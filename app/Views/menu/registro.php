@@ -1141,50 +1141,50 @@
                             </div>
                         </div>
 
-                        <form method="POST" action="<?= base_url('registro-usuario'); ?>">
+                        <form method="POST" action="<?= base_url('dashboard/registro-usuario'); ?>">
 
                             <?= csrf_field(); ?>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Nombres</label>
-                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control"  autofocus>
+                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control" autofocus>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Apellidos</label>
-                                    <input type="text" id="apellido" name="apellido" value="<?= set_value('apellido'); ?>" class="form-control"  autofocus>
+                                    <input type="text" id="apellido" name="apellido" value="<?= set_value('apellido'); ?>" class="form-control" autofocus>
                                 </div>
                             </div>
 
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Correo</label>
-                                    <input type="email" id="correo" name="correo" value="<?= set_value('correo'); ?>" class="form-control"  autofocus>
+                                    <input type="email" id="correo" name="correo" value="<?= set_value('correo'); ?>" class="form-control" autofocus>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Telefono</label>
-                                    <input type="text" id="telefono" name="telefono" value="<?= set_value('telefono'); ?>" class="form-control"  autofocus>
+                                    <input type="text" id="telefono" name="telefono" value="<?= set_value('telefono'); ?>" class="form-control" autofocus>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Clave</label>
-                                    <input type="password" placeholder="********" id="clave" name="clave" class="form-control"  autofocus>
+                                    <input type="password" placeholder="********" id="clave" name="clave" class="form-control" autofocus>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Repita Clave</label>
-                                    <input type="password" placeholder="********" id="reclave" name="reclave" class="form-control"  autofocus>
+                                    <input type="password" placeholder="********" id="reclave" name="reclave" class="form-control" autofocus>
                                 </div>
                             </div>
 
                             <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Repita Clave</label>
+                                    <label class="form-label">Seleccione el Perfil</label>
                                     <select class="form-select" id="perfil" name="perfil" value="<?php set_value('perfil'); ?>">
                                         <?php foreach ($perfiles as $perfil) : ?>
                                             <option value="<?= esc($perfil['id']) ?>"><?= esc($perfil['nombre']) ?></option>
@@ -1193,15 +1193,18 @@
                                 </div>
                             </div>
                             <?php if (session()->getFlashdata('errors') !== null) : ?>
-
                                 <div class="alert alert-danger my-3" role="alert">
                                     <?= session()->getFlashdata('errors'); ?>
                                 </div>
-
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('success') !== null) : ?>
+                                <div class="alert alert-success my-3" role="alert">
+                                    <?= session()->getFlashdata('success'); ?>
+                                </div>
                             <?php endif; ?>
                             <div class="col-12">
                                 <div class="mb-4">
-                                    <button type="submit" class="btn btn-secondary w-100">Entrar</button>
+                                    <button type="submit" class="btn btn-secondary w-100">Crear</button>
                                 </div>
                             </div>
                         </form>
