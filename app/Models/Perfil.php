@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class PerfilModel extends Model
+class Perfil extends Model
 {
     protected $table      = 'perfil';
     protected $primaryKey = 'id';
@@ -14,12 +14,12 @@ class PerfilModel extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','nombre'];
+    protected $allowedFields = ['id','nombre','estado'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = true;
+    protected $useTimestamps = false;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'fcreacion';
     protected $updatedField  = 'factualizacion';
@@ -30,5 +30,11 @@ class PerfilModel extends Model
         'estado' => 'required|in_list[A,I]'
     ];
 
- 
+    public function getNombresPerfil()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select nombre from perfil";
+        $perfil = $db->query($sql)->getResult('array');
+        return $perfil;   
+    }
 }

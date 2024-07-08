@@ -13,6 +13,8 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 
+use App\Filters\SessionFilter;
+
 class Filters extends BaseFilters
 {
     /**
@@ -34,6 +36,7 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        'SessionFilter' => SessionFilter::class,
     ];
 
     /**
@@ -69,6 +72,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            //'mifiltro'
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
@@ -76,6 +80,7 @@ class Filters extends BaseFilters
         'after' => [
             // 'honeypot',
             // 'secureheaders',
+            'toolbar'
         ],
     ];
 
@@ -103,5 +108,12 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'SessionFilter' => [
+            'before' => [
+                'dashboard',
+                'dashboard/*'
+            ]
+        ]
+    ];
 }

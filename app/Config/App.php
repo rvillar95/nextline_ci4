@@ -16,7 +16,7 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = 'http://localhost/codeigniter4/nextline/app_nextline/';
+    public string $baseURL = 'http://localhost/codeigniter4/nextline_ci4/';
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

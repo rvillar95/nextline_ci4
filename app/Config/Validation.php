@@ -64,7 +64,7 @@ class Validation extends BaseConfig
 
     public array $formUserRegister = [
         'nombre' => [
-            'label' => 'nombre',
+            'label' => 'Nombre',
             'rules' => 'required|max_length[100]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
@@ -72,7 +72,7 @@ class Validation extends BaseConfig
             ],
         ],
         'apellido' => [
-            'label' => 'apellido',
+            'label' => 'Apellido',
             'rules' => 'required|max_length[100]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
@@ -110,6 +110,68 @@ class Validation extends BaseConfig
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
                 'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public array $formUserEdit = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'apellido' => [
+            'label' => 'Apellido',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'correo' => [
+            'label' => 'Correo',
+            'rules' => 'required|valid_email|',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'valid_email' => 'Debes ingresar una dirección de correo electrónico válida.',
+            ],
+        ],
+        'perfil' => [
+            'label' => 'perfil',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public array $formUserEditPassword = [
+        'clave' => [
+            'label' => 'Clave',
+            'rules' => 'required|max_length[12]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 12 caracteres de longitud.'
+            ],
+        ],
+        'reclave' => [
+            'label' => 'Re Clave',
+            'rules' => 'matches[clave]',
+            'errors' => [
+                'matches' => 'Las claves tienen que ser iguales',
+                'max_length' => 'El campo {field} no puede exceder de 12 caracteres de longitud.'
             ],
         ],
     ];

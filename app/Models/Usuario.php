@@ -4,7 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class UsuarioModel extends Model
+class Usuario extends Model
 {
     protected $table      = 'usuario';
     protected $primaryKey = 'id';
@@ -14,7 +14,7 @@ class UsuarioModel extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'estado', 'fcreacion', 'factualizacion', 'feliminacion'];
+    protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'estado', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -35,29 +35,24 @@ class UsuarioModel extends Model
         'estado' => 'required|in_list[A,I]',
     ];
 
-    public function validateUser2($correo, $clave){
-        $user = $this->where(['correo' => $correo, 'estado' => 'A'])->first();
-        if ($user && password_verify($clave, $user['clave'])) {
-            return $user;
+    public function validateUser($correo, $clave)
+    {
+        $db = \Config\Database::connect();
+        $sql = "select u.*, f.nombre as perfil_nombre from usuario u, perfil f 
+                         where u.perfil_id = f.id and 
+                               u.correo = :correo: and
+                               u.estado = 'A' ";
+
+        // Ejecuta la consulta con los parámetros
+        $user = $db->query($sql, ['correo' => $correo, 'clave' => $clave])->getResult('array');
+        if ($user && password_verify($clave, $user[0]['clave'])) {
+            return $user[0];
         }
         return null;
     }
 
-    public function validateUser($correo, $clave)
+    public function contrasenaHash($contrasenaHash)
     {
-        // Obtén la instancia de la base de datos
-        $db = \Config\Database::connect();
-
-        $sql = "select u.*, f.nombre as perfil_nombre from usuario u, perfil f 
-                         where u.perfil_id = f.id and 
-                               u.correo = :correo: and
-                               u.clave = :clave: and
-                               u.estado = 'A'";
-
-        // Ejecuta la consulta con los parámetros
-        $query = $db->query($sql, ['correo' => $correo, 'clave' => $clave]);
-
-        // Devuelve el resultado
-        return $query->getResult('array');
+        return password_hash($contrasenaHash, PASSWORD_DEFAULT);
     }
 }

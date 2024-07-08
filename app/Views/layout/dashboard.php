@@ -107,7 +107,7 @@ if (session()->get('usuario')) {
                 <div class="nav-logo">
                     <div class="nav-item theme-logo">
                         <a href="./index.html">
-                            <img src="<?= base_url("lib/src/assets/img/logo.svg") ?>" class="navbar-logo" alt="logo">
+                            <img src="" class="navbar-logo" alt="logo">
                         </a>
                     </div>
                     <div class="nav-item theme-text">
@@ -126,17 +126,19 @@ if (session()->get('usuario')) {
             <div class="shadow-bottom"></div>
             <ul class="list-unstyled menu-categories" id="accordionExample">
                 <?php foreach ($modulos as $modulo) : ?>
-                    <li class="menu active">
-                        <a href="<?= base_url($modulo['ruta']) ?>" aria-expanded="false" class="dropdown-toggle">
-                            <div class="">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                </svg>
-                                <span><?= $modulo['nombre_modulo'] ?></span>
-                            </div>
-                        </a>
-                    </li>
+                    <?php //if ($modulo['mostrar'] == 'S') { ?>
+                        <li class="menu active">
+                            <a href="<?= base_url($modulo['ruta']) ?>" aria-expanded="false" class="dropdown-toggle">
+                                <div class="">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                    <span><?= $modulo['modulo'] ?></span>
+                                </div>
+                            </a>
+                        </li>
+                    <?php //} ?>
                 <?php endforeach; ?>
             </ul>
         </nav>
@@ -180,6 +182,10 @@ if (session()->get('usuario')) {
                 </div>
                 <div class="row layout-top-spacing">
                     <?php echo $this->renderSection("registro"); ?>
+
+                    <?php echo $this->renderSection("table"); ?>
+
+                    <?php echo $this->renderSection("detalle_usuario"); ?>
                 </div>
 
             </div>
