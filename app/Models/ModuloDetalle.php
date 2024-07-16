@@ -37,7 +37,7 @@ class ModuloDetalle extends Model
     public function getModulos($perfil)
     {
         $db = \Config\Database::connect();
-        $sql = "SELECT perf.nombre as perfil, per.nombre as permiso, modu.nombre as modulo ,det.ruta FROM modulo modu, modulo_detalle det, permiso per, perfil perf WHERE modu.id = det.modulo_id and det.permiso_id = per.id AND det.perfil_id = perf.id and det.perfil_id = :perfil: group by det.modulo_id order by det.orden asc;";
+        $sql = "SELECT perf.nombre as perfil, per.nombre as permiso, modu.nombre as modulo ,det.ruta FROM modulo modu, modulo_detalle det, permiso per, perfil perf WHERE modu.id = det.modulo_id and det.permiso_id = per.id AND det.perfil_id = perf.id and det.perfil_id = :perfil: and det.orden != 0 group by det.modulo_id order by det.orden asc;";
         $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
         return $modulos;   
     }
