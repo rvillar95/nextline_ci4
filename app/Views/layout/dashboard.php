@@ -183,7 +183,7 @@ if (session()->get('usuario')) {
                 <div class="row layout-top-spacing">
                     <?php echo $this->renderSection("registro"); ?>
 
-                    <?php echo $this->renderSection("table"); ?>
+                    <?php echo $this->renderSection("lista"); ?>
 
                     <?php echo $this->renderSection("detalle_usuario"); ?>
                 </div>

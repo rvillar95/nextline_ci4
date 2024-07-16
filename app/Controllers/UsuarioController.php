@@ -10,22 +10,53 @@ use App\Models\Perfil;
 class UsuarioController extends BaseController
 {
 
-    public function index()
+    
+    public function registro()
     {
         $modulo = new ModuloDetalle();
         $data['modulos'] = $modulo->getModulos(session()->get('usuario')['perfil_id']);
         $perfil = new Perfil();
         $data['perfiles'] = $perfil->findAll();
         $usuarioModel = new Usuario();
+        $registrosPorPagina = 5;
         $data['usuarios'] = [
-            $usuarioModel->select('usuario.* , perfil.nombre as nombre_perfil')
-                ->join('perfil', 'usuario.perfil_id = perfil.id')->paginate(),
+            'data' => $usuarioModel->select('usuario.* , perfil.nombre as nombre_perfil')
+                ->join('perfil', 'usuario.perfil_id = perfil.id')
+                ->paginate($registrosPorPagina, 'usuarios'),
             'pager' => $usuarioModel->pager
         ];
-        echo view('usuarios/index', $data);
+        echo view('usuarios/registro', $data);
     }
 
-    public function detalle($id)
+    public function lista()
+    {
+        $usuarioModel = new Usuario();
+        $draw = intval($this->request->getGet("draw"));
+        $books = $usuarioModel->getData();
+        $data = array();
+        foreach ($books as $r) {
+            $data[] = array(
+                $r->nombre,
+                $r->apellido,
+                $r->correo,
+                $r->telefono,
+                $r->nombre_perfil,
+                $r->fcreacion,
+                ''
+            );
+        }
+        $output = array(
+            "draw" => $draw,
+            "recordsTotal" => $usuarioModel->countAll(),
+            "recordsFiltered" => 5,
+            "data" => $data
+        );
+        echo json_encode($output);
+        exit();
+    }
+
+
+    public function editar($id)
     {
         $modulo = new ModuloDetalle();
         $data['modulos'] = $modulo->getModulos(session()->get('usuario')['perfil_id']);
@@ -66,9 +97,9 @@ class UsuarioController extends BaseController
         }
     }
 
-    public function editar()
+    public function update()
     {
-    
+
         if (!$this->validate('formUserEdit')) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -80,8 +111,8 @@ class UsuarioController extends BaseController
         $telefono = $this->request->getPost('telefono');
         $perfil = $this->request->getPost('perfil');
         $estado = $this->request->getPost('estado');
-  
-       
+
+
         if ($usuarioModel->update($id, [
             'nombre' => $nombre,
             'apellido' => $apellido,
@@ -90,13 +121,14 @@ class UsuarioController extends BaseController
             'perfil_id' => $perfil,
             'estado' => $estado
         ])) {
-            return redirect()->to(base_url('dashboard/usuario/detalle/'.$id))->with('success', 'Usuario editado con éxito');
+            return redirect()->to(base_url('dashboard/usuario/detalle/' . $id))->with('success', 'Usuario editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el usuario');
         }
     }
 
-    public function editar_clave(){
+    public function update_clave()
+    {
         if (!$this->validate('formUserEditPassword')) {
             return redirect()->back()->withInput()->with('errorsPassword', $this->validator->getErrors());
         }
@@ -104,9 +136,9 @@ class UsuarioController extends BaseController
         $id = $this->request->getPost('id');
         $clave = $this->request->getPost('clave');
         if ($usuarioModel->update($id, [
-            'clave' => $usuarioModel->contrasenaHash($clave),//password_hash($post['clave'], PASSWORD_DEFAULT),
+            'clave' => $usuarioModel->contrasenaHash($clave), //password_hash($post['clave'], PASSWORD_DEFAULT),
         ])) {
-            return redirect()->to(base_url('dashboard/usuario/detalle/'.$id))->with('successPassword', 'Clave editada con éxito');
+            return redirect()->to(base_url('dashboard/usuario/detalle/' . $id))->with('successPassword', 'Clave editada con éxito');
         } else {
             return redirect()->back()->withInput()->with('errorsPassword', 'Error al editar la clave');
         }

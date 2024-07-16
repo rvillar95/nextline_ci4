@@ -7,7 +7,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'ViewController::index');
 
-
+$routes->get('/test','UsuarioController::test');
 
 $routes->get('/login', 'ViewController::login');
 
@@ -22,11 +22,13 @@ $routes->group('dashboard', function ($routes) {
    
 
     $routes->group('usuario', function ($routes2) {
-        $routes2->get('inicio', 'UsuarioController::index');
-        $routes2->get('detalle/(:num)', 'UsuarioController::detalle/$1');
+        $routes2->get('registro', 'UsuarioController::registro');
+        $routes2->get('editar/(:num)', 'UsuarioController::editar/$1');
+        $routes2->get('lista', 'UsuarioController::lista');
+        
         $routes2->post('registrar', 'UsuarioController::registrar');
-        $routes2->post('editar', 'UsuarioController::editar');
-        $routes2->post('editar/clave', 'UsuarioController::editar_clave');
+        $routes2->post('update', 'UsuarioController::update');
+        $routes2->post('update/clave', 'UsuarioController::update_clave');
         
     });
 });

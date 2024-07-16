@@ -22,6 +22,10 @@
     <link href="<?= base_url("lib/src/assets/css/light/dashboard/dash_1.css")?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/src/assets/css/dark/dashboard/dash_1.css")?>" rel="stylesheet" type="text/css" />
     <!-- END PAGE LEVEL PLUGINS/CUSTOM STYLES -->
+    <!-- <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script> -->
+    <script src="<?= base_url("lib/js/jquery-2.1.1.js")?> "></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
 
 </head>
 <body class="layout-boxed">

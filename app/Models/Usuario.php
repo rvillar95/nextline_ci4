@@ -55,4 +55,13 @@ class Usuario extends Model
     {
         return password_hash($contrasenaHash, PASSWORD_DEFAULT);
     }
+
+    
+    public function getData()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id";
+        $perfil = $db->query($sql)->getResult('object');
+        return $perfil;   
+    }
 }
