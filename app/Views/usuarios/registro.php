@@ -1,6 +1,6 @@
 <?php $this->extend('layout/dashboard') ?>
 
-<?= $this->section("registro") ?>
+<?= $this->section("usuario/registro") ?>
 
 <div id="basic" class="col-lg-12 layout-spacing">
     <div class="statbox widget box box-shadow">

@@ -10,16 +10,12 @@
 
         <div class="col-md-12">
             <div class="table-responsive">
-                <table class="table table-bordered getDetalleInventario">
+                <table class="table table-bordered getPerfil">
                     <thead>
                         <tr>
-                            <th scope="col">Nombre</th>
-                            <th scope="col">Apellido</th>
-                            <th scope="col">Correo</th>
-                            <th scope="col">Teléfono</th>
-                            <th scope="col">Perfil</th>
-                            <th scope="col">Creación</th>
-                            <th class="text-center" scope="col">Acciones</th>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                 </table>
@@ -28,11 +24,11 @@
     </div>
 </div>
 <script>
-    getDetalleInventario();
+    getPerfil();
 
-    function getDetalleInventario() {
-        $('.getDetalleInventario').DataTable().clear().destroy();
-        $('.getDetalleInventario').DataTable({
+    function getPerfil() {
+        $('.getPerfil').DataTable().clear().destroy();
+        $('.getPerfil').DataTable({
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
@@ -62,7 +58,7 @@
                 }
             },
             "ajax": {
-                url: 'getUsuarios',
+                url: 'getPerfiles',
                 type: 'GET'
             }
         });

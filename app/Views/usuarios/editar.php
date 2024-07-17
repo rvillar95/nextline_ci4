@@ -1,9 +1,9 @@
 <?php $this->extend('layout/dashboard') ?>
 <?php
-print_r($usuario);
+//print_r($usuario);
 //exit();
 ?>
-<?= $this->section("detalle_usuario") ?>
+<?= $this->section("usuario/detalle") ?>
 <div class="row">
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
         <div class="col-md-12">

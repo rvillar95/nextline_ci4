@@ -29,12 +29,19 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'UsuarioController::editar/$1');
         $routes2->get('lista', 'UsuarioController::lista');
         $routes2->get('getUsuarios', 'UsuarioController::getUsuarios');
-        
-        
         $routes2->post('registrar', 'UsuarioController::registrar');
         $routes2->post('update', 'UsuarioController::update');
         $routes2->post('update/clave', 'UsuarioController::update_clave');
-        
+    });
+
+    $routes->group('perfil', function ($routes2) {
+        $routes2->get('registro', 'PerfilController::registro');
+        $routes2->get('editar/(:num)', 'PerfilController::editar/$1');
+        $routes2->get('lista', 'PerfilController::lista');
+        $routes2->get('getPerfiles', 'PerfilController::getPerfiles');
+        $routes2->post('registrar', 'PerfilController::registrar');
+        $routes2->post('update', 'PerfilController::update');
+        $routes2->post('update/clave', 'PerfilController::update_clave');
     });
 });
 
