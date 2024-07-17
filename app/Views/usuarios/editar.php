@@ -11,7 +11,7 @@ print_r($usuario);
                 <h4>Detalle Usuario</h4>
             </div>
         </div>
-        <form method="POST" action="<?= base_url('dashboard/usuario/editar'); ?>">
+        <form method="POST" action="<?= base_url('dashboard/usuario/update'); ?>">
             <div class="row">
                 <?= csrf_field(); ?>
                 <div class="col-md-6">
@@ -91,7 +91,7 @@ print_r($usuario);
             </div>
         </form>
 
-        <form method="POST" action="<?= base_url('dashboard/usuario/editar/clave'); ?>">
+        <form method="POST" action="<?= base_url('dashboard/usuario/update/clave'); ?>">
             <div class="row">
                 <?= csrf_field(); ?>
                 <div class="col-md-6">
