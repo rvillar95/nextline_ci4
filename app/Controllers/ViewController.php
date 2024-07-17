@@ -34,15 +34,22 @@ class ViewController extends BaseController
 
     public function menu()
     {
+        $menuTotal = array();
         $modulo = new ModuloDetalle();
-        $data['modulos'] = $modulo->getModulos(session()->get('usuario')['perfil_id']);
+        $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
+
+        foreach ($data['menu'] as $entity) {
+            $submenu = $modulo->getSubMenu($entity['id']);
+            array_push($menuTotal,array("menu" => $entity,"submenu" => $submenu));
+        }
+        $data['data'] = $menuTotal;
         return view('layout/dashboard',$data);
     }
 
     public function registro()
     {
         $modulo = new ModuloDetalle();
-        $data['modulos'] = $modulo->getModulos(session()->get('usuario')['perfil_id']);
+        $data['modulos'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
         $perfil = new Perfil();
         $data['perfiles'] = $perfil->findAll();
         $usuarioModel = new Usuario();

@@ -4,25 +4,32 @@
 <?= $this->section("lista") ?>
 
 
-<div class="col-md-12">
-    <div class="table-responsive">
-        <table class="table table-bordered getDetalleInventario">
-            <thead>
-                <tr>
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Apellido</th>
-                    <th scope="col">Correo</th>
-                    <th scope="col">Teléfono</th>
-                    <th scope="col">Perfil</th>
-                    <th scope="col">Creación</th>
-                    <th class="text-center" scope="col"></th>
-                </tr>
-            </thead>
-        </table>
+<div class="widget-content widget-content-area">
+
+    <div class="row">
+
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-bordered getDetalleInventario">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Apellido</th>
+                            <th scope="col">Correo</th>
+                            <th scope="col">Teléfono</th>
+                            <th scope="col">Perfil</th>
+                            <th scope="col">Creación</th>
+                            <th class="text-center" scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 <script>
     getDetalleInventario();
+
     function getDetalleInventario() {
         $('.getDetalleInventario').DataTable().clear().destroy();
         $('.getDetalleInventario').DataTable({
@@ -55,7 +62,7 @@
                 }
             },
             "ajax": {
-                url: 'lista',
+                url: 'getUsuarios',
                 type: 'GET'
             }
         });
