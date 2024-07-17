@@ -14,12 +14,12 @@ class Perfil extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','nombre','estado'];
+    protected $allowedFields = ['id','nombre','fcreacion','estado'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'fcreacion';
     protected $updatedField  = 'factualizacion';
@@ -30,11 +30,27 @@ class Perfil extends Model
         'estado' => 'required|in_list[A,I]'
     ];
 
+    public function getPerfilAll()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from perfil";
+        $perfil = $db->query($sql)->getResult('object');
+        return $perfil;   
+    }
+
     public function getNombresPerfil()
     {
         $db = \Config\Database::connect();
         $sql = "select nombre from perfil";
         $perfil = $db->query($sql)->getResult('array');
+        return $perfil;   
+    }
+
+    public function getPerfil($perfil)
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from perfil where id = :perfil: ";
+        $perfil = $db->query($sql, ['perfil' => $perfil])->getResult('object');
         return $perfil;   
     }
 }

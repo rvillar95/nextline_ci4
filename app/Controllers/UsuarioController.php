@@ -65,8 +65,8 @@ class UsuarioController extends BaseController
             "recordsFiltered" => 5,
             "data" => $data
         );
-        echo json_encode($output);
-        exit();
+
+        return $this->response->setJSON($output);
     }
 
 
@@ -112,7 +112,7 @@ class UsuarioController extends BaseController
         ];
 
         if ($usuarioModel->insert($data)) {
-            return redirect()->to(base_url('dashboard/registro/usuario'))->with('success', 'Usuario registrado con éxito');
+            return redirect()->to(base_url('dashboard/usuario/registro'))->with('success', 'Usuario registrado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al registrar el usuario');
         }

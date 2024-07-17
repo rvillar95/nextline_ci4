@@ -85,7 +85,7 @@ class Validation extends BaseConfig
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
                 'valid_email' => 'Debes ingresar una dirección de correo electrónico válida.',
-                'is_unique' => 'El campo {field} ya existe.'
+                'is_unique' => 'El campo {field} ya esta registrado.'
             ],
         ],
         'clave' => [
@@ -174,6 +174,26 @@ class Validation extends BaseConfig
                 'max_length' => 'El campo {field} no puede exceder de 12 caracteres de longitud.'
             ],
         ],
+    ];
+
+    public array $formPerfilRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[perfil.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ]
     ];
 
 }
