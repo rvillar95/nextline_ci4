@@ -196,4 +196,97 @@ class Validation extends BaseConfig
         ]
     ];
 
+    public array $formPerfilEdit = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ]
+    ];
+
+    public array $formModuloRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[modulo.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'ruta' => [
+            'label' => 'Ruta',
+            'rules' => 'required|max_length[100]|is_unique[modulo.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ],
+        'mostrar' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[S,N]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
+            ],
+        ]
+    ];
+
+    public array $formModuloEdit = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'ruta' => [
+            'label' => 'Ruta',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ],
+        'mostrar' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[S,N]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
+            ],
+        ]
+    ];
 }

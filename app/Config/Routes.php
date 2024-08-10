@@ -41,7 +41,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPerfiles', 'PerfilController::getPerfiles');
         $routes2->post('registrar', 'PerfilController::registrar');
         $routes2->post('update', 'PerfilController::update');
-        $routes2->post('update/clave', 'PerfilController::update_clave');
+    });
+
+    $routes->group('modulo', function ($routes2) {
+        $routes2->get('registro', 'ModuloController::registro');
+        $routes2->get('editar/(:num)', 'ModuloController::editar/$1');
+        $routes2->get('lista', 'ModuloController::lista');
+        $routes2->get('getModulos', 'ModuloController::getModulos');
+        $routes2->post('registrar', 'ModuloController::registrar');
+        $routes2->post('update', 'ModuloController::update');
+        $routes2->post('update/clave', 'ModuloController::update_clave');
     });
 });
 

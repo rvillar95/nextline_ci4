@@ -14,7 +14,7 @@ class Modulo extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','nombre','ruta','mostrar'];
+    protected $allowedFields = ['id','nombre','ruta','estado','mostrar'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -27,7 +27,27 @@ class Modulo extends Model
 
     protected $validationRules = [
         'nombre' => 'required|string|max_length[100]',
-        'descripcion' => 'string|max_length[500]',
-        'estado' => 'required|in_list[A,I]'
+        'ruta' => 'string|max_length[100]',
+        'estado' => 'required|in_list[A,I]',
+        'mostrar' => 'required|in_list[S,N]'
     ];
+
+    public function getModuloAll()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from modulo";
+        $modulo = $db->query($sql)->getResult('object');
+        return $modulo;   
+    }
+
+    public function getModuloLike($ruta)
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('modulo');
+        $builder->like('ruta', $ruta);
+        $modulo = $builder->get()->getResultArray();
+        return $modulo;
+    }
+
+
 }

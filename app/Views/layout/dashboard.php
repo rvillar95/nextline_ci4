@@ -249,6 +249,12 @@ exit(); */
                     <?php echo $this->renderSection("perfil/lista"); ?>
                     <?php echo $this->renderSection("perfil/detalle"); ?>
                     <!-- END Section Perfil -->
+
+                    <!-- Star Section Modulo -->
+                    <?php echo $this->renderSection("modulo/registro"); ?>
+                    <?php echo $this->renderSection("modulo/lista"); ?>
+                    <?php echo $this->renderSection("modulo/detalle"); ?>
+                    <!-- END Section Modulo -->
                 </div>
 
             </div>
