@@ -64,7 +64,7 @@ class ModuloDetalle extends Model
  
     public function getMenu($perfil){
         $db = \Config\Database::connect();
-        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' order by pe.orden asc";
+        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' and mo.mostrar = 'S' and pe.estado = 'A' order by pe.orden asc";
         $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
         return $modulos;   
     }

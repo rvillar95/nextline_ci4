@@ -1,7 +1,7 @@
 <?php $this->extend('layout/dashboard') ?>
 
 
-<?= $this->section("perfil/lista") ?>
+<?= $this->section("perfil_detalle/lista") ?>
 
 
 <div class="widget-content widget-content-area">
@@ -10,10 +10,16 @@
 
         <div class="col-md-12">
             <div class="table-responsive">
-                <table class="table table-bordered getPerfil">
+                <table class="table table-bordered getPerfilDetalle">
                     <thead>
                         <tr>
-                            <th>Nombre</th>
+                            <th>Perfil</th>
+                            <th>Modulo</th>
+                            <th>Ver</th>
+                            <th>Registrar</th>
+                            <th>Editar</th>
+                            <th>Eliminar</th>
+                            <th>Orden</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -27,8 +33,8 @@
     getPerfil();
 
     function getPerfil() {
-        $('.getPerfil').DataTable().clear().destroy();
-        $('.getPerfil').DataTable({
+        $('.getPerfilDetalle').DataTable().clear().destroy();
+        $('.getPerfilDetalle').DataTable({
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
@@ -58,7 +64,7 @@
                 }
             },
             "ajax": {
-                url: 'getPerfiles',
+                url: 'getPerfilDetalle',
                 type: 'GET'
             }
         });

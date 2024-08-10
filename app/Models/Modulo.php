@@ -14,7 +14,7 @@ class Modulo extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','nombre','ruta','estado','mostrar'];
+    protected $allowedFields = ['id','nombre','descripcion','ruta','estado','mostrar'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -49,5 +49,12 @@ class Modulo extends Model
         return $modulo;
     }
 
+    public function getActiveModulo()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from modulo where estado = 'A'";
+        $perfil = $db->query($sql)->getResult('array');
+        return $perfil;   
+    }
 
 }

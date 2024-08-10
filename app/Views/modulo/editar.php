@@ -28,6 +28,18 @@
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
+                        <label class="form-label">Descripcion</label>
+                        <input type="text" id="descripcion" name="descripcion" value="<?= $modulo['descripcion']; ?>" class="form-control" autofocus>
+                        <input type="hidden" id="id" name="id" value="<?= $modulo['descripcion']; ?>" class="form-control" autofocus>
+                    </div>
+                    <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
+                        <p style="color:red; font-weight:bold;">
+                            <?= session()->getFlashdata('errors')['descripcion']; ?>
+                        <p>
+                        <?php endif; ?>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
                         <label class="form-label">Ruta</label>
                         <input type="text" id="nombre" name="ruta" value="<?= $modulo['ruta']; ?>" class="form-control" autofocus>
                         <input type="hidden" id="id" name="id" value="<?= $modulo['id']; ?>" class="form-control" autofocus>

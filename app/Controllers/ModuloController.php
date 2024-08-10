@@ -31,9 +31,10 @@ class ModuloController extends BaseController
 
         $modulo = new Modulo();
 
-        $post = $this->request->getPost(['nombre','ruta','estado','mostrar']);
+        $post = $this->request->getPost(['nombre','descripcion','ruta','estado','mostrar']);
         $data = [
             'nombre' => $post['nombre'],
+            'descripcion' => $post['descripcion'],
             'ruta' => $post['ruta'],
             'estado' => $post['estado'],
             'mostrar' => $post['mostrar'],
@@ -56,6 +57,7 @@ class ModuloController extends BaseController
         foreach ($books as $r) {
             $data[] = array(
                 $r->nombre,
+                $r->descripcion,
                 $r->ruta,
                 $r->estado == 'A' ? '<span class="badge badge-success mb-2 me-4">Activo</span>' : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
                 $r->mostrar == 'S' ? '<span class="badge badge-success mb-2 me-4">Si</span>' : '<span class="badge badge-danger mb-2 me-4">No</span>',
@@ -101,8 +103,6 @@ class ModuloController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        $perfil = new Perfil();
-        $data['perfiles'] = $perfil->findAll();
         echo view('modulo/lista',$data);
     }
 
@@ -115,12 +115,14 @@ class ModuloController extends BaseController
         $modulo = new Modulo();
         $id = $this->request->getPost('id');
         $nombre = $this->request->getPost('nombre');
+        $descripcion = $this->request->getPost('descripcion');
         $ruta = $this->request->getPost('ruta');
         $mostrar = $this->request->getPost('mostrar');
         $estado = $this->request->getPost('estado');
 
         if ($modulo->update($id, [
             'nombre' => $nombre,
+            'descripcion' => $descripcion,
             'ruta' => $ruta,
             'mostrar' => $mostrar,
             'estado' => $estado

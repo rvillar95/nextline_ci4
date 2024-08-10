@@ -34,6 +34,17 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
+                                    <label class="form-label">Descripcion</label>
+                                    <input type="text" id="descripcion" name="descripcion" value="<?= set_value('descripcion'); ?>" class="form-control" autofocus>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
+                                    <p style="color:red; font-weight:bold;">
+                                        <?= session()->getFlashdata('errors')['descripcion']; ?>
+                                    <p>
+                                    <?php endif; ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
                                     <label class="form-label">Ruta</label>
                                     <input type="text" id="ruta" name="ruta" value="<?= set_value('ruta'); ?>" class="form-control" autofocus>
                                 </div>

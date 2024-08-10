@@ -133,7 +133,7 @@ class Validation extends BaseConfig
         ],
         'correo' => [
             'label' => 'Correo',
-            'rules' => 'required|valid_email|',
+            'rules' => 'required|valid_email',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
                 'valid_email' => 'Debes ingresar una dirección de correo electrónico válida.',
@@ -226,6 +226,15 @@ class Validation extends BaseConfig
                 'is_unique' => 'El campo {field} ya esta registrado.',
             ],
         ],
+        'descripcion' => [
+            'label' => 'Descripcion',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
         'ruta' => [
             'label' => 'Ruta',
             'rules' => 'required|max_length[100]|is_unique[modulo.nombre]',
@@ -263,6 +272,15 @@ class Validation extends BaseConfig
                 'is_unique' => 'El campo {field} ya esta registrado.',
             ],
         ],
+        'descripcion' => [
+            'label' => 'Descripcion',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.',
+                'is_unique' => 'El campo {field} ya esta registrado.',
+            ],
+        ],
         'ruta' => [
             'label' => 'Ruta',
             'rules' => 'required|max_length[100]',
@@ -289,4 +307,63 @@ class Validation extends BaseConfig
             ],
         ]
     ];
+
+    public array $formPerfilDetalleRegister = [
+        'perfil' => [
+            'label' => 'Perfil',
+            'rules' => 'required',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+            ],
+        ],
+        'modulo' => [
+            'label' => 'Modulo',
+            'rules' => 'required',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+            ],
+        ],
+        'ver' => [
+            'label' => 'Ver',
+            'rules' => 'required|in_list[1,0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'En el campo {field} tiene que elegir entre Si ó No.'
+            ],
+        ],
+        'registrar' => [
+            'label' => 'Registrar',
+            'rules' => 'required|in_list[1,0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'En el campo {field} tiene que elegir entre Si ó No.'
+            ],
+        ],
+        'editar' => [
+            'label' => 'Editar',
+            'rules' => 'required|in_list[1,0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'En el campo {field} tiene que elegir entre Si ó No.'
+            ],
+        ],
+        'eliminar' => [
+            'label' => 'Eliminar',
+            'rules' => 'required|in_list[1,0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'En el campo {field} tiene que elegir entre Si ó No.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'required|greater_than[0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'greater_than' => 'El campo {field} debe ser un número mayor a 0.'
+            ],
+        ]
+    ];
+
+    
 }

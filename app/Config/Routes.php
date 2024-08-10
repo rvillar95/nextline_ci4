@@ -52,6 +52,15 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('update', 'ModuloController::update');
         $routes2->post('update/clave', 'ModuloController::update_clave');
     });
+
+    $routes->group('perfil-detalle', function ($routes2) {
+        $routes2->get('registro', 'PerfilDetalleController::registro');
+        $routes2->get('editar/(:num)', 'PerfilDetalleController::editar/$1');
+        $routes2->get('lista', 'PerfilDetalleController::lista');
+        $routes2->get('getPerfilDetalle', 'PerfilDetalleController::getPerfilDetalle');
+        $routes2->post('registrar', 'PerfilDetalleController::registrar');
+        $routes2->post('update', 'PerfilDetalleController::update');
+    });
 });
 
 

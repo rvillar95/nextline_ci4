@@ -53,4 +53,12 @@ class Perfil extends Model
         $perfil = $db->query($sql, ['perfil' => $perfil])->getResult('object');
         return $perfil;   
     }
+
+    public function getActivePerfil()
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from perfil where estado = 'A'";
+        $perfil = $db->query($sql)->getResult('array');
+        return $perfil;   
+    }
 }
