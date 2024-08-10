@@ -14,6 +14,7 @@
                     <thead>
                         <tr>
                             <th>Nombre</th>
+                            <th>Descripción</th>
                             <th>Ruta</th>
                             <th>Estado</th>
                             <th>Mostrar</th>

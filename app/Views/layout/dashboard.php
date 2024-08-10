@@ -255,6 +255,12 @@ exit(); */
                     <?php echo $this->renderSection("modulo/lista"); ?>
                     <?php echo $this->renderSection("modulo/detalle"); ?>
                     <!-- END Section Modulo -->
+
+                    <!-- Star Section Perfil -->
+                    <?php echo $this->renderSection("perfil_detalle/registro"); ?>
+                    <?php echo $this->renderSection("perfil_detalle/lista"); ?>
+                    <?php echo $this->renderSection("perfil_detalle/detalle"); ?>
+                    <!-- END Section Perfil -->                    
                 </div>
 
             </div>
