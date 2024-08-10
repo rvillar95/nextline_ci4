@@ -14,7 +14,7 @@ class ModuloDetalle extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','modulo_id','descripcion','ruta','mostrar'];
+    protected $allowedFields = ['id','modulo_id','descripcion','ruta','estado','mostrar'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -64,14 +64,14 @@ class ModuloDetalle extends Model
  
     public function getMenu($perfil){
         $db = \Config\Database::connect();
-        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: order by pe.orden asc";
+        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' order by pe.orden asc";
         $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
         return $modulos;   
     }
 
     public function getSubMenu($modulo){
         $db = \Config\Database::connect();
-        $sql = "select * from modulo_detalle where modulo_id = :modulo: order by orden asc";
+        $sql = "select * from modulo_detalle where modulo_id = :modulo: and estado = 'A' order by orden asc";
         $modulos = $db->query($sql, ['modulo' => $modulo])->getResult('array');
         return $modulos;   
     }
