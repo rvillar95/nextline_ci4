@@ -1,7 +1,7 @@
 <?php $this->extend('layout/dashboard') ?>
 
 
-<?= $this->section("usuario/lista") ?>
+<?= $this->section("modulo_detalle/lista") ?>
 
 
 <div class="widget-content widget-content-area">
@@ -17,16 +17,17 @@
                 </p>
             <?php endif; ?>
             <div class="table-responsive">
-                <table class="table table-bordered getDetalleInventario">
+                <table class="table table-bordered getModuloDetalle">
                     <thead>
                         <tr>
-                            <th scope="col">Nombre</th>
-                            <th scope="col">Apellido</th>
-                            <th scope="col">Correo</th>
-                            <th scope="col">Teléfono</th>
-                            <th scope="col">Perfil</th>
-                            <th scope="col">Creación</th>
-                            <th class="text-center" scope="col">Acciones</th>
+                            <th>Modulo</th>
+                            <th>Descripción</th>
+                            <th>Ruta</th>
+                            <th>Permisos</th>
+                            <th>Estado</th>
+                            <th>Mostrar</th>
+                            <th>Orden</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                 </table>
@@ -35,11 +36,11 @@
     </div>
 </div>
 <script>
-    getDetalleInventario();
+    getModuloDetalle();
 
-    function getDetalleInventario() {
-        $('.getDetalleInventario').DataTable().clear().destroy();
-        $('.getDetalleInventario').DataTable({
+    function getModuloDetalle() {
+        $('.getModuloDetalle').DataTable().clear().destroy();
+        $('.getModuloDetalle').DataTable({
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
@@ -69,7 +70,7 @@
                 }
             },
             "ajax": {
-                url: 'getUsuarios',
+                url: 'getModuloDetalle',
                 type: 'GET'
             }
         });

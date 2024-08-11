@@ -36,8 +36,8 @@
                                 <div class="mb-3">
                                     <label class="form-label">Seleccione el Estado</label>
                                     <select class="form-select" id="estado" name="estado" value="<?php set_value('estado'); ?>">
-                                            <option value="A">Activo</option>
-                                            <option value="I">Inactivo</option>
+                                        <option value="A">Activo</option>
+                                        <option value="I">Inactivo</option>
                                     </select>
                                 </div>
                             </div>
@@ -45,6 +45,13 @@
                                 <div class="alert alert-success my-3" role="alert">
                                     <?= session()->getFlashdata('success'); ?>
                                 </div>
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                                <p style="color:red; font-weight:bold;">
+                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                        <?= session()->getFlashdata('errors'); ?>
+                                    <?php endif; ?>
+                                </p>
                             <?php endif; ?>
                             <div class="col-12">
                                 <div class="mb-4">

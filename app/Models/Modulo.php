@@ -19,7 +19,7 @@ class Modulo extends Model
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'fcreacion';
     protected $updatedField  = 'factualizacion';
@@ -35,7 +35,13 @@ class Modulo extends Model
     public function getModuloAll()
     {
         $db = \Config\Database::connect();
-        $sql = "select * from modulo";
+        $poder = session()->get('usuario')['poder'];
+        if ($poder <= 2) {
+            $sql = "select * from modulo where id != 13";
+        }else{
+            $sql = "select * from modulo";
+        }
+   
         $modulo = $db->query($sql)->getResult('object');
         return $modulo;   
     }
@@ -52,7 +58,13 @@ class Modulo extends Model
     public function getActiveModulo()
     {
         $db = \Config\Database::connect();
-        $sql = "select * from modulo where estado = 'A'";
+        $poder = session()->get('usuario')['poder'];
+        
+        if ($poder <= 2) {
+            $sql = "select * from modulo where estado = 'A' and id != 3";
+        }else{
+            $sql = "select * from modulo where estado = 'A'";
+        }
         $perfil = $db->query($sql)->getResult('array');
         return $perfil;   
     }

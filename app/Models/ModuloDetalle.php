@@ -14,12 +14,12 @@ class ModuloDetalle extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['id','modulo_id','descripcion','ruta','estado','mostrar'];
+    protected $allowedFields = ['id','modulo_id','descripcion','ruta','accion','estado','mostrar','orden'];
 
     protected bool $allowEmptyInserts = false;
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'fcreacion';
     protected $updatedField  = 'factualizacion';
@@ -27,39 +27,25 @@ class ModuloDetalle extends Model
 
     protected $validationRules = [
         'modulo_id' => 'required|integer|greater_than[0]',
-        'permiso_id' => 'required|integer|greater_than[0]',
-        'perfil_id' => 'required|integer|greater_than[0]',
-        'descripcion' => 'string|max_length[100]',
+        'descripcion' => 'string|max_length[500]',
         'ruta' => 'string|max_length[100]',
-        'orden' => 'required|integer|greater_than[0]'
+        'accion' => 'string|max_length[50]',
+        'estado' => 'required|in_list[A,I]',
+        'mostrar' => 'required|in_list[S,N]',
+        'orden' => 'required|integer'
     ];
 
-    public function getModulos($perfil)
+    public function getModuloDetalleAll()
     {
-        $db = \Config\Database::connect();
-        $sql = "SELECT perf.nombre as perfil, per.nombre as permiso, modu.nombre as modulo ,det.ruta FROM modulo modu, modulo_detalle det, permiso per, perfil perf WHERE modu.id = det.modulo_id and det.permiso_id = per.id AND det.perfil_id = perf.id and det.perfil_id = :perfil: and det.orden != 0 group by det.modulo_id order by det.orden asc";
-        $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
-        return $modulos;   
-    }
 
-    public function getPermisos($perfil)
-    {
         $db = \Config\Database::connect();
-        $sql = "SELECT perf.nombre as perfil, per.nombre as permiso, modu.nombre as modulo ,det.ruta FROM modulo modu, modulo_detalle det, permiso per, perfil perf WHERE modu.id = det.modulo_id and det.permiso_id = per.id AND det.perfil_id = perf.id and det.perfil_id = :perfil: ";
-        $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
-        return $modulos;   
-    }
-
-    public function getPermisos2($perfilId)
-    {
-        $db = \Config\Database::connect();
-        $builder = $db->table('perfil_modulo');
-        $builder->select('modulo.nombre as modulo_nombre, modulo.ruta as modulo_ruta, perfil_modulo.ver, perfil_modulo.editar, perfil_modulo.eliminar');
-        $builder->join('modulo', 'perfil_modulo.modulo_id = modulo.id');
-        $builder->where('perfil_modulo.perfil_id', $perfilId);
-        $builder->orderBy('perfil_modulo.orden', 'asc');
+        $builder = $db->table('modulo_detalle');
+        $builder->select('modulo_detalle.id, modulo.nombre as nombreModulo, modulo_detalle.descripcion, modulo_detalle.ruta, modulo_detalle.accion, modulo_detalle.estado, modulo_detalle.mostrar, modulo_detalle.orden');
+        $builder->join('modulo', 'modulo_detalle.modulo_id = modulo.id');
+        $builder->orderBy('modulo.id', 'asc');
+        $builder->orderBy('orden', 'asc');
         $query = $builder->get();
-        return $query->getResult('array');
+        return $query->getResult('object');
     }
  
     public function getMenu($perfil){
@@ -74,5 +60,12 @@ class ModuloDetalle extends Model
         $sql = "select * from modulo_detalle where modulo_id = :modulo: and estado = 'A' order by orden asc";
         $modulos = $db->query($sql, ['modulo' => $modulo])->getResult('array');
         return $modulos;   
+    }
+
+    public function getDetalleModulo($id)
+    {
+        $db = \Config\Database::connect();
+        $sql = "select * from modulo_detalle where id = :id: ";
+        return $db->query($sql, ['id' => $id])->getRowArray();   
     }
 }

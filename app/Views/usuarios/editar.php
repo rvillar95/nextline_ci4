@@ -14,6 +14,13 @@
         <form method="POST" action="<?= base_url('dashboard/usuario/update'); ?>">
             <div class="row">
                 <?= csrf_field(); ?>
+                <?php if (session()->getFlashdata('errors') !== null) : ?>
+                    <p style="color:red; font-weight:bold;">
+                        <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                            <?= session()->getFlashdata('errors'); ?>
+                        <?php endif; ?>
+                    </p>
+                <?php endif; ?>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
@@ -98,7 +105,7 @@
                     <div class="mb-3">
                         <label class="form-label">Clave</label>
                         <input type="hidden" id="id" name="id" value="<?= $usuario['id']; ?>" class="form-control" autofocus>
-                        <input type="password" placeholder="********" id="clave" name="clave"  class="form-control" autofocus>
+                        <input type="password" placeholder="********" id="clave" name="clave" class="form-control" autofocus>
                     </div>
                     <?php if (isset(session()->getFlashdata('errorsPassword')['clave'])) : ?>
                         <p style="color:red; font-weight:bold;">
@@ -122,6 +129,7 @@
                         <?= session()->getFlashdata('successPassword'); ?>
                     </div>
                 <?php endif; ?>
+
                 <div class="col-12">
                     <div class="mb-4">
                         <button type="submit" class="btn btn-secondary w-100">Editar Clave</button>
