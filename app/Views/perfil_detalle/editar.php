@@ -1,9 +1,9 @@
 <?php $this->extend('layout/dashboard') ?>
 
 <?php
-echo "<pre>";
-print_r($perfil);
-echo "</pre>";
+//echo "<pre>";
+//print_r($perfil);
+//echo "</pre>";
 //exit();
 ?>
 
@@ -168,6 +168,13 @@ echo "</pre>";
                     <div class="alert alert-success my-3" role="alert">
                         <?= session()->getFlashdata('success'); ?>
                     </div>
+                <?php endif; ?>
+                <?php if (session()->getFlashdata('errors') !== null) : ?>
+                    <p style="color:red; font-weight:bold;">
+                        <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                            <?= session()->getFlashdata('errors'); ?>
+                        <?php endif; ?>
+                    </p>
                 <?php endif; ?>
                 <div class="col-12">
                     <div class="mb-4">

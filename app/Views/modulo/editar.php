@@ -73,6 +73,13 @@
                         <?= session()->getFlashdata('success'); ?>
                     </div>
                 <?php endif; ?>
+                <?php if (session()->getFlashdata('errors') !== null) : ?>
+                    <p style="color:red; font-weight:bold;">
+                        <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                            <?= session()->getFlashdata('errors'); ?>
+                        <?php endif; ?>
+                    </p>
+                <?php endif; ?>
                 <div class="col-12">
                     <div class="mb-4">
                         <button type="submit" class="btn btn-secondary w-100">Editar</button>

@@ -1,6 +1,6 @@
 <?php $this->extend('layout/dashboard') ?>
 
-<?= $this->section("modulo/registro") ?>
+<?= $this->section("modulo_detalle/registro") ?>
 
 <div id="basic" class="col-lg-12 layout-spacing">
     <div class="statbox widget box box-shadow">
@@ -8,7 +8,7 @@
             <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                     <div class="mb-3">
-                        <h4>Registro de Modulo</h4>
+                        <h4>Registro de Modulo Detalle</h4>
                     </div>
                 </div>
             </div>
@@ -19,18 +19,22 @@
                 <div class="col-lg-12 col-12 ">
 
                     <div class="form-group">
-                        <form method="POST" action="<?= base_url('dashboard/modulo/registrar'); ?>">
+                        <form method="POST" action="<?= base_url('dashboard/modulo-detalle/registrar'); ?>">
                             <?= csrf_field(); ?>
                             <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre</label>
-                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['nombre'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['nombre']; ?>
-                                    <p>
+                                    <label class="form-label">Seleccione el Modulo</label>
+                                    <select class="form-select" id="modulo" name="modulo" value="<?php set_value('modulo'); ?>">
+                                        <?php foreach ($modulos as $modulo) : ?>
+                                            <option value="<?= esc($modulo['id']) ?>"><?= esc($modulo['nombre']) ?> (<?= esc($modulo['descripcion']) ?>)</option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
+                                        <p style="color:red; font-weight:bold;">
+                                            <?= session()->getFlashdata('errors')['modulo']; ?>
+                                        </p>
                                     <?php endif; ?>
+                                </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -51,6 +55,28 @@
                                 <?php if (isset(session()->getFlashdata('errors')['ruta'])) : ?>
                                     <p style="color:red; font-weight:bold;">
                                         <?= session()->getFlashdata('errors')['ruta']; ?>
+                                    <p>
+                                    <?php endif; ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Accion</label>
+                                    <input type="text" id="accion" name="accion" value="<?= set_value('accion'); ?>" class="form-control" autofocus>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['accion'])) : ?>
+                                    <p style="color:red; font-weight:bold;">
+                                        <?= session()->getFlashdata('errors')['accion']; ?>
+                                    <p>
+                                    <?php endif; ?>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">Orden</label>
+                                    <input type="number" min="0" id="orden" name="orden" value="<?= set_value('orden'); ?>" class="form-control" autofocus>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
+                                    <p style="color:red; font-weight:bold;">
+                                        <?= session()->getFlashdata('errors')['orden']; ?>
                                     <p>
                                     <?php endif; ?>
                             </div>

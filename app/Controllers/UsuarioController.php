@@ -159,7 +159,7 @@ class UsuarioController extends BaseController
         if ($usuarioModel->update($id, [
             'clave' => $usuarioModel->contrasenaHash($clave), //password_hash($post['clave'], PASSWORD_DEFAULT),
         ])) {
-            return redirect()->to(base_url('dashboard/usuario/detalle/' . $id))->with('successPassword', 'Clave editada con éxito');
+            return redirect()->to(base_url('dashboard/usuario/editar/' . $id))->with('successPassword', 'Clave editada con éxito');
         } else {
             return redirect()->back()->withInput()->with('errorsPassword', 'Error al editar la clave');
         }

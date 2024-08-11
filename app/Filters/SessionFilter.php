@@ -25,7 +25,8 @@ class SessionFilter implements FilterInterface
         }
 
         if (!in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
-            return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
+            //return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
+            return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
         }
         $menuTotal = array();
 
@@ -142,7 +143,8 @@ class SessionFilter implements FilterInterface
         //exit();
         //$accesoPermitido = true;
         if (!$accesoPermitido) {
-            return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
+            //return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
+            return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
         }
     }
 

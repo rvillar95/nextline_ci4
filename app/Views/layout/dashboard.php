@@ -256,11 +256,17 @@ exit(); */
                     <?php echo $this->renderSection("modulo/detalle"); ?>
                     <!-- END Section Modulo -->
 
-                    <!-- Star Section Perfil -->
+                    <!-- Star Section Perfil Detalle-->
                     <?php echo $this->renderSection("perfil_detalle/registro"); ?>
                     <?php echo $this->renderSection("perfil_detalle/lista"); ?>
                     <?php echo $this->renderSection("perfil_detalle/detalle"); ?>
-                    <!-- END Section Perfil -->                    
+                    <!-- END Section Perfil Detalle-->
+
+                    <!-- Star Section Modulo Detalle-->
+                    <?php echo $this->renderSection("modulo_detalle/registro"); ?>
+                    <?php echo $this->renderSection("modulo_detalle/lista"); ?>
+                    <?php echo $this->renderSection("modulo_detalle/detalle"); ?>
+                    <!-- END Section Modulo Detalle-->
                 </div>
 
             </div>

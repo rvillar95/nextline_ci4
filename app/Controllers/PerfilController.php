@@ -33,7 +33,8 @@ class PerfilController extends BaseController
         $post = $this->request->getPost(['nombre', 'estado']);
         $data = [
             'nombre' => $post['nombre'],
-            'estado' => $post['estado']
+            'estado' => $post['estado'],
+            'poder' => 0
         ];
 
         if ($perfilModel->insert($data)) {

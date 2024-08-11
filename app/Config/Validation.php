@@ -365,5 +365,64 @@ class Validation extends BaseConfig
         ]
     ];
 
+    public array $formModuloDetalleRegister = [
+     
+        'modulo' => [
+            'label' => 'Modulo',
+            'rules' => 'required',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripcion',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.',
+            ],
+        ],
+        'ruta' => [
+            'label' => 'Ruta',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+            ],
+        ],
+        'accion' => [
+            'label' => 'Acción',
+            'rules' => 'required|max_length[50]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 50 caracteres de longitud.',
+            ],
+        ],
+        'estado' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ],
+        'mostrar' => [
+            'label' => 'estado',
+            'rules' => 'required|in_list[S,N]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ]
+    ];
+
     
 }

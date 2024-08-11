@@ -38,7 +38,7 @@ class Usuario extends Model
     public function validateUser($correo, $clave)
     {
         $db = \Config\Database::connect();
-        $sql = "select u.*, f.nombre as perfil_nombre from usuario u, perfil f 
+        $sql = "select u.*, f.nombre as perfil_nombre, f.poder from usuario u, perfil f 
                          where u.perfil_id = f.id and 
                                u.correo = :correo: and
                                u.estado = 'A' ";

@@ -9,6 +9,13 @@
     <div class="row">
 
         <div class="col-md-12">
+            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                <p style="color:red; font-weight:bold;">
+                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                        <?= session()->getFlashdata('errors'); ?>
+                    <?php endif; ?>
+                </p>
+            <?php endif; ?>
             <div class="table-responsive">
                 <table class="table table-bordered getPerfilDetalle">
                     <thead>

@@ -32,17 +32,18 @@ class Perfil extends Model
 
     public function getPerfilAll()
     {
+
         $db = \Config\Database::connect();
-        $sql = "select * from perfil";
-        $perfil = $db->query($sql)->getResult('object');
+        $sql = "select * from perfil where poder <= :poder:";
+        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('object');
         return $perfil;   
     }
 
     public function getNombresPerfil()
     {
         $db = \Config\Database::connect();
-        $sql = "select nombre from perfil";
-        $perfil = $db->query($sql)->getResult('array');
+        $sql = "select nombre from perfil where poder <= :poder:";
+        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('array');
         return $perfil;   
     }
 
@@ -57,8 +58,8 @@ class Perfil extends Model
     public function getActivePerfil()
     {
         $db = \Config\Database::connect();
-        $sql = "select * from perfil where estado = 'A'";
-        $perfil = $db->query($sql)->getResult('array');
+        $sql = "select * from perfil where estado = 'A' and poder <= :poder:";
+        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('array');
         return $perfil;   
     }
 }

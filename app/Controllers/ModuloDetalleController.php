@@ -8,14 +8,13 @@ use App\Models\Perfil;
 use App\Models\Modulo;
 
 
-class PerfilDetalleController extends BaseController
+class ModuloDetalleController extends BaseController
 {
 
     public function registro()
     {
         $menuTotal = array();
         $modulo = new ModuloDetalle();
-        $perfilModel = new Perfil();
         $moduloModel = new Modulo();
         $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
 
@@ -24,67 +23,58 @@ class PerfilDetalleController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
 
-        $data['perfiles'] = $perfilModel->getActivePerfil();
         $data['modulos'] = $moduloModel->getActiveModulo();
         $data['data'] = $menuTotal;
-        echo view('perfil_detalle/registro', $data);
+        echo view('modulo_detalle/registro', $data);
     }
 
     public function registrar()
     {
-        // echo "hola1";
-
-        if (!$this->validate('formPerfilDetalleRegister')) {
-
+        if (!$this->validate('formModuloDetalleRegister')) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
-        // echo "hola3";
-        //exit;
-        $perfilModulo = new PerfilModulo();
+        $moduloModel = new ModuloDetalle();
 
-        $post = $this->request->getPost(['perfil', 'modulo', 'ver', 'registrar', 'editar', 'eliminar', 'orden']);
+        $post = $this->request->getPost(['modulo', 'descripcion', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
         $data = [
-            'perfil_id' => $post['perfil'],
             'modulo_id' => $post['modulo'],
-            'ver' => $post['ver'],
-            'registrar' => $post['registrar'],
-            'editar' => $post['editar'],
-            'eliminar' => $post['eliminar'],
-            'estado' => 'A',
+            'descripcion' => $post['descripcion'],
+            'ruta' => $post['ruta'],
+            'accion' => $post['accion'],
+            'estado' => $post['estado'],
+            'mostrar' => $post['mostrar'],
             'orden' => $post['orden']
         ];
 
-        if ($perfilModulo->insert($data)) {
-            return redirect()->to(base_url('dashboard/perfil-detalle/registro'))->with('success', 'Detalle Perfil registrado con éxito');
+        if ($moduloModel->insert($data)) {
+            return redirect()->to(base_url('dashboard/modulo-detalle/registro'))->with('success', 'Detalle Modulo registrado con éxito');
         } else {
-            return redirect()->back()->withInput()->with('errors', 'Error al registrar el detalle perfil');
+            return redirect()->back()->withInput()->with('errors', 'Error al registrar el detalle modulo');
         }
     }
 
-    public function getPerfilDetalle()
+    public function getModuloDetalle()
     {
-
-        $perfilModel = new PerfilModulo();
+        $moduloDetalle = new ModuloDetalle();
         $draw = intval($this->request->getGet("draw"));
-        $books = $perfilModel->getPerfilModuloAll();
+        $books = $moduloDetalle->getModuloDetalleAll();
 
         $data = array();
         foreach ($books as $r) {
             $data[] = array(
-                $r->nombrePerfil,
                 $r->nombreModulo,
-                $r->ver,
-                $r->registrar,
-                $r->editar,
-                $r->eliminar,
-                $r->orden,
+                $r->descripcion,
+                $r->ruta,
+                $r->accion,
                 $r->estado == 'A' ? '<span class="badge badge-success mb-2 me-4">Activo</span>' : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
+                $r->mostrar == 'S' ? '<span class="badge badge-success mb-2 me-4">Si</span>' : '<span class="badge badge-danger mb-2 me-4">No</span>',
+                $r->orden,
                 '<a href="editar/' . $r->id . '" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>'
             );
         }
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $perfilModel->countAll(),
+            "recordsTotal" => $moduloDetalle->countAll(),
             "recordsFiltered" => 5,
             "data" => $data
         );
@@ -103,13 +93,11 @@ class PerfilDetalleController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('perfil_detalle/lista', $data);
+        echo view('modulo_detalle/lista', $data);
     }
 
     public function editar($id)
     {
-        $perfilModel = new Perfil();
-        $perfilModulo = new PerfilModulo();
         $moduloModel = new Modulo();
         $menuTotal = array();
         $modulo = new ModuloDetalle();
@@ -120,34 +108,33 @@ class PerfilDetalleController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        $data['perfil'] = $perfilModulo->getPerfilModulo($id);
-        $data['perfiles'] = $perfilModel->getActivePerfil();
+        $data['perfil'] = $modulo->getDetalleModulo($id);
         $data['modulos'] = $moduloModel->getActiveModulo();
-        echo view("perfil_detalle/editar", $data);
+        echo view("modulo_detalle/editar", $data);
     }
 
     public function update()
     {
 
-        if (!$this->validate('formPerfilDetalleRegister')) {
+        if (!$this->validate('formModuloDetalleRegister')) {
+            print_r($this->validator->getErrors());
+            exit();
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
-        $perfilModel = new PerfilModulo();
-        $post = $this->request->getPost(['id','perfil', 'modulo', 'ver', 'registrar', 'editar', 'eliminar', 'orden', 'estado']);
+        $moduloDetalle = new ModuloDetalle();
+        $post = $this->request->getPost(['id','modulo', 'descripcion', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
         $data = [
-            'perfil_id' => $post['perfil'],
             'modulo_id' => $post['modulo'],
-            'ver' => $post['ver'],
-            'registrar' => $post['registrar'],
-            'editar' => $post['editar'],
-            'eliminar' => $post['eliminar'],
+            'descripcion' => $post['descripcion'],
+            'ruta' => $post['ruta'],
+            'accion' => $post['accion'],
             'estado' => $post['estado'],
+            'mostrar' => $post['mostrar'],
             'orden' => $post['orden']
         ];
 
-
-        if ($perfilModel->update($post['id'], $data)) {
-            return redirect()->to(base_url('dashboard/perfil-detalle/editar/' . $post['id']))->with('success', 'Detalle Perfil editado con éxito');
+        if ($moduloDetalle->update($post['id'], $data)) {
+            return redirect()->to(base_url('dashboard/modulo-detalle/editar/' . $post['id']))->with('success', 'Detalle Perfil editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el detalle perfil');
         }

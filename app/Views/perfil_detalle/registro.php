@@ -149,7 +149,7 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Orden</label>
-                                    <input type="number" min="1" id="orden" name="orden" value="<?= set_value('orden'); ?>" class="form-control" autofocus>
+                                    <input type="number" min="0" id="orden" name="orden" value="<?= set_value('orden'); ?>" class="form-control" autofocus>
                                 </div>
                                 <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
                                     <p style="color:red; font-weight:bold;">
@@ -161,6 +161,13 @@
                                 <div class="alert alert-success my-3" role="alert">
                                     <?= session()->getFlashdata('success'); ?>
                                 </div>
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                                <p style="color:red; font-weight:bold;">
+                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                        <?= session()->getFlashdata('errors'); ?>
+                                    <?php endif; ?>
+                                </p>
                             <?php endif; ?>
                             <div class="col-12">
                                 <div class="mb-4">

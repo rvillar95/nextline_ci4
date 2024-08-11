@@ -44,6 +44,7 @@ class PerfilModulo extends Model
         $builder->select('perfil_modulo.id, perfil.nombre as nombrePerfil, modulo.nombre as nombreModulo, perfil_modulo.ver, perfil_modulo.editar, perfil_modulo.registrar, perfil_modulo.eliminar, perfil_modulo.estado, perfil_modulo.orden');
         $builder->join('modulo', 'perfil_modulo.modulo_id = modulo.id');
         $builder->join('perfil', 'perfil_modulo.perfil_id = perfil.id');
+        $builder->where('perfil.poder <=', session()->get('usuario')['poder']); 
         $builder->orderBy('modulo.id', 'asc');
         $builder->orderBy('orden', 'asc');
         $query = $builder->get();
@@ -58,11 +59,10 @@ class PerfilModulo extends Model
         return $perfil;   
     }
 
-    public function getPerfil($perfil)
+    public function getPerfilModulo($id)
     {
         $db = \Config\Database::connect();
-        $sql = "select * from perfil where id = :perfil: ";
-        $perfil = $db->query($sql, ['perfil' => $perfil])->getResult('object');
-        return $perfil;   
+        $sql = "select * from perfil_modulo where id = :id: ";
+        return $db->query($sql, ['id' => $id])->getRowArray();   
     }
 }
