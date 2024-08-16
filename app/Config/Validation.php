@@ -244,8 +244,16 @@ class Validation extends BaseConfig
                 'is_unique' => 'El campo {field} ya esta registrado.',
             ],
         ],
+        'sa' => [
+            'label' => 'Es Modulo Super Administrador?',
+            'rules' => 'required|in_list[S,N]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
+            ],
+        ],
         'estado' => [
-            'label' => 'estado',
+            'label' => 'Estado',
             'rules' => 'required|in_list[A,I]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
@@ -253,7 +261,7 @@ class Validation extends BaseConfig
             ],
         ],
         'mostrar' => [
-            'label' => 'estado',
+            'label' => 'Mostrar',
             'rules' => 'required|in_list[S,N]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
@@ -290,8 +298,16 @@ class Validation extends BaseConfig
                 'is_unique' => 'El campo {field} ya esta registrado.',
             ],
         ],
+        'sa' => [
+            'label' => 'Es Modulo Super Administrador?',
+            'rules' => 'required|in_list[S,N]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
+            ],
+        ],
         'estado' => [
-            'label' => 'estado',
+            'label' => 'Estado',
             'rules' => 'required|in_list[A,I]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
@@ -299,7 +315,7 @@ class Validation extends BaseConfig
             ],
         ],
         'mostrar' => [
-            'label' => 'estado',
+            'label' => 'Mostrar',
             'rules' => 'required|in_list[S,N]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',

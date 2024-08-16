@@ -12,7 +12,7 @@ class Usuario extends Model
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'estado', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
 
@@ -60,8 +60,8 @@ class Usuario extends Model
     public function getData()
     {
         $db = \Config\Database::connect();
-        $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id";
-        $perfil = $db->query($sql)->getResult('object');
+        $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id and pe.poder <= :poder:";
+        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('object');
         return $perfil;   
     }
 }

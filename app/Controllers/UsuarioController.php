@@ -22,7 +22,7 @@ class UsuarioController extends BaseController
         }
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
-        $data['perfiles'] = $perfil->findAll();
+        $data['perfiles'] = $perfil->getActivePerfil();
         echo view('usuarios/registro', $data);
     }
 
@@ -38,8 +38,8 @@ class UsuarioController extends BaseController
         }
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
-        $data['perfiles'] = $perfil->findAll();
-        echo view('usuarios/lista',$data);
+        $data['perfiles'] = $perfil->getActivePerfil();
+        echo view('usuarios/lista', $data);
     }
 
     public function getUsuarios()
@@ -56,9 +56,11 @@ class UsuarioController extends BaseController
                 $r->telefono,
                 $r->nombre_perfil,
                 $r->fcreacion,
-                '<a href="editar/'.$r->id.'" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>'
+                '<a href="editar/' . $r->id . '" style="display:inline-block;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
+                <button type="button" value="' . $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>'
             );
         }
+
         $output = array(
             "draw" => $draw,
             "recordsTotal" => $usuarioModel->countAll(),
@@ -99,8 +101,6 @@ class UsuarioController extends BaseController
         $usuarioModel = new Usuario();
 
         $post = $this->request->getPost(['nombre', 'apellido', 'correo', 'clave', 'telefono', 'perfil']);
-        //echo $post['clave'];
-        //exit();
         $data = [
             'nombre' => $post['nombre'],
             'apellido' => $post['apellido'],
@@ -157,11 +157,25 @@ class UsuarioController extends BaseController
         $id = $this->request->getPost('id');
         $clave = $this->request->getPost('clave');
         if ($usuarioModel->update($id, [
-            'clave' => $usuarioModel->contrasenaHash($clave), //password_hash($post['clave'], PASSWORD_DEFAULT),
+            'clave' => $usuarioModel->contrasenaHash($clave), 
         ])) {
             return redirect()->to(base_url('dashboard/usuario/editar/' . $id))->with('successPassword', 'Clave editada con éxito');
         } else {
             return redirect()->back()->withInput()->with('errorsPassword', 'Error al editar la clave');
+        }
+    }
+
+    public function eliminar()
+    {
+        $usuarioModel = new Usuario();
+        $id = $this->request->getPost('id');
+        // Intenta eliminar el usuario
+        if ($usuarioModel->delete($id)) {
+            // Usuario eliminado con éxito
+            return redirect()->to(base_url('dashboard/usuario/lista'))->with('success', 'Usuario eliminado con éxito.');
+        } else {
+            // Error al eliminar el usuario
+            return redirect()->to(base_url('dashboard/usuario/lista'))->with('errors', 'No se pudo eliminar el usuario.');
         }
     }
 
@@ -180,6 +194,7 @@ class UsuarioController extends BaseController
         //        $post = $this->request->getPost(['correo', 'clave']);
 
         $usuario = $usuarioModel->validateUser($correo, $clave);
+
         if ($usuario !== null) {
             $this->session->set('usuario', $usuario);
             return redirect()->to(base_url('dashboard/menu'))->with('mensaje', "Bienvenid@");

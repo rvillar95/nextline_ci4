@@ -29,7 +29,6 @@ class PerfilController extends BaseController
         }
 
         $perfilModel = new Perfil();
-
         $post = $this->request->getPost(['nombre', 'estado']);
         $data = [
             'nombre' => $post['nombre'],
@@ -49,13 +48,14 @@ class PerfilController extends BaseController
         $perfilModel = new Perfil();
         $draw = intval($this->request->getGet("draw"));
         $books = $perfilModel->getPerfilAll();
-    
+
         $data = array();
         foreach ($books as $r) {
             $data[] = array(
                 $r->nombre,
                 $r->estado == 'A' ? '<span class="badge badge-success mb-2 me-4">Activo</span>' : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
-                '<a href="editar/'.$r->id.'" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>'
+                '<a href="editar/' . $r->id . '" style="display:inline-block;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
+                <button type="button" value="' . $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>'
             );
         }
         $output = array(
@@ -79,9 +79,7 @@ class PerfilController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        $perfil = new Perfil();
-        $data['perfiles'] = $perfil->findAll();
-        echo view('perfil/lista',$data);
+        echo view('perfil/lista', $data);
     }
 
     public function editar($id)
@@ -97,7 +95,7 @@ class PerfilController extends BaseController
         $data['data'] = $menuTotal;
 
         $data['perfil'] = $perfilModel->select('perfil.*')
-        ->where('perfil.id', $id)->first();
+            ->where('perfil.id', $id)->first();
         //$data['perfil'] = $perfilModel->getPerfil($id);
         echo view("perfil/editar", $data);
     }
@@ -124,4 +122,17 @@ class PerfilController extends BaseController
         }
     }
 
+    public function eliminar()
+    {
+        $perfilModel = new Perfil();
+        $id = $this->request->getPost('id');
+        // Intenta eliminar el usuario
+        if ($perfilModel->delete($id)) {
+            // Usuario eliminado con éxito
+            return redirect()->to(base_url('dashboard/perfil/lista'))->with('success', 'Perfil eliminado con éxito.');
+        } else {
+            // Error al eliminar el usuario
+            return redirect()->to(base_url('dashboard/perfil/lista'))->with('errors', 'No se pudo eliminar el perfil.');
+        }
+    }
 }

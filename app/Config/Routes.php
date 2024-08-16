@@ -32,6 +32,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'UsuarioController::registrar');
         $routes2->post('update', 'UsuarioController::update');
         $routes2->post('update/clave', 'UsuarioController::update_clave');
+        $routes2->post('eliminar', 'UsuarioController::eliminar');
     });
 
     $routes->group('perfil', function ($routes2) {
@@ -41,6 +42,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPerfiles', 'PerfilController::getPerfiles');
         $routes2->post('registrar', 'PerfilController::registrar');
         $routes2->post('update', 'PerfilController::update');
+        $routes2->post('eliminar', 'PerfilController::eliminar');
     });
 
     $routes->group('modulo', function ($routes2) {
@@ -51,6 +53,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'ModuloController::registrar');
         $routes2->post('update', 'ModuloController::update');
         $routes2->post('update/clave', 'ModuloController::update_clave');
+        $routes2->post('eliminar', 'ModuloController::eliminar');
     });
 
     $routes->group('perfil-detalle', function ($routes2) {
@@ -60,6 +63,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPerfilDetalle', 'PerfilDetalleController::getPerfilDetalle');
         $routes2->post('registrar', 'PerfilDetalleController::registrar');
         $routes2->post('update', 'PerfilDetalleController::update');
+        $routes2->post('eliminar', 'PerfilDetalleController::eliminar');
     });
 
     $routes->group('modulo-detalle', function ($routes2) {
@@ -69,6 +73,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getModuloDetalle', 'ModuloDetalleController::getModuloDetalle');
         $routes2->post('registrar', 'ModuloDetalleController::registrar');
         $routes2->post('update', 'ModuloDetalleController::update');
+        $routes2->post('eliminar', 'ModuloDetalleController::eliminar');
     });
 });
 

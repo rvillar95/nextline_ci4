@@ -31,15 +31,17 @@ class ModuloController extends BaseController
 
         $modulo = new Modulo();
 
-        $post = $this->request->getPost(['nombre','descripcion','ruta','estado','mostrar']);
+        $post = $this->request->getPost(['nombre', 'descripcion', 'ruta', 'sa', 'estado', 'mostrar']);
         $data = [
             'nombre' => $post['nombre'],
             'descripcion' => $post['descripcion'],
             'ruta' => $post['ruta'],
+            'sa' => $post['sa'],
             'estado' => $post['estado'],
             'mostrar' => $post['mostrar'],
         ];
 
+      
         if ($modulo->insert($data)) {
             return redirect()->to(base_url('dashboard/modulo/registro'))->with('success', 'Modulo registrado con éxito');
         } else {
@@ -52,16 +54,18 @@ class ModuloController extends BaseController
         $modulo = new Modulo();
         $draw = intval($this->request->getGet("draw"));
         $books = $modulo->getModuloAll();
-    
+
         $data = array();
         foreach ($books as $r) {
             $data[] = array(
                 $r->nombre,
                 $r->descripcion,
                 $r->ruta,
+                $r->sa == 'S' ? '<span class="badge badge-success mb-2 me-4">Si</span>' : '<span class="badge badge-danger mb-2 me-4">No</span>',
                 $r->estado == 'A' ? '<span class="badge badge-success mb-2 me-4">Activo</span>' : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
                 $r->mostrar == 'S' ? '<span class="badge badge-success mb-2 me-4">Si</span>' : '<span class="badge badge-danger mb-2 me-4">No</span>',
-                '<a href="editar/'.$r->id.'" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>'
+                '<a href="editar/' . $r->id . '" style="display:inline-block;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 p-1 br-8 mb-1"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
+                <button type="button" value="' . $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>'
             );
         }
         $output = array(
@@ -87,7 +91,7 @@ class ModuloController extends BaseController
         $data['data'] = $menuTotal;
 
         $data['modulo'] = $moduloPerfil->select('modulo.*')
-        ->where('modulo.id', $id)->first();
+            ->where('modulo.id', $id)->first();
 
         echo view("modulo/editar", $data);
     }
@@ -103,7 +107,7 @@ class ModuloController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('modulo/lista',$data);
+        echo view('modulo/lista', $data);
     }
 
     public function update()
@@ -117,6 +121,7 @@ class ModuloController extends BaseController
         $nombre = $this->request->getPost('nombre');
         $descripcion = $this->request->getPost('descripcion');
         $ruta = $this->request->getPost('ruta');
+        $sa = $this->request->getPost('sa');
         $mostrar = $this->request->getPost('mostrar');
         $estado = $this->request->getPost('estado');
 
@@ -124,6 +129,7 @@ class ModuloController extends BaseController
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'ruta' => $ruta,
+            'sa' => $sa,
             'mostrar' => $mostrar,
             'estado' => $estado
         ])) {
@@ -133,4 +139,17 @@ class ModuloController extends BaseController
         }
     }
 
+    public function eliminar()
+    {
+        $moduloModel = new Modulo();
+        $id = $this->request->getPost('id');
+        // Intenta eliminar el usuario
+        if ($moduloModel->delete($id)) {
+            // Usuario eliminado con éxito
+            return redirect()->to(base_url('dashboard/modulo/lista'))->with('success', 'Modulo eliminado con éxito.');
+        } else {
+            // Error al eliminar el usuario
+            return redirect()->to(base_url('dashboard/modulo/lista'))->with('error', 'No se pudo eliminar el modulo.');
+        }
+    }
 }

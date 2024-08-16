@@ -9,7 +9,7 @@
     <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
         <div class="col-md-12">
             <div class="mb-3">
-                <h4>Detalle Modulo Detalle</h4>
+                <h4>Detalle de Modulo Detalle</h4>
             </div>
         </div>
         <form method="POST" action="<?= base_url('dashboard/modulo-detalle/update'); ?>">

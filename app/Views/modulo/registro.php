@@ -56,6 +56,15 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
+                                    <label class="form-label">Es modulo de Super Administrador?</label>
+                                    <select class="form-select" id="sa" name="sa" value="<?php set_value('sa'); ?>">
+                                        <option value="S">Si</option>
+                                        <option value="N">No</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="mb-3">
                                     <label class="form-label">Seleccione el Estado</label>
                                     <select class="form-select" id="estado" name="estado" value="<?php set_value('estado'); ?>">
                                         <option value="A">Activo</option>
