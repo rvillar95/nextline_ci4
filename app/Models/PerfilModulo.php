@@ -12,7 +12,7 @@ class PerfilModulo extends Model
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = ['id','perfil_id','modulo_id','ver','registrar','editar','eliminar','estado','orden'];
 
@@ -45,6 +45,7 @@ class PerfilModulo extends Model
         $builder->join('modulo', 'perfil_modulo.modulo_id = modulo.id');
         $builder->join('perfil', 'perfil_modulo.perfil_id = perfil.id');
         $builder->where('perfil.poder <=', session()->get('usuario')['poder']); 
+        //$builder->where('perfil_modulo.feliminacion', null); 
         $builder->orderBy('modulo.id', 'asc');
         $builder->orderBy('orden', 'asc');
         $query = $builder->get();

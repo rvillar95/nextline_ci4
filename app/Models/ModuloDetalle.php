@@ -12,7 +12,7 @@ class ModuloDetalle extends Model
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
     protected $allowedFields = ['id','modulo_id','descripcion','ruta','accion','estado','mostrar','orden'];
 

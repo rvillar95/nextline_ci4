@@ -12,9 +12,9 @@ class Modulo extends Model
     protected $useAutoIncrement = true;
 
     protected $returnType     = 'array';
-    protected $useSoftDeletes = true;
+    protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id','nombre','descripcion','ruta','estado','mostrar'];
+    protected $allowedFields = ['id','nombre','descripcion','sa','ruta','estado','mostrar'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -61,7 +61,7 @@ class Modulo extends Model
         $poder = session()->get('usuario')['poder'];
         
         if ($poder <= 2) {
-            $sql = "select * from modulo where estado = 'A' and id != 3";
+            $sql = "select * from modulo where estado = 'A' and sa = 'N' ";
         }else{
             $sql = "select * from modulo where estado = 'A'";
         }
