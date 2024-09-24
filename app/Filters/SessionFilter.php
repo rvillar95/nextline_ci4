@@ -25,7 +25,6 @@ class SessionFilter implements FilterInterface
         }
 
         if (!in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
-            //return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
             return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
         }
         $menuTotal = array();
@@ -47,7 +46,6 @@ class SessionFilter implements FilterInterface
 
         function rutaCoincide($rutaActual, $rutaBD)
         {
-            // Remover el último segmento variable si existe en la ruta de la base de datos
             $rutaBD = rtrim($rutaBD, '/');
             $rutaRegex = preg_replace('/\(:num\)/', '[0-9]+', $rutaBD) . '(/[0-9]+)?';
             return preg_match('#^' . $rutaRegex . '$#', $rutaActual);
@@ -57,9 +55,7 @@ class SessionFilter implements FilterInterface
 
         $accesoPermitido = false;
         foreach ($menuTotal as $modulo) {
-            //echo $ruta ." v/s ".$modulo['rutas']. "<br>";
             if (rutaCoincide($ruta, $modulo['rutas']) && in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
-                //echo $ruta . " v/s ". $modulo['rutas'];
                 $accesoPermitido = true;
                 break;
             }
@@ -73,33 +69,14 @@ class SessionFilter implements FilterInterface
         $rutaCorta = "/" . explode("/", $ruta)[1] . "/" . explode("/", $ruta)[2];
 
         $respuesta = $modulo->getModuloLike($rutaCorta);
-        /*         echo "<pre>";
-        print_r($respuesta);
-        echo "</pre>"; */
         $accesoPermitido = false;
         foreach ($data['menu'] as $entity) {
             $submenu = $moduloModel->getSubMenu($entity['id']);
-            //array_push($menu, array("menu" => $entity, "submenu" => $submenu));
-
             foreach ($submenu as $submenu) {
 
                 if ($submenu['modulo_id'] == $respuesta[0]["id"]) {
-
-                    /*                     echo "<pre>";
-                    print_r($submenu);
-                    echo "</pre>";
-                    echo $rutaCorta . $submenu["ruta"] . " v/s " . $ruta . "<br>"; */
                     if ($rutaCorta . $submenu["ruta"] == $ruta || rutaCoincide($ruta, $rutaCorta . $submenu["ruta"])) {
-                        /* echo "Cae aca con " . $rutaCorta . $submenu["ruta"]; */
-                        //$accesoPermitido = true;
-                        //break;
-
                         $acciones = explode(',', $submenu['accion']);
-
-
-                        /*                         echo "<pre>";
-                        print_r($acciones);
-                        echo "</pre>"; */
                         foreach ($acciones as $accion) {
                             if ($accion == "ver" && $entity['ver'] == 1) {
                                 $accesoPermitido = true;
@@ -122,28 +99,7 @@ class SessionFilter implements FilterInterface
                 }
             }
         }
-
-        /*         echo $accesoPermitido ? "True" : "False"; */
-
-
-
-        /*         echo "<pre>";
-        print_r($menuTotal);
-        echo "</pre>";
-        var_dump($accesoPermitido);
-        exit();  */
-
-        /* 
-        foreach ($permisos as $permiso) {
-            if (rutaCoincide($ruta, $permiso['ruta']) && in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
-                $accesoPermitido = true;
-                break;
-            }
-        } */
-        //exit();
-        //$accesoPermitido = true;
         if (!$accesoPermitido) {
-            //return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
             return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
         }
     }

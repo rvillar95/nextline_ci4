@@ -75,6 +75,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('update', 'ModuloDetalleController::update');
         $routes2->post('eliminar', 'ModuloDetalleController::eliminar');
     });
+
+    $routes->group('servicio', function ($routes2) {
+        $routes2->get('registro', 'ServicioController::registro');//vista
+        $routes2->get('editar/(:num)', 'ServicioController::editar/$1');//vista
+        $routes2->get('lista', 'ServicioController::lista');//vista
+        $routes2->get('getServicios', 'ServicioController::getUsuarios');//get Data
+        $routes2->post('registrar', 'ServicioController::registrar');//accion
+        $routes2->post('update', 'ServicioController::update');//accion
+        $routes2->post('eliminar', 'ServicioController::eliminar');//accion
+    });
 });
 
 
