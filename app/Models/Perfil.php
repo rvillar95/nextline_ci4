@@ -35,7 +35,7 @@ class Perfil extends Model
 
         $db = \Config\Database::connect();
         //$sql = "select * from perfil where poder < :poder: AND feliminacion IS NULL";
-        $sql = "select * from perfil where poder < :poder: ";
+        $sql = "select * from perfil where poder <= :poder: ";
         $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('object');
         return $perfil;   
     }
