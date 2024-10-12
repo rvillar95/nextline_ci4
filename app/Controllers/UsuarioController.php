@@ -23,7 +23,7 @@ class UsuarioController extends BaseController
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
         $data['perfiles'] = $perfil->getActivePerfil();
-        echo view('usuarios/registro', $data);
+        echo view('Base/usuarios/registro', $data);
     }
 
     public function lista()
@@ -39,7 +39,7 @@ class UsuarioController extends BaseController
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
         $data['perfiles'] = $perfil->getActivePerfil();
-        echo view('usuarios/lista', $data);
+        echo view('Base/usuarios/lista', $data);
     }
 
     public function getUsuarios()
@@ -89,7 +89,7 @@ class UsuarioController extends BaseController
         $data['usuario'] = $usuario->select('usuario.* , perfil.nombre as nombre_perfil')
             ->join('perfil', 'usuario.perfil_id = perfil.id')
             ->where('usuario.id', $id)->first();
-        echo view("usuarios/editar", $data);
+        echo view("Base/usuarios/editar", $data);
     }
 
     public function registrar()
