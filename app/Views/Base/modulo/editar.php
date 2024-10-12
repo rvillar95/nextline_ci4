@@ -54,8 +54,8 @@
                     <div class="mb-3">
                         <label class="form-label">Es modulo de Super Administrador?</label>
                         <select class="form-select" id="sa" name="sa" value="<?php $modulo['sa']; ?>">
-                            <option value="S" <?= $modulo['mostrar'] == 'S' ? 'selected' : '' ?>>Si</option>
-                            <option value="N" <?= $modulo['mostrar'] == 'N' ? 'selected' : '' ?>>No</option>
+                            <option value="S" <?= $modulo['sa'] == 'S' ? 'selected' : '' ?>>Si</option>
+                            <option value="N" <?= $modulo['sa'] == 'N' ? 'selected' : '' ?>>No</option>
                         </select>
                     </div>
                 </div>

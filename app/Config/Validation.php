@@ -382,7 +382,7 @@ class Validation extends BaseConfig
     ];
 
     public array $formModuloDetalleRegister = [
-     
+
         'modulo' => [
             'label' => 'Modulo',
             'rules' => 'required',
@@ -440,5 +440,119 @@ class Validation extends BaseConfig
         ]
     ];
 
-    
+    public array $formServiceRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'descripcionCorta' => [
+            'label' => 'Descripción Corta',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'descripcionLarga' => [
+            'label' => 'Descripción Larga',
+            'rules' => 'required|max_length[2000]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 2000 caracteres de longitud.'
+            ],
+        ],
+        'valor' => [
+            'label' => 'Valor',
+            'rules' => 'required|integer|greater_than[0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than' => 'El campo {field} debe ser un número mayor a 0.'
+            ],
+        ],
+        'img' => [
+            'label' => 'Image File',
+            'rules' => [
+                'uploaded[img]',
+                'is_image[img]',
+                'mime_in[img,image/jpg,image/jpeg,image/gif,image/png]',
+                'max_size[img,4096]',
+            ],
+            'errors' => [
+                'uploaded' => 'Por favor sube una imagen.',
+                'is_image' => 'El archivo debe ser una imagen.',
+                'max_size' => 'El archivo no puede exceder 500 KB.',
+                'mime_in' => 'Solo se permiten archivos JPG, JPEG, PNG.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ]
+    ];
+
+    public array $formServiceEdit = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'descripcionCorta' => [
+            'label' => 'Descripción Corta',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'descripcionLarga' => [
+            'label' => 'Descripción Larga',
+            'rules' => 'required|max_length[2000]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 2000 caracteres de longitud.'
+            ],
+        ],
+        'valor' => [
+            'label' => 'Valor',
+            'rules' => 'required|integer|greater_than[0]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than' => 'El campo {field} debe ser un número mayor a 0.'
+            ],
+        ],
+        'img' => [
+            'label' => 'Image File',
+            'rules' => [
+                'is_image[img]',
+                'mime_in[img,image/jpg,image/jpeg,image/gif,image/png]',
+                'max_size[img,4096]',
+            ],
+            'errors' => [
+                'is_image' => 'El archivo debe ser una imagen.',
+                'max_size' => 'El archivo no puede exceder 500 KB.',
+                'mime_in' => 'Solo se permiten archivos JPG, JPEG, PNG.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} tiene que ser un carácter entre A ó I.'
+            ],
+        ]
+    ];
 }
