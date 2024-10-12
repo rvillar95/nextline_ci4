@@ -83,8 +83,6 @@
     function getDetalleInventario() {
         $('.getDetalleInventario').DataTable().clear().destroy();
         $('.getDetalleInventario').DataTable({
-            processing: true,
-            serverSide: true,
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
