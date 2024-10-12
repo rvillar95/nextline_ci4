@@ -19,7 +19,7 @@ class PerfilController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('perfil/registro', $data);
+        echo view('Base/perfil/registro', $data);
     }
 
     public function registrar()
@@ -79,7 +79,7 @@ class PerfilController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('perfil/lista', $data);
+        echo view('Base/perfil/lista', $data);
     }
 
     public function editar($id)
@@ -97,7 +97,7 @@ class PerfilController extends BaseController
         $data['perfil'] = $perfilModel->select('perfil.*')
             ->where('perfil.id', $id)->first();
         //$data['perfil'] = $perfilModel->getPerfil($id);
-        echo view("perfil/editar", $data);
+        echo view("Base/perfil/editar", $data);
     }
 
     public function update()

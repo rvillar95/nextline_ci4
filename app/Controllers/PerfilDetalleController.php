@@ -27,7 +27,7 @@ class PerfilDetalleController extends BaseController
         $data['perfiles'] = $perfilModel->getActivePerfil();
         $data['modulos'] = $moduloModel->getActiveModulo();
         $data['data'] = $menuTotal;
-        echo view('perfil_detalle/registro', $data);
+        echo view('Base/perfil_detalle/registro', $data);
     }
 
     public function registrar()
@@ -99,7 +99,7 @@ class PerfilDetalleController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('perfil_detalle/lista', $data);
+        echo view('Base/perfil_detalle/lista', $data);
     }
 
     public function editar($id)
@@ -119,7 +119,7 @@ class PerfilDetalleController extends BaseController
         $data['perfil'] = $perfilModulo->getPerfilModulo($id);
         $data['perfiles'] = $perfilModel->getActivePerfil();
         $data['modulos'] = $moduloModel->getActiveModulo();
-        echo view("perfil_detalle/editar", $data);
+        echo view("Base/perfil_detalle/editar", $data);
     }
 
     public function update()
