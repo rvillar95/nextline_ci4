@@ -20,7 +20,7 @@ class ModuloController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('modulo/registro', $data);
+        echo view('Base/modulo/registro', $data);
     }
 
     public function registrar()
@@ -93,7 +93,7 @@ class ModuloController extends BaseController
         $data['modulo'] = $moduloPerfil->select('modulo.*')
             ->where('modulo.id', $id)->first();
 
-        echo view("modulo/editar", $data);
+        echo view("Base/modulo/editar", $data);
     }
 
     public function lista()
@@ -107,7 +107,7 @@ class ModuloController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('modulo/lista', $data);
+        echo view('Base/modulo/lista', $data);
     }
 
     public function update()

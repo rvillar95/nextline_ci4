@@ -1,7 +1,7 @@
 <?php $this->extend('layout/dashboard') ?>
 
 
-<?= $this->section("usuario/lista") ?>
+<?= $this->section("perfil/lista") ?>
 
 <div id="basic" class="col-lg-12 layout-spacing">
     <div class="statbox widget box box-shadow">
@@ -9,7 +9,7 @@
             <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                     <div class="mb-3">
-                        <h4>Lista de Usuario</h4>
+                        <h4>Lista de Perfil</h4>
                     </div>
                 </div>
             </div>
@@ -32,16 +32,12 @@
                         </div>
                     <?php endif; ?>
                     <div class="table-responsive">
-                        <table class="table table-bordered getDetalleInventario">
+                        <table class="table table-bordered getPerfil">
                             <thead>
                                 <tr>
-                                    <th scope="col">Nombre</th>
-                                    <th scope="col">Apellido</th>
-                                    <th scope="col">Correo</th>
-                                    <th scope="col">Teléfono</th>
-                                    <th scope="col">Perfil</th>
-                                    <th scope="col">Creación</th>
-                                    <th class="text-center" scope="col">Acciones</th>
+                                    <th>Nombre</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                         </table>
@@ -65,11 +61,11 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="modal-text">¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</p>
+                <p class="modal-text">¿Estás seguro de que deseas eliminar este perfil? Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/usuario/eliminar'); ?>"> 
+                <form method="POST" action="<?= base_url('dashboard/perfil/eliminar'); ?>"> 
                     <input type="hidden" id="id" name="id" value="">
                     <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
                 </form>
@@ -78,13 +74,11 @@
     </div>
 </div>
 <script>
-    getDetalleInventario();
+    getPerfil();
 
-    function getDetalleInventario() {
-        $('.getDetalleInventario').DataTable().clear().destroy();
-        $('.getDetalleInventario').DataTable({
-            processing: true,
-            serverSide: true,
+    function getPerfil() {
+        $('.getPerfil').DataTable().clear().destroy();
+        $('.getPerfil').DataTable({
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
@@ -114,7 +108,7 @@
                 }
             },
             "ajax": {
-                url: 'getUsuarios',
+                url: 'getPerfiles',
                 type: 'GET'
             }
         });

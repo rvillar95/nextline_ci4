@@ -82,8 +82,6 @@
     function getModulo() {
         $('.getModulo').DataTable().clear().destroy();
         $('.getModulo').DataTable({
-            processing: true,
-            serverSide: true,
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
