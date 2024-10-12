@@ -49,7 +49,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('registro', 'ModuloController::registro');
         $routes2->get('editar/(:num)', 'ModuloController::editar/$1');
         $routes2->get('lista', 'ModuloController::lista');
-        $routes2->get('getModulos', 'ModuloController::getModulos');
+        $routes2->get('getModulo', 'ModuloController::getModulo');
         $routes2->post('registrar', 'ModuloController::registrar');
         $routes2->post('update', 'ModuloController::update');
         $routes2->post('update/clave', 'ModuloController::update_clave');
@@ -80,7 +80,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('registro', 'ServicioController::registro');//vista
         $routes2->get('editar/(:num)', 'ServicioController::editar/$1');//vista
         $routes2->get('lista', 'ServicioController::lista');//vista
-        $routes2->get('getServicios', 'ServicioController::getUsuarios');//get Data
+        $routes2->get('getServicio', 'ServicioController::getServicio');//get Data
         $routes2->post('registrar', 'ServicioController::registrar');//accion
         $routes2->post('update', 'ServicioController::update');//accion
         $routes2->post('eliminar', 'ServicioController::eliminar');//accion
