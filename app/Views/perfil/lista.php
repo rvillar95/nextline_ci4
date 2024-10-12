@@ -79,8 +79,6 @@
     function getPerfil() {
         $('.getPerfil').DataTable().clear().destroy();
         $('.getPerfil').DataTable({
-            processing: true,
-            serverSide: true,
             language: {
                 "sProcessing": "Procesando...",
                 "sLengthMenu": "Registros _MENU_ ",
