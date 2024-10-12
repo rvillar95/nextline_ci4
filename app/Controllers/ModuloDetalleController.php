@@ -25,7 +25,7 @@ class ModuloDetalleController extends BaseController
 
         $data['modulos'] = $moduloModel->getActiveModulo();
         $data['data'] = $menuTotal;
-        echo view('modulo_detalle/registro', $data);
+        echo view('Base/modulo_detalle/registro', $data);
     }
 
     public function registrar()
@@ -94,7 +94,7 @@ class ModuloDetalleController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
-        echo view('modulo_detalle/lista', $data);
+        echo view('Base/modulo_detalle/lista', $data);
     }
 
     public function editar($id)
@@ -111,7 +111,7 @@ class ModuloDetalleController extends BaseController
 
         $data['perfil'] = $modulo->getDetalleModulo($id);
         $data['modulos'] = $moduloModel->getActiveModulo();
-        echo view("modulo_detalle/editar", $data);
+        echo view("Base/modulo_detalle/editar", $data);
     }
 
     public function update()
