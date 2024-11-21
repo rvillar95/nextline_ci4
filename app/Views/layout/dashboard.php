@@ -272,6 +272,12 @@ exit(); */
                     <?php echo $this->renderSection("servicio/lista"); ?>
                     <?php echo $this->renderSection("servicio/detalle"); ?>
                     <!-- END Section Modulo Servicio-->
+
+                    <!-- Star Section Modulo Galeria-->
+                    <?php echo $this->renderSection("galeria/registro"); ?>
+                    <?php echo $this->renderSection("galeria/lista"); ?>
+                    <?php echo $this->renderSection("galeria/detalle"); ?>
+                    <!-- END Section Modulo Galeria-->
                 </div>
 
             </div>

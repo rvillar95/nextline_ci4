@@ -123,10 +123,6 @@ class ServicioController extends BaseController
     {
 
         if (!$this->validate('formServiceEdit')) {
-            echo "<pre>";
-            print_r($this->validator->getErrors());
-            echo "</pre>";
-            exit();
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $servicio = new Servicio();
