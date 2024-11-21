@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <title>Dashboard NextLine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="<?= base_url("lib/src/assets/img/favicon.ico") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
@@ -49,6 +50,7 @@
     <script src="<?= base_url("lib/js/jquery-2.1.1.js") ?> "></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    
 
 </head>
 

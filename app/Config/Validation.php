@@ -475,7 +475,7 @@ class Validation extends BaseConfig
             ],
         ],
         'img' => [
-            'label' => 'Image File',
+            'label' => 'Foto',
             'rules' => [
                 'uploaded[img]',
                 'is_image[img]',
@@ -555,4 +555,103 @@ class Validation extends BaseConfig
             ],
         ]
     ];
+
+    public array $formGaleriaRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'portada' => [
+            'label' => 'Portada',
+            'rules' => [
+                'uploaded[portada]',
+                'is_image[portada]',
+                'mime_in[portada,image/jpg,image/jpeg,image/gif,image/png]',
+                'max_size[portada,4096]'
+            ],
+            'errors' => [
+                'uploaded' => 'Por favor sube una imagen.',
+                'is_image' => 'El archivo debe ser una imagen.',
+                'mime_in' => 'Solo se permiten archivos JPG, JPEG, GIF o PNG.',
+                'max_size' => 'El archivo no puede exceder de 4 MB.'
+            ],
+        ],
+        'fecha' => [
+            'label' => 'Fecha',
+            'rules' => 'required|valid_date',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser un carácter entre A ó I.'
+            ],
+        ],
+    ];
+
+    public array $formGaleriaEdit = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'required|max_length[500]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'portada' => [
+            'label' => 'Portada',
+            'rules' => [
+                'is_image[portada]',
+                'mime_in[portada,image/jpg,image/jpeg,image/gif,image/png]',
+                'max_size[portada,4096]'
+            ],
+            'errors' => [
+                'is_image' => 'El archivo debe ser una imagen.',
+                'mime_in' => 'Solo se permiten archivos JPG, JPEG, GIF o PNG.',
+                'max_size' => 'El archivo no puede exceder de 4 MB.'
+            ],
+        ],
+        'fecha' => [
+            'label' => 'Fecha',
+            'rules' => 'required|valid_date',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser un carácter entre A ó I.'
+            ],
+        ],
+    ];
+    
 }

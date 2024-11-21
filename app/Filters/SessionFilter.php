@@ -16,6 +16,7 @@ class SessionFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $ruta = $_SERVER['PATH_INFO'];
+  
         $perfil = new Perfil();
         $query = $perfil->getNombresPerfil();
         $perfiles = array_column($query, 'nombre');
@@ -27,6 +28,7 @@ class SessionFilter implements FilterInterface
         if (!in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
             return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
         }
+
         $menuTotal = array();
 
         $menu = array();
@@ -47,22 +49,32 @@ class SessionFilter implements FilterInterface
         function rutaCoincide($rutaActual, $rutaBD)
         {
             $rutaBD = rtrim($rutaBD, '/');
+            $rutaBD = trim($rutaBD);
             $rutaRegex = preg_replace('/\(:num\)/', '[0-9]+', $rutaBD) . '(/[0-9]+)?';
+            //echo "++++++++++".$rutaRegex."  vs  ".$rutaActual."<br>";
             return preg_match('#^' . $rutaRegex . '$#', $rutaActual);
         }
 
-
-
+        //echo "<pre>";
+        //print_r($menuTotal);
+        //echo "</pre>";
         $accesoPermitido = false;
         foreach ($menuTotal as $modulo) {
+            //echo "Ruta:  ".$ruta."   vs   ".$modulo['rutas']."<br>";
+            //echo session()->get('usuario')['perfil_nombre']."<br>";
+            //echo "Es => ".rutaCoincide($ruta, $modulo['rutas'])."<br>";
+            //print_r($perfiles)."<br>";
             if (rutaCoincide($ruta, $modulo['rutas']) && in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
                 $accesoPermitido = true;
+                //echo "paso";
                 break;
             }
         }
+        //exit();
 
+        
         if (!$accesoPermitido) {
-            return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
+            return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidada');
         }
         $modulo = new Modulo();
 

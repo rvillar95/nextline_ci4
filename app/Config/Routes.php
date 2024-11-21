@@ -85,6 +85,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('update', 'ServicioController::update');//accion
         $routes2->post('eliminar', 'ServicioController::eliminar');//accion
     });
+
+    $routes->group('galeria', function ($routes2) {
+        $routes2->get('registro', 'GaleriaController::registro');//vista
+        $routes2->get('editar/(:num)', 'GaleriaController::editar/$1');//vista
+        $routes2->get('lista', 'GaleriaController::lista');//vista
+        $routes2->get('getGaleria', 'GaleriaController::getGaleria');//get Data
+        $routes2->post('registrar', 'GaleriaController::registrar');//accion
+        $routes2->post('update', 'GaleriaController::update');//accion
+        $routes2->post('eliminar', 'GaleriaController::eliminar');//accion
+    });
 });
 
 
