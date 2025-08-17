@@ -18,6 +18,20 @@
 
             <div class="row">
                 <div class="col-lg-12 col-12 ">
+                    <div class="row">
+                        <div class="col-lg-4 col-4 ">
+                            <label for="perfil_id" class="me-2">Filtro por Módulo:</label>
+                            <select name="modulo_id" id="modulo_id" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <?php foreach ($modulos as $m): ?>
+                                    <option value="<?= (int)$m['id'] ?>" <?= (int)$selectedModuloId === (int)$m['id'] ? 'selected' : '' ?>>
+                                        <?= esc($m['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <br>
+                        </div>
+                    </div>
                     <?php if (session()->getFlashdata('errors') !== null) : ?>
                         <p style="color:red; font-weight:bold;">
                             <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
@@ -31,15 +45,15 @@
                         </div>
                     <?php endif; ?>
                     <div class="table-responsive">
-                        <table class="table table-bordered getModuloDetalle">
+                        <table class="table table-bordered" id="tabla-modulo-detalle">
                             <thead>
                                 <tr>
-                                    <th>Modulo</th>
+                                    <th>Módulo</th>
                                     <th>Descripción</th>
                                     <th>Ruta</th>
-                                    <th>Permisos</th>
-                                    <th>Estado</th>
+                                    <th>Acción</th>
                                     <th>Mostrar</th>
+                                    <th>Estado</th>
                                     <th>Orden</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -69,7 +83,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>"> 
+                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>">
                     <input type="hidden" id="id" name="id" value="">
                     <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
                 </form>
@@ -78,7 +92,64 @@
     </div>
 </div>
 <script>
-    getModuloDetalle();
+    const dt = $('#tabla-modulo-detalle').DataTable({
+        serverSide: true,
+        processing: true,
+        ajax: {
+            url: '<?= base_url('dashboard/modulo-detalle/getModuloDetalle') ?>',
+            type: 'GET',
+            data: function(d) {
+                d.modulo_id = document.getElementById('modulo_id').value || '';
+            }
+        },
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        columns: [{
+                data: 'modulo_nombre'
+            },
+            {
+                data: 'descripcion'
+            },
+            {
+                data: 'ruta'
+            },
+            {
+                data: 'accion'
+            },
+            {
+                data: 'mostrar_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'estado_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'orden'
+            },
+            {
+                data: 'acciones_html',
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+
+    document.getElementById('modulo_id').addEventListener('change', function() {
+        dt.ajax.reload(null, true);
+    });
+
+    $('body').on('click', '#btnEliminar', function(e) {
+        e.preventDefault();
+        $('#id').val(this.value);
+        $('#modalEliminacion').modal('show');
+    });
+</script>
+<script>
+    /* getModuloDetalle();
 
     function getModuloDetalle() {
         $('.getModuloDetalle').DataTable().clear().destroy();
@@ -117,13 +188,13 @@
             }
         });
     }
-    
+
     $("body").on("click", "#btnEliminar", function(e) {
         e.preventDefault();
         console.log(this.value);
-        $("#id").attr("value",this.value);
+        $("#id").attr("value", this.value);
         $("#modalEliminacion").modal("show");
-    });
+    });*/
 </script>
 
 <?= $this->endSection() ?>

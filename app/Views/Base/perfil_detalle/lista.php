@@ -17,6 +17,20 @@
 
             <div class="row">
                 <div class="col-lg-12 col-12 ">
+                    <div class="row">
+                        <div class="col-lg-4 col-4 ">
+                            <label for="perfil_id" class="me-2">Filtro por perfil:</label>
+                            <select name="perfil_id" id="perfil_id" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                                <?php foreach ($perfiles as $p): ?>
+                                    <option value="<?= (int)$p['id'] ?>" <?= (int)$selectedPerfilId === (int)$p['id'] ? 'selected' : '' ?>>
+                                        <?= esc($p['nombre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <br>
+                        </div>
+                    </div>
 
                     <?php if (session()->getFlashdata('errors') !== null) : ?>
                         <p style="color:red; font-weight:bold;">
@@ -31,11 +45,11 @@
                         </div>
                     <?php endif; ?>
                     <div class="table-responsive">
-                        <table class="table table-bordered getPerfilDetalle">
+                        <table class="table table-bordered" id="tabla-perfil-detalle">
                             <thead>
                                 <tr>
                                     <th>Perfil</th>
-                                    <th>Modulo</th>
+                                    <th>Módulo</th>
                                     <th>Ver</th>
                                     <th>Registrar</th>
                                     <th>Editar</th>
@@ -70,7 +84,8 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/perfil-detalle/eliminar'); ?>"> 
+                <form method="POST" action="<?= base_url('dashboard/perfil-detalle/eliminar'); ?>">
+                    <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
                     <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
                 </form>
@@ -80,7 +95,77 @@
 </div>
 
 <script>
-    getPerfil();
+    const dt = $('#tabla-perfil-detalle').DataTable({
+        serverSide: true,
+        processing: true,
+        searching: true,
+        ordering: true,
+        ajax: {
+            url: '<?= base_url('dashboard/perfil-detalle/getPerfilDetalle') ?>',
+            type: 'GET',
+            data: function(d) {
+                d.perfil_id = document.getElementById('perfil_id').value || '';
+            }
+        },
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+        },
+        columns: [{
+                data: 'perfil_nombre'
+            },
+            {
+                data: 'modulo_nombre'
+            },
+            {
+                data: 'ver_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'registrar_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'editar_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'eliminar_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'orden'
+            },
+            {
+                data: 'estado_html',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'acciones_html',
+                orderable: false,
+                searchable: false
+            }
+        ]
+    });
+
+    // Recargar solo la tabla cuando cambie el perfil
+    document.getElementById('perfil_id').addEventListener('change', function() {
+        dt.ajax.reload(null, true);
+    });
+
+    $("body").on("click", "#btnEliminar", function(e) {
+        e.preventDefault();
+        $("#id").val(this.value);
+        $("#modalEliminacion").modal("show");
+    });
+</script>
+
+<script>
+    /*getPerfil();
 
     function getPerfil() {
         $('.getPerfilDetalle').DataTable().clear().destroy();
@@ -115,7 +200,10 @@
             },
             "ajax": {
                 url: 'getPerfilDetalle',
-                type: 'GET'
+                type: 'GET',
+                data: {
+                    perfil_id: document.getElementById('perfil_id').value || ''
+                }
             }
         });
     }
@@ -123,9 +211,9 @@
     $("body").on("click", "#btnEliminar", function(e) {
         e.preventDefault();
         console.log(this.value);
-        $("#id").attr("value",this.value);
+        $("#id").attr("value", this.value);
         $("#modalEliminacion").modal("show");
-    });
+    });*/
 </script>
 
 <?= $this->endSection() ?>

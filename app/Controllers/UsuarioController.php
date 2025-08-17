@@ -22,7 +22,7 @@ class UsuarioController extends BaseController
         }
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
-        $data['perfiles'] = $perfil->getActivePerfil();
+        $data['perfiles'] = $perfil->getActivePerfil($this->poder);
         echo view('Base/usuarios/registro', $data);
     }
 
@@ -38,7 +38,7 @@ class UsuarioController extends BaseController
         }
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
-        $data['perfiles'] = $perfil->getActivePerfil();
+        $data['perfiles'] = $perfil->getActivePerfil($this->poder);
         echo view('Base/usuarios/lista', $data);
     }
 

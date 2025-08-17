@@ -14,7 +14,7 @@ class Perfil extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id','nombre','fcreacion','estado'];
+    protected $allowedFields = ['id', 'nombre', 'fcreacion', 'estado'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -36,16 +36,16 @@ class Perfil extends Model
         $db = \Config\Database::connect();
         //$sql = "select * from perfil where poder < :poder: AND feliminacion IS NULL";
         $sql = "select * from perfil where poder <= :poder: ";
-        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('object');
-        return $perfil;   
+        $perfil = $db->query($sql, ['poder' => session()->get('usuario')['poder']])->getResult('object');
+        return $perfil;
     }
 
     public function getNombresPerfil()
     {
         $db = \Config\Database::connect();
         $sql = "select nombre from perfil where poder <= :poder:";
-        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('array');
-        return $perfil;   
+        $perfil = $db->query($sql, ['poder' => session()->get('usuario')['poder']])->getResult('array');
+        return $perfil;
     }
 
     public function getPerfil($perfil)
@@ -53,14 +53,18 @@ class Perfil extends Model
         $db = \Config\Database::connect();
         $sql = "select * from perfil where id = :perfil: ";
         $perfil = $db->query($sql, ['perfil' => $perfil])->getResult('object');
-        return $perfil;   
+        return $perfil;
     }
 
-    public function getActivePerfil()
+    public function getActivePerfil(int $maxPoder): array
     {
-        $db = \Config\Database::connect();
-        $sql = "select * from perfil where estado = 'A' and poder <= :poder:";
-        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('array');
-        return $perfil;   
+        $builder = $this->db->table($this->table)
+            ->select('id, nombre, poder')
+            ->where('estado', 'A')
+            ->where('poder <=', $maxPoder)
+            ->orderBy('poder', 'DESC')
+            ->orderBy('nombre', 'ASC');
+
+        return $builder->get()->getResultArray();
     }
 }
