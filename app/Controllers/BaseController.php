@@ -43,6 +43,8 @@ abstract class BaseController extends Controller
      */
     protected $session;
 
+    protected $poder;
+
     /**
      * @return void
      */
@@ -51,5 +53,6 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
         $this->session = \Config\Services::session();
+        $this->poder = (int) (session('usuario')['poder'] ?? 0);
     }
 }
