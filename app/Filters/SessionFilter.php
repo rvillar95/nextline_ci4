@@ -16,14 +16,16 @@ class SessionFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $ruta = $_SERVER['PATH_INFO'];
-  
-        $perfil = new Perfil();
-        $query = $perfil->getNombresPerfil();
-        $perfiles = array_column($query, 'nombre');
 
         if (session()->get('usuario') == null) {
             return redirect()->to(route_to('login'));
         }
+
+        $perfil = new Perfil();
+        $query = $perfil->getNombresPerfil();
+        $perfiles = array_column($query, 'nombre');
+
+
 
         if (!in_array(session()->get('usuario')['perfil_nombre'], $perfiles)) {
             return redirect()->back()->withInput()->with('errors', 'No tiene permisos para esta funcionalidad');
@@ -72,7 +74,7 @@ class SessionFilter implements FilterInterface
         }
         //exit();
 
-        
+
         if (!$accesoPermitido) {
             return redirect()->to(route_to('login'))->withInput()->with('errors', 'No tiene permisos para esta funcionalidada');
         }
