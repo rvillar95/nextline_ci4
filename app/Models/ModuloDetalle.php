@@ -84,6 +84,7 @@ class ModuloDetalle extends Model
      */
     public function getAllowedByPerfil(int $perfilId): array
     {
+        
         $db = $this->db;
         $sql = "
             SELECT
@@ -106,8 +107,10 @@ class ModuloDetalle extends Model
               AND pm.estado = 'A'
             ORDER BY pm.orden ASC, md.orden ASC
         ";
-
         $rows = $db->query($sql, ['pid' => $perfilId])->getResultArray();
+        //echo "<pre>";
+        //print_r($rows);
+        //echo "</pre>";
         $out = [];
         foreach ($rows as $r) {
             $out[] = [

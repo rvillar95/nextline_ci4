@@ -75,7 +75,7 @@ class PerfilDetalleController extends BaseController
         ];
         $orderBy = $orderable[$orderColIdx] ?? 'pm.id';
 
-        $poder = (int) (session('usuario')['poder'] ?? 0);
+        $poder = $this->poder;
 
         $model = new PerfilModulo();
 
@@ -117,7 +117,7 @@ class PerfilDetalleController extends BaseController
             'data'            => $data,
         ]);
     }
-    
+
     public function lista()
     {
         $perfilId = (int) ($this->request->getGet('perfil_id') ?? 0);
