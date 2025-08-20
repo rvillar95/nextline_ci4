@@ -82,10 +82,22 @@
                 <p class="modal-text">¿Estás seguro de que deseas eliminar este modulo detalle? Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>">
+                <button type="button"
+                    class="btn btn-light-dark _effect--ripple waves-effect waves-light"
+                    data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>"
+                    onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+                    <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
-                    <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
+                    <button type="submit"
+                        class="btn btn-danger"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Eliminar">
+                        Eliminar
+                    </button>
                 </form>
             </div>
         </div>
@@ -148,53 +160,4 @@
         $('#modalEliminacion').modal('show');
     });
 </script>
-<script>
-    /* getModuloDetalle();
-
-    function getModuloDetalle() {
-        $('.getModuloDetalle').DataTable().clear().destroy();
-        $('.getModuloDetalle').DataTable({
-            language: {
-                "sProcessing": "Procesando...",
-                "sLengthMenu": "Registros _MENU_ ",
-                "sZeroRecords": "No se encontraron resultados",
-                "sEmptyTable": "Ningún dato disponible en esta tabla =(",
-                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "sInfoPostFix": "",
-                "sSearch": "Buscar:",
-                "sUrl": "",
-                "sInfoThousands": ",",
-                "sLoadingRecords": "Cargando...",
-                "oPaginate": {
-                    "sFirst": "Primero",
-                    "sLast": "Último",
-                    "sNext": "Siguiente",
-                    "sPrevious": "Anterior"
-                },
-                "oAria": {
-                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
-                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
-                },
-                "buttons": {
-                    "copy": "Copiar",
-                    "colvis": "Visibilidad"
-                }
-            },
-            "ajax": {
-                url: 'getModuloDetalle',
-                type: 'GET'
-            }
-        });
-    }
-
-    $("body").on("click", "#btnEliminar", function(e) {
-        e.preventDefault();
-        console.log(this.value);
-        $("#id").attr("value", this.value);
-        $("#modalEliminacion").modal("show");
-    });*/
-</script>
-
 <?= $this->endSection() ?>

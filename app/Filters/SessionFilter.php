@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Filters;
@@ -7,15 +8,31 @@ use App\Models\ModuloDetalle;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use Config\Services;
 
 final class SessionFilter implements FilterInterface
 {
     /** Rutas públicas que no requieren sesión/permiso. Ajusta según tu proyecto. */
     private const PUBLIC_PATHS = [
-        '/', '/login', '/login/(:any)', '/logout', '/password/(:any)',
-        '/css/(:any)', '/js/(:any)', '/images/(:any)', '/img/(:any)', '/assets/(:any)', '/favicon.ico',
+        '/',
+        '/login',
+        '/login/(:any)',
+        '/logout',
+        '/password/(:any)',
+        '/css/(:any)',
+        '/js/(:any)',
+        '/images/(:any)',
+        '/img/(:any)',
+        '/assets/(:any)',
+        '/favicon.ico',
     ];
+
+    /**
+     * TTL del caché de permisos (segundos).
+     *  - 0  => SIN caché (recomiendo en desarrollo)
+     *  - >0 => con caché (recomiendo en producción, p.ej. 300)
+     * Usa PermissionCache::invalidatePerfil / ::invalidateAll para efecto inmediato.
+     */
+    private const PERM_CACHE_TTL = 0;
 
     public function before(RequestInterface $request, $arguments = null)
     {
@@ -34,21 +51,19 @@ final class SessionFilter implements FilterInterface
             return redirect()->to(route_to('login'));
         }
 
-        // 3) Permisos por perfil (cache)
+        // 3) Permisos por perfil (con o sin caché)
         $perfilId = (int) ($user['perfil_id'] ?? 0);
         if ($perfilId <= 0) {
             return $this->deny('Perfil inválido o no asignado');
         }
 
-        $allowed = cache()->remember("allowed_routes_{$perfilId}", 300, function () use ($perfilId): array {
-            $md = new ModuloDetalle();
-            return $this->loadAllowedMap($md->getAllowedByPerfil($perfilId));
-        });
+        $allowed = $this->getAllowedRules($perfilId);
 
         // 4) Evaluar ruta contra patrones
         foreach ($allowed as $rule) {
             $pattern      = $rule['pattern'];              // p.ej. /dashboard/perfil/editar
             $allowTailNum = (bool)($rule['allowTailNum'] ?? false);
+            $regex        = $rule['regex'];                // ya precompilado
 
             // Igualdad exacta (ignora slash final)
             if ($this->isDirectMatch($path, $pattern)) {
@@ -60,13 +75,13 @@ final class SessionFilter implements FilterInterface
                 return;
             }
 
-            // Match por segmentos con placeholders CI4
+            // Match por placeholders CI4 a nivel de segmentos
             if ($this->matchesPattern($path, $pattern)) {
                 return;
             }
 
-            // Regex fallback; incluye /<num> opcional sólo si procede
-            if ($this->pathMatchesRegex($path, $this->buildRegexFromPattern($pattern, $allowTailNum))) {
+            // Regex precompilado (incluye tolerancia a /<num> si corresponde)
+            if ($this->pathMatchesRegex($path, $regex)) {
                 return;
             }
         }
@@ -81,20 +96,54 @@ final class SessionFilter implements FilterInterface
     }
 
     /**
-     * Convierte filas de BD en reglas:
+     * Obtiene las reglas permitidas para un perfil, usando cache versionado
+     * cuando PERM_CACHE_TTL > 0.
+     * @return array<int, array{pattern:string, allowTailNum:bool, regex:string}>
+     */
+    private function getAllowedRules(int $perfilId): array
+    {
+        // Versión global del mapa (incrementada por PermissionCache::invalidateAll)
+        $version = (int) (cache('perm_version') ?? 1);
+        $cacheKey = "allowed_routes_v{$version}_{$perfilId}";
+
+        if (self::PERM_CACHE_TTL > 0) {
+            return cache()->remember($cacheKey, self::PERM_CACHE_TTL, function () use ($perfilId): array {
+                $md = new ModuloDetalle();
+                return $this->loadAllowedMap($md->getAllowedByPerfil($perfilId));
+            });
+        }
+
+        // Sin caché (dev)
+        $md = new ModuloDetalle();
+        return $this->loadAllowedMap($md->getAllowedByPerfil($perfilId));
+    }
+
+    /**
+     * Transforma filas de BD en reglas:
      *  - pattern normalizado
      *  - allowTailNum (si la acción sugiere ID al final, p.ej. editar/eliminar)
      *  - regex base (sin o con /<num> opcional según allowTailNum)
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array{pattern:string, allowTailNum:bool, regex:string}>
      */
     private function loadAllowedMap(array $rows): array
     {
         $rules = [];
 
         foreach ($rows as $r) {
-            $modRoute = $this->normalizeRoute((string) $r['modulo_ruta']);
-            $detRoute = $r['detalle_ruta'] !== null ? $this->normalizeRoute((string) $r['detalle_ruta']) : null;
+            $modRoute = $this->normalizeRoute((string) ($r['modulo_ruta'] ?? ''));
+            $detRoute = isset($r['detalle_ruta']) && $r['detalle_ruta'] !== null
+                ? $this->normalizeRoute((string) $r['detalle_ruta'])
+                : null;
+
+            // Si modulo_ruta viene vacío, ignora fila
+            if ($modRoute === '') {
+                continue;
+            }
+
             $pattern  = $detRoute ? ($modRoute . $detRoute) : $modRoute;
 
+            // Acciones efectivas
             $allowedActions = $this->effectiveActions($r['acciones_csv'] ?? null, $r['permisos'] ?? []);
             if (($r['acciones_csv'] ?? null) !== null && empty($allowedActions)) {
                 // El detalle define acciones pero ninguna efectiva -> descartar
@@ -111,7 +160,7 @@ final class SessionFilter implements FilterInterface
             ];
         }
 
-        // Deduplicar
+        // Deduplicar por 'pattern'
         $uniq = [];
         $out  = [];
         foreach ($rules as $row) {
@@ -161,11 +210,8 @@ final class SessionFilter implements FilterInterface
         }
         // 3) Heurística por último segmento (evita 'lista'/'registro')
         $last = basename($pattern);
-        $verbsId = ['editar','eliminar','update','detalle','show','view']; // ajustable
-        if (in_array($last, $verbsId, true)) {
-            return true;
-        }
-        return false;
+        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view'];
+        return in_array($last, $verbsId, true);
     }
 
     /** ¿El patrón termina con (:num) o (:segment) o (:any)? */
@@ -290,7 +336,7 @@ final class SessionFilter implements FilterInterface
 
     /**
      * Devuelve la ruta de aplicación, quitando subcarpeta base y/o index.php.
-     * Ej: /codeigniter4/nextline_ci4/index.php/dashboard/menu -> /dashboard/menu
+     * Ej: /app/sub/index.php/dashboard/menu -> /dashboard/menu
      */
     private function currentPath(RequestInterface $request): string
     {
@@ -321,6 +367,6 @@ final class SessionFilter implements FilterInterface
     {
         return redirect()->back()->withInput()->with('errors', $message);
         // Alternativa API-friendly:
-        // return Services::response()->setStatusCode(403)->setBody($message);
+        // return service('response')->setStatusCode(403)->setBody($message);
     }
 }

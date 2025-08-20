@@ -36,7 +36,11 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
+        // Alias coherente para usar en rutas y en $filters
+        'session'       => SessionFilter::class,
+        // Compatibilidad por si quedó referenciado con mayúsculas en algún sitio
         'SessionFilter' => SessionFilter::class,
+        'perfilDetalle' => PerfilDetalleFilter::class
     ];
 
     /**
@@ -54,13 +58,13 @@ class Filters extends BaseFilters
      */
     public array $required = [
         'before' => [
-            'forcehttps', // Force Global Secure Requests
-            'pagecache',  // Web Page Caching
+            // 'forcehttps', // Force Global Secure Requests
+            // 'pagecache',  // Web Page Caching
         ],
         'after' => [
-            'pagecache',   // Web Page Caching
-            'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
+            //  'pagecache',   // Web Page Caching
+            //  'performance', // Performance Metrics
+            //  'toolbar',     // Debug Toolbar
         ],
     ];
 
@@ -97,7 +101,9 @@ class Filters extends BaseFilters
      *
      * @var array<string, list<string>>
      */
-    public array $methods = [];
+    public array $methods = [
+        'post' => ['csrf']
+    ];
 
     /**
      * List of filter aliases that should run on any
@@ -116,4 +122,18 @@ class Filters extends BaseFilters
             ]
         ]
     ];
+
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Endurece sólo en producción
+        if (ENVIRONMENT === 'production') {
+            $this->required['before'][] = 'forcehttps';
+            $this->required['before'][] = 'pagecache';
+            $this->required['after'][]  = 'pagecache';
+            $this->required['after'][]  = 'performance';
+        }
+    }
 }
