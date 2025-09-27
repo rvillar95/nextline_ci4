@@ -69,6 +69,7 @@
             <div class="modal-footer">
                 <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
                 <form method="POST" action="<?= base_url('dashboard/modulo/eliminar'); ?>"> 
+                    <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
                     <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
                 </form>

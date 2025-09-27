@@ -8,7 +8,7 @@
             <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                     <div class="mb-3">
-                        <h4>Registro de Galeria</h4>
+                        <h4>Registro de Galería</h4>
                     </div>
                 </div>
             </div>
@@ -22,8 +22,9 @@
                             <?= csrf_field(); ?>
                             <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Nombre</label>
-                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control" autofocus>
+                                    <label class="form-label">Nombre de la Galería *</label>
+                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control" required>
+                                    <small class="text-muted">Nombre descriptivo de la galería</small>
                                 </div>
                                 <?php if (isset(session()->getFlashdata('errors')['nombre'])) : ?>
                                     <p style="color:red; font-weight:bold;">
@@ -31,10 +32,31 @@
                                     <p>
                                     <?php endif; ?>
                             </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Categoría *</label>
+                                    <select class="form-select" id="categoria_id" name="categoria_id" required>
+                                        <option value="">Seleccionar categoría...</option>
+                                        <?php foreach ($categorias as $categoria): ?>
+                                            <option value="<?= $categoria->id; ?>" 
+                                                <?= set_select('categoria_id', $categoria->id); ?>>
+                                                <?= $categoria->nombre; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="text-muted">Categoría de la galería (obligatorio)</small>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['categoria_id'])) : ?>
+                                    <p style="color:red; font-weight:bold;">
+                                        <?= session()->getFlashdata('errors')['categoria_id']; ?>
+                                    <p>
+                                    <?php endif; ?>
+                            </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea type="text" id="descripcion" name="descripcion" class="form-control" autofocus rows="5"><?= set_value('descripcion'); ?></textarea>
+                                    <label class="form-label">Descripción de la Galería *</label>
+                                    <textarea id="descripcion" name="descripcion" class="form-control" rows="5" required placeholder="Describe los detalles de la obra..."><?= set_value('descripcion'); ?></textarea>
+                                    <small class="text-muted">Descripción detallada de la obra realizada</small>
                                 </div>
                                 <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
                                     <p style="color:red; font-weight:bold;">
@@ -44,23 +66,13 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="mb-3">
-                                    <label class="form-label">Portada</label>
-                                    <input type="file" id="portada" name="portada" value="<?= set_value('portada'); ?>" class="form-control" autofocus >
+                                    <label class="form-label">Imagen de la Galería</label>
+                                    <input type="file" id="portada" name="portada" class="form-control" accept="image/*">
+                                    <small class="text-muted">Selecciona una imagen representativa de la obra (JPG, PNG, GIF)</small>
                                 </div>
                                 <?php if (isset(session()->getFlashdata('errors')['portada'])) : ?>
                                     <p style="color:red; font-weight:bold;">
                                         <?= session()->getFlashdata('errors')['portada']; ?>
-                                    <p>
-                                    <?php endif; ?>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Fecha</label>
-                                    <input type="datetime-local" id="fecha" name="fecha" value="<?= set_value('fecha'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['fecha'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['fecha']; ?>
                                     <p>
                                     <?php endif; ?>
                             </div>

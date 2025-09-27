@@ -1,0 +1,47 @@
+/* Estilos para el selector de iconos */
+/* Archivo: public/css/icon-selector.css */
+
+.icono-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.icono-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.icono-card.border-primary {
+    border-color: #007bff !important;
+    background-color: #f8f9fa !important;
+}
+
+.icono-card .card-body {
+    padding: 1rem;
+}
+
+.icono-card i {
+    transition: color 0.3s ease;
+}
+
+.icono-card:hover i {
+    color: #007bff !important;
+}
+
+#iconoPreview {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+/* Modal personalizado */
+#iconSelectorModal .modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#iconSelectorModal .modal-dialog {
+    max-width: 800px;
+}

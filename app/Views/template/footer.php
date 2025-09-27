@@ -24,10 +24,14 @@
          <script src="<?= base_url("lib//layouts/vertical-light-menu/app.js") ?>"></script>
          <!-- END GLOBAL MANDATORY SCRIPTS -->
 
-         <!-- BEGIN PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
-         <script src="<?= base_url("lib/src/plugins/src/apex/apexcharts.min.js") ?>"></script>
-         <script src="<?= base_url("lib/src/assets/js/dashboard/dash_1.js") ?>"></script>
-         <!-- BEGIN PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
+        <!-- BEGIN PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
+        <script src="<?= base_url("lib/src/plugins/src/apex/apexcharts.min.js") ?>"></script>
+        <script src="<?= base_url("lib/src/assets/js/dashboard/dash_1.js") ?>"></script>
+        
+        <!-- JavaScript para selector de iconos -->
+        <script src="<?= base_url("lib/js/icon-selector.js") ?>"></script>
+        
+        <!-- END PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
 
          </body>
 

@@ -5,9 +5,9 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'ViewController::index');
+$routes->get('/', 'Web\HomeController::index');
 
-$routes->get('/test','UsuarioController::test');
+$routes->get('/test', 'UsuarioController::test');
 
 $routes->get('/login', 'ViewController::login');
 
@@ -21,91 +21,151 @@ $routes->group('dashboard', function ($routes) {
     $routes->get('registro/usuario', 'ViewController::registro');
     $routes->get('menu', 'ViewController::menu');
     $routes->get('layout_menu', 'ViewController::layout_menu');
-   
+
 
     $routes->group('usuario', function ($routes2) {
-        $routes2->get('', 'UsuarioController::inicio');
-        $routes2->get('registro', 'UsuarioController::registro');
-        $routes2->get('editar/(:num)', 'UsuarioController::editar/$1');
-        $routes2->get('lista', 'UsuarioController::lista');
-        $routes2->get('getUsuarios', 'UsuarioController::getUsuarios');
-        $routes2->post('registrar', 'UsuarioController::registrar');
-        $routes2->post('update', 'UsuarioController::update');
-        $routes2->post('update/clave', 'UsuarioController::update_clave');
-        $routes2->post('eliminar', 'UsuarioController::eliminar');
+        $routes2->get('', 'Dashboard\UsuarioController::inicio');
+        $routes2->get('registro', 'Dashboard\UsuarioController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\UsuarioController::editar/$1');
+        $routes2->get('lista', 'Dashboard\UsuarioController::lista');
+        $routes2->get('getUsuarios', 'Dashboard\UsuarioController::getUsuarios');
+        $routes2->post('registrar', 'Dashboard\UsuarioController::registrar');
+        $routes2->post('update', 'Dashboard\UsuarioController::update');
+        $routes2->post('update/clave', 'Dashboard\UsuarioController::update_clave');
+        $routes2->post('eliminar', 'Dashboard\UsuarioController::eliminar');
     });
 
     $routes->group('perfil', function ($routes2) {
-        $routes2->get('registro', 'PerfilController::registro');
-        $routes2->get('editar/(:num)', 'PerfilController::editar/$1');
-        $routes2->get('lista', 'PerfilController::lista');
-        $routes2->get('getPerfiles', 'PerfilController::getPerfiles');
-        $routes2->post('registrar', 'PerfilController::registrar');
-        $routes2->post('update', 'PerfilController::update');
-        $routes2->post('eliminar', 'PerfilController::eliminar');
+        $routes2->get('registro', 'Dashboard\PerfilController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\PerfilController::editar/$1');
+        $routes2->get('lista', 'Dashboard\PerfilController::lista');
+        $routes2->get('getPerfiles', 'Dashboard\PerfilController::getPerfiles');
+        $routes2->post('registrar', 'Dashboard\PerfilController::registrar');
+        $routes2->post('update', 'Dashboard\PerfilController::update');
+        $routes2->post('eliminar', 'Dashboard\PerfilController::eliminar');
     });
 
     $routes->group('modulo', function ($routes2) {
-        $routes2->get('registro', 'ModuloController::registro');
-        $routes2->get('editar/(:num)', 'ModuloController::editar/$1');
-        $routes2->get('lista', 'ModuloController::lista');
-        $routes2->get('getModulo', 'ModuloController::getModulo');
-        $routes2->post('registrar', 'ModuloController::registrar');
-        $routes2->post('update', 'ModuloController::update');
-        $routes2->post('update/clave', 'ModuloController::update_clave');
-        $routes2->post('eliminar', 'ModuloController::eliminar');
+        $routes2->get('registro', 'Dashboard\ModuloController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\ModuloController::editar/$1');
+        $routes2->get('lista', 'Dashboard\ModuloController::lista');
+        $routes2->get('getModulo', 'Dashboard\ModuloController::getModulo');
+        $routes2->post('registrar', 'Dashboard\ModuloController::registrar');
+        $routes2->post('update', 'Dashboard\ModuloController::update');
+        $routes2->post('update/clave', 'Dashboard\ModuloController::update_clave');
+        $routes2->post('eliminar', 'Dashboard\ModuloController::eliminar');
     });
 
     $routes->group('perfil-detalle', function ($routes2) {
-        $routes2->get('registro', 'PerfilDetalleController::registro');
-        $routes2->get('editar/(:num)', 'PerfilDetalleController::editar/$1');
-        $routes2->get('lista', 'PerfilDetalleController::lista');
-        $routes2->get('getPerfilDetalle', 'PerfilDetalleController::getPerfilDetalle');
-        $routes2->post('registrar', 'PerfilDetalleController::registrar');
-        $routes2->post('update', 'PerfilDetalleController::update');
-        $routes2->post('eliminar', 'PerfilDetalleController::eliminar');
+        $routes2->get('registro', 'Dashboard\PerfilDetalleController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\PerfilDetalleController::editar/$1');
+        $routes2->get('lista', 'Dashboard\PerfilDetalleController::lista');
+        $routes2->get('getPerfilDetalle', 'Dashboard\PerfilDetalleController::getPerfilDetalle');
+        $routes2->post('registrar', 'Dashboard\PerfilDetalleController::registrar');
+        $routes2->post('update', 'Dashboard\PerfilDetalleController::update');
+        $routes2->post('eliminar', 'Dashboard\PerfilDetalleController::eliminar');
     });
 
     $routes->group('modulo-detalle', function ($routes2) {
-        $routes2->get('registro', 'ModuloDetalleController::registro');
-        $routes2->get('editar/(:num)', 'ModuloDetalleController::editar/$1');
-        $routes2->get('lista', 'ModuloDetalleController::lista');
-        $routes2->get('getModuloDetalle', 'ModuloDetalleController::getModuloDetalle');
-        $routes2->post('registrar', 'ModuloDetalleController::registrar');
-        $routes2->post('update', 'ModuloDetalleController::update');
-        $routes2->post('eliminar', 'ModuloDetalleController::eliminar');
+        $routes2->get('registro', 'Dashboard\ModuloDetalleController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\ModuloDetalleController::editar/$1');
+        $routes2->get('lista', 'Dashboard\ModuloDetalleController::lista');
+        $routes2->get('getModuloDetalle', 'Dashboard\ModuloDetalleController::getModuloDetalle');
+        $routes2->post('registrar', 'Dashboard\ModuloDetalleController::registrar');
+        $routes2->post('update', 'Dashboard\ModuloDetalleController::update');
+        $routes2->post('eliminar', 'Dashboard\ModuloDetalleController::eliminar');
     });
 
     $routes->group('servicio', function ($routes2) {
-        $routes2->get('registro', 'ServicioController::registro');//vista
-        $routes2->get('editar/(:num)', 'ServicioController::editar/$1');//vista
-        $routes2->get('lista', 'ServicioController::lista');//vista
-        $routes2->get('getServicio', 'ServicioController::getServicio');//get Data
-        $routes2->post('registrar', 'ServicioController::registrar');//accion
-        $routes2->post('update', 'ServicioController::update');//accion
-        $routes2->post('eliminar', 'ServicioController::eliminar');//accion
+        $routes2->get('registro', 'Dashboard\ServicioController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\ServicioController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\ServicioController::lista'); //vista
+        $routes2->get('getServicio', 'Dashboard\ServicioController::getServicio'); //get Data
+        $routes2->post('registrar', 'Dashboard\ServicioController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\ServicioController::update'); //accion
+        $routes2->post('eliminar', 'Dashboard\ServicioController::eliminar'); //accion
     });
 
     $routes->group('galeria', function ($routes2) {
-        $routes2->get('registro', 'GaleriaController::registro');//vista
-        $routes2->get('editar/(:num)', 'GaleriaController::editar/$1');//vista
-        $routes2->get('lista', 'GaleriaController::lista');//vista
-        $routes2->get('getGaleria', 'GaleriaController::getGaleria');//get Data
-        $routes2->post('registrar', 'GaleriaController::registrar');//accion
-        $routes2->post('update', 'GaleriaController::update');//accion
-        $routes2->post('eliminar', 'GaleriaController::eliminar');//accion
+        $routes2->get('registro', 'Web\GaleriaController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Web\GaleriaController::editar/$1'); //vista
+        $routes2->get('lista', 'Web\GaleriaController::lista'); //vista
+        $routes2->get('getGaleria', 'Web\GaleriaController::getGaleria'); //get Data
+        $routes2->post('registrar', 'Web\GaleriaController::registrar'); //accion
+        $routes2->post('update', 'Web\GaleriaController::update'); //accion
+        $routes2->post('eliminar', 'Web\GaleriaController::eliminar'); //accion
+    });
+
+    $routes->group('servicio-categoria', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\ServicioCategoriaController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\ServicioCategoriaController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\ServicioCategoriaController::lista'); //vista
+        $routes2->get('getServicioCategoria', 'Dashboard\ServicioCategoriaController::getServicioCategoria'); //get Data
+        $routes2->post('registrar', 'Dashboard\ServicioCategoriaController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\ServicioCategoriaController::update'); //accion
+        $routes2->post('eliminar', 'Dashboard\ServicioCategoriaController::eliminar'); //accion
+    });
+
+    $routes->group('galeria-categoria', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\GaleriaCategoriaController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\GaleriaCategoriaController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\GaleriaCategoriaController::lista'); //vista
+        $routes2->get('getGaleriaCategoria', 'Dashboard\GaleriaCategoriaController::getGaleriaCategoria'); //get Data
+        $routes2->post('registrar', 'Dashboard\GaleriaCategoriaController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\GaleriaCategoriaController::update'); //accion
+        $routes2->post('eliminar', 'Dashboard\GaleriaCategoriaController::eliminar'); //accion
+    });
+
+    $routes->group('proyecto', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\ProyectoController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\ProyectoController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\ProyectoController::lista'); //vista
+        $routes2->get('getProyecto', 'Dashboard\ProyectoController::getProyecto'); //get Data
+        $routes2->post('registrar', 'Dashboard\ProyectoController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\ProyectoController::update'); //accion
+        $routes2->post('eliminar', 'Dashboard\ProyectoController::eliminar'); //accion
+        $routes2->post('setPortada', 'Dashboard\ProyectoController::setPortada'); //accion
+        $routes2->post('eliminarImagen', 'Dashboard\ProyectoController::eliminarImagen'); //accion
+    });
+
+    $routes->group('leads', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\LeadController::lista');
+        $routes2->get('getLeads', 'Dashboard\LeadController::getLeads');
+        $routes2->get('getServicios', 'Dashboard\LeadController::getServicios');
+        $routes2->post('cambiarEstado', 'Dashboard\LeadController::cambiarEstado');
+        $routes2->post('eliminar', 'Dashboard\LeadController::eliminar');
+    });
+
+    $routes->group('testimonio', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\TestimonioController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\TestimonioController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\TestimonioController::lista'); //vista
+        $routes2->get('getTestimonios', 'Dashboard\TestimonioController::getTestimonios'); //get Data
+        $routes2->post('registrar', 'Dashboard\TestimonioController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\TestimonioController::update'); //accion
+        $routes2->get('eliminar/(:num)', 'Dashboard\TestimonioController::eliminar/$1'); //accion
     });
 });
 
-
-
-
-
-
-$routes->post('/inicio-sesion', 'UsuarioController::inicio_sesion');
+$routes->post('/inicio-sesion', 'Dashboard\UsuarioController::inicio_sesion');
 $routes->get('/logout', 'UsuarioController::logout');
 
-$routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {
-});
+$routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {});
+
+// Rutas públicas del sitio web
+$routes->get('servicios', 'Web\ServicioController::index');
+$routes->get('servicios/(:segment)', 'Web\ServicioController::detalle/$1');
+$routes->get('servicios-categorias', 'Web\ServicioCategoriaController::index');
+$routes->get('servicios-categorias/(:segment)', 'Web\ServicioCategoriaController::detalle/$1');
+$routes->get('proyectos', 'Web\ProyectoController::index');
+$routes->get('proyectos/(:segment)', 'Web\ProyectoController::detalle/$1');
+$routes->get('galeria', 'Web\GaleriaController::index');
+$routes->get('galeria-categorias', 'Web\GaleriaCategoriaController::index');
+$routes->get('galeria-categorias/(:segment)', 'Web\GaleriaCategoriaController::detalle/$1');
+$routes->get('nosotros', 'Web\NosotrosController::index');
+$routes->get('contacto', 'Web\ContactoController::index');
+$routes->post('contacto/enviar', 'Web\ContactoController::enviar');
+$routes->get('gracias', 'Web\ContactoController::gracias');
+$routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
 
 //$routes->get('/getPerfil', 'PerfilController::getPerfil');

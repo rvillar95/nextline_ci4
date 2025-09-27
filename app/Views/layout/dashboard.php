@@ -140,6 +140,33 @@ exit(); */
                 </div>
             </div>
             <div class="shadow-bottom"></div>
+            
+            <!-- CSS personalizado para el menú -->
+            <style>
+                /* Solución simple: permitir que el texto se envuelva en los botones del menú */
+                #sidebar ul.menu-categories li.menu > .dropdown-toggle {
+                    white-space: normal !important;     /* Permite que el texto se envuelva */
+                    word-wrap: break-word !important;   /* Permite que se divida si es necesario */
+                    height: auto !important;            /* Altura automática para acomodar múltiples líneas */
+                    min-height: 40px !important;       /* Altura mínima para mantener consistencia */
+                    padding: 10px 16px !important;      /* Padding adecuado para múltiples líneas */
+                }
+
+                /* Ajustar el contenedor del texto para que se expanda */
+                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div {
+                    flex: 1 !important;                 /* Permitir que se expanda */
+                    min-width: 0 !important;            /* Permitir que se contraiga si es necesario */
+                }
+
+                /* Ajustar el texto para que se envuelva correctamente */
+                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div span {
+                    white-space: normal !important;     /* Permitir envoltura del texto */
+                    word-wrap: break-word !important;   /* Permitir división de palabras */
+                    line-height: 1.3 !important;       /* Altura de línea cómoda para múltiples líneas */
+                    display: block !important;          /* Mostrar como bloque para mejor control */
+                }
+            </style>
+            
             <ul class="list-unstyled menu-categories" id="accordionExample">
                 <?php
                 $contador = 1;
@@ -278,6 +305,34 @@ exit(); */
                     <?php echo $this->renderSection("galeria/lista"); ?>
                     <?php echo $this->renderSection("galeria/detalle"); ?>
                     <!-- END Section Modulo Galeria-->
+
+                    <!-- Star Section Modulo Galeria Categoria-->
+                    <?php echo $this->renderSection("galeria_categoria/registro"); ?>
+                    <?php echo $this->renderSection("galeria_categoria/lista"); ?>
+                    <?php echo $this->renderSection("galeria_categoria/editar"); ?>
+                    <!-- END Section Modulo Galeria Categoria-->
+
+                    <!-- Star Section Modulo Servicio Categoria-->
+                    <?php echo $this->renderSection("servicio_categoria/registro"); ?>
+                    <?php echo $this->renderSection("servicio_categoria/lista"); ?>
+                    <?php echo $this->renderSection("servicio_categoria/editar"); ?>
+                    <!-- END Section Modulo Servicio Categoria-->
+
+                    <!-- Star Section Modulo Proyecto-->
+                    <?php echo $this->renderSection("proyecto/registro"); ?>
+                    <?php echo $this->renderSection("proyecto/lista"); ?>
+                    <?php echo $this->renderSection("proyecto/editar"); ?>
+                    <!-- END Section Modulo Proyecto-->
+
+                    <!-- Star Section Modulo Leads-->
+                    <?php echo $this->renderSection("leads/lista"); ?>
+                    <!-- END Section Modulo Leads-->
+
+                    <!-- Star Section Modulo Testimonio-->
+                    <?php echo $this->renderSection("testimonio/registro"); ?>
+                    <?php echo $this->renderSection("testimonio/lista"); ?>
+                    <?php echo $this->renderSection("testimonio/editar"); ?>
+                    <!-- END Section Modulo Testimonio-->
                 </div>
 
             </div>

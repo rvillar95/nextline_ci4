@@ -35,11 +35,12 @@
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
+                                    <th>Categoría</th>
                                     <th>Descripción Corta</th>
-                                    <th>Descripción Larga</th>
-                                    <th>Valor</th>
-                                    <th>Foto</th>
+                                    <th>Precio</th>
                                     <th>Estado</th>
+                                    <th>Destacado</th>
+                                    <th>Foto</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
