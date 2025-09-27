@@ -91,6 +91,7 @@
                     onsubmit="this.querySelector('button[type=submit]').disabled = true;">
                     <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
+                    <input type="hidden" id="modulo_id_filter" name="modulo_id_filter" value="">
                     <button type="submit"
                         class="btn btn-danger"
                         data-bs-toggle="tooltip"
@@ -157,6 +158,8 @@
     $('body').on('click', '#btnEliminar', function(e) {
         e.preventDefault();
         $('#id').val(this.value);
+        // Capturar el filtro actual del select
+        $('#modulo_id_filter').val(document.getElementById('modulo_id').value);
         $('#modalEliminacion').modal('show');
     });
 </script>

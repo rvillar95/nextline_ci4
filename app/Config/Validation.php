@@ -7,6 +7,7 @@ use CodeIgniter\Validation\StrictRules\CreditCardRules;
 use CodeIgniter\Validation\StrictRules\FileRules;
 use CodeIgniter\Validation\StrictRules\FormatRules;
 use CodeIgniter\Validation\StrictRules\Rules;
+use App\Validation\ChileanPhoneRules;
 
 class Validation extends BaseConfig
 {
@@ -25,6 +26,7 @@ class Validation extends BaseConfig
         FormatRules::class,
         FileRules::class,
         CreditCardRules::class,
+        ChileanPhoneRules::class,
     ];
 
     /**
@@ -443,10 +445,11 @@ class Validation extends BaseConfig
     public array $formServiceRegister = [
         'nombre' => [
             'label' => 'Nombre',
-            'rules' => 'required|max_length[100]',
+            'rules' => 'required|max_length[100]|is_unique[servicio.nombre]',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
-                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre del servicio ya existe. Por favor, elige otro nombre.'
             ],
         ],
         'descripcionCorta' => [
@@ -465,27 +468,87 @@ class Validation extends BaseConfig
                 'max_length' => 'El campo {field} no puede exceder de 2000 caracteres de longitud.'
             ],
         ],
-        'valor' => [
-            'label' => 'Valor',
-            'rules' => 'required|integer|greater_than[0]',
+        'categoria_id' => [
+            'label' => 'Categoría',
+            'rules' => 'required|integer',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'caracteristicas' => [
+            'label' => 'Características',
+            'rules' => 'permit_empty',
+            'errors' => []
+        ],
+        'beneficios' => [
+            'label' => 'Beneficios',
+            'rules' => 'permit_empty',
+            'errors' => []
+        ],
+        'tiempo_estimado' => [
+            'label' => 'Tiempo Estimado',
+            'rules' => 'permit_empty|max_length[50]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 50 caracteres de longitud.'
+            ],
+        ],
+        'garantia' => [
+            'label' => 'Garantía',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'precio_desde' => [
+            'label' => 'Precio Desde',
+            'rules' => 'permit_empty|decimal',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.'
+            ],
+        ],
+        'precio_hasta' => [
+            'label' => 'Precio Hasta',
+            'rules' => 'permit_empty|decimal',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.'
+            ],
+        ],
+        'mostrar_precio' => [
+            'label' => 'Mostrar Precio',
+            'rules' => 'permit_empty|in_list[S,N]',
+            'errors' => [
+                'in_list' => 'El campo {field} debe ser Sí o No.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
                 'integer' => 'El campo {field} debe ser un número entero.',
-                'greater_than' => 'El campo {field} debe ser un número mayor a 0.'
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'destacado' => [
+            'label' => 'Destacado',
+            'rules' => 'permit_empty|in_list[S,N]',
+            'errors' => [
+                'in_list' => 'El campo {field} debe ser Sí o No.'
             ],
         ],
         'img' => [
             'label' => 'Foto',
             'rules' => [
+                'permit_empty',
                 'uploaded[img]',
                 'is_image[img]',
                 'mime_in[img,image/jpg,image/jpeg,image/gif,image/png]',
-                'max_size[img,4096]',
+                'max_size[img,2048]',
             ],
             'errors' => [
                 'uploaded' => 'Por favor sube una imagen.',
                 'is_image' => 'El archivo debe ser una imagen.',
-                'max_size' => 'El archivo no puede exceder 500 KB.',
+                'max_size' => 'El archivo no puede exceder 2MB.',
                 'mime_in' => 'Solo se permiten archivos JPG, JPEG, PNG.'
             ],
         ],
@@ -500,12 +563,21 @@ class Validation extends BaseConfig
     ];
 
     public array $formServiceEdit = [
-        'nombre' => [
-            'label' => 'Nombre',
-            'rules' => 'required|max_length[100]',
+        'id' => [
+            'label' => 'ID',
+            'rules' => 'required|integer',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
-                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[servicio.nombre,id,{id}]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre del servicio ya existe. Por favor, elige otro nombre.'
             ],
         ],
         'descripcionCorta' => [
@@ -524,13 +596,72 @@ class Validation extends BaseConfig
                 'max_length' => 'El campo {field} no puede exceder de 2000 caracteres de longitud.'
             ],
         ],
-        'valor' => [
-            'label' => 'Valor',
-            'rules' => 'required|integer|greater_than[0]',
+        'categoria_id' => [
+            'label' => 'Categoría',
+            'rules' => 'required|integer',
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'caracteristicas' => [
+            'label' => 'Características',
+            'rules' => 'permit_empty',
+            'errors' => [],
+        ],
+        'beneficios' => [
+            'label' => 'Beneficios',
+            'rules' => 'permit_empty',
+            'errors' => [],
+        ],
+        'tiempo_estimado' => [
+            'label' => 'Tiempo Estimado',
+            'rules' => 'permit_empty|max_length[50]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 50 caracteres de longitud.'
+            ],
+        ],
+        'garantia' => [
+            'label' => 'Garantía',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'precio_desde' => [
+            'label' => 'Precio Desde',
+            'rules' => 'permit_empty|decimal',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.'
+            ],
+        ],
+        'precio_hasta' => [
+            'label' => 'Precio Hasta',
+            'rules' => 'permit_empty|decimal',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.'
+            ],
+        ],
+        'mostrar_precio' => [
+            'label' => 'Mostrar Precio',
+            'rules' => 'permit_empty|in_list[S,N]',
+            'errors' => [
+                'in_list' => 'El campo {field} debe ser S o N.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
                 'integer' => 'El campo {field} debe ser un número entero.',
-                'greater_than' => 'El campo {field} debe ser un número mayor a 0.'
+                'greater_than_equal_to' => 'El campo {field} debe ser un número mayor o igual a 0.'
+            ],
+        ],
+        'destacado' => [
+            'label' => 'Destacado',
+            'rules' => 'permit_empty|in_list[S,N]',
+            'errors' => [
+                'in_list' => 'El campo {field} debe ser S o N.'
             ],
         ],
         'img' => [
@@ -565,6 +696,14 @@ class Validation extends BaseConfig
                 'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
             ],
         ],
+        'categoria_id' => [
+            'label' => 'Categoría',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero válido.'
+            ],
+        ],
         'descripcion' => [
             'label' => 'Descripción',
             'rules' => 'required|max_length[500]',
@@ -588,14 +727,6 @@ class Validation extends BaseConfig
                 'max_size' => 'El archivo no puede exceder de 4 MB.'
             ],
         ],
-        'fecha' => [
-            'label' => 'Fecha',
-            'rules' => 'required|valid_date',
-            'errors' => [
-                'required' => 'El campo {field} es obligatorio.',
-                'valid_date' => 'El campo {field} debe ser una fecha válida.'
-            ],
-        ],
         'estado' => [
             'label' => 'Estado',
             'rules' => 'required|in_list[A,I]',
@@ -613,6 +744,14 @@ class Validation extends BaseConfig
             'errors' => [
                 'required' => 'El campo {field} es obligatorio.',
                 'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'categoria_id' => [
+            'label' => 'Categoría',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero válido.'
             ],
         ],
         'descripcion' => [
@@ -636,14 +775,6 @@ class Validation extends BaseConfig
                 'max_size' => 'El archivo no puede exceder de 4 MB.'
             ],
         ],
-        'fecha' => [
-            'label' => 'Fecha',
-            'rules' => 'required|valid_date',
-            'errors' => [
-                'required' => 'El campo {field} es obligatorio.',
-                'valid_date' => 'El campo {field} debe ser una fecha válida.'
-            ],
-        ],
         'estado' => [
             'label' => 'Estado',
             'rules' => 'required|in_list[A,I]',
@@ -654,4 +785,620 @@ class Validation extends BaseConfig
         ],
     ];
     
+    public array $formGaleriaCategoriaRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[galeria_categoria.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre de la categoría ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'icono' => [
+            'label' => 'Icono',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'color' => [
+            'label' => 'Color',
+            'rules' => 'permit_empty|max_length[20]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 20 caracteres de longitud.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than_equal_to' => 'El campo {field} debe ser un número mayor o igual a 0.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser A o I.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public array $formGaleriaCategoriaEdit = [
+        'id' => [
+            'label' => 'ID',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[galeria_categoria.nombre,id,{id}]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre de la categoría ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'icono' => [
+            'label' => 'Icono',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'color' => [
+            'label' => 'Color',
+            'rules' => 'permit_empty|max_length[20]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 20 caracteres de longitud.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than_equal_to' => 'El campo {field} debe ser un número mayor o igual a 0.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser A o I.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+    
+    // Reglas de validación para categorías de servicios
+    public array $formServicioCategoriaRegister = [
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[servicio_categoria.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre de la categoría ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'icono' => [
+            'label' => 'Icono',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'color' => [
+            'label' => 'Color',
+            'rules' => 'permit_empty|max_length[20]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 20 caracteres de longitud.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser un carácter entre A ó I.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public array $formServicioCategoriaEdit = [
+        'id' => [
+            'label' => 'ID',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'nombre' => [
+            'label' => 'Nombre',
+            'rules' => 'required|max_length[100]|is_unique[servicio_categoria.nombre,id,{id}]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.',
+                'is_unique' => 'El nombre de la categoría ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'descripcion' => [
+            'label' => 'Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'icono' => [
+            'label' => 'Icono',
+            'rules' => 'permit_empty|max_length[100]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 100 caracteres de longitud.'
+            ],
+        ],
+        'color' => [
+            'label' => 'Color',
+            'rules' => 'permit_empty|max_length[20]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 20 caracteres de longitud.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser un carácter entre A ó I.'
+            ],
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'errors' => [
+                'integer' => 'El campo {field} debe ser un número entero.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+    
+    // Validaciones para Proyectos
+    public array $formProyectoRegister = [
+        'nombre' => [
+            'label' => 'Nombre del Proyecto',
+            'rules' => 'required|max_length[255]|is_unique[proyectos.nombre]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.',
+                'is_unique' => 'El nombre del proyecto ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'cliente' => [
+            'label' => 'Cliente',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'tipo_proyecto' => [
+            'label' => 'Tipo de Proyecto',
+            'rules' => 'required|in_list[residencial,comercial,industrial,institucional,otro]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser uno de los valores permitidos.'
+            ],
+        ],
+        'ubicacion' => [
+            'label' => 'Ubicación',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'direccion' => [
+            'label' => 'Dirección',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'fecha_inicio' => [
+            'label' => 'Fecha de Inicio',
+            'rules' => 'permit_empty|valid_date',
+            'errors' => [
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'fecha_finalizacion' => [
+            'label' => 'Fecha de Finalización',
+            'rules' => 'permit_empty|valid_date',
+            'errors' => [
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'presupuesto' => [
+            'label' => 'Presupuesto',
+            'rules' => 'permit_empty|decimal|greater_than_equal_to[0]',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[en_progreso,completado,en_pausa,cancelado]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser uno de los valores permitidos.'
+            ],
+        ],
+        'descripcion_corta' => [
+            'label' => 'Descripción Corta',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'descripcion_detallada' => [
+            'label' => 'Descripción Detallada',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'caracteristicas_tecnicas' => [
+            'label' => 'Características Técnicas',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'area_construida' => [
+            'label' => 'Área Construida',
+            'rules' => 'permit_empty|decimal|greater_than_equal_to[0]',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'materiales_principales' => [
+            'label' => 'Materiales Principales',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'testimonio_cliente' => [
+            'label' => 'Testimonio del Cliente',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'nombre_cliente' => [
+            'label' => 'Nombre del Cliente',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public array $formProyectoEdit = [
+        'id' => [
+            'label' => 'ID',
+            'rules' => 'required|integer',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'integer' => 'El campo {field} debe ser un número entero.'
+            ],
+        ],
+        'nombre' => [
+            'label' => 'Nombre del Proyecto',
+            'rules' => 'required|max_length[255]|is_unique[proyectos.nombre,id,{id}]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.',
+                'is_unique' => 'El nombre del proyecto ya existe. Por favor, elige otro nombre.'
+            ],
+        ],
+        'cliente' => [
+            'label' => 'Cliente',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'tipo_proyecto' => [
+            'label' => 'Tipo de Proyecto',
+            'rules' => 'required|in_list[residencial,comercial,industrial,institucional,otro]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser uno de los valores permitidos.'
+            ],
+        ],
+        'ubicacion' => [
+            'label' => 'Ubicación',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'direccion' => [
+            'label' => 'Dirección',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'fecha_inicio' => [
+            'label' => 'Fecha de Inicio',
+            'rules' => 'permit_empty|valid_date',
+            'errors' => [
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'fecha_finalizacion' => [
+            'label' => 'Fecha de Finalización',
+            'rules' => 'permit_empty|valid_date',
+            'errors' => [
+                'valid_date' => 'El campo {field} debe ser una fecha válida.'
+            ],
+        ],
+        'presupuesto' => [
+            'label' => 'Presupuesto',
+            'rules' => 'permit_empty|decimal|greater_than_equal_to[0]',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[en_progreso,completado,en_pausa,cancelado]',
+            'errors' => [
+                'required' => 'El campo {field} es obligatorio.',
+                'in_list' => 'El campo {field} debe ser uno de los valores permitidos.'
+            ],
+        ],
+        'descripcion_corta' => [
+            'label' => 'Descripción Corta',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'descripcion_detallada' => [
+            'label' => 'Descripción Detallada',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'caracteristicas_tecnicas' => [
+            'label' => 'Características Técnicas',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'area_construida' => [
+            'label' => 'Área Construida',
+            'rules' => 'permit_empty|decimal|greater_than_equal_to[0]',
+            'errors' => [
+                'decimal' => 'El campo {field} debe ser un número decimal válido.',
+                'greater_than_equal_to' => 'El campo {field} debe ser mayor o igual a 0.'
+            ],
+        ],
+        'materiales_principales' => [
+            'label' => 'Materiales Principales',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'testimonio_cliente' => [
+            'label' => 'Testimonio del Cliente',
+            'rules' => 'permit_empty|string',
+            'errors' => [
+                'string' => 'El campo {field} debe ser texto válido.'
+            ],
+        ],
+        'nombre_cliente' => [
+            'label' => 'Nombre del Cliente',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_titulo' => [
+            'label' => 'Meta Título',
+            'rules' => 'permit_empty|max_length[255]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 255 caracteres de longitud.'
+            ],
+        ],
+        'meta_descripcion' => [
+            'label' => 'Meta Descripción',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+        'meta_keywords' => [
+            'label' => 'Meta Keywords',
+            'rules' => 'permit_empty|max_length[500]',
+            'errors' => [
+                'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
+            ],
+        ],
+    ];
+
+    public $formTestimonioRegister = [
+        'nombre' => 'required|string|max_length[100]',
+        'cargo' => 'permit_empty|string|max_length[100]',
+        'empresa' => 'permit_empty|string|max_length[100]',
+        'testimonio' => 'required|string|max_length[2000]',
+        'calificacion' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[5]',
+        'proyecto_id' => 'permit_empty|integer',
+        'servicio_id' => 'permit_empty|integer',
+        'estado' => 'required|in_list[A,I]',
+        'destacado' => 'required|in_list[S,N]',
+        'fecha_proyecto' => 'permit_empty|valid_date'
+    ];
+
+    public $formTestimonioEdit = [
+        'id' => 'required|integer',
+        'nombre' => 'required|string|max_length[100]',
+        'cargo' => 'permit_empty|string|max_length[100]',
+        'empresa' => 'permit_empty|string|max_length[100]',
+        'testimonio' => 'required|string|max_length[2000]',
+        'calificacion' => 'required|integer|greater_than_equal_to[1]|less_than_equal_to[5]',
+        'proyecto_id' => 'permit_empty|integer',
+        'servicio_id' => 'permit_empty|integer',
+        'estado' => 'required|in_list[A,I]',
+        'destacado' => 'required|in_list[S,N]',
+        'fecha_proyecto' => 'permit_empty|valid_date'
+    ];
 }

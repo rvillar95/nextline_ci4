@@ -9,7 +9,7 @@
             <div class="row">
                 <div class="col-xl-12 col-md-12 col-sm-12 col-12">
                     <div class="mb-3">
-                        <h4>Lista de Galeria</h4>
+                        <h4>Lista de Galería</h4>
                     </div>
                 </div>
             </div>
@@ -35,10 +35,10 @@
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
+                                    <th>Categoría</th>
                                     <th>Descripción</th>
+                                    <th>Estado</th>
                                     <th>Portada</th>
-                                    <th>fecha</th>
-                                    <th>estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -63,7 +63,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p class="modal-text">¿Estás seguro de que deseas eliminar esta galeria? Esta acción no se puede deshacer.</p>
+                <p class="modal-text">¿Estás seguro de que deseas eliminar esta galería? Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
@@ -87,7 +87,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminacionTitle">Confirmar eliminación</h5>
+                <h5 class="modal-title" id="modalDetalleTitle">Detalle de Galería</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -96,87 +96,15 @@
                 </button>
             </div>
             <div class="modal-body">
-                <?= form_open_multipart('dashboard/galeria/registrar') ?>
-                <?= csrf_field(); ?>
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre'); ?>" class="form-control" autofocus>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['nombre'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['nombre']; ?>
-                        <p>
-                        <?php endif; ?>
+                <div id="detalleContenido">
+                    <!-- El contenido se cargará aquí -->
                 </div>
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea type="text" id="descripcion" name="descripcion" class="form-control" autofocus rows="5"><?= set_value('descripcion'); ?></textarea>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['descripcion']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label class="form-label">Portada</label>
-                        <input type="file" id="portada" name="portada" value="<?= set_value('portada'); ?>" class="form-control" autofocus>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['portada'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['portada']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label class="form-label">Fecha</label>
-                        <input type="datetime-local" id="fecha" name="fecha" value="<?= set_value('fecha'); ?>" class="form-control" autofocus>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['fecha'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['fecha']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <div class="col-md-12">
-                    <div class="mb-3">
-                        <label class="form-label">Seleccione el Estado</label>
-                        <select class="form-select" id="estado" name="estado" value="<?php set_value('estado'); ?>">
-                            <option value="A">Activo</option>
-                            <option value="I">Inactivo</option>
-                        </select>
-                    </div>
-                </div>
-                <?php if (session()->getFlashdata('success') !== null) : ?>
-                    <div class="alert alert-success my-3" role="alert">
-                        <?= session()->getFlashdata('success'); ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('errors') !== null) : ?>
-                    <p style="color:red; font-weight:bold;">
-                        <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                            <?= session()->getFlashdata('errors'); ?>
-                        <?php endif; ?>
-                    </p>
-                <?php endif; ?>
-                <div class="col-12">
-                    <div class="mb-4">
-                        <button type="submit" class="btn btn-secondary w-100">Crear</button>
-                    </div>
-                </div>
-                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
-    <div class="modal-footer">
-        <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-    </div>
-</div>
-</div>
 </div>
 <script>
     getGaleria();
@@ -224,6 +152,21 @@
         console.log(this.value);
         $("#id").attr("value", this.value);
         $("#modalEliminacion").modal("show");
+    });
+
+    $("body").on("click", "#btnVerDetalle", function(e) {
+        e.preventDefault();
+        var galeriaId = this.value;
+        
+        // Aquí podrías hacer una llamada AJAX para obtener los detalles
+        // Por ahora, mostraremos un mensaje simple
+        $("#detalleContenido").html(`
+            <div class="text-center">
+                <h6>Detalle de Galería ID: ${galeriaId}</h6>
+                <p>Esta funcionalidad se puede expandir para mostrar más detalles de la galería.</p>
+            </div>
+        `);
+        $("#modalDetalle").modal("show");
     });
 </script>
 
