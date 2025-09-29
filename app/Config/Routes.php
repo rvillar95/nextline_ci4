@@ -87,13 +87,13 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('galeria', function ($routes2) {
-        $routes2->get('registro', 'Web\GaleriaController::registro'); //vista
-        $routes2->get('editar/(:num)', 'Web\GaleriaController::editar/$1'); //vista
-        $routes2->get('lista', 'Web\GaleriaController::lista'); //vista
-        $routes2->get('getGaleria', 'Web\GaleriaController::getGaleria'); //get Data
-        $routes2->post('registrar', 'Web\GaleriaController::registrar'); //accion
-        $routes2->post('update', 'Web\GaleriaController::update'); //accion
-        $routes2->post('eliminar', 'Web\GaleriaController::eliminar'); //accion
+        $routes2->get('registro', 'Dashboard\GaleriaController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\GaleriaController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\GaleriaController::lista'); //vista
+        $routes2->get('getGaleria', 'Dashboard\GaleriaController::getGaleria'); //get Data
+        $routes2->post('registrar', 'Dashboard\GaleriaController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\GaleriaController::update'); //accion
+        $routes2->post('eliminar', 'Dashboard\GaleriaController::eliminar'); //accion
     });
 
     $routes->group('servicio-categoria', function ($routes2) {
@@ -144,6 +144,44 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'Dashboard\TestimonioController::registrar'); //accion
         $routes2->post('update', 'Dashboard\TestimonioController::update'); //accion
         $routes2->get('eliminar/(:num)', 'Dashboard\TestimonioController::eliminar/$1'); //accion
+    });
+
+    $routes->group('cliente', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\ClienteController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\ClienteController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\ClienteController::lista'); //vista
+        $routes2->get('detalle/(:num)', 'Dashboard\ClienteController::detalle/$1'); //vista
+        $routes2->get('getClientes', 'Dashboard\ClienteController::getClientes'); //get Data
+        $routes2->get('getClientesSelect', 'Dashboard\ClienteController::getClientesSelect'); //get Data
+        $routes2->post('registrar', 'Dashboard\ClienteController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\ClienteController::update'); //accion
+        $routes2->post('activar', 'Dashboard\ClienteController::activar'); //accion
+        $routes2->post('eliminar/(:num)', 'Dashboard\ClienteController::eliminar/$1'); //accion
+    });
+
+    $routes->group('cotizacion', function ($routes2) {
+        $routes2->get('registro', 'Dashboard\CotizacionController::registro'); //vista
+        $routes2->get('editar/(:num)', 'Dashboard\CotizacionController::editar/$1'); //vista
+        $routes2->get('lista', 'Dashboard\CotizacionController::lista'); //vista
+        $routes2->get('detalle/(:num)', 'Dashboard\CotizacionController::detalle/$1'); //vista
+        $routes2->get('getCotizaciones', 'Dashboard\CotizacionController::getCotizaciones'); //get Data
+        $routes2->get('getClientesSelect', 'Dashboard\CotizacionController::getClientesSelect'); //get Data
+        $routes2->get('generarPDF/(:num)', 'Dashboard\CotizacionController::generarPDF/$1'); //get Data
+        $routes2->post('registrar', 'Dashboard\CotizacionController::registrar'); //accion
+        $routes2->post('update', 'Dashboard\CotizacionController::update'); //accion
+        $routes2->post('eliminar/(:num)', 'Dashboard\CotizacionController::eliminar/$1'); //accion
+    });
+
+    // Rutas para ubicaciones (regiones y comunas)
+    $routes->group('ubicacion', function ($routes2) {
+        $routes2->get('regiones', 'Dashboard\UbicacionController::getRegiones');
+        $routes2->get('comunas/(:num)', 'Dashboard\UbicacionController::getComunasPorRegion/$1');
+        $routes2->get('comunas', 'Dashboard\UbicacionController::getComunasPorRegion');
+        $routes2->get('buscar-comunas', 'Dashboard\UbicacionController::buscarComunas');
+        $routes2->get('comuna-info/(:num)', 'Dashboard\UbicacionController::getComunaInfo/$1');
+        $routes2->get('comuna-info', 'Dashboard\UbicacionController::getComunaInfo');
+        $routes2->post('validar', 'Dashboard\UbicacionController::validarUbicacion');
+        $routes2->get('estadisticas', 'Dashboard\UbicacionController::getEstadisticas');
     });
 });
 

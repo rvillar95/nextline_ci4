@@ -1,35 +1,42 @@
-<?php $this->extend('layout/dashboard') ?>
+<?= $this->extend('layout/dashboard') ?>
 
+<?= $this->section('servicio/lista') ?>
 
-<?= $this->section("servicio/lista") ?>
-
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <div class="mb-3">
-                        <h4>Lista de Servicios</h4>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-cogs"></i> Gestión de Servicios
+                    </h3>
+                    <div class="card-tools">
+                        <a href="<?= base_url('dashboard/servicio/registro') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nuevo Servicio
+                        </a>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="widget-content widget-content-area">
-
-            <div class="row">
-                <div class="col-lg-12 col-12 ">
+                <div class="card-body">
                     <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                                <?= session()->getFlashdata('errors'); ?>
-                            <?php endif; ?>
-                        </p>
-                    <?php endif; ?>
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success my-3" role="alert">
-                            <?= session()->getFlashdata('success'); ?>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                    <li><?= session()->getFlashdata('errors') ?></li>
+                                <?php else: ?>
+                                    <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                        <li><?= esc($error) ?></li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </ul>
                         </div>
                     <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('success') !== null) : ?>
+                        <div class="alert alert-success" role="alert">
+                            <?= session()->getFlashdata('success') ?>
+                        </div>
+                    <?php endif; ?>
+                    
                     <div class="table-responsive">
                         <table class="table table-bordered getServicio">
                             <thead>

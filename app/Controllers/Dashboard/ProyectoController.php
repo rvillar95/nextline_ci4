@@ -88,8 +88,8 @@ class ProyectoController extends BaseController
         if ($proyecto->insert($data)) {
             $proyectoId = $proyecto->getInsertID();
             
-            // Procesar imágenes si se subieron
-            $this->procesarImagenes($proyectoId);
+            // Procesar imágenes si se subieron (sin establecer portada automáticamente)
+            $this->procesarImagenes($proyectoId, false);
             
             return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto registrado con éxito');
         } else {
@@ -106,6 +106,7 @@ class ProyectoController extends BaseController
 
         $data = array();
         foreach ($proyectos as $r) {
+            log_message('debug', 'Proyecto destacado: ' . ($r->destacado ?? 'NULL') . ' - Tipo: ' . gettype($r->destacado));
             // Obtener imagen portada
             $imagenPortada = $imagen->getImagenPortada('proyecto', $r->id);
             $imagenHtml = $imagenPortada ? 
@@ -113,15 +114,17 @@ class ProyectoController extends BaseController
                 '<span class="badge badge-secondary">Sin imagen</span>';
 
             $data[] = array(
+                $imagenHtml,
                 $r->nombre,
+                $r->cliente ?? 'No especificado',
                 ucfirst($r->tipo_proyecto),
-                $r->ubicacion ?? 'No especificada',
                 $r->estado == 'completado' ? '<span class="badge badge-success">Completado</span>' : 
                    ($r->estado == 'en_progreso' ? '<span class="badge badge-primary">En Progreso</span>' : 
                    ($r->estado == 'en_pausa' ? '<span class="badge badge-warning">En Pausa</span>' : 
                    '<span class="badge badge-danger">Cancelado</span>')),
-                $r->destacado ? '<span class="badge badge-info">Destacado</span>' : '<span class="badge badge-light">Normal</span>',
-                $imagenHtml,
+                $r->ubicacion ?? 'No especificada',
+                $r->presupuesto ? '$' . number_format($r->presupuesto, 0, ',', '.') : 'No especificado',
+                !empty($r->destacado) && ($r->destacado == 'S' || $r->destacado == 1) ? '<span class="badge badge-info">Destacado</span>' : '<span class="badge badge-secondary">Normal</span>',
                 '<a href="editar/' . $r->id . '" style="display:inline-block; margin-right: 5px;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 25 25" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 table-cancel"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
                 <button type="button" value="' . $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>'
             );
@@ -245,17 +248,17 @@ class ProyectoController extends BaseController
             'materiales_principales' => $post['materiales_principales'],
             'testimonio_cliente' => $post['testimonio_cliente'],
             'nombre_cliente' => $post['nombre_cliente'],
-            'destacado' => $post['destacado'] ?? false,
+            'destacado' => $post['destacado'] ?? 0,
             'meta_titulo' => $post['meta_titulo'],
             'meta_descripcion' => $post['meta_descripcion'],
             'meta_keywords' => $post['meta_keywords']
         ];
 
         if ($proyecto->update($id, $arreglo)) {
-            // Procesar nuevas imágenes si se subieron
-            $this->procesarImagenes($id);
+            // Procesar nuevas imágenes si se subieron (sin establecer portada automáticamente)
+            $this->procesarImagenes($id, false);
             
-            return redirect()->to(base_url('dashboard/proyecto/editar/' . $id))->with('success', 'Proyecto editado con éxito');
+            return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el proyecto');
         }
@@ -264,12 +267,16 @@ class ProyectoController extends BaseController
     /**
      * Procesar imágenes subidas
      */
-    private function procesarImagenes($proyectoId)
+    private function procesarImagenes($proyectoId, $establecerPortada = false)
     {
         $imagen = new Imagen();
         $files = $this->request->getFiles();
         
+        log_message('debug', 'Procesando imágenes para proyecto ID: ' . $proyectoId . ' - Establecer portada: ' . ($establecerPortada ? 'Sí' : 'No'));
+        log_message('debug', 'Archivos recibidos: ' . json_encode(array_keys($files)));
+        
         if (isset($files['imagenes']) && !empty($files['imagenes'])) {
+            log_message('debug', 'Se encontraron ' . count($files['imagenes']) . ' imágenes para procesar');
             $uploadPath = WRITEPATH . 'uploads/proyectos/';
             $publicPath = FCPATH . 'uploads/proyectos/';
             
@@ -281,31 +288,58 @@ class ProyectoController extends BaseController
                 mkdir($publicPath, 0755, true);
             }
             
-            foreach ($files['imagenes'] as $file) {
+            // Determinar si se debe establecer portada automáticamente
+            $primeraImagen = false; // Por defecto, no establecer portada
+            
+            if ($establecerPortada) {
+                // Solo establecer portada si se especifica y no hay portada existente
+                $portadaExistente = $imagen->getImagenPortada('proyecto', $proyectoId);
+                $primeraImagen = !$portadaExistente;
+            }
+            
+            foreach ($files['imagenes'] as $index => $file) {
+                log_message('debug', "Procesando imagen $index: " . $file->getName() . " - Válida: " . ($file->isValid() ? 'Sí' : 'No') . " - Movida: " . ($file->hasMoved() ? 'Sí' : 'No'));
+                
                 if ($file->isValid() && !$file->hasMoved()) {
                     $newName = $file->getRandomName();
                     
                     // Mover a writable
-                    $file->move($uploadPath, $newName);
-                    
-                    // Copiar a public para acceso web
-                    copy($uploadPath . $newName, $publicPath . $newName);
-                    
-                    // Obtener siguiente orden
-                    $orden = $imagen->getSiguienteOrden('proyecto', $proyectoId);
-                    
-                    $imagenData = [
-                        'nombre_archivo' => $newName,
-                        'ruta' => 'uploads/proyectos/' . $newName,
-                        'tipo' => 'proyecto',
-                        'entidad_id' => $proyectoId,
-                        'es_portada' => false,
-                        'orden' => $orden,
-                        'descripcion' => '',
-                        'estado' => 'A'
-                    ];
-                    
-                    $imagen->insert($imagenData);
+                    if ($file->move($uploadPath, $newName)) {
+                        log_message('debug', "Imagen movida exitosamente: $newName");
+                        
+                        // Copiar a public para acceso web
+                        if (copy($uploadPath . $newName, $publicPath . $newName)) {
+                            log_message('debug', "Imagen copiada a directorio público: $newName");
+                            
+                            // Obtener siguiente orden
+                            $orden = $imagen->getSiguienteOrden('proyecto', $proyectoId);
+                            
+                            $imagenData = [
+                                'nombre_archivo' => $newName,
+                                'ruta' => 'uploads/proyectos/' . $newName,
+                                'tipo' => 'proyecto',
+                                'entidad_id' => $proyectoId,
+                                'es_portada' => $primeraImagen, // Solo la primera será portada si no hay portada existente
+                                'orden' => $orden,
+                                'descripcion' => '',
+                                'estado' => 'A'
+                            ];
+                            
+                            if ($imagen->insert($imagenData)) {
+                                log_message('debug', "Imagen insertada en BD exitosamente: $newName");
+                            } else {
+                                log_message('error', "Error al insertar imagen en BD: " . json_encode($imagen->errors()));
+                            }
+                            
+                            $primeraImagen = false; // Las siguientes no son portada
+                        } else {
+                            log_message('error', "Error al copiar imagen a directorio público: $newName");
+                        }
+                    } else {
+                        log_message('error', "Error al mover imagen: " . $file->getErrorString());
+                    }
+                } else {
+                    log_message('debug', "Imagen $index no válida o ya movida: " . $file->getErrorString());
                 }
             }
         }

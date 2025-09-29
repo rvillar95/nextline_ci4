@@ -51,7 +51,20 @@ class ModuloDetalle extends Model
     public function getMenu($perfil)
     {
         $db = \Config\Database::connect();
+        // Este método es para mostrar en el menú, SÍ debe respetar el campo mostrar
         $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' and mo.mostrar = 'S' and pe.estado = 'A' order by pe.orden asc";
+        $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
+        return $modulos;
+    }
+
+    /**
+     * Obtiene todos los módulos accesibles para un perfil (para permisos)
+     * NO respeta el campo mostrar - solo estado y permisos
+     */
+    public function getMenuForPermissions($perfil)
+    {
+        $db = \Config\Database::connect();
+        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' and pe.estado = 'A' order by pe.orden asc";
         $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
         return $modulos;
     }
@@ -76,6 +89,10 @@ class ModuloDetalle extends Model
      * NUEVO: Trae en una sola consulta todos los patrones de rutas accesibles
      * para un perfil (módulo y submódulos) junto a sus acciones y flags efectivos.
      *
+     * IMPORTANTE: Este método NO respeta el campo 'mostrar' del módulo.
+     * El campo 'mostrar' solo controla la visibilidad en el menú, NO los permisos de acceso.
+     * Los permisos se basan únicamente en el estado del módulo y los permisos del perfil.
+     *
      * Retorna un array de items con:
      * - modulo_ruta (string)
      * - detalle_ruta (string|null)
@@ -99,7 +116,6 @@ class ModuloDetalle extends Model
             JOIN modulo m
               ON m.id = pm.modulo_id
              AND m.estado = 'A'
-             AND (m.mostrar = 'S' OR m.mostrar IS NULL)
             LEFT JOIN modulo_detalle md
               ON md.modulo_id = m.id
              AND md.estado = 'A'

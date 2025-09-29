@@ -1,78 +1,134 @@
-<?php $this->extend('layout/dashboard') ?>
+<?= $this->extend('layout/dashboard') ?>
 
-<?= $this->section('content') ?>
-<div class="row layout-top-spacing">
-    <div class="col-xl-12 col-lg-12 col-sm-12 layout-spacing">
-        <div class="widget-content widget-content-area br-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4 class="mb-0">Lista de Testimonios</h4>
-                <a href="<?= base_url('dashboard/testimonio/registro') ?>" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nuevo Testimonio
-                </a>
+<?= $this->section('testimonio/lista') ?>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-quote-left"></i> Gestión de Testimonios
+                    </h3>
+                    <div class="card-tools">
+                        <a href="<?= base_url('dashboard/testimonio/registro') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nuevo Testimonio
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <?php if (session()->getFlashdata('errors')): ?>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                    <li><?= esc($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('success')): ?>
+                        <div class="alert alert-success" role="alert">
+                            <?= session()->getFlashdata('success') ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered getTestimonios">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Empresa</th>
+                                    <th>Testimonio</th>
+                                    <th>Calificación</th>
+                                    <th>Proyecto</th>
+                                    <th>Servicio</th>
+                                    <th>Estado</th>
+                                    <th>Destacado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('success') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('error') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            <?php endif; ?>
-
-            <div class="table-responsive">
-                <table id="testimonios-table" class="table table-hover" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>Empresa</th>
-                            <th>Testimonio</th>
-                            <th>Calificación</th>
-                            <th>Proyecto</th>
-                            <th>Servicio</th>
-                            <th>Estado</th>
-                            <th>Destacado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true" style="display: none;">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEliminacionTitle">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-text">¿Estás seguro de que deseas eliminar este testimonio? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="<?= base_url('dashboard/testimonio/eliminar'); ?>"> 
+                    <?= csrf_field() ?>
+                    <input type="hidden" id="id" name="id" value="">
+                     <button type="submit"
+                        class="btn btn-danger"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Eliminar">
+                        Eliminar
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-$(document).ready(function() {
-    var table = $('#testimonios-table').DataTable({
-        "processing": true,
-        "serverSide": false,
-        "ajax": {
-            "url": "<?= base_url('dashboard/testimonio/getTestimonios') ?>",
-            "type": "GET"
-        },
-        "columns": [
-            { "data": 0 },
-            { "data": 1 },
-            { "data": 2 },
-            { "data": 3 },
-            { "data": 4 },
-            { "data": 5 },
-            { "data": 6 },
-            { "data": 7 },
-            { "data": 8, "orderable": false }
-        ],
-        "order": [[0, "desc"]],
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
-        }
-    });
+    getTestimonios();
+
+    function getTestimonios() {
+        $('.getTestimonios').DataTable().clear().destroy();
+        $('.getTestimonios').DataTable({
+            language: {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Registros _MENU_ ",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla =(",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sSearch": "Buscar:",
+                "sUrl": "",
+                "sInfoThousands": ",",
+                "sLoadingRecords": "Cargando...",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                },
+                "buttons": {
+                    "copy": "Copiar",
+                    "colvis": "Visibilidad"
+                }
+            },
+            "ajax": {
+                url: 'getTestimonios',
+                type: 'GET'
+            }
+        });
+    }
 
     // Función para editar testimonio
     window.editarTestimonio = function(id) {
@@ -81,10 +137,16 @@ $(document).ready(function() {
 
     // Función para eliminar testimonio
     window.eliminarTestimonio = function(id) {
-        if (confirm('¿Estás seguro de que deseas eliminar este testimonio?')) {
-            window.location.href = '<?= base_url('dashboard/testimonio/eliminar') ?>/' + id;
-        }
+        $("#id").attr("value", id);
+        $("#modalEliminacion").modal("show");
     };
-});
+
+    $("body").on("click", "#btnEliminar", function(e) {
+        e.preventDefault();
+        console.log(this.value);
+        $("#id").attr("value", this.value);
+        $("#modalEliminacion").modal("show");
+    });
 </script>
+
 <?= $this->endSection() ?>

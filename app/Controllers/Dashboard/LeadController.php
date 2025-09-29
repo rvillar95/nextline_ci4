@@ -23,7 +23,7 @@ final class LeadController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        return view('Base/leads/lista', $data);
+        return view('Modulos/leads/lista', $data);
     }
 
     public function getLeads()
@@ -66,7 +66,14 @@ final class LeadController extends BaseController
                 default => '<span class="badge badge-secondary">N/A</span>',
             };
 
-            $fecha = $r['fcreacion'] ? date('d/m/Y H:i', strtotime($r['fcreacion'])) : 'N/A';
+            $fecha = 'N/A';
+            if (!empty($r['fcreacion']) && $r['fcreacion'] !== '0000-00-00 00:00:00') {
+                try {
+                    $fecha = date('d/m/Y H:i', strtotime($r['fcreacion']));
+                } catch (Exception $e) {
+                    $fecha = 'Fecha inválida';
+                }
+            }
 
             $data[] = [
                 esc($r['nombre']),

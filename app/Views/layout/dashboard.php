@@ -165,6 +165,16 @@ exit(); */
                     line-height: 1.3 !important;       /* Altura de línea cómoda para múltiples líneas */
                     display: block !important;          /* Mostrar como bloque para mejor control */
                 }
+
+                /* Asegurar que el último elemento del menú se vea bien */
+                #sidebar ul.menu-categories li.menu:last-child {
+                    margin-bottom: 80px !important;     /* Espacio al final del menú */
+                }
+
+                /* Asegurar que todos los elementos del menú tengan el mismo estilo */
+                #sidebar ul.menu-categories li.menu {
+                    margin-bottom: 5px !important;     /* Espacio consistente entre elementos */
+                }
             </style>
             
             <ul class="list-unstyled menu-categories" id="accordionExample">
@@ -297,13 +307,14 @@ exit(); */
                     <!-- Star Section Modulo Servicio-->
                     <?php echo $this->renderSection("servicio/registro"); ?>
                     <?php echo $this->renderSection("servicio/lista"); ?>
+                    <?php echo $this->renderSection("servicio/editar"); ?>
                     <?php echo $this->renderSection("servicio/detalle"); ?>
                     <!-- END Section Modulo Servicio-->
 
                     <!-- Star Section Modulo Galeria-->
                     <?php echo $this->renderSection("galeria/registro"); ?>
                     <?php echo $this->renderSection("galeria/lista"); ?>
-                    <?php echo $this->renderSection("galeria/detalle"); ?>
+                    <?php echo $this->renderSection("galeria/editar"); ?>
                     <!-- END Section Modulo Galeria-->
 
                     <!-- Star Section Modulo Galeria Categoria-->
@@ -332,6 +343,18 @@ exit(); */
                     <?php echo $this->renderSection("testimonio/registro"); ?>
                     <?php echo $this->renderSection("testimonio/lista"); ?>
                     <?php echo $this->renderSection("testimonio/editar"); ?>
+                    
+                    <!-- Secciones de Clientes -->
+                    <?php echo $this->renderSection("cliente/lista"); ?>
+                    <?php echo $this->renderSection("cliente/registro"); ?>
+                    <?php echo $this->renderSection("cliente/editar"); ?>
+                    <?php echo $this->renderSection("cliente/detalle"); ?>
+                    
+                    <!-- Secciones de Cotizaciones -->
+                    <?php echo $this->renderSection("cotizacion/lista"); ?>
+                    <?php echo $this->renderSection("cotizacion/registro"); ?>
+                    <?php echo $this->renderSection("cotizacion/editar"); ?>
+                    <?php echo $this->renderSection("cotizacion/detalle"); ?>
                     <!-- END Section Modulo Testimonio-->
                 </div>
 

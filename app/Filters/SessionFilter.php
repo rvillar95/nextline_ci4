@@ -24,6 +24,13 @@ final class SessionFilter implements FilterInterface
         '/img/(:any)',
         '/assets/(:any)',
         '/favicon.ico',
+        // Rutas AJAX de ubicación (regiones/comunas)
+        '/dashboard/ubicacion/regiones',
+        '/dashboard/ubicacion/comunas/(:any)',
+        '/dashboard/ubicacion/buscar-comunas',
+        '/dashboard/ubicacion/comuna-info/(:any)',
+        '/dashboard/ubicacion/validar',
+        '/dashboard/ubicacion/estadisticas',
     ];
 
     /**
@@ -37,10 +44,18 @@ final class SessionFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $path = $this->sanitizePath($this->currentPath($request));
+        
+        // Log para debugging
+        if (strpos($path, 'generarPDF') !== false) {
+            log_message('debug', 'SessionFilter: Procesando ruta generarPDF: ' . $path);
+        }
 
         // 1) Públicos fuera del filtro
         foreach (self::PUBLIC_PATHS as $pub) {
             if ($this->matchesPattern($path, $pub)) {
+                if (strpos($path, 'generarPDF') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta generarPDF encontrada en PUBLIC_PATHS');
+                }
                 return;
             }
         }
@@ -58,35 +73,58 @@ final class SessionFilter implements FilterInterface
         }
 
         $allowed = $this->getAllowedRules($perfilId);
+        
+        if (strpos($path, 'generarPDF') !== false) {
+            log_message('debug', 'SessionFilter: Reglas permitidas para perfil ' . $perfilId . ': ' . count($allowed));
+            foreach ($allowed as $rule) {
+                log_message('debug', 'SessionFilter: Regla: ' . $rule['pattern'] . ' (allowTailNum: ' . ($rule['allowTailNum'] ? 'true' : 'false') . ')');
+            }
+        }
 
         // 4) Evaluar ruta contra patrones
         foreach ($allowed as $rule) {
             $pattern      = $rule['pattern'];              // p.ej. /dashboard/perfil/editar
             $allowTailNum = (bool)($rule['allowTailNum'] ?? false);
             $regex        = $rule['regex'];                // ya precompilado
-
+            //            //echo $pattern." vs ".$path."<br>";
             // Igualdad exacta (ignora slash final)
             if ($this->isDirectMatch($path, $pattern)) {
+                if (strpos($path, 'generarPDF') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta generarPDF PERMITIDA por igualdad exacta con: ' . $pattern);
+                }
                 return;
             }
 
             // Igualdad tras remover /<num> sólo si la regla lo permite
             if ($allowTailNum && $this->isDirectMatch($this->dropTrailingNum($path), $pattern)) {
+                if (strpos($path, 'generarPDF') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta generarPDF PERMITIDA por igualdad con tail num con: ' . $pattern);
+                }
                 return;
             }
 
             // Match por placeholders CI4 a nivel de segmentos
             if ($this->matchesPattern($path, $pattern)) {
+                if (strpos($path, 'generarPDF') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta generarPDF PERMITIDA por match pattern con: ' . $pattern);
+                }
                 return;
             }
 
             // Regex precompilado (incluye tolerancia a /<num> si corresponde)
             if ($this->pathMatchesRegex($path, $regex)) {
+                if (strpos($path, 'generarPDF') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta generarPDF PERMITIDA por regex con: ' . $pattern);
+                }
                 return;
             }
         }
+        //exit();
 
         // 5) Denegar si nada coincide
+        if (strpos($path, 'generarPDF') !== false) {
+            log_message('debug', 'SessionFilter: Ruta generarPDF DENEGADA - no tiene permisos');
+        }
         return $this->deny('No tiene permisos para esta funcionalidad');
     }
 
@@ -210,7 +248,7 @@ final class SessionFilter implements FilterInterface
         }
         // 3) Heurística por último segmento (evita 'lista'/'registro')
         $last = basename($pattern);
-        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view'];
+        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view', 'generarPDF'];
         return in_array($last, $verbsId, true);
     }
 
