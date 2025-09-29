@@ -1,400 +1,406 @@
-<?php $this->extend('layout/dashboard') ?>
+<?= $this->extend('layout/dashboard') ?>
 
-<?= $this->section("proyecto/editar") ?>
+<?= $this->section('proyecto/editar') ?>
 
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <div class="mb-3">
-                        <h4>Editar Proyecto</h4>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-edit"></i> Editar Proyecto
+                    </h3>
+                    <div class="card-tools">
+                        <a href="<?= base_url('dashboard/proyecto/lista') ?>" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver
+                        </a>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="widget-content widget-content-area">
-
-            <div class="row">
-                <div class="col-lg-12 col-12 ">
-
-                    <?php if (session()->getFlashdata('success')) : ?>
-                        <div class="alert alert-success" role="alert">
-                            <?= session()->getFlashdata('success'); ?>
+                <div class="card-body">
+                    <?php if (session()->getFlashdata('errors')): ?>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                    <li><?= esc($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
                         </div>
                     <?php endif; ?>
 
-                    <?php if (session()->getFlashdata('errors')) : ?>
-                        <div class="alert alert-danger" role="alert">
-                            <?php if (is_array(session()->getFlashdata('errors'))) : ?>
-                                <ul class="mb-0">
-                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
-                                        <li><?= $error ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php else : ?>
-                                <?= session()->getFlashdata('errors'); ?>
-                            <?php endif; ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <div class="form-group">
                     <?= form_open_multipart('dashboard/proyecto/update') ?>
-                        <?= csrf_field(); ?>
+                        <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= $proyecto->id ?>">
                         
-                        <!-- Información Básica -->
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
                                     <label class="form-label">Nombre del Proyecto *</label>
-                                    <input type="text" id="nombre" name="nombre" value="<?= set_value('nombre', $proyecto->nombre); ?>" class="form-control" autofocus required>
+                                    <input type="text" name="nombre" class="form-control" 
+                                           value="<?= old('nombre', $proyecto->nombre) ?>" required>
+                                    <?php if (session()->getFlashdata('errors')['nombre'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['nombre']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
                                     <label class="form-label">Cliente</label>
-                                    <input type="text" id="cliente" name="cliente" value="<?= set_value('cliente', $proyecto->cliente); ?>" class="form-control">
+                                    <input type="text" name="cliente" class="form-control" 
+                                           value="<?= old('cliente', $proyecto->cliente) ?>">
+                                    <?php if (session()->getFlashdata('errors')['cliente'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['cliente']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
                                     <label class="form-label">Tipo de Proyecto *</label>
-                                    <select class="form-select" id="tipo_proyecto" name="tipo_proyecto" required>
-                                        <option value="">Seleccionar tipo...</option>
-                                        <?php foreach ($tipos_proyecto as $key => $value): ?>
-                                            <option value="<?= $key; ?>" <?= set_select('tipo_proyecto', $key, $proyecto->tipo_proyecto == $key); ?>>
-                                                <?= $value; ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                    <select name="tipo_proyecto" class="form-control" required>
+                                        <option value="">Seleccionar tipo</option>
+                                        <option value="residencial" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'residencial' ? 'selected' : '' ?>>Residencial</option>
+                                        <option value="comercial" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'comercial' ? 'selected' : '' ?>>Comercial</option>
+                                        <option value="industrial" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'industrial' ? 'selected' : '' ?>>Industrial</option>
+                                        <option value="institucional" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'institucional' ? 'selected' : '' ?>>Institucional</option>
+                                        <option value="infraestructura" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'infraestructura' ? 'selected' : '' ?>>Infraestructura</option>
+                                        <option value="remodelacion" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'remodelacion' ? 'selected' : '' ?>>Remodelación</option>
+                                        <option value="ampliacion" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'ampliacion' ? 'selected' : '' ?>>Ampliación</option>
+                                        <option value="mantenimiento" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'mantenimiento' ? 'selected' : '' ?>>Mantenimiento</option>
+                                        <option value="reparacion" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'reparacion' ? 'selected' : '' ?>>Reparación</option>
+                                        <option value="otros" <?= old('tipo_proyecto', $proyecto->tipo_proyecto) == 'otros' ? 'selected' : '' ?>>Otros</option>
                                     </select>
+                                    <?php if (session()->getFlashdata('errors')['tipo_proyecto'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['tipo_proyecto']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Estado *</label>
-                                    <select class="form-select" id="estado" name="estado" required>
-                                        <option value="">Seleccionar estado...</option>
-                                        <?php foreach ($estados_proyecto as $key => $value): ?>
-                                            <option value="<?= $key; ?>" <?= set_select('estado', $key, $proyecto->estado == $key); ?>>
-                                                <?= $value; ?>
-                                            </option>
-                                        <?php endforeach; ?>
+                                <div class="form-group">
+                                    <label class="form-label">Estado del Proyecto *</label>
+                                    <select name="estado" class="form-control" required>
+                                        <option value="">Seleccionar estado</option>
+                                        <option value="en_progreso" <?= old('estado', $proyecto->estado) == 'en_progreso' ? 'selected' : '' ?>>En Progreso</option>
+                                        <option value="completado" <?= old('estado', $proyecto->estado) == 'completado' ? 'selected' : '' ?>>Completado</option>
+                                        <option value="en_pausa" <?= old('estado', $proyecto->estado) == 'en_pausa' ? 'selected' : '' ?>>En Pausa</option>
+                                        <option value="cancelado" <?= old('estado', $proyecto->estado) == 'cancelado' ? 'selected' : '' ?>>Cancelado</option>
                                     </select>
+                                    <?php if (session()->getFlashdata('errors')['estado'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['estado']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Ubicación -->
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Ubicación</label>
-                                    <input type="text" id="ubicacion" name="ubicacion" value="<?= set_value('ubicacion', $proyecto->ubicacion); ?>" class="form-control" placeholder="Ciudad, Región">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Dirección</label>
-                                    <input type="text" id="direccion" name="direccion" value="<?= set_value('direccion', $proyecto->direccion); ?>" class="form-control" placeholder="Dirección específica">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Fechas -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
                                     <label class="form-label">Fecha de Inicio</label>
-                                    <input type="date" id="fecha_inicio" name="fecha_inicio" value="<?= set_value('fecha_inicio', $proyecto->fecha_inicio); ?>" class="form-control">
+                                    <input type="date" name="fecha_inicio" class="form-control" 
+                                           value="<?= old('fecha_inicio', $proyecto->fecha_inicio) ?>">
+                                    <?php if (session()->getFlashdata('errors')['fecha_inicio'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['fecha_inicio']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
                                     <label class="form-label">Fecha de Finalización</label>
-                                    <input type="date" id="fecha_finalizacion" name="fecha_finalizacion" value="<?= set_value('fecha_finalizacion', $proyecto->fecha_finalizacion); ?>" class="form-control">
+                                    <input type="date" name="fecha_finalizacion" class="form-control"
+                                           value="<?= old('fecha_finalizacion', $proyecto->fecha_finalizacion) ?>">
+                                    <?php if (session()->getFlashdata('errors')['fecha_finalizacion'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['fecha_finalizacion']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Presupuesto -->
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
+                                <div class="form-group">
+                                    <label class="form-label">Ubicación</label>
+                                    <input type="text" name="ubicacion" class="form-control" 
+                                           value="<?= old('ubicacion', $proyecto->ubicacion) ?>" placeholder="Dirección del proyecto">
+                                    <?php if (session()->getFlashdata('errors')['ubicacion'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['ubicacion']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label class="form-label">Presupuesto</label>
-                                    <input type="number" id="presupuesto" name="presupuesto" value="<?= set_value('presupuesto', $proyecto->presupuesto); ?>" class="form-control" step="0.01" min="0" placeholder="0.00">
+                                    <input type="number" name="presupuesto" class="form-control" 
+                                           value="<?= old('presupuesto', $proyecto->presupuesto) ?>" step="0.01" placeholder="0.00">
+                                    <small class="text-muted">Presupuesto estimado del proyecto</small>
+                                    <?php if (session()->getFlashdata('errors')['presupuesto'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['presupuesto']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Mostrar Presupuesto</label>
+                                    <select name="mostrar_presupuesto" class="form-control">
+                                        <option value="0" <?= old('mostrar_presupuesto', $proyecto->mostrar_presupuesto ?? 0) == 0 ? 'selected' : '' ?>>No</option>
+                                        <option value="1" <?= old('mostrar_presupuesto', $proyecto->mostrar_presupuesto ?? 0) == 1 ? 'selected' : '' ?>>Sí</option>
+                                    </select>
+                                    <small class="text-muted">Determina si el presupuesto se muestra públicamente</small>
+                                    <?php if (session()->getFlashdata('errors')['mostrar_presupuesto'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['mostrar_presupuesto']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check mt-4">
-                                        <input class="form-check-input" type="checkbox" id="mostrar_presupuesto" name="mostrar_presupuesto" value="1" <?= set_checkbox('mostrar_presupuesto', '1', $proyecto->mostrar_presupuesto); ?>>
-                                        <label class="form-check-label" for="mostrar_presupuesto">
-                                            Mostrar presupuesto públicamente
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Descripciones -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Descripción Corta</label>
-                                    <textarea id="descripcion_corta" name="descripcion_corta" class="form-control" rows="3" placeholder="Descripción breve del proyecto"><?= set_value('descripcion_corta', $proyecto->descripcion_corta); ?></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Descripción Detallada</label>
-                                    <textarea id="descripcion_detallada" name="descripcion_detallada" class="form-control" rows="5" placeholder="Descripción completa del proyecto, proceso, características especiales..."><?= set_value('descripcion_detallada', $proyecto->descripcion_detallada); ?></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Características Técnicas -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Área Construida (m²)</label>
-                                    <input type="number" id="area_construida" name="area_construida" value="<?= set_value('area_construida', $proyecto->area_construida); ?>" class="form-control" step="0.01" min="0" placeholder="0.00">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Materiales Principales</label>
-                                    <input type="text" id="materiales_principales" name="materiales_principales" value="<?= set_value('materiales_principales', $proyecto->materiales_principales); ?>" class="form-control" placeholder="Hormigón, Acero, Madera...">
+                                <div class="form-group">
+                                    <label class="form-label">Proyecto Destacado</label>
+                                    <select name="destacado" class="form-control">
+                                        <?php 
+                                        $destacadoValue = old('destacado', $proyecto->destacado ?? 0);
+                                        // En BD viene como 1 o 0, convertir a S/N para el formulario
+                                        $isDestacado = ($destacadoValue == 1 || $destacadoValue == '1');
+                                        ?>
+                                        <option value="0" <?= !$isDestacado ? 'selected' : '' ?>>No</option>
+                                        <option value="1" <?= $isDestacado ? 'selected' : '' ?>>Sí</option>
+                                    </select>
+                                    <small class="text-muted">Los proyectos destacados aparecen en la página principal</small>
+                                    <?php if (session()->getFlashdata('errors')['destacado'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['destacado']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Características Técnicas</label>
-                                    <textarea id="caracteristicas_tecnicas" name="caracteristicas_tecnicas" class="form-control" rows="4" placeholder="Detalles técnicos, especificaciones, sistemas utilizados..."><?= set_value('caracteristicas_tecnicas', $proyecto->caracteristicas_tecnicas); ?></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Testimonio del Cliente -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Nombre del Cliente</label>
-                                    <input type="text" id="nombre_cliente" name="nombre_cliente" value="<?= set_value('nombre_cliente', $proyecto->nombre_cliente); ?>" class="form-control" placeholder="Nombre para el testimonio">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check mt-4">
-                                        <input class="form-check-input" type="checkbox" id="destacado" name="destacado" value="1" <?= set_checkbox('destacado', '1', $proyecto->destacado); ?>>
-                                        <label class="form-check-label" for="destacado">
-                                            Proyecto Destacado
-                                        </label>
-                                    </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Descripción del Proyecto</label>
+                                    <textarea name="descripcion_detallada" class="form-control" rows="4" 
+                                              placeholder="Descripción detallada del proyecto..."><?= old('descripcion_detallada', $proyecto->descripcion_detallada) ?></textarea>
+                                    <?php if (session()->getFlashdata('errors')['descripcion_detallada'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['descripcion_detallada']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Testimonio del Cliente</label>
-                                    <textarea id="testimonio_cliente" name="testimonio_cliente" class="form-control" rows="3" placeholder="Testimonio o comentario del cliente sobre el proyecto"><?= set_value('testimonio_cliente', $proyecto->testimonio_cliente); ?></textarea>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Agregar Más Imágenes</label>
+                                    <input type="file" name="imagenes[]" class="form-control" accept="image/*" multiple>
+                                    <small class="text-muted">Puedes seleccionar múltiples imágenes para agregar al proyecto (JPG, PNG, GIF - máximo 5MB cada una)</small>
+                                    <?php 
+                                    // Buscar imagen portada
+                                    $imagenPortada = null;
+                                    if (!empty($imagenes)) {
+                                        foreach ($imagenes as $img) {
+                                            if (isset($img->es_portada) && $img->es_portada == 1) {
+                                                $imagenPortada = $img;
+                                                break;
+                                            }
+                                        }
+                                        // Si no hay imagen portada, tomar la primera
+                                        if (!$imagenPortada && !empty($imagenes)) {
+                                            $imagenPortada = $imagenes[0];
+                                        }
+                                    }
+                                    ?>
+                                    <?php if (session()->getFlashdata('errors')['imagen_principal'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['imagen_principal']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Imágenes del Proyecto -->
+
+                        <!-- Gestión de Imágenes del Proyecto -->
+                        <?php if (!empty($imagenes)): ?>
                         <div class="row">
-                            <div class="col-md-12">
-                                <h5 class="mt-4 mb-3">Imágenes del Proyecto</h5>
-                                
-                                <!-- Imágenes existentes -->
-                                <?php if (!empty($imagenes)) : ?>
-                                    <div class="row mb-3">
-                                        <?php foreach ($imagenes as $imagen) : ?>
-                                            <div class="col-md-3 mb-3">
-                                                <div class="card">
-                                                    <img src="<?= base_url($imagen->ruta) ?>" class="card-img-top" style="height: 150px; object-fit: cover;" alt="Imagen del proyecto">
-                                                    <div class="card-body p-2">
-                                                        <div class="d-flex justify-content-between">
-                                                            <?php if ($imagen->es_portada) : ?>
-                                                                <span class="badge badge-success">Portada</span>
-                                                            <?php else : ?>
-                                                                <button type="button" class="btn btn-sm btn-outline-primary set-portada" data-imagen-id="<?= $imagen->id ?>" data-proyecto-id="<?= $proyecto->id ?>">
-                                                                    Portada
-                                                                </button>
-                                                            <?php endif; ?>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger eliminar-imagen" data-imagen-id="<?= $imagen->id ?>">
-                                                                Eliminar
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Imágenes del Proyecto</label>
+                                    <div class="row">
+                                        <?php foreach ($imagenes as $index => $img): ?>
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card">
+                                                <img src="<?= base_url($img->ruta) ?>" class="card-img-top" style="height: 150px; object-fit: cover;" alt="Imagen <?= $index + 1 ?>">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between">
+                                                        <?php if ($img->es_portada == 1): ?>
+                                                            <span class="badge badge-success">Portada</span>
+                                                        <?php else: ?>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="setPortada(<?= $img->id ?>, <?= $proyecto->id ?>)">
+                                                                <i class="fas fa-star"></i> Portada
                                                             </button>
-                                                        </div>
+                                                        <?php endif; ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarImagen(<?= $img->id ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
                                         <?php endforeach; ?>
                                     </div>
-                                <?php endif; ?>
-                                
-                                <!-- Subir nuevas imágenes -->
-                                <div class="mb-3">
-                                    <label class="form-label">Agregar Nuevas Imágenes</label>
-                                    <input type="file" id="imagenes" name="imagenes[]" class="form-control" multiple accept="image/*">
-                                    <small class="text-muted">Puedes seleccionar múltiples imágenes.</small>
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
-                        <!-- SEO -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h5 class="mt-4 mb-3">Configuración SEO</h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Meta Título</label>
-                                    <input type="text" id="meta_titulo" name="meta_titulo" value="<?= set_value('meta_titulo', $proyecto->meta_titulo); ?>" class="form-control" placeholder="Título para motores de búsqueda">
+                        <!-- Espaciado adicional antes de los botones -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Actualizar Proyecto
+                                    </button>
+                                    <a href="<?= base_url('dashboard/proyecto/lista') ?>" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </a>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Meta Descripción</label>
-                                    <textarea id="meta_descripcion" name="meta_descripcion" class="form-control" rows="2" placeholder="Descripción para motores de búsqueda"><?= set_value('meta_descripcion', $proyecto->meta_descripcion); ?></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Meta Keywords</label>
-                                    <input type="text" id="meta_keywords" name="meta_keywords" value="<?= set_value('meta_keywords', $proyecto->meta_keywords); ?>" class="form-control" placeholder="Palabras clave separadas por comas">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <button type="submit" class="btn btn-primary">Actualizar Proyecto</button>
-                                    <a href="<?= base_url('dashboard/proyecto/lista') ?>" class="btn btn-secondary">Volver a Lista</a>
-                                </div>
-                            </div>
-                        </div>
-
-                    <?= form_close() ?>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalEliminarImagen" tabindex="-1" aria-labelledby="modalEliminarImagenTitle" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<!-- Modal de Confirmación para Establecer Portada -->
+<div class="modal fade" id="modalConfirmarPortada" tabindex="-1" aria-labelledby="modalConfirmarPortadaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminarImagenTitle">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                <h5 class="modal-title" id="modalConfirmarPortadaLabel">Confirmar Portada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="modal-text">¿Estás seguro de que deseas eliminar esta imagen? Esta acción no se puede deshacer.</p>
+                <p>¿Estás seguro de que deseas establecer esta imagen como portada?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="confirmarEliminarImagen" class="btn btn-danger">
-                    Eliminar Imagen
-                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarPortada">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar Imagen -->
+<div class="modal fade" id="modalConfirmarEliminarImagen" tabindex="-1" aria-labelledby="modalConfirmarEliminarImagenLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarEliminarImagenLabel">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar esta imagen? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminarImagen">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Información -->
+<div class="modal fade" id="modalInformacion" tabindex="-1" aria-labelledby="modalInformacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalInformacionLabel">Información</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalInformacionBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Establecer imagen como portada
-$(document).on('click', '.set-portada', function() {
-    var imagenId = $(this).data('imagen-id');
-    var proyectoId = $(this).data('proyecto-id');
-    
+let imagenIdActual = null;
+let proyectoIdActual = null;
+
+function setPortada(imagenId, proyectoId) {
+    imagenIdActual = imagenId;
+    proyectoIdActual = proyectoId;
+    $('#modalConfirmarPortada').modal('show');
+}
+
+function eliminarImagen(imagenId) {
+    imagenIdActual = imagenId;
+    $('#modalConfirmarEliminarImagen').modal('show');
+}
+
+function mostrarModalInformacion(titulo, mensaje) {
+    $('#modalInformacionLabel').text(titulo);
+    $('#modalInformacionBody').html('<p>' + mensaje + '</p>');
+    $('#modalInformacion').modal('show');
+}
+
+// Confirmar establecer portada
+$('#btnConfirmarPortada').on('click', function() {
     $.ajax({
         url: '<?= base_url('dashboard/proyecto/setPortada') ?>',
         type: 'POST',
         data: {
-            imagen_id: imagenId,
-            proyecto_id: proyectoId,
+            imagen_id: imagenIdActual,
+            proyecto_id: proyectoIdActual,
             <?= csrf_token() ?>: '<?= csrf_hash() ?>'
         },
         success: function(response) {
+            $('#modalConfirmarPortada').modal('hide');
             if (response.success) {
-                location.reload();
+                mostrarModalInformacion('Éxito', 'Imagen establecida como portada correctamente');
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
             } else {
-                alert('Error al establecer portada: ' + response.message);
+                mostrarModalInformacion('Error', response.message);
             }
         },
         error: function() {
-            alert('Error al establecer portada');
+            $('#modalConfirmarPortada').modal('hide');
+            mostrarModalInformacion('Error', 'Error al establecer la imagen como portada');
         }
     });
 });
 
-// Variable para almacenar el ID de la imagen a eliminar
-var imagenIdAEliminar = null;
-
-// Mostrar modal de confirmación para eliminar imagen
-$(document).on('click', '.eliminar-imagen', function() {
-    imagenIdAEliminar = $(this).data('imagen-id');
-    $("#modalEliminarImagen").modal("show");
-});
-
-// Confirmar eliminación de imagen
-$(document).on('click', '#confirmarEliminarImagen', function() {
-    if (imagenIdAEliminar) {
-        $.ajax({
-            url: '<?= base_url('dashboard/proyecto/eliminarImagen') ?>',
-            type: 'POST',
-            data: {
-                imagen_id: imagenIdAEliminar,
-                <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    $("#modalEliminarImagen").modal("hide");
+// Confirmar eliminar imagen
+$('#btnConfirmarEliminarImagen').on('click', function() {
+    $.ajax({
+        url: '<?= base_url('dashboard/proyecto/eliminarImagen') ?>',
+        type: 'POST',
+        data: {
+            imagen_id: imagenIdActual,
+            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+        },
+        success: function(response) {
+            $('#modalConfirmarEliminarImagen').modal('hide');
+            if (response.success) {
+                mostrarModalInformacion('Éxito', 'Imagen eliminada correctamente');
+                setTimeout(function() {
                     location.reload();
-                } else {
-                    alert('Error al eliminar imagen: ' + response.message);
-                }
-            },
-            error: function() {
-                alert('Error al eliminar imagen');
+                }, 1500);
+            } else {
+                mostrarModalInformacion('Error', response.message);
             }
-        });
-    }
-});
-
-// Limpiar variable al cerrar modal
-$('#modalEliminarImagen').on('hidden.bs.modal', function () {
-    imagenIdAEliminar = null;
+        },
+        error: function() {
+            $('#modalConfirmarEliminarImagen').modal('hide');
+            mostrarModalInformacion('Error', 'Error al eliminar la imagen');
+        }
+    });
 });
 </script>
 

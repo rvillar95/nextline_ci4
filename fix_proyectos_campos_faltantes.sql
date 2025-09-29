@@ -1,0 +1,3 @@
+-- Script para proyectos - No se requieren cambios en la base de datos
+-- El campo 'mostrar_presupuesto' ya existe en la tabla proyectos
+-- El campo 'orden' no es necesario para este sistema

@@ -1,37 +1,58 @@
-<?php $this->extend('layout/dashboard') ?>
+<?= $this->extend('layout/dashboard') ?>
 
-<?= $this->section("galeria_categoria/lista") ?>
+<?= $this->section('galeria_categoria/lista') ?>
 
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <h4>Lista de Categorías de Galería</h4>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-images"></i> Gestión de Categorías de Galería
+                    </h3>
+                    <div class="card-tools">
+                        <a href="<?= base_url('dashboard/galeria-categoria/registro') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nueva Categoría
+                        </a>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="widget-content widget-content-area">
-            <?php if (session()->getFlashdata('success')) : ?>
-                <div class="alert alert-success" role="alert">
-                    <?= session()->getFlashdata('success'); ?>
+                <div class="card-body">
+                    <?php if (session()->getFlashdata('errors')): ?>
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                    <li><?= esc($error) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('success')): ?>
+                        <div class="alert alert-success" role="alert">
+                            <?= session()->getFlashdata('success') ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover mb-4" id="tablaGaleriaCategoria">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Icono</th>
+                                    <th>Color</th>
+                                    <th>Imágenes</th>
+                                    <th>Orden</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargan via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            <?php endif; ?>
-            <div class="table-responsive">
-                <table class="table table-bordered getGaleriaCategoria">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Descripción</th>
-                            <th>Icono</th>
-                            <th>Color</th>
-                            <th>Galerías</th>
-                            <th>Orden</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                </table>
             </div>
         </div>
     </div>
@@ -71,46 +92,65 @@
 </div>
 
 <script>
-$(document).ready(function() {
-    $('.getGaleriaCategoria').DataTable({
-        "processing": true,
-        "serverSide": true,
-        "ajax": {
-            "url": "<?= base_url('dashboard/galeria-categoria/getGaleriaCategoria') ?>",
-            "type": "GET"
-        },
-        "columns": [
-            { "data": 0 },
-            { "data": 1 },
-            { "data": 2 },
-            { "data": 3 },
-            { "data": 4 },
-            { "data": 5 },
-            { "data": 6 },
-            { "data": 7 }
-        ],
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
-        },
-        "responsive": true,
-        "pageLength": 10,
-        "order": [[5, "asc"]], // Ordenar por orden por defecto
-        "columnDefs": [
-            {
-                "targets": [7], // Columna de acciones
-                "orderable": false
-            }
-        ]
+    $(document).ready(function() {
+        // Cargar datos de la tabla
+        cargarTablaGaleriaCategoria();
     });
 
-    // Manejar eliminación con modal
+    function cargarTablaGaleriaCategoria() {
+        $('#tablaGaleriaCategoria').DataTable().clear().destroy();
+        $('#tablaGaleriaCategoria').DataTable({
+            language: {
+                "sProcessing": "Procesando...",
+                "sLengthMenu": "Registros _MENU_ ",
+                "sZeroRecords": "No se encontraron resultados",
+                "sEmptyTable": "Ningún dato disponible en esta tabla =(",
+                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+                "sInfoPostFix": "",
+                "sSearch": "Buscar:",
+                "sUrl": "",
+                "sInfoThousands": ",",
+                "sLoadingRecords": "Cargando...",
+                "oPaginate": {
+                    "sFirst": "Primero",
+                    "sLast": "Último",
+                    "sNext": "Siguiente",
+                    "sPrevious": "Anterior"
+                },
+                "oAria": {
+                    "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+                    "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                },
+                "buttons": {
+                    "copy": "Copiar",
+                    "colvis": "Visibilidad"
+                }
+            },
+            "ajax": {
+                url: 'getGaleriaCategoria',
+                type: 'GET'
+            },
+            "columns": [
+                { "data": "nombre" },
+                { "data": "descripcion" },
+                { "data": "icono" },
+                { "data": "color" },
+                { "data": "imagenes_count" },
+                { "data": "orden" },
+                { "data": "estado" },
+                { "data": "acciones" }
+            ]
+        });
+    }
+
     $("body").on("click", "#btnEliminar", function(e) {
         e.preventDefault();
         console.log(this.value);
         $("#id").attr("value", this.value);
         $("#modalEliminacion").modal("show");
     });
-});
 </script>
 
 <?= $this->endSection() ?>

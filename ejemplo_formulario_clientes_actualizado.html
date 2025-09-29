@@ -1,0 +1,138 @@
+<!-- EJEMPLO DE FORMULARIO DE CLIENTES ACTUALIZADO -->
+<!-- Este es un ejemplo de cómo actualizar el formulario de clientes para usar las nuevas tablas -->
+
+<!-- Campo de Región -->
+<div class="col-md-6">
+    <div class="form-group">
+        <label class="form-label">Región *</label>
+        <select name="region_id" id="region_id" class="form-control" required>
+            <option value="">Seleccionar región...</option>
+            <!-- Las opciones se cargarán via AJAX -->
+        </select>
+        <?php if (session()->getFlashdata('errors')['region_id'] ?? false): ?>
+            <div class="text-danger"><?= esc(session()->getFlashdata('errors')['region_id']) ?></div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Campo de Comuna -->
+<div class="col-md-6">
+    <div class="form-group">
+        <label class="form-label">Comuna *</label>
+        <select name="comuna_id" id="comuna_id" class="form-control" required disabled>
+            <option value="">Primero seleccione una región...</option>
+        </select>
+        <?php if (session()->getFlashdata('errors')['comuna_id'] ?? false): ?>
+            <div class="text-danger"><?= esc(session()->getFlashdata('errors')['comuna_id']) ?></div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- JavaScript para manejar la carga dinámica -->
+<script>
+$(document).ready(function() {
+    // Cargar regiones al inicializar
+    cargarRegiones();
+    
+    // Manejar cambio de región
+    $('#region_id').on('change', function() {
+        var regionId = $(this).val();
+        if (regionId) {
+            cargarComunas(regionId);
+        } else {
+            $('#comuna_id').html('<option value="">Primero seleccione una región...</option>').prop('disabled', true);
+        }
+    });
+});
+
+function cargarRegiones() {
+    $.ajax({
+        url: '<?= base_url('dashboard/ubicacion/regiones') ?>',
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var options = '<option value="">Seleccionar región...</option>';
+                $.each(response.data, function(index, region) {
+                    options += '<option value="' + region.id + '">' + region.nombre + '</option>';
+                });
+                $('#region_id').html(options);
+                
+                // Si hay un valor preseleccionado (en modo edición)
+                <?php if (isset($cliente) && $cliente->region_id): ?>
+                    $('#region_id').val('<?= $cliente->region_id ?>').trigger('change');
+                <?php endif; ?>
+            }
+        },
+        error: function() {
+            console.error('Error al cargar regiones');
+        }
+    });
+}
+
+function cargarComunas(regionId) {
+    $.ajax({
+        url: '<?= base_url('dashboard/ubicacion/comunas') ?>/' + regionId,
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                var options = '<option value="">Seleccionar comuna...</option>';
+                $.each(response.data, function(index, comuna) {
+                    options += '<option value="' + comuna.id + '">' + comuna.nombre + '</option>';
+                });
+                $('#comuna_id').html(options).prop('disabled', false);
+                
+                // Si hay un valor preseleccionado (en modo edición)
+                <?php if (isset($cliente) && $cliente->comuna_id): ?>
+                    $('#comuna_id').val('<?= $cliente->comuna_id ?>');
+                <?php endif; ?>
+            }
+        },
+        error: function() {
+            console.error('Error al cargar comunas');
+            $('#comuna_id').html('<option value="">Error al cargar comunas</option>');
+        }
+    });
+}
+
+// Función para validar ubicación
+function validarUbicacion() {
+    var regionId = $('#region_id').val();
+    var comunaId = $('#comuna_id').val();
+    
+    if (!regionId || !comunaId) {
+        return true; // Dejar que la validación HTML5 maneje esto
+    }
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/ubicacion/validar') ?>',
+        type: 'POST',
+        data: {
+            region_id: regionId,
+            comuna_id: comunaId
+        },
+        dataType: 'json',
+        success: function(response) {
+            if (!response.success || !response.valid) {
+                alert('La comuna seleccionada no pertenece a la región elegida.');
+                $('#comuna_id').focus();
+                return false;
+            }
+        },
+        error: function() {
+            console.error('Error al validar ubicación');
+        }
+    });
+    
+    return true;
+}
+
+// Agregar validación al formulario
+$('form').on('submit', function(e) {
+    if (!validarUbicacion()) {
+        e.preventDefault();
+        return false;
+    }
+});
+</script>

@@ -87,6 +87,7 @@
                 <form method="POST" action="<?= base_url('dashboard/perfil-detalle/eliminar'); ?>">
                     <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
+                    <input type="hidden" id="perfil_id_filter" name="perfil_id_filter" value="">
                     <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
                 </form>
             </div>
@@ -160,6 +161,8 @@
     $("body").on("click", "#btnEliminar", function(e) {
         e.preventDefault();
         $("#id").val(this.value);
+        // Capturar el valor actual del filtro de perfil
+        $("#perfil_id_filter").val(document.getElementById('perfil_id').value);
         $("#modalEliminacion").modal("show");
     });
 </script>

@@ -12,9 +12,12 @@ final class LeadModel extends Model
     protected $returnType    = 'array';
     protected $allowedFields = [
         'nombre','correo','telefono','mensaje','servicio_id',
-        'estado_id','utm_source','utm_medium','utm_campaign','factualizacion'
+        'estado_id','utm_source','utm_medium','utm_campaign','fcreacion','factualizacion'
     ];
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
+    protected $dateFormat = 'datetime';
+    protected $createdField = 'fcreacion';
+    protected $updatedField = 'factualizacion';
 
     protected $validationRules = [
         'nombre'  => 'required|string|min_length[2]|max_length[100]',

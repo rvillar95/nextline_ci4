@@ -7,10 +7,12 @@ use App\Models\ModuloDetalle;
 use App\Models\PerfilModulo;
 use App\Models\Perfil;
 use App\Models\Modulo;
+use App\Traits\MaintainsFilters;
 
 
 class PerfilDetalleController extends BaseController
 {
+    use MaintainsFilters;
 
     public function registro()
     {
@@ -188,12 +190,20 @@ class PerfilDetalleController extends BaseController
     {
         $perfilModulo = new PerfilModulo();
         $id = $this->request->getPost('id');
-        // Intenta eliminar el usuario
+        
+        // Intenta eliminar el perfil detalle
         if ($perfilModulo->delete($id)) {
-            // Usuario eliminado con éxito
-            return redirect()->to(base_url('dashboard/perfil-detalle/lista'))->with('success', 'Perfil Detalle eliminado con éxito.');
+            // Obtener el filtro de perfil_id del POST para mantenerlo
+            $perfilIdFilter = $this->request->getPost('perfil_id_filter');
+            
+            // Redirigir manteniendo el filtro
+            return $this->redirectWithPostFilters(
+                base_url('dashboard/perfil-detalle/lista'),
+                ['perfil_id' => $perfilIdFilter],
+                'Perfil Detalle eliminado con éxito.'
+            );
         } else {
-            // Error al eliminar el usuario
+            // Error al eliminar
             return redirect()->to(base_url('dashboard/perfil-detalle/lista'))->with('errors', 'No se pudo eliminar el Perfil Detalle.');
         }
     }

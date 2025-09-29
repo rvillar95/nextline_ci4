@@ -24,9 +24,10 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Seleccione el Perfil</label>
-                                    <select class="form-select" id="perfil" name="perfil" value="<?php set_value('perfil'); ?>">
+                                    <select class="form-select" id="perfil" name="perfil">
+                                        <option value="">Seleccionar perfil</option>
                                         <?php foreach ($perfiles as $perfil) : ?>
-                                            <option value="<?= esc($perfil['id']) ?>"><?= esc($perfil['nombre']) ?> </option>
+                                            <option value="<?= esc($perfil['id']) ?>" <?= old('perfil') == $perfil['id'] ? 'selected' : '' ?>><?= esc($perfil['nombre']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                     <?php if (isset(session()->getFlashdata('errors')['perfil'])) : ?>
@@ -39,9 +40,10 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Seleccione el Modulo</label>
-                                    <select class="form-select" id="modulo" name="modulo" value="<?php set_value('modulo'); ?>">
+                                    <select class="form-select" id="modulo" name="modulo">
+                                        <option value="">Seleccionar módulo</option>
                                         <?php foreach ($modulos as $modulo) : ?>
-                                            <option value="<?= esc($modulo['id']) ?>"><?= esc($modulo['nombre']) ?> (<?= esc($modulo['descripcion']) ?>)</option>
+                                            <option value="<?= esc($modulo['id']) ?>" <?= old('modulo') == $modulo['id'] ? 'selected' : '' ?>><?= esc($modulo['nombre']) ?> (<?= esc($modulo['descripcion']) ?>)</option>
                                         <?php endforeach; ?>
                                     </select>
                                     <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
@@ -56,15 +58,15 @@
                                 <div class="mb-3 form-check form-check-primary form-check-inline">
                                     <label class="form-check-label">Ver</label> <br>
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="ver" value="1" id="form-check-radio-default-checked" checked>
-                                        <label class="form-check-label" for="form-check-radio-default-checked">
+                                        <input class="form-check-input" type="radio" name="ver" value="1" id="ver_si" <?= old('ver', '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="ver_si">
                                             Si
                                         </label>
                                     </div>
 
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="ver" value="0" id="form-check-radio-default">
-                                        <label class="form-check-label" for="form-check-radio-default">
+                                        <input class="form-check-input" type="radio" name="ver" value="0" id="ver_no" <?= old('ver', '1') == '0' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="ver_no">
                                             No
                                         </label>
                                     </div>
@@ -80,16 +82,15 @@
                                 <div class="mb-3 form-check form-check-primary form-check-inline">
                                     <label class="form-check-label">Registrar</label> <br>
                                     <div class="form-check form-check-primary form-check-inline">
-
-                                        <input class="form-check-input" type="radio" name="registrar" value="1" id="form-check-radio-default-checked" checked>
-                                        <label class="form-check-label" for="form-check-radio-default-checked">
+                                        <input class="form-check-input" type="radio" name="registrar" value="1" id="registrar_si" <?= old('registrar', '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="registrar_si">
                                             Si
                                         </label>
                                     </div>
 
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="registrar" value="0" id="form-check-radio-default">
-                                        <label class="form-check-label" for="form-check-radio-default">
+                                        <input class="form-check-input" type="radio" name="registrar" value="0" id="registrar_no" <?= old('registrar', '1') == '0' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="registrar_no">
                                             No
                                         </label>
                                     </div>
@@ -104,15 +105,15 @@
                                 <div class="mb-3 form-check form-check-primary form-check-inline">
                                     <label class="form-check-label">Editar</label> <br>
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="editar" value="1" id="form-check-radio-default-checked" checked>
-                                        <label class="form-check-label" for="form-check-radio-default-checked">
+                                        <input class="form-check-input" type="radio" name="editar" value="1" id="editar_si" <?= old('editar', '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="editar_si">
                                             Si
                                         </label>
                                     </div>
 
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="editar" value="0" id="form-check-radio-default">
-                                        <label class="form-check-label" for="form-check-radio-default">
+                                        <input class="form-check-input" type="radio" name="editar" value="0" id="editar_no" <?= old('editar', '1') == '0' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="editar_no">
                                             No
                                         </label>
                                     </div>
@@ -127,15 +128,15 @@
                                 <div class="mb-3 form-check form-check-primary form-check-inline">
                                     <label class="form-check-label">Eliminar</label> <br>
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="eliminar" value="1" id="form-check-radio-default-checked" checked>
-                                        <label class="form-check-label" for="form-check-radio-default-checked">
+                                        <input class="form-check-input" type="radio" name="eliminar" value="1" id="eliminar_si" <?= old('eliminar', '1') == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="eliminar_si">
                                             Si
                                         </label>
                                     </div>
 
                                     <div class="form-check form-check-primary form-check-inline">
-                                        <input class="form-check-input" type="radio" name="eliminar" value="0" id="form-check-radio-default">
-                                        <label class="form-check-label" for="form-check-radio-default">
+                                        <input class="form-check-input" type="radio" name="eliminar" value="0" id="eliminar_no" <?= old('eliminar', '1') == '0' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="eliminar_no">
                                             No
                                         </label>
                                     </div>
@@ -149,7 +150,7 @@
                             <div class="col-md-12">
                                 <div class="mb-3">
                                     <label class="form-label">Orden</label>
-                                    <input type="number" min="0" id="orden" name="orden" value="<?= set_value('orden'); ?>" class="form-control" autofocus>
+                                    <input type="number" min="0" id="orden" name="orden" value="<?= old('orden', '0'); ?>" class="form-control" autofocus>
                                 </div>
                                 <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
                                     <p style="color:red; font-weight:bold;">

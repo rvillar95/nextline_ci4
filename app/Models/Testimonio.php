@@ -9,7 +9,7 @@ class Testimonio extends Model
     protected $table = 'testimonios';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType = 'array';
+    protected $returnType = 'object';
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
@@ -193,7 +193,7 @@ class Testimonio extends Model
         return [
             'total' => $total,
             'destacados' => $destacados,
-            'promedio_calificacion' => round($promedio['calificacion'] ?? 0, 1)
+            'promedio_calificacion' => round($promedio->calificacion ?? 0, 1)
         ];
     }
 }

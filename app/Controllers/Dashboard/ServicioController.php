@@ -35,7 +35,7 @@ class ServicioController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        $img = $this->request->getFile('img');
+        $img = $this->request->getFile('foto');
 
         $post = $this->request->getPost([
             'nombre', 'categoria_id', 'descripcionCorta', 'descripcionLarga', 
@@ -236,7 +236,7 @@ class ServicioController extends BaseController
             $arreglo['slug'] = $servicio->generarSlug($post['nombre']);
         }
         
-        $img = $this->request->getFile('img');
+        $img = $this->request->getFile('foto');
         if ($img && $img->isValid() && ! $img->hasMoved()) {
             $fecha = date('dmY');
             $newName = $img->getRandomName();

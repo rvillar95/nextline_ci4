@@ -26,7 +26,7 @@ class TestimonioController extends BaseController
         $proyectoModel = new Proyecto();
         $servicioModel = new Servicio();
         
-        $data['proyectos'] = $proyectoModel->where('estado', 'A')->findAll();
+        $data['proyectos'] = $proyectoModel->whereIn('estado', ['en_progreso', 'completado'])->findAll();
         $data['servicios'] = $servicioModel->where('estado', 'A')->findAll();
 
         echo view('Modulos/testimonio/registro', $data);
@@ -96,36 +96,36 @@ class TestimonioController extends BaseController
 
         $data = array();
         foreach ($rows as $r) {
-            $estado = $r['estado'] == 'A' ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>';
-            $destacado = $r['destacado'] == 'S' ? '<span class="badge badge-warning">Destacado</span>' : '';
+            $estado = $r->estado == 'A' ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>';
+            $destacado = $r->destacado == 'S' ? '<span class="badge badge-warning">Destacado</span>' : '<span class="badge badge-secondary">Normal</span>';
             
-            $estrellas = str_repeat('★', $r['calificacion']) . str_repeat('☆', 5 - $r['calificacion']);
+            $estrellas = str_repeat('★', $r->calificacion) . str_repeat('☆', 5 - $r->calificacion);
             
             $proyecto = '';
-            if ($r['proyecto_id']) {
+            if ($r->proyecto_id) {
                 $proyectoModel = new Proyecto();
-                $proyectoData = $proyectoModel->find($r['proyecto_id']);
-                $proyecto = $proyectoData ? $proyectoData['nombre'] : 'Proyecto no encontrado';
+                $proyectoData = $proyectoModel->find($r->proyecto_id);
+                $proyecto = $proyectoData ? $proyectoData->nombre : 'Proyecto no encontrado';
             }
             
             $servicio = '';
-            if ($r['servicio_id']) {
+            if ($r->servicio_id) {
                 $servicioModel = new Servicio();
-                $servicioData = $servicioModel->find($r['servicio_id']);
-                $servicio = $servicioData ? $servicioData['nombre'] : 'Servicio no encontrado';
+                $servicioData = $servicioModel->find($r->servicio_id);
+                $servicio = $servicioData ? $servicioData->nombre : 'Servicio no encontrado';
             }
 
             $data[] = array(
-                esc($r['nombre']),
-                esc($r['empresa'] ?? ''),
-                esc(mb_substr($r['testimonio'], 0, 80)) . '...',
+                esc($r->nombre),
+                esc($r->empresa ?? ''),
+                esc(mb_substr($r->testimonio, 0, 80)) . '...',
                 $estrellas,
                 $proyecto,
                 $servicio,
                 $estado,
                 $destacado,
-                '<button class="btn btn-sm btn-outline-primary" onclick="editarTestimonio(' . $r['id'] . ')">Editar</button> ' .
-                '<button class="btn btn-sm btn-outline-danger" onclick="eliminarTestimonio(' . $r['id'] . ')">Eliminar</button>'
+                '<button class="btn btn-sm btn-outline-primary" onclick="editarTestimonio(' . $r->id . ')">Editar</button> ' .
+                '<button class="btn btn-sm btn-outline-danger" onclick="eliminarTestimonio(' . $r->id . ')">Eliminar</button>'
             );
         }
 
@@ -162,7 +162,7 @@ class TestimonioController extends BaseController
         $proyectoModel = new Proyecto();
         $servicioModel = new Servicio();
         
-        $data['proyectos'] = $proyectoModel->where('estado', 'A')->findAll();
+        $data['proyectos'] = $proyectoModel->whereIn('estado', ['en_progreso', 'completado'])->findAll();
         $data['servicios'] = $servicioModel->where('estado', 'A')->findAll();
 
         echo view('Modulos/testimonio/editar', $data);
