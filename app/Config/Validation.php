@@ -666,6 +666,11 @@ class Validation extends BaseConfig
                 'in_list' => 'El campo {field} debe ser S o N.'
             ],
         ],
+        'foto' => [
+            'label' => 'Imagen',
+            'rules' => 'permit_empty',
+            'errors' => [],
+        ],
         'img' => [
             'label' => 'Image File',
             'rules' => [
@@ -1549,7 +1554,7 @@ class Validation extends BaseConfig
         'descripcion' => 'permit_empty|string|max_length[1000]',
         'fecha_cotizacion' => 'required|valid_date',
         'fecha_validez' => 'permit_empty|valid_date',
-        'estado_cotizacion' => 'required|in_list[borrador,enviada,aceptada,rechazada,expirada]',
+        'estado_cotizacion' => 'required|in_list[borrador,enviada,revisada,aprobada,rechazada,expirada]',
         'prioridad' => 'required|in_list[baja,media,alta]',
         'descuento_porcentaje' => 'permit_empty|decimal|greater_than_equal_to[0]|less_than_equal_to[100]',
         'descuento_monto' => 'permit_empty|decimal|greater_than_equal_to[0]',
@@ -1568,7 +1573,7 @@ class Validation extends BaseConfig
         'descripcion' => 'permit_empty|string|max_length[1000]',
         'fecha_cotizacion' => 'required|valid_date',
         'fecha_validez' => 'permit_empty|valid_date',
-        'estado_cotizacion' => 'required|in_list[borrador,enviada,aceptada,rechazada,expirada]',
+        'estado_cotizacion' => 'required|in_list[borrador,enviada,revisada,aprobada,rechazada,expirada]',
         'prioridad' => 'required|in_list[baja,media,alta]',
         'descuento_porcentaje' => 'permit_empty|decimal|greater_than_equal_to[0]|less_than_equal_to[100]',
         'descuento_monto' => 'permit_empty|decimal|greater_than_equal_to[0]',

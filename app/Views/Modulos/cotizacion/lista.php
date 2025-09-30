@@ -39,7 +39,8 @@
                                 <option value="">Todos</option>
                                 <option value="borrador">Borrador</option>
                                 <option value="enviada">Enviada</option>
-                                <option value="aceptada">Aceptada</option>
+                                <option value="revisada">Revisada</option>
+                                <option value="aprobada">Aprobada</option>
                                 <option value="rechazada">Rechazada</option>
                                 <option value="expirada">Expirada</option>
                             </select>

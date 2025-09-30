@@ -24,6 +24,18 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
+                    <?php if (session()->getFlashdata('success') !== null) : ?>
+                                <div class="alert alert-success my-3" role="alert">
+                                    <?= session()->getFlashdata('success'); ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                                <p style="color:red; font-weight:bold;">
+                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                        <?= session()->getFlashdata('errors'); ?>
+                                    <?php endif; ?>
+                                </p>
+                            <?php endif; ?>
                         <!-- Información Principal -->
                         <div class="col-md-8">
                             <!-- Información de la Cotización -->
@@ -52,7 +64,8 @@
                                             $estadoBadge = match ($cotizacion->estado ?? 'borrador') {
                                                 'borrador' => '<span class="badge badge-secondary">Borrador</span>',
                                                 'enviada' => '<span class="badge badge-info">Enviada</span>',
-                                                'aceptada' => '<span class="badge badge-success">Aceptada</span>',
+                                                'revisada' => '<span class="badge badge-warning">Revisada</span>',
+                                                'aprobada' => '<span class="badge badge-success">Aprobada</span>',
                                                 'rechazada' => '<span class="badge badge-danger">Rechazada</span>',
                                                 'expirada' => '<span class="badge badge-warning">Expirada</span>',
                                                 default => '<span class="badge badge-secondary">N/A</span>',
@@ -294,6 +307,11 @@
                                     <a href="<?= base_url('dashboard/cotizacion/editar/' . ($cotizacion->id ?? 0)) ?>" class="btn btn-primary btn-block mb-2">
                                         <i class="fas fa-edit"></i> Editar Cotización
                                     </a>
+                                    <?php if (($cotizacion->estado ?? 'borrador') === 'aprobada'): ?>
+                                    <button class="btn btn-success btn-block mb-2" onclick="convertirCotizacion(<?= $cotizacion->id ?? 0 ?>)">
+                                        <i class="fas fa-project-diagram"></i> Convertir en Proyecto
+                                    </button>
+                                    <?php endif; ?>
                                     <a href="<?= base_url('dashboard/cliente/detalle/' . ($cotizacion->cliente_id ?? 0)) ?>" class="btn btn-info btn-block mb-2">
                                         <i class="fas fa-user"></i> Ver Cliente
                                     </a>
@@ -341,6 +359,13 @@ function eliminarCotizacion(id) {
     eliminarConConfirmacion(
         '<?= base_url('dashboard/cotizacion/eliminar') ?>/' + id,
         '¿Estás seguro de que deseas eliminar esta cotización?'
+    );
+}
+
+function convertirCotizacion(id) {
+    convertirCotizacionConConfirmacion(
+        '<?= base_url('dashboard/cotizacion/convertir-proyecto') ?>/' + id,
+        '¿Estás seguro de convertir esta cotización en proyecto? Se creará un nuevo proyecto basado en los datos de esta cotización.'
     );
 }
 </script>

@@ -17,15 +17,18 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <?php if (session()->getFlashdata('errors')): ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                    <li><?= esc($error) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
+                <?php if (session()->getFlashdata('success') !== null) : ?>
+                                <div class="alert alert-success my-3" role="alert">
+                                    <?= session()->getFlashdata('success'); ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                                <p style="color:red; font-weight:bold;">
+                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                        <?= session()->getFlashdata('errors'); ?>
+                                    <?php endif; ?>
+                                </p>
+                            <?php endif; ?>
 
                     <form method="post" action="<?= base_url('dashboard/galeria-categoria/update') ?>" enctype="multipart/form-data">
                         <?= csrf_field() ?>
@@ -46,7 +49,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">Icono</label>
-                                    <input type="text" name="icono" class="form-control" 
+                                    <input type="text" name="icono" id="icono" class="form-control" 
                                            value="<?= old('icono', $categoria->icono) ?>" placeholder="Ej: fas fa-home, bi bi-house...">
                                     <small class="text-muted">Clase CSS del icono (opcional)</small>
                                     <?php if (session()->getFlashdata('errors')['icono'] ?? false): ?>
@@ -136,5 +139,9 @@
         </div>
     </div>
 </div>
+
+<!-- Cargar archivos del selector de iconos -->
+<link rel="stylesheet" href="<?= base_url('lib/css/icon-selector.css') ?>">
+<script src="<?= base_url('lib/js/icon-selector.js') ?>"></script>
 
 <?= $this->endSection() ?>

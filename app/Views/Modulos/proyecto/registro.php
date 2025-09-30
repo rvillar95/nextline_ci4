@@ -169,13 +169,107 @@
                         </div>
 
                         <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Área Construida (m²)</label>
+                                    <input type="number" name="area_construida" class="form-control" 
+                                           value="<?= old('area_construida') ?>" step="0.01" placeholder="0.00">
+                                    <small class="text-muted">Área total construida en metros cuadrados</small>
+                                    <?php if (session()->getFlashdata('errors')['area_construida'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['area_construida']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Estado Público</label>
+                                    <select name="estado_publico" class="form-control">
+                                        <option value="A" <?= old('estado_publico', 'A') == 'A' ? 'selected' : '' ?>>Activo (Visible públicamente)</option>
+                                        <option value="I" <?= old('estado_publico') == 'I' ? 'selected' : '' ?>>Inactivo (No visible públicamente)</option>
+                                    </select>
+                                    <small class="text-muted">Determina si el proyecto se muestra en el sitio web público</small>
+                                    <?php if (session()->getFlashdata('errors')['estado_publico'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['estado_publico']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label class="form-label">Descripción del Proyecto</label>
+                                    <label class="form-label">Descripción Corta</label>
+                                    <textarea name="descripcion_corta" class="form-control" rows="2" 
+                                              placeholder="Descripción breve del proyecto (máximo 500 caracteres)..."><?= old('descripcion_corta') ?></textarea>
+                                    <small class="text-muted">Descripción breve que aparecerá en listados y tarjetas</small>
+                                    <?php if (session()->getFlashdata('errors')['descripcion_corta'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['descripcion_corta']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Descripción Detallada</label>
                                     <textarea name="descripcion_detallada" class="form-control" rows="4" 
                                               placeholder="Descripción detallada del proyecto..."><?= old('descripcion_detallada') ?></textarea>
                                     <?php if (session()->getFlashdata('errors')['descripcion_detallada'] ?? false): ?>
                                         <div class="text-danger"><?= esc(session()->getFlashdata('errors')['descripcion_detallada']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Características Técnicas</label>
+                                    <textarea name="caracteristicas_tecnicas" class="form-control" rows="3" 
+                                              placeholder="Especificaciones técnicas, materiales especiales, sistemas utilizados..."><?= old('caracteristicas_tecnicas') ?></textarea>
+                                    <small class="text-muted">Detalles técnicos del proyecto</small>
+                                    <?php if (session()->getFlashdata('errors')['caracteristicas_tecnicas'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['caracteristicas_tecnicas']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label">Materiales Principales</label>
+                                    <textarea name="materiales_principales" class="form-control" rows="2" 
+                                              placeholder="Lista de materiales principales utilizados en el proyecto..."><?= old('materiales_principales') ?></textarea>
+                                    <small class="text-muted">Materiales y elementos principales del proyecto</small>
+                                    <?php if (session()->getFlashdata('errors')['materiales_principales'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['materiales_principales']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Testimonio del Cliente</label>
+                                    <textarea name="testimonio_cliente" class="form-control" rows="3" 
+                                              placeholder="Testimonio o comentario del cliente sobre el proyecto..."><?= old('testimonio_cliente') ?></textarea>
+                                    <small class="text-muted">Comentario del cliente sobre el proyecto</small>
+                                    <?php if (session()->getFlashdata('errors')['testimonio_cliente'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['testimonio_cliente']) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">Nombre del Cliente para Testimonio</label>
+                                    <input type="text" name="nombre_cliente" class="form-control" 
+                                           value="<?= old('nombre_cliente') ?>" placeholder="Nombre del cliente">
+                                    <small class="text-muted">Nombre que aparecerá con el testimonio</small>
+                                    <?php if (session()->getFlashdata('errors')['nombre_cliente'] ?? false): ?>
+                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['nombre_cliente']) ?></div>
                                     <?php endif; ?>
                                 </div>
                             </div>

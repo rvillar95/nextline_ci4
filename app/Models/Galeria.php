@@ -73,14 +73,14 @@ class Galeria extends Model
         }
     }
 
-    public function getGaleriaPorCategoria($categoria_id = null)
+    public function getGaleriaPorCategoria($categoriaNombre = null)
     {
-        $builder = $this->select('galeria.*, galeria_categoria.nombre as categoria_nombre')
+        $builder = $this->select('galeria.*, galeria_categoria.nombre as categoria_nombre, galeria_categoria.icono as categoria_icono, galeria_categoria.color as categoria_color')
                        ->join('galeria_categoria', 'galeria_categoria.id = galeria.categoria_id', 'left')
                        ->where('galeria.estado', 'A');
         
-        if ($categoria_id) {
-            $builder->where('galeria.categoria_id', $categoria_id);
+        if ($categoriaNombre) {
+            $builder->where('galeria_categoria.nombre', $categoriaNombre);
         }
         
         return $builder->orderBy('galeria.fcreacion', 'DESC')->findAll();

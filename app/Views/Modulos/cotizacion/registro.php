@@ -110,7 +110,8 @@
                                     <select name="estado_cotizacion" class="form-control" required>
                                         <option value="borrador" <?= old('estado_cotizacion') == 'borrador' ? 'selected' : '' ?>>Borrador</option>
                                         <option value="enviada" <?= old('estado_cotizacion') == 'enviada' ? 'selected' : '' ?>>Enviada</option>
-                                        <option value="aceptada" <?= old('estado_cotizacion') == 'aceptada' ? 'selected' : '' ?>>Aceptada</option>
+                                        <option value="revisada" <?= old('estado_cotizacion') == 'revisada' ? 'selected' : '' ?>>Revisada</option>
+                                        <option value="aprobada" <?= old('estado_cotizacion') == 'aprobada' ? 'selected' : '' ?>>Aprobada</option>
                                         <option value="rechazada" <?= old('estado_cotizacion') == 'rechazada' ? 'selected' : '' ?>>Rechazada</option>
                                         <option value="expirada" <?= old('estado_cotizacion') == 'expirada' ? 'selected' : '' ?>>Expirada</option>
                                     </select>
@@ -210,7 +211,7 @@
                         </div>
 
                         <!-- Items de la Cotización -->
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-header">
@@ -231,7 +232,7 @@
                         </div>
 
                         <!-- Totales -->
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-md-8"></div>
                             <div class="col-md-4">
                                 <div class="card">
@@ -285,7 +286,7 @@
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Guardar Cotización
@@ -345,7 +346,7 @@ function agregarItem() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Precio Unit.</label>
-                    <input type="text" name="items[${itemCounter}][precio_unitario]" class="form-control precio" min="0" step="0.01" required placeholder="0">
+                    <input type="text" name="items[${itemCounter}][precio_unitario]" class="form-control precio" min="0" step="0.01" placeholder="0">
                 </div>
                 <div class="col-md-1">
                     <label class="form-label">Subtotal</label>
@@ -355,18 +356,19 @@ function agregarItem() {
             <div class="row mt-2">
                 <div class="col-md-3">
                     <label class="form-label">Tipo de Item</label>
-                    <select name="items[${itemCounter}][tipo_item]" class="form-control">
+                    <select name="items[${itemCounter}][categoria]" class="form-control">
                         <option value="material">Material</option>
                         <option value="mano_obra">Mano de Obra</option>
                         <option value="equipo">Equipo</option>
                         <option value="servicio">Servicio</option>
-                        <option value="otro">Otro</option>
+                        <option value="transporte">Transporte</option>
+                        <option value="otros">Otros</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Subtipo</label>
                     <div class="position-relative">
-                        <input type="text" name="items[${itemCounter}][subtipo_item]" class="form-control subtipo-input" 
+                        <input type="text" name="items[${itemCounter}][subcategoria]" class="form-control subtipo-input" 
                                placeholder="Escribir o seleccionar..." autocomplete="off">
                         <div class="subtipo-suggestions" style="display: none;"></div>
                     </div>
@@ -403,7 +405,7 @@ function agregarItem() {
     });
     
     // Agregar listener para cambio de tipo de item
-    const tipoItemSelect = row.querySelector('select[name*="[tipo_item]"]');
+    const tipoItemSelect = row.querySelector('select[name*="[categoria]"]');
     const unidadSelect = row.querySelector('.unidad-select');
     const subtipoInput = row.querySelector('.subtipo-input');
     

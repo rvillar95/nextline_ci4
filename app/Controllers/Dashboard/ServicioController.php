@@ -195,7 +195,26 @@ class ServicioController extends BaseController
         // Log para debug
         log_message('debug', 'Iniciando update de servicio');
         
-        if (!$this->validate('formServiceEdit')) {
+        // Crear reglas de validación personalizadas excluyendo el campo foto
+        $validationRules = [
+            'id' => 'required|integer',
+            'nombre' => 'required|max_length[100]|is_unique[servicio.nombre,id,{id}]',
+            'descripcionCorta' => 'required|max_length[500]',
+            'descripcionLarga' => 'required|max_length[2000]',
+            'categoria_id' => 'required|integer',
+            'caracteristicas' => 'permit_empty',
+            'beneficios' => 'permit_empty',
+            'tiempo_estimado' => 'permit_empty|max_length[50]',
+            'garantia' => 'permit_empty|max_length[100]',
+            'precio_desde' => 'permit_empty|decimal',
+            'precio_hasta' => 'permit_empty|decimal',
+            'mostrar_precio' => 'permit_empty|in_list[S,N]',
+            'estado' => 'required|in_list[A,I]',
+            'orden' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'destacado' => 'permit_empty|in_list[S,N]'
+        ];
+        
+        if (!$this->validate($validationRules)) {
             log_message('error', 'Validación falló: ' . json_encode($this->validator->getErrors()));
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
@@ -237,7 +256,17 @@ class ServicioController extends BaseController
         }
         
         $img = $this->request->getFile('foto');
-        if ($img && $img->isValid() && ! $img->hasMoved()) {
+        log_message('debug', 'Archivo de imagen recibido: ' . ($img ? 'Sí' : 'No'));
+        
+        if ($img) {
+            log_message('debug', 'Tamaño del archivo: ' . $img->getSize());
+            log_message('debug', 'Archivo válido: ' . ($img->isValid() ? 'Sí' : 'No'));
+            log_message('debug', 'Archivo movido: ' . ($img->hasMoved() ? 'Sí' : 'No'));
+        }
+        
+        // Solo procesar imagen si realmente se envió un archivo
+        if ($img && $img->isValid() && !$img->hasMoved() && $img->getSize() > 0) {
+            log_message('debug', 'Imagen válida, procesando...');
             $fecha = date('dmY');
             $newName = $img->getRandomName();
             $uploadPath = ROOTPATH . 'lib/img/' . $fecha . '/';
@@ -252,6 +281,8 @@ class ServicioController extends BaseController
             } else {
                 return redirect()->back()->withInput()->with('errors', 'Error al subir la nueva imagen');
             }
+        } else {
+            log_message('debug', 'No se envió imagen nueva, manteniendo la existente');
         }
 
         log_message('debug', 'Datos a actualizar: ' . json_encode($arreglo));

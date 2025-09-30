@@ -72,7 +72,8 @@ class CotizacionController extends BaseController
             $estadoBadge = match ($r->estado ?? 'borrador') {
                 'borrador' => '<span class="badge badge-secondary">Borrador</span>',
                 'enviada' => '<span class="badge badge-info">Enviada</span>',
-                'aceptada' => '<span class="badge badge-success">Aceptada</span>',
+                'revisada' => '<span class="badge badge-warning">Revisada</span>',
+                'aprobada' => '<span class="badge badge-success">Aprobada</span>',
                 'rechazada' => '<span class="badge badge-danger">Rechazada</span>',
                 'expirada' => '<span class="badge badge-warning">Expirada</span>',
                 default => '<span class="badge badge-secondary">N/A</span>',
@@ -82,6 +83,7 @@ class CotizacionController extends BaseController
                 'baja' => '<span class="badge badge-success">Baja</span>',
                 'media' => '<span class="badge badge-warning">Media</span>',
                 'alta' => '<span class="badge badge-danger">Alta</span>',
+                'urgente' => '<span class="badge badge-danger">Urgente</span>',
                 default => '<span class="badge badge-secondary">N/A</span>',
             };
 
@@ -187,7 +189,7 @@ class CotizacionController extends BaseController
                     $precio = floatval(str_replace(['.', ','], ['', '.'], $item['precio_unitario']));
                     $subtotal = $cantidad * $precio;
                     
-                    $tipoItem = $item['tipo_item'] ?? 'otro';
+                    $tipoItem = $item['categoria'] ?? 'otros';
                     
                     switch ($tipoItem) {
                         case 'material':
@@ -261,8 +263,8 @@ class CotizacionController extends BaseController
                     if (isset($item['descripcion']) && !empty($item['descripcion'])) {
                         $itemData = [
                             'cotizacion_id' => $cotizacionId,
-                            'categoria' => $item['tipo_item'] ?? 'otros',
-                            'subcategoria' => $item['subtipo_item'] ?? '',
+                            'categoria' => $item['categoria'] ?? 'otros',
+                            'subcategoria' => $item['subcategoria'] ?? '',
                             'descripcion' => $item['descripcion'],
                             'cantidad' => floatval($item['cantidad'] ?? 1),
                             'unidad' => $item['unidad'] ?? '',
@@ -341,6 +343,9 @@ class CotizacionController extends BaseController
             'proyecto_tipo', 'proyecto_area', 'proyecto_ubicacion', 'proyecto_direccion'
         ]);
 
+        // Debug: Log del estado recibido
+        log_message('debug', 'Estado cotización recibido: ' . ($post['estado_cotizacion'] ?? 'NO RECIBIDO'));
+
         // Generar slug
         $slug = $cotizacion->generarSlug($post['titulo'], $id);
 
@@ -367,6 +372,9 @@ class CotizacionController extends BaseController
             'slug' => $slug
         ];
 
+        // Debug: Log de los datos que se van a actualizar
+        log_message('debug', 'Datos a actualizar: ' . json_encode($data));
+        
         if ($cotizacion->update($id, $data)) {
             // Eliminar items existentes
             $cotizacionItem = new CotizacionItem();
@@ -381,8 +389,8 @@ class CotizacionController extends BaseController
                     if (isset($item['descripcion']) && !empty($item['descripcion'])) {
                         $itemData = [
                             'cotizacion_id' => $id,
-                            'categoria' => $item['tipo_item'] ?? 'otros',
-                            'subcategoria' => $item['subtipo_item'] ?? '',
+                            'categoria' => $item['categoria'] ?? 'otros',
+                            'subcategoria' => $item['subcategoria'] ?? '',
                             'descripcion' => $item['descripcion'],
                             'cantidad' => floatval($item['cantidad'] ?? 1),
                             'unidad' => $item['unidad'] ?? '',
@@ -490,6 +498,134 @@ class CotizacionController extends BaseController
             log_message('error', 'Stack trace: ' . $e->getTraceAsString());
             return redirect()->back()->with('error', 'Error al generar el PDF: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Convertir cotización en proyecto
+     */
+    public function convertirEnProyecto($id)
+    {
+        log_message('debug', 'Método convertirEnProyecto llamado con ID: ' . $id);
+        
+        try {
+            $cotizacion = new Cotizacion();
+            $cotizacionData = $cotizacion->getCotizacionCompleta($id);
+            
+            log_message('debug', 'Datos de cotización obtenidos: ' . ($cotizacionData ? 'OK' : 'NULL'));
+            
+            if (!$cotizacionData) {
+                return redirect()->to(base_url('dashboard/cotizacion/lista'))->with('error', 'Cotización no encontrada');
+            }
+            
+            // Verificar que la cotización esté en estado apropiado para convertir
+            if ($cotizacionData->estado !== 'aprobada') {
+                return redirect()->to(base_url('dashboard/cotizacion/detalle/' . $id))->with('error', 'Solo se pueden convertir en proyecto las cotizaciones que estén en estado "Aprobada"');
+            }
+            
+            $proyecto = new \App\Models\Proyecto();
+            
+            // Mapear datos de cotización a proyecto
+            $proyectoData = [
+                'nombre' => $cotizacionData->proyecto_nombre ?? $cotizacionData->titulo ?? 'Proyecto ' . $cotizacionData->numero_cotizacion,
+                'slug' => $proyecto->generarSlug($cotizacionData->proyecto_nombre ?? $cotizacionData->titulo ?? 'Proyecto ' . $cotizacionData->numero_cotizacion),
+                'cliente' => $cotizacionData->cliente_nombre ?? 'Cliente',
+                'tipo_proyecto' => $this->mapearTipoProyecto($cotizacionData->proyecto_tipo ?? 'residencial'),
+                'ubicacion' => $cotizacionData->proyecto_ubicacion ?? '',
+                'direccion' => $cotizacionData->proyecto_direccion ?? '',
+                'fecha_inicio' => date('Y-m-d'), // Fecha actual como inicio
+                'fecha_finalizacion' => null, // Se puede calcular después
+                'presupuesto' => $cotizacionData->total_general ?? 0,
+                'mostrar_presupuesto' => false, // Por defecto no mostrar
+                'estado' => 'en_progreso',
+                'descripcion_corta' => substr($cotizacionData->proyecto_descripcion ?? '', 0, 500),
+                'descripcion_detallada' => $cotizacionData->proyecto_descripcion ?? '',
+                'caracteristicas_tecnicas' => $this->generarCaracteristicasTecnicas($cotizacionData),
+                'area_construida' => $cotizacionData->proyecto_area ?? null,
+                'materiales_principales' => $this->generarMaterialesPrincipales($cotizacionData),
+                'testimonio_cliente' => null,
+                'nombre_cliente' => $cotizacionData->cliente_nombre ?? '',
+                'destacado' => false,
+                'meta_titulo' => ($cotizacionData->proyecto_nombre ?? $cotizacionData->titulo ?? 'Proyecto') . ' - MANSANCHEZ',
+                'meta_descripcion' => substr($cotizacionData->proyecto_descripcion ?? '', 0, 500),
+                'meta_keywords' => 'proyecto, construcción, ' . strtolower($cotizacionData->proyecto_tipo ?? 'residencial'),
+                'estado_publico' => 'A'
+            ];
+            
+            // Insertar proyecto
+            if ($proyecto->insert($proyectoData)) {
+                $proyectoId = $proyecto->getInsertID();
+                
+                // Actualizar estado de la cotización a "aprobada"
+                $cotizacion->update($id, [
+                    'estado' => 'aprobada'
+                ]);
+                
+                return redirect()->to(base_url('dashboard/cotizacion/detalle/' . $id))->with('success', 'Cotización convertida en proyecto exitosamente. <a href="' . base_url('dashboard/proyecto/editar/' . $proyectoId) . '">Ver proyecto</a>');
+            } else {
+                return redirect()->to(base_url('dashboard/cotizacion/detalle/' . $id))->with('error', 'Error al crear el proyecto');
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error al convertir cotización en proyecto: ' . $e->getMessage());
+            return redirect()->to(base_url('dashboard/cotizacion/detalle/' . $id))->with('error', 'Error al convertir la cotización en proyecto');
+        }
+    }
+    
+    /**
+     * Mapear tipo de proyecto de cotización a proyecto
+     */
+    private function mapearTipoProyecto($tipoCotizacion)
+    {
+        $mapeo = [
+            'residencial' => 'residencial',
+            'comercial' => 'comercial',
+            'industrial' => 'industrial',
+            'institucional' => 'institucional',
+            'infraestructura' => 'industrial',
+            'mantenimiento' => 'comercial',
+            'reparacion' => 'residencial',
+            'otros' => 'otro'
+        ];
+        
+        return $mapeo[$tipoCotizacion] ?? 'residencial';
+    }
+    
+    /**
+     * Generar características técnicas basadas en los items de la cotización
+     */
+    private function generarCaracteristicasTecnicas($cotizacionData)
+    {
+        if (empty($cotizacionData->items)) {
+            return '';
+        }
+        
+        $caracteristicas = [];
+        foreach ($cotizacionData->items as $item) {
+            if (!empty($item->especificaciones)) {
+                $caracteristicas[] = $item->especificaciones;
+            }
+        }
+        
+        return implode(', ', $caracteristicas);
+    }
+    
+    /**
+     * Generar lista de materiales principales basada en los items
+     */
+    private function generarMaterialesPrincipales($cotizacionData)
+    {
+        if (empty($cotizacionData->items)) {
+            return '';
+        }
+        
+        $materiales = [];
+        foreach ($cotizacionData->items as $item) {
+            if ($item->categoria === 'material' && !empty($item->descripcion)) {
+                $materiales[] = $item->descripcion;
+            }
+        }
+        
+        return implode(', ', array_slice($materiales, 0, 5)); // Máximo 5 materiales
     }
 
     public function getClientesSelect()
