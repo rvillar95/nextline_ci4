@@ -45,7 +45,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">Icono</label>
-                                    <input type="text" name="icono" class="form-control" 
+                                    <input type="text" name="icono" id="icono" class="form-control" 
                                            value="<?= old('icono') ?>" placeholder="Ej: fas fa-home, bi bi-house...">
                                     <small class="text-muted">Clase CSS del icono (opcional)</small>
                                     <?php if (session()->getFlashdata('errors')['icono'] ?? false): ?>
@@ -135,5 +135,9 @@
         </div>
     </div>
 </div>
+
+<!-- Cargar archivos del selector de iconos -->
+<link rel="stylesheet" href="<?= base_url('lib/css/icon-selector.css') ?>">
+<script src="<?= base_url('lib/js/icon-selector.js') ?>"></script>
 
 <?= $this->endSection() ?>

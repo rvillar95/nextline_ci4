@@ -17,15 +17,18 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <?php if (session()->getFlashdata('errors')): ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                    <li><?= esc($error) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
+                <?php if (session()->getFlashdata('success') !== null) : ?>
+                                <div class="alert alert-success my-3" role="alert">
+                                    <?= session()->getFlashdata('success'); ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (session()->getFlashdata('errors') !== null) : ?>
+                                <p style="color:red; font-weight:bold;">
+                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
+                                        <?= session()->getFlashdata('errors'); ?>
+                                    <?php endif; ?>
+                                </p>
+                            <?php endif; ?>
 
                     <?= form_open_multipart('dashboard/servicio/update') ?>
                         <?= csrf_field() ?>
@@ -215,9 +218,9 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="form-group">
-                                    <label class="form-label">Imagen del Servicio</label>
+                                    <label class="form-label">Imagen del Servicio <span class="text-muted">(Opcional)</span></label>
                                     <input type="file" name="foto" class="form-control" accept="image/*">
-                                    <small class="text-muted">Imagen representativa del servicio (JPG, PNG, GIF - máximo 2MB)</small>
+                                    <small class="text-muted">Solo selecciona una imagen si deseas cambiar la actual. Si no seleccionas nada, se mantendrá la imagen existente.</small>
                                     <?php if ($servicio->foto): ?>
                                         <div class="mt-2">
                                             <img src="<?= base_url($servicio->foto) ?>" alt="Imagen actual" class="img-thumbnail" style="max-width: 200px;">
@@ -250,5 +253,43 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const fotoInput = document.querySelector('input[name="foto"]');
+    
+    // Remover cualquier validación requerida del campo foto
+    if (fotoInput) {
+        fotoInput.removeAttribute('required');
+        fotoInput.setAttribute('data-optional', 'true');
+    }
+    
+    // Interceptar el envío del formulario
+    form.addEventListener('submit', function(e) {
+        // Verificar que los campos requeridos estén llenos
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor, completa todos los campos obligatorios.');
+            return false;
+        }
+        
+        // El campo foto es opcional, así que no validamos si está vacío
+        console.log('Formulario enviado correctamente');
+    });
+});
+</script>
 
 <?= $this->endSection() ?>

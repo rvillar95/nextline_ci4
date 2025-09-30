@@ -82,7 +82,8 @@
                                     <select name="estado_cotizacion" class="form-control" required>
                                         <option value="borrador" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'borrador' ? 'selected' : '' ?>>Borrador</option>
                                         <option value="enviada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'enviada' ? 'selected' : '' ?>>Enviada</option>
-                                        <option value="aceptada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'aceptada' ? 'selected' : '' ?>>Aceptada</option>
+                                        <option value="revisada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'revisada' ? 'selected' : '' ?>>Revisada</option>
+                                        <option value="aprobada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'aprobada' ? 'selected' : '' ?>>Aprobada</option>
                                         <option value="rechazada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'rechazada' ? 'selected' : '' ?>>Rechazada</option>
                                         <option value="expirada" <?= old('estado_cotizacion', $cotizacion->estado ?? 'borrador') == 'expirada' ? 'selected' : '' ?>>Expirada</option>
                                     </select>
@@ -117,6 +118,31 @@
                             </div>
                         </div>
 
+                        <!-- Información adicional del proyecto -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Área del Proyecto (m²)</label>
+                                    <input type="number" name="proyecto_area" class="form-control" 
+                                           value="<?= old('proyecto_area', $cotizacion->proyecto_area ?? '') ?>" min="0" step="0.01" placeholder="Ej: 120.50">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Ubicación</label>
+                                    <input type="text" name="proyecto_ubicacion" class="form-control" 
+                                           value="<?= old('proyecto_ubicacion', $cotizacion->proyecto_ubicacion ?? '') ?>" placeholder="Ej: Santiago, Región Metropolitana">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">Dirección</label>
+                                    <input type="text" name="proyecto_direccion" class="form-control" 
+                                           value="<?= old('proyecto_direccion', $cotizacion->proyecto_direccion ?? '') ?>" placeholder="Ej: Av. Principal 123, Comuna">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Espacio entre secciones -->
                         <div class="row">
                             <div class="col-12">
@@ -146,7 +172,7 @@
                                                                 <label class="form-label">#</label>
                                                                 <input type="text" class="form-control" value="<?= $index + 1 ?>" readonly>
                                                             </div>
-                                                            <div class="col-md-4">
+                                                            <div class="col-md-3">
                                                                 <label class="form-label">Descripción</label>
                                                                 <input type="text" name="items[<?= $index + 1 ?>][descripcion]" class="form-control" 
                                                                        value="<?= esc($item->descripcion ?? '') ?>" required>
@@ -176,30 +202,32 @@
                                                             </div>
                                                             <div class="col-md-2">
                                                                 <label class="form-label">Precio Unit.</label>
-                                                                <input type="number" name="items[<?= $index + 1 ?>][precio_unitario]" class="form-control precio" 
-                                                                       value="<?= $item->precio_unitario ?? 0 ?>" min="0" step="0.01" required>
+                                                                <input type="text" name="items[<?= $index + 1 ?>][precio_unitario]" class="form-control precio" 
+                                                                       value="<?= number_format($item->precio_unitario ?? 0, 0, ',', '.') ?>" min="0" step="0.01">
                                                             </div>
-                                                            <div class="col-md-1">
+                                                            <div class="col-md-2">
                                                                 <label class="form-label">Subtotal</label>
-                                                                <input type="text" class="form-control subtotal" value="<?= $item->subtotal ?? 0 ?>" readonly>
+                                                                <input type="text" class="form-control subtotal" value="<?= number_format($item->subtotal ?? 0, 0, ',', '.') ?>" readonly>
                                                             </div>
                                                         </div>
                                                         <div class="row mt-2">
                                                             <div class="col-md-3">
                                                                 <label class="form-label">Tipo de Item</label>
-                                                                <select name="items[<?= $index + 1 ?>][tipo_item]" class="form-control">
-                                                                    <option value="material" <?= ($item->tipo_item ?? 'material') == 'material' ? 'selected' : '' ?>>Material</option>
-                                                                    <option value="mano_obra" <?= ($item->tipo_item ?? 'material') == 'mano_obra' ? 'selected' : '' ?>>Mano de Obra</option>
-                                                                    <option value="equipo" <?= ($item->tipo_item ?? 'material') == 'equipo' ? 'selected' : '' ?>>Equipo</option>
-                                                                    <option value="servicio" <?= ($item->tipo_item ?? 'material') == 'servicio' ? 'selected' : '' ?>>Servicio</option>
-                                                                    <option value="otro" <?= ($item->tipo_item ?? 'material') == 'otro' ? 'selected' : '' ?>>Otro</option>
+                                                                <select name="items[<?= $index + 1 ?>][categoria]" class="form-control">
+                                                                    <option value="">Seleccionar tipo...</option>
+                                                                    <option value="material" <?= ($item->categoria ?? '') == 'material' ? 'selected' : '' ?>>Material</option>
+                                                                    <option value="mano_obra" <?= ($item->categoria ?? '') == 'mano_obra' ? 'selected' : '' ?>>Mano de Obra</option>
+                                                                    <option value="equipo" <?= ($item->categoria ?? '') == 'equipo' ? 'selected' : '' ?>>Equipo</option>
+                                                                    <option value="servicio" <?= ($item->categoria ?? '') == 'servicio' ? 'selected' : '' ?>>Servicio</option>
+                                                                    <option value="transporte" <?= ($item->categoria ?? '') == 'transporte' ? 'selected' : '' ?>>Transporte</option>
+                                                                    <option value="otros" <?= ($item->categoria ?? '') == 'otros' ? 'selected' : '' ?>>Otros</option>
                                                                 </select>
                                                             </div>
                                                             <div class="col-md-3">
                                                                 <label class="form-label">Subtipo</label>
                                                                 <div class="position-relative">
-                                                                    <input type="text" name="items[<?= $index + 1 ?>][subtipo_item]" class="form-control subtipo-input" 
-                                                                           value="<?= esc($item->subtipo_item ?? '') ?>" placeholder="Escribir o seleccionar..." autocomplete="off">
+                                                                    <input type="text" name="items[<?= $index + 1 ?>][subcategoria]" class="form-control subtipo-input" 
+                                                                           value="<?= esc($item->subcategoria ?? '') ?>" placeholder="Escribir o seleccionar..." autocomplete="off">
                                                                     <div class="subtipo-suggestions" style="display: none;"></div>
                                                                 </div>
                                                             </div>
@@ -227,7 +255,7 @@
                         </div>
 
                         <!-- Totales -->
-                        <div class="row">
+                        <div class="row  mt-4">
                             <div class="col-md-8"></div>
                             <div class="col-md-4">
                                 <div class="card">
@@ -244,7 +272,7 @@
                                             <div class="col-6 text-right">$<span id="descuento"><?= number_format($cotizacion->descuento_monto ?? 0, 0, ',', '.') ?></span></div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-6"><strong>IVA:</strong></div>
+                                            <div class="col-6"><strong>IVA (<span id="iva_porcentaje_display"><?= $cotizacion->iva_porcentaje ?></span>%):</strong></div>
                                             <div class="col-6 text-right">$<span id="iva"><?= number_format($cotizacion->iva_monto ?? 0, 0, ',', '.') ?></span></div>
                                         </div>
                                         <hr>
@@ -279,7 +307,7 @@
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row mt-4">
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Actualizar Cotización
@@ -310,7 +338,7 @@ function agregarItem() {
                     <label class="form-label">#</label>
                     <input type="text" class="form-control" value="${itemCounter}" readonly>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Descripción</label>
                     <input type="text" name="items[${itemCounter}][descripcion]" class="form-control" required>
                 </div>
@@ -338,9 +366,9 @@ function agregarItem() {
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Precio Unit.</label>
-                    <input type="number" name="items[${itemCounter}][precio_unitario]" class="form-control precio" min="0" step="0.01" required>
+                    <input type="text" name="items[${itemCounter}][precio_unitario]" class="form-control precio" min="0" step="0.01">
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label class="form-label">Subtotal</label>
                     <input type="text" class="form-control subtotal" readonly>
                 </div>
@@ -393,7 +421,10 @@ function agregarItem() {
     const subtipoInput = row.querySelector('.subtipo-input');
     
     cantidadInput.addEventListener('input', calcularSubtotal);
-    precioInput.addEventListener('input', calcularSubtotal);
+    precioInput.addEventListener('input', function() {
+        formatearPrecioInput(this);
+        calcularSubtotal();
+    });
     
     // Configurar funcionalidades dinámicas
     if (tipoItemSelect && unidadSelect) {
@@ -408,10 +439,10 @@ function agregarItem() {
     
     function calcularSubtotal() {
         const cantidad = parseFloat(cantidadInput.value) || 0;
-        const precio = parseFloat(precioInput.value) || 0;
+        const precio = parseFloat(precioInput.value.replace(/\./g, '').replace(',', '.')) || 0;
         const subtotal = cantidad * precio;
         
-        subtotalInput.value = subtotal.toFixed(2);
+        subtotalInput.value = formatearNumero(subtotal);
         calcularTotales();
     }
 }
@@ -427,51 +458,83 @@ function eliminarItem(itemId) {
 function calcularTotales() {
     let subtotal = 0;
     
-    document.querySelectorAll('.subtotal').forEach(input => {
-        subtotal += parseFloat(input.value) || 0;
+    console.log('calcularTotales ejecutándose...');
+    const subtotalInputs = document.querySelectorAll('.subtotal');
+    console.log('Elementos .subtotal encontrados:', subtotalInputs.length);
+    
+    subtotalInputs.forEach((input, index) => {
+        console.log(`Subtotal ${index + 1}:`, input.value);
+        // Parsear correctamente números formateados con puntos separadores de miles
+        const valor = parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+        console.log(`Valor parseado ${index + 1}:`, valor);
+        subtotal += valor;
     });
     
-    const ivaPorcentaje = parseFloat(document.querySelector('input[name="iva_porcentaje"]').value) || 19;
-    const descuento = parseFloat(document.getElementById('hidden_descuento').value) || 0;
+    console.log('Subtotal total calculado:', subtotal);
+    
+    const ivaPorcentajeElement = document.querySelector('input[name="iva_porcentaje"]');
+    const descuentoPorcentajeElement = document.querySelector('input[name="descuento_porcentaje"]');
+    const descuentoMontoElement = document.querySelector('input[name="descuento_monto"]');
+    
+    console.log('Elementos de cálculo:');
+    console.log('iva_porcentaje:', ivaPorcentajeElement);
+    console.log('descuento_porcentaje:', descuentoPorcentajeElement);
+    console.log('descuento_monto:', descuentoMontoElement);
+    
+    const ivaPorcentaje = ivaPorcentajeElement ? parseFloat(ivaPorcentajeElement.value) || 0 : 0;
+    const descuentoPorcentaje = descuentoPorcentajeElement ? parseFloat(descuentoPorcentajeElement.value) || 0 : 0;
+    const descuentoMonto = descuentoMontoElement ? parseFloat(descuentoMontoElement.value.replace(/\./g, '').replace(',', '.')) || 0 : 0;
+    
+    console.log('IVA porcentaje:', ivaPorcentaje);
+    console.log('Descuento porcentaje:', descuentoPorcentaje);
+    console.log('Descuento monto:', descuentoMonto);
+    
+    // Calcular descuento total (porcentaje + monto fijo)
+    const descuentoPorcentajeCalculado = subtotal * (descuentoPorcentaje / 100);
+    const descuentoTotal = descuentoPorcentajeCalculado + descuentoMonto;
     
     const iva = subtotal * (ivaPorcentaje / 100);
-    const total = subtotal - descuento + iva;
+    const total = subtotal - descuentoTotal + iva;
     
-    // Actualizar display
-    document.getElementById('subtotal').textContent = subtotal.toLocaleString();
-    document.getElementById('descuento').textContent = descuento.toLocaleString();
-    document.getElementById('iva').textContent = iva.toLocaleString();
-    document.getElementById('total').textContent = total.toLocaleString();
+    console.log('IVA calculado:', iva);
+    console.log('Total calculado:', total);
+    
+    // Verificar que los elementos existen antes de actualizarlos
+    const subtotalElement = document.getElementById('subtotal');
+    const descuentoElement = document.getElementById('descuento');
+    const ivaElement = document.getElementById('iva');
+    const totalElement = document.getElementById('total');
+    
+    console.log('Elementos encontrados:');
+    console.log('subtotal:', subtotalElement);
+    console.log('descuento:', descuentoElement);
+    console.log('iva:', ivaElement);
+    console.log('total:', totalElement);
+    
+    // Actualizar display con formateo
+    if (subtotalElement) subtotalElement.textContent = formatearNumero(subtotal);
+    if (descuentoElement) descuentoElement.textContent = formatearNumero(descuentoTotal);
+    if (ivaElement) ivaElement.textContent = formatearNumero(iva);
+    if (totalElement) totalElement.textContent = formatearNumero(total);
+    
+    // Actualizar el porcentaje de IVA mostrado
+    const ivaPorcentajeDisplay = document.getElementById('iva_porcentaje_display');
+    if (ivaPorcentajeDisplay) {
+        ivaPorcentajeDisplay.textContent = ivaPorcentaje;
+    }
     
     // Actualizar campos ocultos
-    document.getElementById('hidden_subtotal').value = subtotal;
-    document.getElementById('hidden_iva').value = iva;
-    document.getElementById('hidden_total').value = total;
+    const hiddenSubtotal = document.getElementById('hidden_subtotal');
+    const hiddenDescuento = document.getElementById('hidden_descuento');
+    const hiddenIva = document.getElementById('hidden_iva');
+    const hiddenTotal = document.getElementById('hidden_total');
+    
+    if (hiddenSubtotal) hiddenSubtotal.value = subtotal;
+    if (hiddenDescuento) hiddenDescuento.value = descuentoTotal;
+    if (hiddenIva) hiddenIva.value = iva;
+    if (hiddenTotal) hiddenTotal.value = total;
 }
 
-// Agregar event listeners a los items existentes
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.cantidad, .precio').forEach(input => {
-        input.addEventListener('input', calcularTotales);
-    });
-    
-    // Configurar funcionalidades para items existentes
-    document.querySelectorAll('.item-row').forEach(row => {
-        const tipoItemSelect = row.querySelector('select[name*="[tipo_item]"]');
-        const unidadSelect = row.querySelector('.unidad-select');
-        const subtipoInput = row.querySelector('.subtipo-input');
-        
-        if (tipoItemSelect && unidadSelect) {
-            tipoItemSelect.addEventListener('change', function() {
-                actualizarUnidadesPorTipo(this.value, unidadSelect);
-            });
-        }
-        
-        if (subtipoInput) {
-            configurarAutocompletadoSubtipo(subtipoInput);
-        }
-    });
-});
 
 // Lista de subtipos de construcción
 const subtiposConstruccion = [
@@ -616,6 +679,102 @@ function actualizarUnidadesPorTipo(tipoItem, unidadSelect) {
         unidadSelect.appendChild(option);
     });
 }
+
+function formatearNumero(numero) {
+    return new Intl.NumberFormat('es-CL', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+    }).format(numero);
+}
+
+function formatearPrecioInput(input) {
+    console.log('formatearPrecioInput llamado con:', input.value);
+    let valor = input.value.replace(/[^\d,]/g, '');
+    console.log('Valor después de limpiar:', valor);
+    if (valor) {
+        let numero = parseFloat(valor.replace(',', '.'));
+        console.log('Número parseado:', numero);
+        if (!isNaN(numero)) {
+            let formateado = formatearNumero(numero);
+            console.log('Número formateado:', formateado);
+            input.value = formateado;
+        }
+    }
+}
+
+function calcularSubtotal(row) {
+    const cantidadInput = row.querySelector('.cantidad');
+    const precioInput = row.querySelector('.precio');
+    const subtotalInput = row.querySelector('.subtotal');
+    
+    if (!cantidadInput || !precioInput || !subtotalInput) return;
+    
+    const cantidad = parseFloat(cantidadInput.value) || 0;
+    const precio = parseFloat(precioInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+    const subtotal = cantidad * precio;
+    
+    subtotalInput.value = formatearNumero(subtotal);
+    calcularTotales();
+}
+
+// Event listeners para cálculo automático de totales
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar listeners para los campos de cálculo
+    const ivaInput = document.querySelector('input[name="iva_porcentaje"]');
+    const descuentoPorcentajeInput = document.querySelector('input[name="descuento_porcentaje"]');
+    const descuentoMontoInput = document.querySelector('input[name="descuento_monto"]');
+    
+    console.log('Elementos encontrados:');
+    console.log('ivaInput:', ivaInput);
+    console.log('descuentoPorcentajeInput:', descuentoPorcentajeInput);
+    console.log('descuentoMontoInput:', descuentoMontoInput);
+    
+    if (ivaInput) {
+        console.log('Configurando listener para IVA input:', ivaInput);
+        ivaInput.addEventListener('input', function() {
+            console.log('Evento input disparado en IVA:', this.value);
+            calcularTotales();
+        });
+    }
+    if (descuentoPorcentajeInput) {
+        descuentoPorcentajeInput.addEventListener('input', calcularTotales);
+    }
+    if (descuentoMontoInput) {
+        descuentoMontoInput.addEventListener('input', function() {
+            formatearPrecioInput(this);
+            calcularTotales();
+        });
+    }
+    
+    // Configurar event listeners para items existentes
+    document.querySelectorAll('.precio').forEach(precioInput => {
+        console.log('Configurando listener para precio input:', precioInput);
+        precioInput.addEventListener('input', function() {
+            console.log('Evento input disparado en precio');
+            formatearPrecioInput(this);
+            // Encontrar el row padre para calcular subtotal
+            const row = this.closest('.item-row');
+            if (row) {
+                calcularSubtotal(row);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.cantidad').forEach(cantidadInput => {
+        cantidadInput.addEventListener('input', function() {
+            const row = this.closest('.item-row');
+            if (row) {
+                calcularSubtotal(row);
+            }
+        });
+    });
+    
+    // Calcular totales iniciales al cargar la página
+    setTimeout(() => {
+        console.log('Ejecutando calcularTotales después de timeout...');
+        calcularTotales();
+    }, 100);
+});
 </script>
 
 <?= $this->endSection() ?>

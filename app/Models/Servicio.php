@@ -115,8 +115,10 @@ class Servicio extends Model
 
     public function getServicioAll()
     {
-        return $this->orderBy('orden', 'ASC')
-                   ->orderBy('fcreacion', 'DESC')
+        return $this->select('servicio.*, servicio_categoria.nombre as categoria_nombre')
+                   ->join('servicio_categoria', 'servicio_categoria.id = servicio.categoria_id', 'left')
+                   ->orderBy('servicio.orden', 'ASC')
+                   ->orderBy('servicio.fcreacion', 'DESC')
                    ->findAll();
     }
 
@@ -179,17 +181,17 @@ class Servicio extends Model
      */
     public function getServiciosPorCategoria($categoriaNombre = null)
     {
-        if ($categoriaNombre) {
-            return $this->select('servicio.*, servicio_categoria.nombre as categoria_nombre, servicio_categoria.icono as categoria_icono, servicio_categoria.color as categoria_color')
+        $builder = $this->select('servicio.*, servicio_categoria.nombre as categoria_nombre, servicio_categoria.icono as categoria_icono, servicio_categoria.color as categoria_color')
                         ->join('servicio_categoria', 'servicio_categoria.id = servicio.categoria_id', 'left')
-                        ->where('servicio.estado', 'A')
-                        ->where('servicio_categoria.nombre', $categoriaNombre)
-                        ->orderBy('servicio.orden', 'ASC')
-                        ->orderBy('servicio.nombre', 'ASC')
-                        ->findAll();
+                        ->where('servicio.estado', 'A');
+        
+        if ($categoriaNombre) {
+            $builder->where('servicio_categoria.nombre', $categoriaNombre);
         }
         
-        return $this->getServiciosConCategoria();
+        return $builder->orderBy('servicio.orden', 'ASC')
+                      ->orderBy('servicio.nombre', 'ASC')
+                      ->findAll();
     }
 
 }

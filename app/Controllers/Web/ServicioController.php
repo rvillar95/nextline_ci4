@@ -11,15 +11,25 @@ class ServicioController extends BaseController
     public function index()
     {
         $servicioModel = new Servicio();
+        $servicioCategoriaModel = new \App\Models\ServicioCategoria();
         $categoria = $this->request->getGet('categoria');
         
+        // Obtener servicios con información de categoría
         $servicios = $servicioModel->getServiciosPorCategoria($categoria);
         
+        // Obtener todas las categorías activas con iconos para los filtros
+        $categorias = $servicioCategoriaModel->select('*')
+                                           ->where('estado', 'A')
+                                           ->orderBy('orden', 'ASC')
+                                           ->orderBy('nombre', 'ASC')
+                                           ->findAll();
+        
         $data = [
-            'title' => 'Nuestros Servicios - NextLine Constructor',
+            'title' => 'Nuestros Servicios - MANSANCHEZ Constructor',
             'description' => 'Servicios de construcción profesional: construcción residencial, comercial, remodelaciones y más.',
-            'keywords' => 'servicios construcción, constructor, remodelaciones, obras',
+            'keywords' => 'servicios construcción, constructor, remodelaciones, obras, mansanchez',
             'servicios' => $servicios,
+            'categorias' => $categorias,
             'categoria_actual' => $categoria
         ];
         

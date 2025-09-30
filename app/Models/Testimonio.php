@@ -153,9 +153,7 @@ class Testimonio extends Model
     public function getTestimoniosDestacados($limit = 3)
     {
         return $this->where('estado', 'A')
-                   ->where('destacado', 'S')
                    ->orderBy('fcreacion', 'DESC')
-                   ->limit($limit)
                    ->findAll();
     }
 

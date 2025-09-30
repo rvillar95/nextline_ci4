@@ -170,6 +170,13 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'Dashboard\CotizacionController::registrar'); //accion
         $routes2->post('update', 'Dashboard\CotizacionController::update'); //accion
         $routes2->post('eliminar/(:num)', 'Dashboard\CotizacionController::eliminar/$1'); //accion
+        $routes2->post('convertir-proyecto/(:num)', 'Dashboard\CotizacionController::convertirEnProyecto/$1'); //accion
+    });
+
+    $routes->group('empresa', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\EmpresaController::lista'); //redirige a registro
+        $routes2->get('registro', 'Dashboard\EmpresaController::registro'); //vista
+        $routes2->post('registrar', 'Dashboard\EmpresaController::registrar'); //accion
     });
 
     // Rutas para ubicaciones (regiones y comunas)

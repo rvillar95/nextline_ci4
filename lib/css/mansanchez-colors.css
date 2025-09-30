@@ -1,0 +1,177 @@
+/* Colores Corporativos MANSANCHEZ */
+:root {
+  --primary-color: #f0841a;        /* Naranja corporativo */
+  --primary-color-rgb: 240, 132, 26;
+  --secondary-color: #1d2844;      /* Azul corporativo */
+  --secondary-color-rgb: 29, 40, 68;
+  --accent-color: #f3d7b0;         /* Beige corporativo */
+  --accent-color-rgb: 243, 215, 176;
+}
+
+/* Aplicar colores corporativos */
+.bg-color,
+section.bg-color,
+section.call-to-action,
+.btn-primary,
+.btn-custom,
+.btn-id,
+.btn-more,
+.btn-rsvp,
+.btn-close,
+.btn-border:hover,
+.btn-line:hover,
+.btn-line.hover,
+.btn-custom:hover,
+.btn-primary:hover,
+.btn-id:hover,
+.btn-more:hover,
+.btn-rsvp:hover,
+.btn-close:hover,
+.btn-border:focus,
+.btn-line:focus,
+.btn-custom:focus,
+.btn-primary:focus,
+.btn-id:focus,
+.btn-more:focus,
+.btn-rsvp:focus,
+.btn-close:focus,
+.btn-border:active,
+.btn-line:active,
+.btn-custom:active,
+.btn-primary:active,
+.btn-id:active,
+.btn-more:active,
+.btn-rsvp:active,
+.btn-close:active {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* Texto en color primario */
+a,
+a:hover,
+.id-color,
+.text-primary,
+.text-color-primary {
+  color: var(--primary-color) !important;
+}
+
+/* Elementos secundarios en azul corporativo */
+.bg-secondary,
+.bg-id-color,
+.bg-gradient-to-right-2,
+.feature-box-big-icon i,
+.feature-box-type-1 i,
+.feature-box-type-1.hover i,
+.feature-box-type-1:hover i,
+.icon-deco i,
+.team-list .small-border,
+.de-team-list .small-border,
+.widget .small-border,
+.tiny-border,
+#subheader .small-border-deco span,
+.box-fx .info,
+.box-icon-simple .num,
+.box-highlight.s2,
+.feature-box.f-boxed:hover,
+.fpw-overlay-btm,
+.fpw-wrap .fpwow-icons,
+.social-icons i,
+.d-gallery-item .dgi-1,
+.dih-overlay,
+.widget_tags li a,
+.nav-pills .nav-link.active,
+.nav-pills .show>.nav-link,
+#selector .sc-opt,
+#cookieConsent a.cookieConsentOK,
+.mask .cover,
+.icon-box:hover,
+#back-to-top,
+.post-content .date-box,
+#mainmenu li a b {
+  background-color: var(--secondary-color) !important;
+  color: var(--accent-color) !important;
+}
+
+/* Bordes y elementos de acento */
+.border-primary,
+.border-color-primary,
+.feature-box-small-icon .border,
+.feature-box-small-icon.style-2 .number.bg-color,
+.circle,
+.social-icons-sm i:hover,
+.pricing-s1 .ribbon,
+.custom-show:after,
+.custom-close:after,
+.style-2 .date-box,
+.owl-item.active > div blockquote:before,
+.accordion-section-title:before,
+#form_subscribe #btn-submit i,
+.owl-dot.active,
+.ribbon,
+.spinner > div,
+a.btn-border:hover {
+  border-color: var(--primary-color) !important;
+  background-color: var(--accent-color) !important;
+}
+
+/* Navegación y menús */
+#mainmenu li li a:hover,
+#mainmenu ul li:hover > a,
+#mainmenu li a:hover,
+#mainmenu li.active > a,
+#mainmenu li.current > a {
+  color: var(--primary-color) !important;
+  background-color: var(--accent-color) !important;
+}
+
+/* Slider y elementos destacados */
+.slider-info .text1,
+.fullwidthbanner-container a.btn,
+#testimonial-full,
+.date-post,
+.owl-arrow span,
+.de-progress .progress-bar,
+#btn-close-x:hover,
+#btn-search,
+.de_tab.timeline li.active .dot,
+#services-list li a:hover,
+.timeline .tl-block .tl-line,
+.de_tab.tab_style_2 .de_nav li.active span,
+.de_tab.tab_steps.style-2 .de_nav li.active span,
+.de_light .de_tab.tab_style_3 .de_nav li.active span,
+.de_tab.tab_style_4 .de_nav li.active span,
+.de_tab.tab_style_4 .de_nav li.active,
+.timeline > li > .timeline-badge,
+#preloader .s1 span,
+#filters a.selected,
+.widget-post .date,
+.owl-item.active.center .feature-box-type-2,
+.testimonial-color .item:nth-child(1n) blockquote:before {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+/* Footer y elementos de fondo */
+footer,
+.footer,
+.bg-dark,
+.bg-secondary {
+  background-color: var(--secondary-color) !important;
+  color: var(--accent-color) !important;
+}
+
+/* Enlaces en footer */
+footer a,
+.footer a,
+.bg-dark a,
+.bg-secondary a {
+  color: var(--accent-color) !important;
+}
+
+footer a:hover,
+.footer a:hover,
+.bg-dark a:hover,
+.bg-secondary a:hover {
+  color: var(--primary-color) !important;
+}

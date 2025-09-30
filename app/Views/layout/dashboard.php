@@ -355,6 +355,9 @@ exit(); */
                     <?php echo $this->renderSection("cotizacion/registro"); ?>
                     <?php echo $this->renderSection("cotizacion/editar"); ?>
                     <?php echo $this->renderSection("cotizacion/detalle"); ?>
+                    
+                    <!-- Secciones de Empresa -->
+                    <?php echo $this->renderSection("empresa/registro"); ?>
                     <!-- END Section Modulo Testimonio-->
                 </div>
 

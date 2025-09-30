@@ -13,16 +13,25 @@ class GaleriaController extends BaseController
     {
         $galeriaModel = new Galeria();
         $galeriaCategoriaModel = new GaleriaCategoria();
+        $categoria = $this->request->getGet('categoria');
         
-        $proyectos = $galeriaModel->getGaleriaPorCategoria();
-        $categorias = $galeriaCategoriaModel->getCategoriaConProyectos();
+        // Obtener proyectos con información de categoría
+        $proyectos = $galeriaModel->getGaleriaPorCategoria($categoria);
+        
+        // Obtener todas las categorías activas con iconos para los filtros
+        $categorias = $galeriaCategoriaModel->select('*')
+                                          ->where('estado', 'A')
+                                          ->orderBy('orden', 'ASC')
+                                          ->orderBy('nombre', 'ASC')
+                                          ->findAll();
         
         $data = [
-            'title' => 'Nuestros Proyectos - NextLine Constructor',
+            'title' => 'Nuestros Proyectos - MANSANCHEZ Constructor',
             'description' => 'Galería de proyectos de construcción: casas, edificios, remodelaciones y más.',
-            'keywords' => 'proyectos construcción, galería obras, constructor, proyectos terminados',
+            'keywords' => 'proyectos construcción, galería obras, constructor, proyectos terminados, mansanchez',
             'proyectos' => $proyectos,
-            'categorias' => $categorias
+            'categorias' => $categorias,
+            'categoria_actual' => $categoria
         ];
         
         return view('Web/proyectos', $data);
