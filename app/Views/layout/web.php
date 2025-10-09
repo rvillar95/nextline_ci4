@@ -46,13 +46,23 @@ $empresaContacto = [
     <!-- Custom CSS for page spacing and navbar -->
     <style>
         .page-content {
-            margin-top: 120px;
+            margin-top: 0;
+            padding-top: 120px;
         }
         
         @media (max-width: 768px) {
             .page-content {
-                margin-top: 100px;
+                padding-top: 100px;
             }
+        }
+        
+        /* ===== SCROLL SUAVE ===== */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            scroll-behavior: smooth;
         }
         
         /* ===== HEADER Y NAVBAR MODERNO ===== */
@@ -148,7 +158,7 @@ $empresaContacto = [
         .btn-topbar-modern:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(240, 132, 26, 0.4);
-            color: white;
+            color: white !important;
             text-decoration: none;
         }
         
@@ -162,6 +172,7 @@ $empresaContacto = [
             z-index: 999;
             box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
             border-bottom: 1px solid rgba(240, 132, 26, 0.2);
+            transition: box-shadow 0.3s ease;
         }
         
         .header-content-modern {
@@ -1029,17 +1040,11 @@ $empresaContacto = [
                     </div>
                     <div class="topbar-right-modern">
                         <div class="social-links-modern">
-                            <a href="#" class="social-link-modern" title="Facebook">
+                            <a href="https://web.facebook.com/man.msanchez" target="_blank" class="social-link-modern" title="Facebook">
                                 <i class="fab fa-facebook-f"></i>
                             </a>
-                            <a href="#" class="social-link-modern" title="Instagram">
+                            <a href="https://www.instagram.com/mansanchez45/" target="_blank" class="social-link-modern" title="Instagram">
                                 <i class="fab fa-instagram"></i>
-                            </a>
-                            <a href="#" class="social-link-modern" title="LinkedIn">
-                                <i class="fab fa-linkedin-in"></i>
-                            </a>
-                            <a href="#" class="social-link-modern" title="WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
                             </a>
                         </div>
                         <div class="topbar-actions-modern">
@@ -1082,6 +1087,12 @@ $empresaContacto = [
                                 <a href="<?= base_url('proyectos') ?>" class="nav-link-modern <?= (uri_string() == 'proyectos') ? 'active' : '' ?>">
                                     <i class="fas fa-building"></i>
                                     <span>Proyectos</span>
+                                </a>
+                            </li>
+                            <li class="nav-item-modern">
+                                <a href="<?= base_url('galeria') ?>" class="nav-link-modern <?= (strpos(uri_string(), 'galeria') === 0) ? 'active' : '' ?>">
+                                    <i class="fas fa-images"></i>
+                                    <span>Galería</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
@@ -1242,23 +1253,14 @@ $empresaContacto = [
                             </p>
                         </div>
                         <div class="col-lg-6 col-md-6 text-md-end">
-                            <div class="social-icons-modern">
-                                <a href="#" class="social-icon-modern" title="Facebook">
-                                    <i class="fab fa-facebook-f" style="color:white;"></i>
-                                </a>
-                                <a href="#" class="social-icon-modern" title="Twitter">
-                                    <i class="fab fa-twitter" style="color:white;"></i>
-                                </a>
-                                <a href="#" class="social-icon-modern" title="LinkedIn">
-                                    <i class="fab fa-linkedin-in" style="color:white;"></i>
-                                </a>
-                                <a href="#" class="social-icon-modern" title="Instagram">
-                                    <i class="fab fa-instagram" style="color:white;"></i>
-                                </a>
-                                <a href="#" class="social-icon-modern" title="YouTube">
-                                    <i class="fab fa-youtube" style="color:white;"></i>
-                                </a>
-                            </div>
+                        <div class="social-icons-modern">
+                            <a href="https://web.facebook.com/man.msanchez" target="_blank" class="social-icon-modern" title="Facebook">
+                                <i class="fab fa-facebook-f" style="color:white;"></i>
+                            </a>
+                            <a href="https://www.instagram.com/mansanchez45/" target="_blank" class="social-icon-modern" title="Instagram">
+                                <i class="fab fa-instagram" style="color:white;"></i>
+                            </a>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -1359,18 +1361,29 @@ $empresaContacto = [
             });
         });
         
-        // Header scroll effect - Solo cambia la sombra y padding, mantiene el color sólido
+        // Header scroll effect - Solo cambia la sombra, sin cambios de padding
         const header = document.querySelector('.header-modern');
         if (header) {
-            window.addEventListener('scroll', function() {
+            let ticking = false;
+            
+            function updateHeader() {
+                console.log(window.scrollY);
                 if (window.scrollY > 50) {
-                    // Mantener el color sólido #1d2844, intensificar la sombra y agregar padding-top
                     header.style.boxShadow = '0 4px 25px rgba(29, 40, 68, 0.4)';
-                    header.style.paddingTop = '5px'; // 5px + 5px original = 10px total
+                    header.style.paddingTop = '5px';
+                    header.style.transition = '2s';
                 } else {
-                    // Mantener el color sólido #1d2844, sombra normal y padding original
                     header.style.boxShadow = '0 4px 20px rgba(29, 40, 68, 0.3)';
-                    header.style.paddingTop = '5px'; // Volver al padding original
+                    header.style.paddingTop = '5px';
+                    header.style.transition = '2s';
+                }
+                ticking = false;
+            }
+            
+            window.addEventListener('scroll', function() {
+                if (!ticking) {
+                    requestAnimationFrame(updateHeader);
+                    ticking = true;
                 }
             });
         }

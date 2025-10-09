@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <!-- Hero Section -->
-<section class="hero-section" style="background: linear-gradient(to bottom, #1d2844 30%, #4a5f7a 100%) !important; padding: 100px 0 80px; margin-top: 0; position: relative; overflow: hidden;">
+<section class="hero-section" style="background: linear-gradient(to bottom, #1d2844 0%, #4a5f7a 100%) !important; padding: 100px 0 80px; margin-top: 0; position: relative; overflow: hidden;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
@@ -124,14 +124,21 @@
                             </div>
                             
                             <div class="col-12">
+                                <!-- Campo oculto para reCAPTCHA v3 -->
+                                <input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response">
+                                
                                 <div class="form-submit-section text-center">
-                                    <button type="submit" class="btn-submit-modern">
+                                    <button type="submit" class="btn-submit-modern" id="submit-btn">
                                         <i class="fas fa-paper-plane me-2"></i>
                                         Enviar Consulta
                                     </button>
                                     <p class="submit-note mt-3">
                                         <i class="fas fa-shield-alt text-success me-1"></i>
                                         Tus datos están seguros y no serán compartidos con terceros
+                                    </p>
+                                    <p class="submit-note mt-2 text-muted small">
+                                        <i class="fas fa-lock me-1"></i>
+                                        Protegido por reCAPTCHA de Google
                                     </p>
                                 </div>
                             </div>
@@ -426,5 +433,48 @@
     }
 }
 </style>
+
+<!-- Google reCAPTCHA v3 -->
+<script src="https://www.google.com/recaptcha/api.js?render=6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_"></script>
+<script>
+    // Configurar reCAPTCHA v3
+    grecaptcha.ready(function() {
+        // Generar token al enviar el formulario
+        document.querySelector('.contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Deshabilitar botón y mostrar loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
+            
+            // Obtener token de reCAPTCHA
+            grecaptcha.execute('6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_', {action: 'submit'})
+                .then(function(token) {
+                    // Insertar token en el campo oculto
+                    document.getElementById('g-recaptcha-response').value = token;
+                    
+                    // Cambiar texto del botón
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Enviando...';
+                    
+                    // Enviar formulario
+                    form.submit();
+                })
+                .catch(function(error) {
+                    console.error('Error reCAPTCHA:', error);
+                    
+                    // Restaurar botón
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                    
+                    // Mostrar error
+                    alert('Error en la verificación de seguridad. Por favor, recarga la página e intenta nuevamente.');
+                });
+        });
+    });
+</script>
 
 <?= $this->endSection() ?>

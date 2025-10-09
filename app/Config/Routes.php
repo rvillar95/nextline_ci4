@@ -131,6 +131,7 @@ $routes->group('dashboard', function ($routes) {
     $routes->group('leads', function ($routes2) {
         $routes2->get('lista', 'Dashboard\LeadController::lista');
         $routes2->get('getLeads', 'Dashboard\LeadController::getLeads');
+        $routes2->get('getDetalle', 'Dashboard\LeadController::getDetalle');
         $routes2->get('getServicios', 'Dashboard\LeadController::getServicios');
         $routes2->post('cambiarEstado', 'Dashboard\LeadController::cambiarEstado');
         $routes2->post('eliminar', 'Dashboard\LeadController::eliminar');
@@ -205,6 +206,8 @@ $routes->get('servicios-categorias/(:segment)', 'Web\ServicioCategoriaController
 $routes->get('proyectos', 'Web\ProyectoController::index');
 $routes->get('proyectos/(:segment)', 'Web\ProyectoController::detalle/$1');
 $routes->get('galeria', 'Web\GaleriaController::index');
+$routes->get('galeria/detalle/(:num)', 'Web\GaleriaController::detalle/$1');
+$routes->get('galeria/categoria/(:segment)', 'Web\GaleriaController::categoria/$1');
 $routes->get('galeria-categorias', 'Web\GaleriaCategoriaController::index');
 $routes->get('galeria-categorias/(:segment)', 'Web\GaleriaCategoriaController::detalle/$1');
 $routes->get('nosotros', 'Web\NosotrosController::index');

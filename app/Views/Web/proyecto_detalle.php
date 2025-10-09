@@ -2,15 +2,22 @@
 
 <?= $this->section('content') ?>
 
-<!-- Breadcrumb -->
-<section id="page-header" class="no-bottom page-content" data-bgimage="url(<?= base_url('lib/images/slider/construccion_2.jpg') ?>)">
-    <div class="mask">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="spacer-single"></div>
-                    <div class="spacer-single"></div>
-                    <nav aria-label="breadcrumb">
+<!-- Hero Section Moderno -->
+<section class="hero-project-detail-modern" style="background: linear-gradient(to bottom, #1d2844 0%, #4a5f7a 100%); padding: 100px 0 80px; margin-top: 0; position: relative; overflow: hidden;">
+    <div class="hero-pattern-project-detail"></div>
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <div class="hero-content-project-detail text-white">
+                    <div class="hero-badge-project-detail">
+                        <i class="fas fa-building"></i>
+                        <span>PROYECTO</span>
+                    </div>
+                    <h1 class="hero-title-project-detail mb-4"><?= esc($proyecto->nombre) ?></h1>
+                    <p class="hero-subtitle-project-detail lead mb-4">
+                        <?= !empty($proyecto->descripcion_corta) ? esc($proyecto->descripcion_corta) : 'Un proyecto de construcción excepcional que refleja nuestra pasión por la excelencia y la innovación.' ?>
+                    </p>
+                    <nav aria-label="breadcrumb" class="breadcrumb-modern">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="<?= base_url() ?>">Inicio</a></li>
                             <li class="breadcrumb-item"><a href="<?= base_url('proyectos') ?>">Proyectos</a></li>
@@ -23,93 +30,113 @@
     </div>
 </section>
 
-<!-- Proyecto Detalle -->
-<section id="section-project-detail" class="no-top">
+<!-- Proyecto Detalle Moderno -->
+<section class="project-detail-modern" style="background: white; padding: 80px 0;">
     <div class="container">
         <div class="row">
             <!-- Información Principal -->
             <div class="col-lg-8">
-                <div class="project-detail-content">
+                <div class="project-detail-content-modern">
                     <!-- Header del Proyecto -->
-                    <div class="project-header">
-                        <h1 class="project-title"><?= esc($proyecto->nombre) ?></h1>
-                        
+                    <div class="project-header-modern">
                         <!-- Badges -->
-                        <div class="project-badges">
-                            <span class="badge badge-tipo"><?= ucfirst($proyecto->tipo_proyecto) ?></span>
-                            <span class="badge badge-estado"><?= ucfirst(str_replace('_', ' ', $proyecto->estado)) ?></span>
+                        <div class="project-badges-modern">
+                            <span class="badge-modern badge-tipo-modern">
+                                <i class="fas fa-tools"></i>
+                                <?= ucfirst($proyecto->tipo_proyecto) ?>
+                            </span>
+                            <span class="badge-modern badge-estado-modern">
+                                <i class="fas fa-check-circle"></i>
+                                <?= ucfirst(str_replace('_', ' ', $proyecto->estado)) ?>
+                            </span>
                             <?php if ($proyecto->destacado): ?>
-                                <span class="badge badge-destacado">⭐ Destacado</span>
+                                <span class="badge-modern badge-destacado-modern">
+                                    <i class="fas fa-star"></i>
+                                    Destacado
+                                </span>
                             <?php endif; ?>
                         </div>
                         
                         <!-- Información del Proyecto -->
-                        <div class="project-info-grid">
+                        <div class="project-info-grid-modern">
                             <?php if ($proyecto->cliente): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-user"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Cliente</span>
-                                        <span class="info-value"><?= esc($proyecto->cliente) ?></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Cliente</span>
+                                        <span class="info-value-modern"><?= esc($proyecto->cliente) ?></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->ubicacion): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Ubicación</span>
-                                        <span class="info-value"><?= esc($proyecto->ubicacion) ?></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Ubicación</span>
+                                        <span class="info-value-modern"><?= esc($proyecto->ubicacion) ?></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->area_construida): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-ruler-combined"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Área Construida</span>
-                                        <span class="info-value"><?= number_format($proyecto->area_construida, 0, ',', '.') ?> m²</span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-ruler-combined"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Área Construida</span>
+                                        <span class="info-value-modern"><?= number_format($proyecto->area_construida, 0, ',', '.') ?> m²</span>
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <!-- Mostrar área construida de ejemplo si está vacía -->
-                                <div class="info-item">
-                                    <i class="fas fa-ruler-combined"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Área Construida</span>
-                                        <span class="info-value"><em>Por especificar</em></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-ruler-combined"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Área Construida</span>
+                                        <span class="info-value-modern"><em>Por especificar</em></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->presupuesto && $proyecto->mostrar_presupuesto): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-dollar-sign"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Presupuesto</span>
-                                        <span class="info-value">$<?= number_format($proyecto->presupuesto, 0, ',', '.') ?></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Presupuesto</span>
+                                        <span class="info-value-modern">$<?= number_format($proyecto->presupuesto, 0, ',', '.') ?></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->fecha_inicio): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Fecha de Inicio</span>
-                                        <span class="info-value"><?= date('d/m/Y', strtotime($proyecto->fecha_inicio)) ?></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Fecha de Inicio</span>
+                                        <span class="info-value-modern"><?= date('d/m/Y', strtotime($proyecto->fecha_inicio)) ?></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->fecha_finalizacion): ?>
-                                <div class="info-item">
-                                    <i class="fas fa-calendar-check"></i>
-                                    <div class="info-content">
-                                        <span class="info-label">Fecha de Finalización</span>
-                                        <span class="info-value"><?= date('d/m/Y', strtotime($proyecto->fecha_finalizacion)) ?></span>
+                                <div class="info-item-modern">
+                                    <div class="info-icon-modern">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="info-content-modern">
+                                        <span class="info-label-modern">Fecha de Finalización</span>
+                                        <span class="info-value-modern"><?= date('d/m/Y', strtotime($proyecto->fecha_finalizacion)) ?></span>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -118,19 +145,25 @@
                     
                     <!-- Descripción Corta -->
                     <?php if ($proyecto->descripcion_corta): ?>
-                        <div class="content-section">
-                            <h2 class="section-title">Resumen del Proyecto</h2>
-                            <div class="section-content">
-                                <p class="lead"><?= esc($proyecto->descripcion_corta) ?></p>
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-clipboard-list"></i>
+                                Resumen del Proyecto
+                            </h2>
+                            <div class="section-content-modern">
+                                <p class="lead-modern"><?= esc($proyecto->descripcion_corta) ?></p>
                             </div>
                         </div>
                     <?php endif; ?>
                     
                     <!-- Descripción Detallada -->
                     <?php if ($proyecto->descripcion_detallada): ?>
-                        <div class="content-section">
-                            <h2 class="section-title">Descripción Detallada</h2>
-                            <div class="section-content">
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-file-alt"></i>
+                                Descripción Detallada
+                            </h2>
+                            <div class="section-content-modern">
                                 <p><?= nl2br(esc($proyecto->descripcion_detallada)) ?></p>
                             </div>
                         </div>
@@ -138,17 +171,22 @@
                     
                     <!-- Características Técnicas -->
                     <?php if ($proyecto->caracteristicas_tecnicas): ?>
-                        <div class="content-section">
-                            <h2 class="section-title">Características Técnicas</h2>
-                            <div class="section-content">
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-cogs"></i>
+                                Características Técnicas
+                            </h2>
+                            <div class="section-content-modern">
                                 <p><?= nl2br(esc($proyecto->caracteristicas_tecnicas)) ?></p>
                             </div>
                         </div>
                     <?php else: ?>
-                        <!-- Mostrar sección de ejemplo si está vacía -->
-                        <div class="content-section">
-                            <h2 class="section-title">Características Técnicas</h2>
-                            <div class="section-content">
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-cogs"></i>
+                                Características Técnicas
+                            </h2>
+                            <div class="section-content-modern">
                                 <p><em>Las características técnicas de este proyecto se pueden agregar desde el panel de administración.</em></p>
                             </div>
                         </div>
@@ -156,17 +194,22 @@
                     
                     <!-- Materiales -->
                     <?php if ($proyecto->materiales_principales): ?>
-                        <div class="content-section">
-                            <h2 class="section-title">Materiales Principales</h2>
-                            <div class="section-content">
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-hammer"></i>
+                                Materiales Principales
+                            </h2>
+                            <div class="section-content-modern">
                                 <p><?= esc($proyecto->materiales_principales) ?></p>
                             </div>
                         </div>
                     <?php else: ?>
-                        <!-- Mostrar sección de ejemplo si está vacía -->
-                        <div class="content-section">
-                            <h2 class="section-title">Materiales Principales</h2>
-                            <div class="section-content">
+                        <div class="content-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-hammer"></i>
+                                Materiales Principales
+                            </h2>
+                            <div class="section-content-modern">
                                 <p><em>Los materiales principales utilizados en este proyecto se pueden especificar desde el panel de administración.</em></p>
                             </div>
                         </div>
@@ -174,32 +217,37 @@
                     
                     <!-- Testimonio del Cliente -->
                     <?php if ($proyecto->testimonio_cliente && $proyecto->nombre_cliente): ?>
-                        <div class="testimonial-section">
-                            <h2 class="section-title">Testimonio del Cliente</h2>
-                            <div class="testimonial-card">
-                                <div class="testimonial-content">
-                                    <i class="fas fa-quote-left testimonial-quote"></i>
-                                    <p class="testimonial-text">"<?= esc($proyecto->testimonio_cliente) ?>"</p>
-                                    <div class="testimonial-author">
+                        <div class="testimonial-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-quote-left"></i>
+                                Testimonio del Cliente
+                            </h2>
+                            <div class="testimonial-card-modern">
+                                <div class="testimonial-content-modern">
+                                    <i class="fas fa-quote-left testimonial-quote-modern"></i>
+                                    <p class="testimonial-text-modern">"<?= esc($proyecto->testimonio_cliente) ?>"</p>
+                                    <div class="testimonial-author-modern">
                                         <strong><?= esc($proyecto->nombre_cliente) ?></strong>
                                         <?php if ($proyecto->cliente): ?>
-                                            <span class="author-role">Cliente del proyecto</span>
+                                            <span class="author-role-modern">Cliente del proyecto</span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     <?php else: ?>
-                        <!-- Mostrar sección de ejemplo si está vacía -->
-                        <div class="testimonial-section">
-                            <h2 class="section-title">Testimonio del Cliente</h2>
-                            <div class="testimonial-card">
-                                <div class="testimonial-content">
-                                    <i class="fas fa-quote-left testimonial-quote"></i>
-                                    <p class="testimonial-text"><em>El testimonio del cliente se puede agregar desde el panel de administración.</em></p>
-                                    <div class="testimonial-author">
+                        <div class="testimonial-section-modern">
+                            <h2 class="section-title-modern">
+                                <i class="fas fa-quote-left"></i>
+                                Testimonio del Cliente
+                            </h2>
+                            <div class="testimonial-card-modern">
+                                <div class="testimonial-content-modern">
+                                    <i class="fas fa-quote-left testimonial-quote-modern"></i>
+                                    <p class="testimonial-text-modern"><em>El testimonio del cliente se puede agregar desde el panel de administración.</em></p>
+                                    <div class="testimonial-author-modern">
                                         <strong>Cliente</strong>
-                                        <span class="author-role">Testimonio pendiente</span>
+                                        <span class="author-role-modern">Testimonio pendiente</span>
                                     </div>
                                 </div>
                             </div>
@@ -210,27 +258,33 @@
             
             <!-- Sidebar -->
             <div class="col-lg-4">
-                <div class="project-sidebar">
+                <div class="project-sidebar-modern">
                     <!-- Galería de Imágenes -->
                     <?php if (!empty($imagenes)): ?>
-                        <div class="sidebar-widget gallery-widget">
-                            <h3 class="widget-title">Galería del Proyecto</h3>
+                        <div class="sidebar-widget-modern gallery-widget-modern">
+                            <h3 class="widget-title-modern">
+                                <i class="fas fa-images"></i>
+                                Galería del Proyecto
+                            </h3>
                             
                             <!-- Imagen Principal -->
                             <?php 
                             $imagenPrincipal = array_filter($imagenes, function($img) { return $img->es_portada; });
                             $imagenPrincipal = !empty($imagenPrincipal) ? reset($imagenPrincipal) : $imagenes[0];
                             ?>
-                            <div class="main-gallery-image">
+                            <div class="main-gallery-image-modern">
                                 <img src="<?= base_url($imagenPrincipal->ruta) ?>" class="img-fluid" alt="<?= esc($proyecto->nombre) ?>" id="main-image">
+                                <div class="gallery-overlay-modern">
+                                    <i class="fas fa-search-plus"></i>
+                                </div>
                             </div>
                             
                             <!-- Thumbnails -->
                             <?php if (count($imagenes) > 1): ?>
-                                <div class="gallery-thumbnails">
+                                <div class="gallery-thumbnails-modern">
                                     <?php foreach ($imagenes as $imagen): ?>
                                         <img src="<?= base_url($imagen->ruta) ?>" 
-                                             class="gallery-thumbnail <?= $imagen->id === $imagenPrincipal->id ? 'active' : '' ?>" 
+                                             class="gallery-thumbnail-modern <?= $imagen->id === $imagenPrincipal->id ? 'active' : '' ?>" 
                                              alt="Imagen del proyecto"
                                              onclick="changeMainImage('<?= base_url($imagen->ruta) ?>', this)">
                                     <?php endforeach; ?>
@@ -240,14 +294,17 @@
                     <?php endif; ?>
                     
                     <!-- Información de Contacto -->
-                    <div class="sidebar-widget contact-widget">
-                        <h3 class="widget-title">¿Te Interesa Este Proyecto?</h3>
-                        <p class="widget-description">Contáctanos para conocer más detalles o solicitar una cotización similar.</p>
-                        <div class="contact-buttons">
-                            <a href="<?= base_url('contacto') ?>" class="btn-contact btn-primary">
+                    <div class="sidebar-widget-modern contact-widget-modern">
+                        <h3 class="widget-title-modern">
+                            <i class="fas fa-envelope"></i>
+                            ¿Te Interesa Este Proyecto?
+                        </h3>
+                        <p class="widget-description-modern">Contáctanos para conocer más detalles o solicitar una cotización similar.</p>
+                        <div class="contact-buttons-modern">
+                            <a href="<?= base_url('contacto') ?>" class="btn-contact-modern btn-primary-modern">
                                 <i class="fas fa-envelope"></i> Contactar
                             </a>
-                            <a href="<?= base_url('servicios') ?>" class="btn-contact btn-secondary">
+                            <a href="<?= base_url('servicios') ?>" class="btn-contact-modern btn-secondary-modern">
                                 <i class="fas fa-tools"></i> Ver Servicios
                             </a>
                         </div>
@@ -255,22 +312,25 @@
                     
                     <!-- Proyectos Relacionados -->
                     <?php if (!empty($proyectos_relacionados)): ?>
-                        <div class="sidebar-widget related-widget">
-                            <h3 class="widget-title">Proyectos Similares</h3>
-                            <div class="related-projects">
+                        <div class="sidebar-widget-modern related-widget-modern">
+                            <h3 class="widget-title-modern">
+                                <i class="fas fa-project-diagram"></i>
+                                Proyectos Similares
+                            </h3>
+                            <div class="related-projects-modern">
                                 <?php foreach ($proyectos_relacionados as $proyectoRel): ?>
-                                    <div class="related-project-item">
-                                        <div class="related-project-image">
+                                    <div class="related-project-item-modern">
+                                        <div class="related-project-image-modern">
                                             <?php if ($proyectoRel->imagen_portada): ?>
                                                 <img src="<?= base_url($proyectoRel->imagen_portada->ruta) ?>" alt="<?= esc($proyectoRel->nombre) ?>">
                                             <?php else: ?>
                                                 <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="Proyecto sin imagen">
                                             <?php endif; ?>
                                         </div>
-                                        <div class="related-project-content">
+                                        <div class="related-project-content-modern">
                                             <h4><a href="<?= base_url('proyectos/' . $proyectoRel->slug) ?>"><?= esc($proyectoRel->nombre) ?></a></h4>
                                             <p><?= esc($proyectoRel->descripcion_corta) ?></p>
-                                            <span class="related-project-type"><?= ucfirst($proyectoRel->tipo_proyecto) ?></span>
+                                            <span class="related-project-type-modern"><?= ucfirst($proyectoRel->tipo_proyecto) ?></span>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -284,33 +344,103 @@
 </section>
 
 <style>
-/* Estilos modernos para página de detalle de proyecto */
-.project-detail-content {
+/* ===== PROYECTO DETALLE MODERNOS CSS ===== */
+
+/* Hero Section */
+.hero-project-detail-modern {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-pattern-project-detail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain-project-detail" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(240,132,26,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(240,132,26,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(240,132,26,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(240,132,26,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(240,132,26,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain-project-detail)"/></svg>');
+    opacity: 0.3;
+}
+
+.hero-badge-project-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(240, 132, 26, 0.2);
+    color: #f0841a;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(240, 132, 26, 0.3);
+}
+
+.hero-title-project-detail {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle-project-detail {
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.breadcrumb-modern {
+    margin-bottom: 0;
+}
+
+.breadcrumb-modern .breadcrumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 10px 20px;
+    margin: 0;
+    backdrop-filter: blur(10px);
+}
+
+.breadcrumb-modern .breadcrumb-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-modern .breadcrumb-item a:hover {
+    color: #f0841a;
+}
+
+.breadcrumb-modern .breadcrumb-item.active {
+    color: white;
+}
+
+/* Contenido Principal */
+.project-detail-content-modern {
     padding: 40px 0;
 }
 
-.project-header {
+.project-header-modern {
     margin-bottom: 50px;
     padding-bottom: 30px;
     border-bottom: 2px solid #f0f0f0;
 }
 
-.project-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #1d2844;
-    margin-bottom: 25px;
-    line-height: 1.2;
-}
-
-.project-badges {
+.project-badges-modern {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     margin-bottom: 30px;
 }
 
-.badge {
+.badge-modern {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     padding: 10px 20px;
     border-radius: 25px;
     font-size: 0.9rem;
@@ -319,32 +449,32 @@
     letter-spacing: 0.5px;
 }
 
-.badge-tipo {
+.badge-tipo-modern {
     background: linear-gradient(135deg, #f0841a, #ff6b35);
     color: white;
     box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);
 }
 
-.badge-estado {
+.badge-estado-modern {
     background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
-.badge-destacado {
+.badge-destacado-modern {
     background: linear-gradient(135deg, #ffc107, #ff8c00);
     color: #1d2844;
     box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
 }
 
-.project-info-grid {
+.project-info-grid-modern {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 25px;
     margin-top: 30px;
 }
 
-.info-item {
+.info-item-modern {
     display: flex;
     align-items: center;
     padding: 20px;
@@ -354,26 +484,32 @@
     transition: all 0.3s ease;
 }
 
-.info-item:hover {
+.info-item-modern:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     background: #ffffff;
 }
 
-.info-item i {
-    font-size: 1.5rem;
-    color: #f0841a;
+.info-icon-modern {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #f0841a, #ff6b35);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
     margin-right: 15px;
-    width: 30px;
-    text-align: center;
+    flex-shrink: 0;
 }
 
-.info-content {
+.info-content-modern {
     display: flex;
     flex-direction: column;
 }
 
-.info-label {
+.info-label-modern {
     font-size: 0.85rem;
     color: #666;
     font-weight: 500;
@@ -382,13 +518,14 @@
     margin-bottom: 5px;
 }
 
-.info-value {
+.info-value-modern {
     font-size: 1.1rem;
     color: #1d2844;
     font-weight: 700;
 }
 
-.content-section {
+/* Secciones de Contenido */
+.content-section-modern {
     margin-bottom: 50px;
     padding: 30px;
     background: #ffffff;
@@ -397,7 +534,7 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.section-title {
+.section-title-modern {
     font-size: 1.8rem;
     font-weight: 700;
     color: #1d2844;
@@ -405,9 +542,17 @@
     padding-bottom: 15px;
     border-bottom: 3px solid #f0841a;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.section-title::after {
+.section-title-modern i {
+    color: #f0841a;
+    font-size: 1.5rem;
+}
+
+.section-title-modern::after {
     content: '';
     position: absolute;
     bottom: -3px;
@@ -417,13 +562,13 @@
     background: #ff6b35;
 }
 
-.section-content {
+.section-content-modern {
     font-size: 1.1rem;
     line-height: 1.8;
     color: #555;
 }
 
-.section-content .lead {
+.lead-modern {
     font-size: 1.3rem;
     font-weight: 500;
     color: #1d2844;
@@ -436,11 +581,12 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.testimonial-section {
+/* Testimonio */
+.testimonial-section-modern {
     margin-bottom: 50px;
 }
 
-.testimonial-card {
+.testimonial-card-modern {
     background: linear-gradient(135deg, #1d2844, #2c3e50);
     border-radius: 20px;
     padding: 40px;
@@ -449,7 +595,7 @@
     overflow: hidden;
 }
 
-.testimonial-card::before {
+.testimonial-card-modern::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -460,19 +606,19 @@
     pointer-events: none;
 }
 
-.testimonial-content {
+.testimonial-content-modern {
     position: relative;
     z-index: 2;
 }
 
-.testimonial-quote {
+.testimonial-quote-modern {
     font-size: 3rem;
     color: #f0841a;
     margin-bottom: 20px;
     opacity: 0.7;
 }
 
-.testimonial-text {
+.testimonial-text-modern {
     font-size: 1.2rem;
     line-height: 1.8;
     font-style: italic;
@@ -480,29 +626,29 @@
     color: #f8f9fa;
 }
 
-.testimonial-author {
+.testimonial-author-modern {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.testimonial-author strong {
+.testimonial-author-modern strong {
     font-size: 1.1rem;
     color: #ffffff;
 }
 
-.author-role {
+.author-role-modern {
     font-size: 0.9rem;
     color: #f0841a;
     font-weight: 500;
 }
 
-/* Sidebar Styles */
-.project-sidebar {
+/* Sidebar */
+.project-sidebar-modern {
     padding: 40px 0;
 }
 
-.sidebar-widget {
+.sidebar-widget-modern {
     background: #ffffff;
     border-radius: 20px;
     padding: 30px;
@@ -512,53 +658,81 @@
     transition: all 0.3s ease;
 }
 
-.sidebar-widget:hover {
+.sidebar-widget-modern:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
 }
 
-.widget-title {
+.widget-title-modern {
     font-size: 1.4rem;
     font-weight: 700;
     color: #1d2844;
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 2px solid #f0841a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.widget-description {
+.widget-title-modern i {
+    color: #f0841a;
+    font-size: 1.2rem;
+}
+
+.widget-description-modern {
     color: #666;
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 25px;
 }
 
-/* Gallery Widget */
-.main-gallery-image {
+/* Galería */
+.main-gallery-image-modern {
     margin-bottom: 20px;
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    position: relative;
 }
 
-.main-gallery-image img {
+.main-gallery-image-modern img {
     width: 100%;
     height: 300px;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
 
-.main-gallery-image:hover img {
-    transform: scale(1.05);
+.gallery-overlay-modern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-.gallery-thumbnails {
+.main-gallery-image-modern:hover .gallery-overlay-modern {
+    opacity: 1;
+}
+
+.gallery-overlay-modern i {
+    color: white;
+    font-size: 2rem;
+}
+
+.gallery-thumbnails-modern {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
 }
 
-.gallery-thumbnail {
+.gallery-thumbnail-modern {
     width: 70px;
     height: 70px;
     object-fit: cover;
@@ -568,20 +742,20 @@
     transition: all 0.3s ease;
 }
 
-.gallery-thumbnail:hover,
-.gallery-thumbnail.active {
+.gallery-thumbnail-modern:hover,
+.gallery-thumbnail-modern.active {
     border-color: #f0841a;
     transform: scale(1.1);
 }
 
-/* Contact Widget */
-.contact-buttons {
+/* Botones de Contacto */
+.contact-buttons-modern {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.btn-contact {
+.btn-contact-modern {
     padding: 15px 25px;
     border-radius: 12px;
     text-decoration: none;
@@ -595,7 +769,7 @@
     gap: 10px;
 }
 
-.btn-contact.btn-primary {
+.btn-primary-modern {
     background: linear-gradient(135deg, #f0841a, #ff6b35);
     color: white !important;
     box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);
@@ -603,7 +777,7 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.btn-contact.btn-primary:hover {
+.btn-primary-modern:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(240, 132, 26, 0.4);
     color: white !important;
@@ -611,27 +785,27 @@
     background: linear-gradient(135deg, #e67e00, #e55a00);
 }
 
-.btn-contact.btn-secondary {
+.btn-secondary-modern {
     background: transparent;
     color: #1d2844;
     border: 2px solid #1d2844;
 }
 
-.btn-contact.btn-secondary:hover {
+.btn-secondary-modern:hover {
     background: #1d2844;
     color: white;
     transform: translateY(-2px);
     text-decoration: none;
 }
 
-/* Related Projects */
-.related-projects {
+/* Proyectos Relacionados */
+.related-projects-modern {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.related-project-item {
+.related-project-item-modern {
     display: flex;
     gap: 15px;
     padding: 15px;
@@ -640,13 +814,13 @@
     border: 1px solid #f0f0f0;
 }
 
-.related-project-item:hover {
+.related-project-item-modern:hover {
     background: #f8f9fa;
     transform: translateX(5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.related-project-image {
+.related-project-image-modern {
     flex-shrink: 0;
     width: 80px;
     height: 80px;
@@ -654,40 +828,40 @@
     overflow: hidden;
 }
 
-.related-project-image img {
+.related-project-image-modern img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.related-project-content {
+.related-project-content-modern {
     flex-grow: 1;
 }
 
-.related-project-content h4 {
+.related-project-content-modern h4 {
     margin-bottom: 8px;
     font-size: 1rem;
     font-weight: 600;
 }
 
-.related-project-content h4 a {
+.related-project-content-modern h4 a {
     color: #1d2844;
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
-.related-project-content h4 a:hover {
+.related-project-content-modern h4 a:hover {
     color: #f0841a;
 }
 
-.related-project-content p {
+.related-project-content-modern p {
     font-size: 0.9rem;
     color: #666;
     line-height: 1.4;
     margin-bottom: 8px;
 }
 
-.related-project-type {
+.related-project-type-modern {
     font-size: 0.8rem;
     color: #f0841a;
     font-weight: 600;
@@ -697,47 +871,47 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .project-title {
+    .hero-title-project-detail {
         font-size: 2rem;
     }
     
-    .project-info-grid {
+    .project-info-grid-modern {
         grid-template-columns: 1fr;
         gap: 15px;
     }
     
-    .content-section {
+    .content-section-modern {
         padding: 20px;
         margin-bottom: 30px;
     }
     
-    .section-title {
+    .section-title-modern {
         font-size: 1.5rem;
     }
     
-    .testimonial-card {
+    .testimonial-card-modern {
         padding: 25px;
     }
     
-    .sidebar-widget {
+    .sidebar-widget-modern {
         padding: 20px;
     }
     
-    .main-gallery-image img {
+    .main-gallery-image-modern img {
         height: 250px;
     }
     
-    .gallery-thumbnail {
+    .gallery-thumbnail-modern {
         width: 60px;
         height: 60px;
     }
     
-    .related-project-item {
+    .related-project-item-modern {
         flex-direction: column;
         text-align: center;
     }
     
-    .related-project-image {
+    .related-project-image-modern {
         width: 100%;
         height: 120px;
         margin-bottom: 10px;
@@ -745,37 +919,39 @@
 }
 
 @media (max-width: 576px) {
-    .project-detail-content {
+    .project-detail-content-modern {
         padding: 20px 0;
     }
     
-    .project-title {
+    .hero-title-project-detail {
         font-size: 1.8rem;
     }
     
-    .project-badges {
+    .project-badges-modern {
         gap: 8px;
     }
     
-    .badge {
+    .badge-modern {
         padding: 8px 16px;
         font-size: 0.8rem;
     }
     
-    .info-item {
+    .info-item-modern {
         padding: 15px;
     }
     
-    .info-item i {
-        font-size: 1.2rem;
+    .info-icon-modern {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
         margin-right: 10px;
     }
     
-    .content-section {
+    .content-section-modern {
         padding: 15px;
     }
     
-    .sidebar-widget {
+    .sidebar-widget-modern {
         padding: 15px;
     }
 }

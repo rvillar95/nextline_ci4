@@ -1,0 +1,28 @@
+═══════════════════════════════════════════════════════════════
+  📋 AGREGAR AL ARCHIVO .env
+═══════════════════════════════════════════════════════════════
+
+Copia y pega estas líneas al final de tu archivo .env:
+
+# ────────────────────────────────────────────────────────────
+# Google reCAPTCHA v3 - Formulario de Contacto
+# ────────────────────────────────────────────────────────────
+recaptcha.siteKey = 6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_
+recaptcha.secretKey = 6LfzneMrAAAAABT4irksZucBsYQeg1bxLMh3WNB-
+recaptcha.enabled = true
+recaptcha.minScore = 0.5
+
+═══════════════════════════════════════════════════════════════
+  ℹ️ EXPLICACIÓN
+═══════════════════════════════════════════════════════════════
+
+recaptcha.siteKey     → Clave pública (se usa en el frontend)
+recaptcha.secretKey   → Clave privada (se usa en el backend)
+recaptcha.enabled     → Activar/desactivar reCAPTCHA (true/false)
+recaptcha.minScore    → Puntuación mínima (0.0 a 1.0)
+                        0.5 = Recomendado (balance seguridad/usabilidad)
+                        0.7 = Más estricto
+                        0.3 = Más permisivo
+
+═══════════════════════════════════════════════════════════════
+

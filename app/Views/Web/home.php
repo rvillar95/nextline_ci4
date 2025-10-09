@@ -19,7 +19,7 @@ function mostrarEstrellas($calificacion) {
 ?>
 
 <!-- Hero Section Moderno -->
-<section class="hero-section-modern" style="background: linear-gradient(to bottom, #1d2844 30%, #4a5f7a 100%) !important; padding: 120px 0 100px; margin-top: 0; position: relative; overflow: hidden;">
+<section class="hero-section-modern" style="background: linear-gradient(to bottom, #1d2844 0%, #4a5f7a 100%) !important; padding: 120px 0 100px; margin-top: 0; position: relative; overflow: hidden;">
     <div class="hero-pattern-modern"></div>
     <div class="container">
         <div class="row align-items-center">
@@ -1080,7 +1080,7 @@ function mostrarEstrellas($calificacion) {
 
 .btn-service-modern:hover {
     background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white;
+    color: white !important;
     text-decoration: none;
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(240, 132, 26, 0.4);

@@ -1,0 +1,195 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║               🎯 DESDE DONDE ESTÁS AHORA - SIGUIENTE PASO                   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📍 DÓNDE ESTÁS:
+══════════════════════════════════════════════════════════════════════════════
+
+Estás viendo el menú lateral de Mailtrap con estas opciones:
+- Home
+- API/SMTP (Transactional) ← Aquí necesitas entrar
+- Sandboxes
+- Campaigns
+- etc.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 SIGUIENTE PASO - OBTENER CREDENCIALES:
+══════════════════════════════════════════════════════════════════════════════
+
+1. En el menú lateral que estás viendo, haz clic en:
+   
+   📧 Sandboxes  ← HAZ CLIC AQUÍ
+
+2. Verás una lista de "Inboxes" (buzones)
+   
+   Deberías ver algo como:
+   ┌────────────────────────────────┐
+   │ 📥 My Inbox                    │
+   │ 0 messages                     │
+   │ [View]                         │
+   └────────────────────────────────┘
+
+3. Haz clic en "My Inbox" o en el botón [View]
+
+4. Una vez dentro, verás PESTAÑAS arriba:
+   
+   [ Messages ] [ SMTP Settings ] [ HTTP API ] [ Settings ]
+   
+   Haz clic en: SMTP Settings  ← HAZ CLIC AQUÍ
+
+5. En SMTP Settings verás un dropdown que dice:
+   
+   "Select framework or language"
+   
+   Selecciona: "Other" o "Laravel/Symfony"
+
+6. ¡AHÍ ESTÁN LAS CREDENCIALES! 🎉
+   
+   ┌────────────────────────────────────────┐
+   │ Host:     smtp.mailtrap.io             │
+   │ Port:     2525                         │
+   │ Username: 1a2b3c4d5e6f7g  ← COPIA    │
+   │ Password: 1a2b3c4d5e6f7g  ← COPIA    │
+   └────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💾 QUÉ HACER CON LAS CREDENCIALES:
+══════════════════════════════════════════════════════════════════════════════
+
+1. COPIA el Username (haz clic en el icono de copiar al lado)
+
+2. COPIA el Password (haz clic en el icono de copiar al lado)
+
+3. Ve a tu proyecto:
+   C:\wamp64\www\codeigniter4\nextline_ci4\
+
+4. Crea un archivo llamado: .env  (con punto al inicio)
+
+5. Abre el archivo .env y pega esto:
+
+═══════════════════════════════════════════════════════════════════════════════
+CI_ENVIRONMENT = development
+
+app.baseURL = 'http://localhost/codeigniter4/nextline_ci4/'
+
+email.protocol = smtp
+email.SMTPHost = smtp.mailtrap.io
+email.SMTPUser = PEGA_TU_USERNAME_AQUI
+email.SMTPPass = PEGA_TU_PASSWORD_AQUI
+email.SMTPPort = 2525
+email.SMTPCrypto = tls
+email.mailType = html
+email.charset = UTF-8
+email.newline = "\r\n"
+═══════════════════════════════════════════════════════════════════════════════
+
+6. Reemplaza:
+   - PEGA_TU_USERNAME_AQUI con el username que copiaste
+   - PEGA_TU_PASSWORD_AQUI con el password que copiaste
+
+7. GUARDA el archivo .env
+
+8. REINICIA WAMP (Stop All Services → Start All Services)
+
+9. Prueba el formulario:
+   http://localhost/codeigniter4/nextline_ci4/contacto
+
+10. Vuelve a Mailtrap → Sandboxes → My Inbox → Messages
+    ¡Verás el email ahí! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔄 RESUMEN VISUAL DEL CAMINO:
+══════════════════════════════════════════════════════════════════════════════
+
+DONDE ESTÁS AHORA:
+  Menú lateral de Mailtrap
+
+      ↓ (haz clic)
+
+Sandboxes
+
+      ↓ (se abre)
+
+My Inbox
+
+      ↓ (haz clic)
+
+Pestaña: SMTP Settings
+
+      ↓ (ahí están)
+
+Username y Password
+
+      ↓ (cópialos)
+
+Pégalos en .env
+
+      ↓ (reinicia)
+
+WAMP restart
+
+      ↓ (prueba)
+
+Formulario de contacto
+
+      ↓ (verifica)
+
+Vuelve a Mailtrap → Messages
+
+      ↓ (éxito)
+
+¡Email capturado! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 ATAJO RÁPIDO:
+══════════════════════════════════════════════════════════════════════════════
+
+En el menú que estás viendo:
+
+1. Clic en: Sandboxes
+2. Clic en: My Inbox
+3. Clic en: SMTP Settings (pestaña)
+4. Copia Username y Password
+5. Crea .env con esas credenciales
+6. Reinicia WAMP
+7. Prueba formulario
+8. ¡Listo!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+❓ ¿NO VES "SANDBOXES"?
+══════════════════════════════════════════════════════════════════════════════
+
+Si no ves "Sandboxes" en el menú, busca:
+- "Email Testing"
+- "Inboxes"
+- O cualquier opción que diga "Inbox" o "Testing"
+
+El objetivo es llegar a un inbox/buzón donde verás "SMTP Settings"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 IMPORTANTE:
+══════════════════════════════════════════════════════════════════════════════
+
+Las credenciales (Username y Password) son ÚNICAS para tu cuenta.
+No uses las del ejemplo, usa las que te da Mailtrap.
+
+Ejemplo de cómo se ven (TUS serán diferentes):
+Username: 1a2b3c4d5e6f7g
+Password: 1a2b3c4d5e6f7g
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿SIGUIENTE PASO?
+
+Haz clic en "Sandboxes" en el menú que estás viendo y sígueme! 🚀
+
+═══════════════════════════════════════════════════════════════════════════════
+

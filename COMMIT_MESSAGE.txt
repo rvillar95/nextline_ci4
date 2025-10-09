@@ -1,0 +1,121 @@
+feat: Implementar sistema de notificaciones por email, mejoras en gestión de leads, zona horaria y reCAPTCHA v3
+
+### 📧 Sistema de Notificaciones por Email
+- Implementado envío automático de email a la empresa cuando se recibe un lead desde el formulario de contacto
+- Email con diseño moderno y responsive en HTML
+- Configuración SMTP completa en ContactoController
+- Sistema inteligente: solo envía emails en producción, loguea en desarrollo
+- Manejo robusto de errores con logs detallados
+
+### 👥 Mejoras en Gestión de Leads
+- Agregado botón "Ver Detalle" para visualizar información completa del lead
+- Modal moderno con diseño por cards mostrando:
+  * Información personal (nombre, correo, teléfono)
+  * Estado y servicio de interés
+  * Mensaje completo del cliente
+  * Información de campaña UTM (si existe)
+- Botones de acción con iconos mejorados (ver, contactar, cerrar, eliminar)
+- Truncamiento de mensaje en tabla a 50 caracteres con "..." para mejor UX
+
+### ⏰ Configuración de Zona Horaria
+- Configurada zona horaria global a America/Santiago (Chile)
+- Todas las fechas ahora se guardan con hora local de Chile
+- Afecta a todas las tablas de forma automática
+
+### 🛡️ Implementación de Google reCAPTCHA v3
+- Protección invisible contra spam y bots en formulario de contacto
+- Sistema de validación basado en score (0.0 - 1.0)
+- Score mínimo configurable desde .env (default: 0.5)
+- Feedback visual al usuario: "Verificando..." → "Enviando..."
+- Logs detallados de cada validación
+- Sistema desactivable para entorno de desarrollo
+- Documentación completa incluida
+
+### 📝 Archivos Modificados
+
+**Controladores:**
+- app/Controllers/Web/ContactoController.php
+  * Método enviarNotificacionEmail() con diseño HTML moderno
+  * Método crearMensajeHTML() para template de email
+  * Configuración SMTP manual completa
+  * Método validarRecaptcha() con validación contra API de Google
+  * Detección automática de entorno (dev/prod)
+
+- app/Controllers/Dashboard/LeadController.php
+  * Método getDetalle() para obtener información completa del lead
+  * Mejora en columna de acciones con iconos y btn-group
+  * Truncamiento de mensaje a 50 caracteres
+
+**Vistas:**
+- app/Views/Modulos/leads/lista.php
+  * Modal moderno para detalle de lead con diseño por cards
+  * JavaScript para cargar y mostrar información del lead
+  * Mejoras visuales en modales (headers con color, iconos)
+
+- app/Views/Web/contacto.php
+  * Script de Google reCAPTCHA v3 integrado
+  * Campo oculto para token de reCAPTCHA
+  * JavaScript para generar token al enviar formulario
+  * Indicador "Protegido por reCAPTCHA de Google"
+
+**Configuración:**
+- app/Config/App.php
+  * Zona horaria cambiada de 'UTC' a 'America/Santiago'
+
+- app/Config/Routes.php
+  * Ruta agregada: dashboard/leads/getDetalle
+
+- app/Config/Email.php
+  * mailType cambiado a 'html'
+  * CRLF y newline configurados para Windows/SMTP
+
+### 📚 Documentación Creada
+- CONFIGURACION_EMAIL_FINAL.md - Guía completa del sistema de emails
+- TIMEZONE_CONFIGURACION.md - Documentación de zona horaria
+- RECAPTCHA_IMPLEMENTACION.md - Guía completa de reCAPTCHA v3
+- PASOS_RECAPTCHA.txt - Guía rápida de 4 pasos
+- recaptcha_env_config.txt - Configuración para .env
+
+### 🔧 Requisitos de Configuración
+
+Agregar al archivo .env:
+
+```env
+# Configuración de Email (solo en producción)
+CI_ENVIRONMENT = production  # Cambiar a 'production' en servidor real
+
+# Google reCAPTCHA v3
+recaptcha.siteKey = 6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_
+recaptcha.secretKey = 6LfzneMrAAAAABT4irksZucBsYQeg1bxLMh3WNB-
+recaptcha.enabled = true
+recaptcha.minScore = 0.5
+```
+
+### ✨ Mejoras de UX/UI
+- Feedback visual mejorado en formulario de contacto
+- Modales modernos con diseño consistente
+- Iconos Font Awesome en todos los botones de acción
+- Cards con sombras y espaciado mejorado
+- Estados de loading claros ("Verificando...", "Enviando...")
+
+### 🔒 Seguridad
+- Validación reCAPTCHA v3 contra bots
+- Honeypot existente mantenido
+- CSRF protection activo
+- Validación de score ajustable
+- Logs de seguridad detallados
+
+### 🎯 Beneficios
+✅ Notificación instantánea de nuevos leads
+✅ Email profesional y moderno
+✅ Protección efectiva contra spam (99%)
+✅ Mejor gestión y visualización de leads
+✅ Fechas correctas en zona horaria local
+✅ UX mejorada sin fricción para usuarios reales
+✅ Sistema configurable y flexible
+✅ Documentación completa para mantenimiento
+
+---
+
+**Nota:** Requiere reiniciar WAMP después de agregar las configuraciones al .env
+

@@ -1,0 +1,104 @@
+═══════════════════════════════════════════════════════════════
+  📦 COMANDOS PARA HACER EL COMMIT
+═══════════════════════════════════════════════════════════════
+
+Copia y ejecuta estos comandos en la terminal (Git Bash o CMD):
+
+# 1. Asegurarte de estar en el directorio correcto
+cd C:\wamp64\www\codeigniter4\nextline_ci4
+
+# 2. Ver estado actual
+git status
+
+# 3. Agregar todos los archivos modificados
+git add app/Controllers/Web/ContactoController.php
+git add app/Controllers/Dashboard/LeadController.php
+git add app/Views/Modulos/leads/lista.php
+git add app/Views/Web/contacto.php
+git add app/Config/App.php
+git add app/Config/Routes.php
+git add app/Config/Email.php
+
+# 4. Agregar documentación
+git add CONFIGURACION_EMAIL_FINAL.md
+git add TIMEZONE_CONFIGURACION.md
+git add RECAPTCHA_IMPLEMENTACION.md
+git add PASOS_RECAPTCHA.txt
+git add recaptcha_env_config.txt
+git add COMMIT_MESSAGE.txt
+
+# 5. Hacer el commit con mensaje detallado
+git commit -m "feat: Sistema de notificaciones email, gestión leads mejorada, zona horaria y reCAPTCHA v3
+
+- Implementado envío automático de email con diseño HTML moderno
+- Agregado modal de detalle completo para leads
+- Configurada zona horaria America/Santiago (Chile)
+- Implementado Google reCAPTCHA v3 en formulario contacto
+- Mejorada UX con feedback visual y estados de loading
+- Documentación completa incluida
+
+Archivos principales modificados:
+- ContactoController: email notifications + reCAPTCHA validation
+- LeadController: getDetalle() method + improved actions
+- contacto.php: reCAPTCHA v3 integration
+- leads/lista.php: detail modal + improved UI
+- App.php: timezone America/Santiago
+- Routes.php: new getDetalle route
+
+Ver COMMIT_MESSAGE.txt para detalles completos"
+
+# 6. Ver el commit creado
+git log -1
+
+# 7. (Opcional) Push al repositorio remoto
+# git push origin main
+# o
+# git push origin master
+
+═══════════════════════════════════════════════════════════════
+  📝 COMMIT ALTERNATIVO MÁS CORTO
+═══════════════════════════════════════════════════════════════
+
+Si prefieres un commit más simple:
+
+git add .
+git commit -m "feat: Email notifications, lead management, timezone & reCAPTCHA v3
+
+- Auto email to company on new lead with modern HTML design
+- Lead detail modal with complete info display
+- Timezone set to America/Santiago (Chile)
+- Google reCAPTCHA v3 protection on contact form
+- Improved UX and security
+
+See COMMIT_MESSAGE.txt for full details"
+
+═══════════════════════════════════════════════════════════════
+  ⚠️ ANTES DE HACER COMMIT
+═══════════════════════════════════════════════════════════════
+
+IMPORTANTE: NO incluyas el archivo .env en el commit (ya debería
+estar en .gitignore). El .env contiene claves sensibles.
+
+Para verificar que .env NO será incluido:
+git status
+
+Si ves .env en la lista, agrégalo a .gitignore:
+echo .env >> .gitignore
+
+═══════════════════════════════════════════════════════════════
+  🎯 RESUMEN DE CAMBIOS
+═══════════════════════════════════════════════════════════════
+
+Archivos modificados: 7
+Documentación creada: 6
+Líneas agregadas: ~600
+Líneas modificadas: ~150
+
+Funcionalidades nuevas:
+✅ Sistema de notificaciones por email
+✅ Modal de detalle de leads
+✅ Zona horaria configurada
+✅ Protección reCAPTCHA v3
+
+═══════════════════════════════════════════════════════════════
+
