@@ -157,7 +157,7 @@
                         <h3>Próximamente</h3>
                         <p>Estamos preparando nuestros servicios para mostrarte. Muy pronto podrás ver toda nuestra oferta profesional.</p>
                         <a href="<?= base_url('contacto') ?>" class="btn-contact-modern">
-                            <i class="fas fa-envelope"></i> Contáctanos
+                            <i class="fas fa-envelope" style="color: white; padding-top:17px"></i> Contáctanos
                         </a>
                     </div>
                 </div>
@@ -635,7 +635,7 @@
 
 .btn-contact-modern {
     background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white;
+    color: white !important;
     padding: 15px 30px;
     border-radius: 50px;
     text-decoration: none;
@@ -650,7 +650,7 @@
 .btn-contact-modern:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4);
-    color: white;
+    color: white !important;
     text-decoration: none;
 }
 
@@ -729,7 +729,7 @@
 
 .btn-cta-primary {
     background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white;
+    color: white !important;
 }
 
 .btn-cta-primary:hover {

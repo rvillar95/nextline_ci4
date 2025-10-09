@@ -1,0 +1,124 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                    🚨 SOLUCIÓN AL ERROR DE EMAIL 🚨                          ║
+║                           (En 3 Pasos Simples)                              ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 1: Crear archivo .env                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Ve a la raíz de tu proyecto: 
+   C:\wamp64\www\codeigniter4\nextline_ci4\
+
+2. Crea un nuevo archivo llamado:  .env  (con punto al inicio)
+
+3. Abre el archivo ENV_EXAMPLE_COPIAR.txt
+
+4. Copia TODO su contenido
+
+5. Pégalo en tu nuevo archivo .env
+
+6. Guarda el archivo .env
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 2: Configurar Gmail                                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Abre tu navegador
+
+2. Ve a: https://myaccount.google.com/apppasswords
+
+3. Inicia sesión con tu Gmail
+
+4. Genera una nueva contraseña de aplicación:
+   - Selecciona "Correo"
+   - Dispositivo: "Otro (nombre personalizado)"
+   - Nombre: "MANSANCHEZ Web"
+   - Clic en "Generar"
+
+5. Copia la contraseña de 16 caracteres que aparece
+   Ejemplo: abcd efgh ijkl mnop
+
+6. Abre tu archivo .env
+
+7. Reemplaza:
+   email.SMTPUser = rvillar1995@gmail.com
+   email.SMTPPass = abcdefghijklmnop  (sin espacios)
+
+8. Guarda el archivo .env
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 3: Reiniciar y Probar                                                  │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Detén el servidor WAMP (clic en icono → Stop All Services)
+
+2. Inicia el servidor WAMP nuevamente (Start All Services)
+
+3. Abre tu navegador
+
+4. Ve a: http://localhost/codeigniter4/nextline_ci4/contacto
+
+5. Llena el formulario de prueba:
+   - Nombre: Prueba Email
+   - Email: tu_email@ejemplo.com
+   - Teléfono: +56912345678
+   - Servicio: Cualquiera
+   - Mensaje: Probando sistema de emails
+
+6. Envía el formulario
+
+7. Revisa tu correo: rvillar1995@gmail.com
+   (Revisa también la carpeta SPAM)
+
+8. Verifica los logs en:
+   writable/logs/log-2025-10-09.log
+   
+   Deberías ver:
+   ✅ "Email de notificación enviado exitosamente"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                           🎉 ¡ESO ES TODO! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🆘 ¿PROBLEMAS?
+
+Si no tienes Gmail o prefieres una opción más fácil:
+
+👉 USA MAILTRAP (No requiere configuración de Gmail)
+
+1. Ve a: https://mailtrap.io
+2. Regístrate gratis
+3. Copia las credenciales SMTP
+4. Úsalas en tu archivo .env
+5. Los emails llegarán a Mailtrap (no a Gmail)
+
+Ver archivo CONFIGURAR_EMAIL.txt para instrucciones detalladas
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📝 NOTAS IMPORTANTES:
+
+⚠️  El archivo .env NO debe subirse a Git
+⚠️  Usa contraseña de aplicación, NO tu contraseña normal
+⚠️  Reinicia WAMP después de crear/editar el .env
+⚠️  Verifica que el email esté configurado en la tabla empresa
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔍 VERIFICAR TODO ESTÁ BIEN:
+
+✅ Archivo .env existe en la raíz
+✅ Credenciales SMTP configuradas
+✅ WAMP reiniciado
+✅ Email en tabla empresa configurado
+✅ Formulario de contacto funciona
+✅ Email recibido en Gmail
+✅ Logs sin errores
+
+═══════════════════════════════════════════════════════════════════════════════
+

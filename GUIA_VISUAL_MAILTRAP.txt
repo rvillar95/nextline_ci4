@@ -1,0 +1,240 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                  📸 GUÍA VISUAL - MAILTRAP PASO A PASO                      ║
+║                    (Con descripciones de lo que verás)                      ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 1: PÁGINA DE INICIO DE MAILTRAP
+═══════════════════════════════════════════════════════════════════════════════
+
+URL: https://mailtrap.io
+
+Lo que verás:
+┌────────────────────────────────────────────────────────────────────┐
+│                          MAILTRAP                                  │
+│                                                                    │
+│     Email Testing & Email Infrastructure                           │
+│     for Development Teams                                          │
+│                                                                    │
+│     ┌─────────────────────────┐   ┌──────────────────────┐       │
+│     │ [G] Sign up with Google │   │  Try for Free        │       │
+│     └─────────────────────────┘   └──────────────────────┘       │
+│                                                                    │
+│     OR                                                             │
+│                                                                    │
+│     Email:    ___________________________                          │
+│     Password: ___________________________                          │
+│     [ Sign Up ]                                                    │
+│                                                                    │
+│     Already have an account? [Sign In]                            │
+└────────────────────────────────────────────────────────────────────┘
+
+➜ Haz clic en "Sign up with Google" o llena el formulario
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 2: DASHBOARD DESPUÉS DE REGISTRARTE
+═══════════════════════════════════════════════════════════════════════════════
+
+Lo que verás:
+┌────────────────────────────────────────────────────────────────────┐
+│ ☰  MAILTRAP                                    [👤 Tu Nombre] [▼] │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ Sidebar (Izquierda):                  Main Area (Derecha):        │
+│ ┌──────────────────┐                  ┌──────────────────────┐   │
+│ │ Home             │                  │ Welcome to Mailtrap  │   │
+│ │ Email Testing    │ ◄── AQUÍ        │                      │   │
+│ │  └→ Inboxes      │                  │ Quick Start Guide    │   │
+│ │ Email Sending    │                  │                      │   │
+│ │ Billing          │                  │ Create your first    │   │
+│ │ Settings         │                  │ inbox                │   │
+│ └──────────────────┘                  └──────────────────────┘   │
+└────────────────────────────────────────────────────────────────────┘
+
+➜ Haz clic en "Email Testing" → "Inboxes" en el sidebar
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 3: LISTA DE INBOXES
+═══════════════════════════════════════════════════════════════════════════════
+
+Lo que verás:
+┌────────────────────────────────────────────────────────────────────┐
+│ Inboxes                                      [+ New Inbox]         │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ 📥 My Inbox                               [⚙️] [🗑️]          │ │
+│ │                                                               │ │
+│ │ 0 messages                                                    │ │
+│ │                                                               │ │
+│ │ [View Inbox] ◄── HAZ CLIC AQUÍ                              │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────┘
+
+➜ Haz clic en "View Inbox" o en el nombre "My Inbox"
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 4: DENTRO DEL INBOX - AQUÍ ESTÁN LAS CREDENCIALES
+═══════════════════════════════════════════════════════════════════════════════
+
+Lo que verás:
+┌────────────────────────────────────────────────────────────────────┐
+│ My Inbox                                                           │
+├────────────────────────────────────────────────────────────────────┤
+│ Tabs:                                                              │
+│ [Messages] [SMTP Settings] ◄── HAZ CLIC AQUÍ  [HTTP API] [...]   │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ SMTP Settings                                                      │
+│                                                                    │
+│ Integration: [Choose Integration ▼] ◄── Selecciona "Other"       │
+│                                                                    │
+│ SMTP Settings:                                                     │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ Host:     smtp.mailtrap.io                                   │ │
+│ │ Port:     2525, 25, 465, 587                                 │ │
+│ │ Username: 1a2b3c4d5e6f7g  ◄── COPIA ESTE                    │ │
+│ │ Password: 1a2b3c4d5e6f7g  ◄── COPIA ESTE                    │ │
+│ │ Auth:     PLAIN, LOGIN, CRAM-MD5                             │ │
+│ │ TLS:      Optional (STARTTLS on all ports)                   │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                    │
+│ Instructions:                                                      │
+│ Configure your mail client with the settings above...             │
+└────────────────────────────────────────────────────────────────────┘
+
+➜ COPIA el Username y Password (haz clic en el icono de copiar)
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 5: TU ARCHIVO .env FINAL
+═══════════════════════════════════════════════════════════════════════════════
+
+Crea/edita: C:\wamp64\www\codeigniter4\nextline_ci4\.env
+
+Debe verse así (con TUS credenciales reales):
+
+CI_ENVIRONMENT = development
+
+app.baseURL = 'http://localhost/codeigniter4/nextline_ci4/'
+
+email.protocol = smtp
+email.SMTPHost = smtp.mailtrap.io
+email.SMTPUser = 1a2b3c4d5e6f7g         ◄── TU username
+email.SMTPPass = 1a2b3c4d5e6f7g         ◄── TU password
+email.SMTPPort = 2525
+email.SMTPCrypto = tls
+email.mailType = html
+email.charset = UTF-8
+email.newline = "\r\n"
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 6: DESPUÉS DE ENVIAR EL FORMULARIO
+═══════════════════════════════════════════════════════════════════════════════
+
+Vuelve a Mailtrap → My Inbox → Pestaña Messages
+
+Lo que verás:
+┌────────────────────────────────────────────────────────────────────┐
+│ My Inbox                                                           │
+├────────────────────────────────────────────────────────────────────┤
+│ [Messages] [SMTP Settings] [HTTP API]                             │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │ 📧 Nueva Consulta desde el Sitio Web                         │ │
+│ │ Sistema MANSANCHEZ <no-reply@mansanchez.cl>                  │ │
+│ │ To: rvillar1995@gmail.com                                    │ │
+│ │ Recién ahora • 1.2 KB                            [🗑️] [⋮]   │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                    │
+│ Filters: [All] [Read] [Unread]                     1 message      │
+└────────────────────────────────────────────────────────────────────┘
+
+➜ Haz clic en el email para verlo completo
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 7: EMAIL ABIERTO - LO QUE VERÁS
+═══════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────┐
+│ [← Back to Inbox]                                                  │
+├────────────────────────────────────────────────────────────────────┤
+│ Tabs:                                                              │
+│ [HTML] [Text] [Raw] [Headers]                                     │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│ Vista HTML:                                                        │
+│ ┌──────────────────────────────────────────────────────────────┐ │
+│ │                                                               │ │
+│ │   🔔 Nueva Consulta Recibida                                 │ │
+│ │   09/10/2025 14:30                                           │ │
+│ │                                                               │ │
+│ │   ✨ Se ha recibido una nueva consulta desde el formulario   │ │
+│ │                                                               │ │
+│ │   📋 Datos del Cliente                                        │ │
+│ │                                                               │ │
+│ │   👤 Juan Pérez                                              │ │
+│ │   📧 juan@ejemplo.com                                        │ │
+│ │   📱 +56912345678                                            │ │
+│ │   🛠️ Construcción de Casas                                   │ │
+│ │                                                               │ │
+│ │   💬 Mensaje del Cliente                                      │ │
+│ │   "Esto es una prueba de email"                              │ │
+│ │                                                               │ │
+│ │   [📧 RESPONDER AL CLIENTE]                                   │ │
+│ │                                                               │ │
+│ └──────────────────────────────────────────────────────────────┘ │
+│                                                                    │
+│ Spam Score: 0.1 (Excellent!) ✅                                   │
+│ Analysis: No spam indicators detected                             │
+└────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+PASO 8: VERIFICAR LOGS EN CODEIGNITER
+═══════════════════════════════════════════════════════════════════════════════
+
+Abre: C:\wamp64\www\codeigniter4\nextline_ci4\writable\logs\log-2025-10-09.log
+
+Al final del archivo verás:
+
+INFO - 2025-10-09 14:30:25 --> Session: Class initialized
+INFO - 2025-10-09 14:30:25 --> CSRF token verified
+INFO - 2025-10-09 14:30:26 --> Email de notificación enviado exitosamente a: rvillar1995@gmail.com ✅
+INFO - 2025-10-09 14:30:26 --> Session: Class initialized
+
+Si ves "enviado exitosamente", ¡TODO FUNCIONA! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 CHECKLIST FINAL
+═══════════════════════════════════════════════════════════════════════════════
+
+Verifica que todo esté completo:
+
+□ Cuenta en Mailtrap creada
+□ Username y Password copiados
+□ Archivo .env creado con las credenciales
+□ WAMP reiniciado
+□ Formulario de contacto probado
+□ Email aparece en Mailtrap
+□ Logs muestran "enviado exitosamente"
+□ Email se ve correctamente en HTML
+
+Si todos los checks están ✅, ¡el sistema funciona perfectamente!
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 TIPS ÚTILES
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ Puedes crear múltiples inboxes en Mailtrap
+✅ Puedes compartir un inbox con tu equipo
+✅ Mailtrap detecta si el email sería spam
+✅ Puedes ver el código HTML del email
+✅ Puedes reenviar el email a un correo real
+✅ Los emails se borran automáticamente después de 30 días
+
+═══════════════════════════════════════════════════════════════════════════════
+

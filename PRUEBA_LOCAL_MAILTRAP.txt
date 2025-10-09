@@ -1,0 +1,316 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║              🧪 PRUEBA DE EMAILS EN LOCAL CON MAILTRAP                      ║
+║                    (La forma más fácil - 5 minutos)                         ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+🎯 ¿QUÉ ES MAILTRAP?
+═══════════════════════════════════════════════════════════════════════════════
+
+Mailtrap es un servidor SMTP FALSO que:
+✅ NO envía emails reales
+✅ Captura todos los emails enviados
+✅ Te permite ver cómo se ven los emails
+✅ Es GRATIS (hasta 500 emails/mes)
+✅ Perfecto para desarrollo y testing
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 CONFIGURACIÓN PASO A PASO
+═══════════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 1: Registrarse en Mailtrap (2 minutos)                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Abre tu navegador
+
+2. Ve a: https://mailtrap.io
+
+3. Haz clic en "Sign Up" (Registrarse)
+
+4. Opciones de registro:
+   
+   Opción A - Con Google:
+   ┌─────────────────────────────────┐
+   │  [G] Sign up with Google        │
+   └─────────────────────────────────┘
+   
+   Opción B - Con Email:
+   ┌─────────────────────────────────┐
+   │  Email: _____________________   │
+   │  Password: __________________   │
+   │  [ ] Sign up                    │
+   └─────────────────────────────────┘
+
+5. Confirma tu email (si usaste opción B)
+
+6. ¡Listo! Ya tienes cuenta
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 2: Obtener Credenciales SMTP (1 minuto)                                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Una vez dentro de Mailtrap, verás tu Dashboard
+
+2. En el menú lateral, busca:
+   Email Testing → Inboxes
+
+3. Verás un inbox llamado "My Inbox" (o similar)
+   Haz clic en él
+
+4. Verás pestañas arriba:
+   [ Messages ] [ SMTP Settings ] [ HTTP API ]
+
+5. Haz clic en "SMTP Settings"
+
+6. En el dropdown, selecciona: "Integrations"
+
+7. Busca y selecciona: "Laravel/Symfony" o "Other"
+
+8. Verás algo como esto:
+   
+   ┌─────────────────────────────────────────┐
+   │ Host:     smtp.mailtrap.io              │
+   │ Port:     2525                          │
+   │ Username: 1a2b3c4d5e6f7g                │
+   │ Password: 1a2b3c4d5e6f7g                │
+   │ Auth:     PLAIN                         │
+   │ TLS:      Optional                      │
+   └─────────────────────────────────────────┘
+
+9. ¡Guarda estos datos! Los necesitarás
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 3: Configurar .env en tu Proyecto (2 minutos)                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Ve a la raíz de tu proyecto:
+   C:\wamp64\www\codeigniter4\nextline_ci4\
+
+2. Busca el archivo ".env"
+   - Si NO existe, créalo (nuevo archivo de texto llamado ".env")
+
+3. Abre el archivo .env con tu editor de texto
+
+4. COPIA Y PEGA este contenido:
+
+═══════════════════════════════════════════════════════════════════════════════
+#--------------------------------------------------------------------
+# ENVIRONMENT
+#--------------------------------------------------------------------
+
+CI_ENVIRONMENT = development
+
+#--------------------------------------------------------------------
+# APP
+#--------------------------------------------------------------------
+
+app.baseURL = 'http://localhost/codeigniter4/nextline_ci4/'
+
+#--------------------------------------------------------------------
+# EMAIL - MAILTRAP (Testing Local)
+#--------------------------------------------------------------------
+
+email.protocol = smtp
+email.SMTPHost = smtp.mailtrap.io
+email.SMTPUser = TU_USERNAME_DE_MAILTRAP
+email.SMTPPass = TU_PASSWORD_DE_MAILTRAP
+email.SMTPPort = 2525
+email.SMTPCrypto = tls
+email.mailType = html
+email.charset = UTF-8
+email.newline = "\r\n"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+5. REEMPLAZA los valores:
+   
+   email.SMTPUser = 1a2b3c4d5e6f7g  ← (tu username de Mailtrap)
+   email.SMTPPass = 1a2b3c4d5e6f7g  ← (tu password de Mailtrap)
+
+6. GUARDA el archivo .env
+
+7. CIERRA el archivo
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 4: Reiniciar WAMP (30 segundos)                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Haz clic en el icono de WAMP (en la bandeja del sistema)
+
+2. Selecciona: "Stop All Services"
+
+3. Espera unos segundos
+
+4. Selecciona: "Start All Services"
+
+5. Espera a que todo esté verde
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 5: Probar el Sistema (1 minuto)                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Abre tu navegador
+
+2. Ve a: http://localhost/codeigniter4/nextline_ci4/contacto
+
+3. Llena el formulario con datos de prueba:
+   
+   ┌────────────────────────────────────────┐
+   │ Nombre:    Juan Pérez                  │
+   │ Email:     juan@ejemplo.com            │
+   │ Teléfono:  +56912345678                │
+   │ Servicio:  Construcción de Casas       │
+   │ Mensaje:   Esto es una prueba de email │
+   └────────────────────────────────────────┘
+
+4. Haz clic en "Enviar Consulta"
+
+5. Deberías ser redirigido a la página de "Gracias"
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ PASO 6: Ver el Email en Mailtrap (30 segundos)                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. Ve de vuelta a Mailtrap: https://mailtrap.io
+
+2. Haz clic en tu inbox: "My Inbox"
+
+3. Verás la pestaña "Messages"
+
+4. ¡Deberías ver tu email ahí! 🎉
+   
+   ┌────────────────────────────────────────────────┐
+   │ 📧 Nueva Consulta Recibida                     │
+   │ Sistema MANSANCHEZ → rvillar1995@gmail.com     │
+   │ Recién ahora                                   │
+   └────────────────────────────────────────────────┘
+
+5. Haz clic en el email para verlo completo
+
+6. Verás:
+   - Vista HTML (como se vería en un correo real)
+   - Vista Text
+   - Código fuente
+   - Headers
+   - Y más información técnica
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ VERIFICAR QUE TODO FUNCIONA
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Abre los logs de CodeIgniter:
+   C:\wamp64\www\codeigniter4\nextline_ci4\writable\logs\log-2025-10-09.log
+
+2. Al final del archivo deberías ver:
+   
+   ✅ INFO - Email de notificación enviado exitosamente a: rvillar1995@gmail.com
+
+3. Si ves esto, ¡TODO FUNCIONA! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎨 LO QUE VERÁS EN MAILTRAP
+═══════════════════════════════════════════════════════════════════════════════
+
+El email que aparecerá en Mailtrap tendrá:
+
+┌─────────────────────────────────────────────────────────────────┐
+│ 🔔 Nueva Consulta Recibida                                      │
+│ 09/10/2025 14:30                                                │
+├─────────────────────────────────────────────────────────────────┤
+│ ✨ Se ha recibido una nueva consulta desde el formulario web    │
+├─────────────────────────────────────────────────────────────────┤
+│ 📋 Datos del Cliente                                            │
+│                                                                 │
+│ 👤 Juan Pérez                                                   │
+│ 📧 juan@ejemplo.com                                             │
+│ 📱 +56912345678                                                 │
+│ 🛠️ Construcción de Casas                                        │
+├─────────────────────────────────────────────────────────────────┤
+│ 💬 Mensaje del Cliente                                          │
+│ "Esto es una prueba de email"                                   │
+├─────────────────────────────────────────────────────────────────┤
+│ [📧 RESPONDER AL CLIENTE]                                       │
+└─────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🆘 SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════════════════════
+
+❌ ERROR: "Could not connect to SMTP"
+✅ SOLUCIÓN: 
+   - Verifica que copiaste bien el username y password
+   - No debe haber espacios antes o después
+   - Puerto debe ser 2525
+
+❌ ERROR: "Authentication failed"
+✅ SOLUCIÓN:
+   - Verifica las credenciales en Mailtrap
+   - Cópialas nuevamente
+
+❌ ERROR: Email no aparece en Mailtrap
+✅ SOLUCIÓN:
+   - Espera 10 segundos y recarga la página
+   - Verifica que estás viendo el inbox correcto
+   - Revisa los logs para confirmar que se envió
+
+❌ ERROR: "Empresa sin correo configurado"
+✅ SOLUCIÓN:
+   - Ve a PHPMyAdmin
+   - Ejecuta:
+     UPDATE empresa SET email = 'rvillar1995@gmail.com' WHERE id = 1;
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💡 VENTAJAS DE MAILTRAP
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ No necesitas configurar Gmail
+✅ No requiere contraseñas de aplicación
+✅ No envía emails reales (seguro para testing)
+✅ Puedes ver cómo se ve el email antes de producción
+✅ Puedes probar cuantas veces quieras
+✅ Puedes compartir el inbox con tu equipo
+✅ Puedes revisar el HTML del email
+✅ Puedes ver si el email es spam o no
+✅ GRATIS para desarrollo
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📝 RESUMEN RÁPIDO
+═══════════════════════════════════════════════════════════════════════════════
+
+1. ✅ Regístrate en https://mailtrap.io
+2. ✅ Copia username y password de SMTP Settings
+3. ✅ Crea/edita archivo .env con esas credenciales
+4. ✅ Reinicia WAMP
+5. ✅ Prueba el formulario de contacto
+6. ✅ Ve a Mailtrap para ver el email capturado
+7. ✅ Verifica logs para confirmar envío exitoso
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 DIFERENCIA CON PRODUCCIÓN
+═══════════════════════════════════════════════════════════════════════════════
+
+LOCAL (Mailtrap):
+→ Los emails NO llegan a correos reales
+→ Se capturan en Mailtrap
+→ Perfecto para testing
+
+PRODUCCIÓN (Gmail/SMTP real):
+→ Los emails SÍ llegan a correos reales
+→ Necesitas configurar Gmail u otro SMTP
+→ Ver archivo CONFIGURAR_EMAIL.txt
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿TODO LISTO? ¡EMPIEZA LA PRUEBA! 🚀
+
+═══════════════════════════════════════════════════════════════════════════════
+
