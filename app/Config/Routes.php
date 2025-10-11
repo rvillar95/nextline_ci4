@@ -147,32 +147,6 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('eliminar/(:num)', 'Dashboard\TestimonioController::eliminar/$1'); //accion
     });
 
-    $routes->group('cliente', function ($routes2) {
-        $routes2->get('registro', 'Dashboard\ClienteController::registro'); //vista
-        $routes2->get('editar/(:num)', 'Dashboard\ClienteController::editar/$1'); //vista
-        $routes2->get('lista', 'Dashboard\ClienteController::lista'); //vista
-        $routes2->get('detalle/(:num)', 'Dashboard\ClienteController::detalle/$1'); //vista
-        $routes2->get('getClientes', 'Dashboard\ClienteController::getClientes'); //get Data
-        $routes2->get('getClientesSelect', 'Dashboard\ClienteController::getClientesSelect'); //get Data
-        $routes2->post('registrar', 'Dashboard\ClienteController::registrar'); //accion
-        $routes2->post('update', 'Dashboard\ClienteController::update'); //accion
-        $routes2->post('activar', 'Dashboard\ClienteController::activar'); //accion
-        $routes2->post('eliminar/(:num)', 'Dashboard\ClienteController::eliminar/$1'); //accion
-    });
-
-    $routes->group('cotizacion', function ($routes2) {
-        $routes2->get('registro', 'Dashboard\CotizacionController::registro'); //vista
-        $routes2->get('editar/(:num)', 'Dashboard\CotizacionController::editar/$1'); //vista
-        $routes2->get('lista', 'Dashboard\CotizacionController::lista'); //vista
-        $routes2->get('detalle/(:num)', 'Dashboard\CotizacionController::detalle/$1'); //vista
-        $routes2->get('getCotizaciones', 'Dashboard\CotizacionController::getCotizaciones'); //get Data
-        $routes2->get('getClientesSelect', 'Dashboard\CotizacionController::getClientesSelect'); //get Data
-        $routes2->get('generarPDF/(:num)', 'Dashboard\CotizacionController::generarPDF/$1'); //get Data
-        $routes2->post('registrar', 'Dashboard\CotizacionController::registrar'); //accion
-        $routes2->post('update', 'Dashboard\CotizacionController::update'); //accion
-        $routes2->post('eliminar/(:num)', 'Dashboard\CotizacionController::eliminar/$1'); //accion
-        $routes2->post('convertir-proyecto/(:num)', 'Dashboard\CotizacionController::convertirEnProyecto/$1'); //accion
-    });
 
     $routes->group('empresa', function ($routes2) {
         $routes2->get('lista', 'Dashboard\EmpresaController::lista'); //redirige a registro

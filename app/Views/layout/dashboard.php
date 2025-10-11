@@ -344,18 +344,6 @@ exit(); */
                     <?php echo $this->renderSection("testimonio/lista"); ?>
                     <?php echo $this->renderSection("testimonio/editar"); ?>
                     
-                    <!-- Secciones de Clientes -->
-                    <?php echo $this->renderSection("cliente/lista"); ?>
-                    <?php echo $this->renderSection("cliente/registro"); ?>
-                    <?php echo $this->renderSection("cliente/editar"); ?>
-                    <?php echo $this->renderSection("cliente/detalle"); ?>
-                    
-                    <!-- Secciones de Cotizaciones -->
-                    <?php echo $this->renderSection("cotizacion/lista"); ?>
-                    <?php echo $this->renderSection("cotizacion/registro"); ?>
-                    <?php echo $this->renderSection("cotizacion/editar"); ?>
-                    <?php echo $this->renderSection("cotizacion/detalle"); ?>
-                    
                     <!-- Secciones de Empresa -->
                     <?php echo $this->renderSection("empresa/registro"); ?>
                     <!-- END Section Modulo Testimonio-->
