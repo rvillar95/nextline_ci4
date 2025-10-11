@@ -25,7 +25,8 @@ class Empresa extends Model
         'mision',
         'vision',
         'valores',
-        'estado'
+        'estado',
+        'paquete_id'  // Asignación de paquete (solo Super Admin)
     ];
 
     // Dates

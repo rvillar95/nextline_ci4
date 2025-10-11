@@ -84,7 +84,8 @@ class UsuarioController extends BaseController
         }
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
-        $data['perfiles'] = $perfil->findAll();
+        // Solo mostrar perfiles con poder menor al usuario actual
+        $data['perfiles'] = $perfil->getActivePerfil($this->poder);
         $usuario = new Usuario();
         $data['usuario'] = $usuario->select('usuario.* , perfil.nombre as nombre_perfil')
             ->join('perfil', 'usuario.perfil_id = perfil.id')

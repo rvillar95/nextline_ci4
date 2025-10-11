@@ -93,6 +93,46 @@
                             </div>
                         </div>
 
+                        <?php if ($poder_usuario >= 3): ?>
+                            <!-- Campo de Paquete - Solo visible para Super Admin -->
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-crown"></i> <strong>Super Admin:</strong> Puedes asignar el paquete para esta empresa
+                                    </div>
+                                    
+                                    <?php if (empty($paquetes)): ?>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> 
+                                            <strong>Atención:</strong> No hay paquetes configurados en la base de datos. 
+                                            <br>Por favor, ejecuta el script <code>SQL_SISTEMA_PAQUETES_INTEGRADO_V2.sql</code> primero.
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="form-group">
+                                            <label for="paquete_id" class="form-label">
+                                                <i class="fas fa-box"></i> Paquete Contratado <span class="text-danger">*</span>
+                                            </label>
+                                            <select class="form-select" id="paquete_id" name="paquete_id" required>
+                                                <option value="">Seleccione un paquete...</option>
+                                                <?php foreach ($paquetes as $paquete): ?>
+                                                    <option value="<?= esc($paquete['id']) ?>" 
+                                                            <?= old('paquete_id', $empresa->paquete_id ?? '') == $paquete['id'] ? 'selected' : '' ?>>
+                                                        <?= esc($paquete['nombre']) ?> 
+                                                        <?php if ($paquete['precio_mensual'] > 0): ?>
+                                                            - $<?= number_format($paquete['precio_mensual'], 0, ',', '.') ?>/mes
+                                                        <?php endif; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i> El paquete determina qué módulos verán los usuarios de esta empresa
+                                            </small>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="form-group">
                             <label for="direccion" class="form-label">Dirección</label>
                             <textarea class="form-control" id="direccion" name="direccion" rows="2"><?= old('direccion', $empresa->direccion ?? '') ?></textarea>

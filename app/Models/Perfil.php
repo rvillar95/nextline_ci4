@@ -32,19 +32,37 @@ class Perfil extends Model
 
     public function getPerfilAll()
     {
-
         $db = \Config\Database::connect();
-        //$sql = "select * from perfil where poder < :poder: AND feliminacion IS NULL";
-        $sql = "select * from perfil where poder <= :poder: ";
-        $perfil = $db->query($sql, ['poder' => session()->get('usuario')['poder']])->getResult('object');
+        $poderUsuario = session()->get('usuario')['poder'];
+        
+        // Si es Super Admin (poder=3), mostrar TODOS los perfiles
+        // Si no, mostrar solo perfiles con poder MENOR
+        if ($poderUsuario >= 3) {
+            $sql = "select * from perfil";
+            $perfil = $db->query($sql)->getResult('object');
+        } else {
+            $sql = "select * from perfil where poder <= :poder:";
+            $perfil = $db->query($sql, ['poder' => $poderUsuario])->getResult('object');
+        }
+        
         return $perfil;
     }
 
     public function getNombresPerfil()
     {
         $db = \Config\Database::connect();
-        $sql = "select nombre from perfil where poder <= :poder:";
-        $perfil = $db->query($sql, ['poder' => session()->get('usuario')['poder']])->getResult('array');
+        $poderUsuario = session()->get('usuario')['poder'];
+        
+        // Si es Super Admin (poder=3), mostrar TODOS los perfiles
+        // Si no, mostrar solo perfiles con poder MENOR
+        if ($poderUsuario >= 3) {
+            $sql = "select nombre from perfil";
+            $perfil = $db->query($sql)->getResult('array');
+        } else {
+            $sql = "select nombre from perfil where poder <= :poder:";
+            $perfil = $db->query($sql, ['poder' => $poderUsuario])->getResult('array');
+        }
+        
         return $perfil;
     }
 
@@ -60,10 +78,16 @@ class Perfil extends Model
     {
         $builder = $this->db->table($this->table)
             ->select('id, nombre, poder')
-            ->where('estado', 'A')
-            ->where('poder <=', $maxPoder)
-            ->orderBy('poder', 'DESC')
-            ->orderBy('nombre', 'ASC');
+            ->where('estado', 'A');
+        
+        // Si es Super Admin (poder=3), mostrar TODOS los perfiles
+        // Si no, mostrar solo perfiles con poder MENOR
+        if ($maxPoder < 3) {
+            $builder->where('poder <=', $maxPoder);
+        }
+        
+        $builder->orderBy('poder', 'DESC')
+                ->orderBy('nombre', 'ASC');
 
         return $builder->get()->getResultArray();
     }

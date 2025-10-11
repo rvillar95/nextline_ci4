@@ -28,7 +28,8 @@ class PerfilDetalleController extends BaseController
         }
 
         $data['perfiles'] = $perfilModel->getActivePerfil($this->poder);
-        $data['modulos'] = $moduloModel->getActiveModulo();
+        // Filtrar módulos por paquete de la empresa activa del sistema
+        $data['modulos'] = $moduloModel->getModulosByPaqueteEmpresa($this->poder);
         $data['data'] = $menuTotal;
         echo view('Base/perfil_detalle/registro', $data);
     }
@@ -155,7 +156,8 @@ class PerfilDetalleController extends BaseController
 
         $data['perfil'] = $perfilModulo->getPerfilModulo($id);
         $data['perfiles'] = $perfilModel->getActivePerfil($this->poder);
-        $data['modulos'] = $moduloModel->getActiveModulo();
+        // Filtrar módulos por paquete de la empresa activa del sistema
+        $data['modulos'] = $moduloModel->getModulosByPaqueteEmpresa($this->poder);
         echo view("Base/perfil_detalle/editar", $data);
     }
 

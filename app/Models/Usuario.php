@@ -38,10 +38,11 @@ class Usuario extends Model
     public function validateUser($correo, $clave)
     {
         $db = \Config\Database::connect();
-        $sql = "select u.*, f.nombre as perfil_nombre, f.poder from usuario u, perfil f 
-                         where u.perfil_id = f.id and 
-                               u.correo = :correo: and
-                               u.estado = 'A' ";
+        $sql = "select u.*, f.nombre as perfil_nombre, f.poder 
+                from usuario u 
+                join perfil f on u.perfil_id = f.id
+                where u.correo = :correo: 
+                  and u.estado = 'A' ";
 
         // Ejecuta la consulta con los parámetros
         $user = $db->query($sql, ['correo' => $correo, 'clave' => $clave])->getResult('array');
@@ -60,8 +61,18 @@ class Usuario extends Model
     public function getData()
     {
         $db = \Config\Database::connect();
-        $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id and pe.poder <= :poder:";
-        $perfil = $db->query($sql,['poder' => session()->get('usuario')['poder']])->getResult('object');
+        $poderUsuario = session()->get('usuario')['poder'];
+        
+        // Si es Super Admin (poder=3), mostrar TODOS los usuarios
+        // Si no, mostrar solo usuarios con perfiles de poder MENOR
+        if ($poderUsuario >= 3) {
+            $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id";
+            $perfil = $db->query($sql)->getResult('object');
+        } else {
+            $sql = "select us.* , pe.nombre as nombre_perfil from usuario us, perfil pe where us.perfil_id = pe.id and pe.poder <= :poder:";
+            $perfil = $db->query($sql, ['poder' => $poderUsuario])->getResult('object');
+        }
+        
         return $perfil;   
     }
 }

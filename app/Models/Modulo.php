@@ -69,4 +69,37 @@ class Modulo extends Model
         return $perfil;   
     }
 
+    /**
+     * Obtiene los módulos activos filtrados por el paquete de la empresa activa del sistema
+     * 
+     * @param int $poderUsuario El poder del usuario actual
+     * @return array Lista de módulos disponibles
+     */
+    public function getModulosByPaqueteEmpresa(int $poderUsuario): array
+    {
+        $db = \Config\Database::connect();
+        
+        // Super Admin (poder >= 3) ve todos los módulos activos
+        if ($poderUsuario >= 3) {
+            $sql = "SELECT * FROM modulo WHERE estado = 'A' ORDER BY nombre";
+            return $db->query($sql)->getResultArray();
+        }
+        
+        // Admin y otros usuarios ven solo módulos del paquete de la empresa activa
+        // Obtener el paquete de la única empresa activa del sistema
+        $sql = "
+            SELECT DISTINCT m.*
+            FROM modulo m
+            INNER JOIN paquete_modulo pm ON m.id = pm.modulo_id
+            INNER JOIN empresa e ON e.paquete_id = pm.paquete_id
+            WHERE e.estado = 'A'
+              AND m.estado = 'A'
+              AND m.sa = 'N'
+            ORDER BY m.nombre
+            LIMIT 100
+        ";
+        
+        return $db->query($sql)->getResultArray();
+    }
+
 }
