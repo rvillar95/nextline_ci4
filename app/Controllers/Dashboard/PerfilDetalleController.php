@@ -96,6 +96,7 @@ class PerfilDetalleController extends BaseController
                 : '<span class="badge badge-danger mb-2 me-4">No Permitido</span>';
 
             return [
+                'id'              => (int)$r['id'],
                 'perfil_nombre'   => esc($r['perfil_nombre']),
                 'modulo_nombre'   => esc($r['modulo_nombre']),
                 'ver_html'        => $badge((int)$r['ver'] === 1),
@@ -205,6 +206,43 @@ class PerfilDetalleController extends BaseController
         } else {
             // Error al eliminar
             return redirect()->to(base_url('dashboard/perfil-detalle/lista'))->with('errors', 'No se pudo eliminar el Perfil Detalle.');
+        }
+    }
+
+    /**
+     * Actualizar solo el orden vía AJAX (edición inline)
+     */
+    public function updateOrden()
+    {
+        // Verificar autenticación
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $id = $this->request->getPost('id');
+        $orden = $this->request->getPost('orden');
+
+        // Validar que sean números válidos
+        if (!is_numeric($id) || !is_numeric($orden)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Datos inválidos'
+            ]);
+        }
+
+        $perfilModulo = new PerfilModulo();
+        
+        // Solo actualizar el campo orden
+        if ($perfilModulo->update($id, ['orden' => (int)$orden])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Orden actualizado correctamente'
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error al actualizar el orden'
+            ]);
         }
     }
 }

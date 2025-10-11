@@ -63,6 +63,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPerfilDetalle', 'Dashboard\PerfilDetalleController::getPerfilDetalle');
         $routes2->post('registrar', 'Dashboard\PerfilDetalleController::registrar');
         $routes2->post('update', 'Dashboard\PerfilDetalleController::update');
+        $routes2->post('updateOrden', 'Dashboard\PerfilDetalleController::updateOrden'); // Edición inline
         $routes2->post('eliminar', 'Dashboard\PerfilDetalleController::eliminar');
     });
 
@@ -121,6 +122,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'Dashboard\ProyectoController::editar/$1'); //vista
         $routes2->get('lista', 'Dashboard\ProyectoController::lista'); //vista
         $routes2->get('getProyecto', 'Dashboard\ProyectoController::getProyecto'); //get Data
+        $routes2->get('getClientesSelect', 'Dashboard\ProyectoController::getClientesSelect'); //get Data
         $routes2->post('registrar', 'Dashboard\ProyectoController::registrar'); //accion
         $routes2->post('update', 'Dashboard\ProyectoController::update'); //accion
         $routes2->post('eliminar', 'Dashboard\ProyectoController::eliminar'); //accion
@@ -194,7 +196,7 @@ $routes->group('dashboard', function ($routes) {
 });
 
 $routes->post('/inicio-sesion', 'Dashboard\UsuarioController::inicio_sesion');
-$routes->get('/logout', 'UsuarioController::logout');
+$routes->get('/logout', 'Dashboard\UsuarioController::logout');
 
 $routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {});
 

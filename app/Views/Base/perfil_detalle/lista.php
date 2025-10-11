@@ -67,6 +67,30 @@
     </div>
 </div>
 
+<style>
+/* Estilos para celdas editables */
+.editable-orden {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.editable-orden:hover {
+    background-color: #e9ecef;
+}
+
+.editable-orden::after {
+    content: ' ✎';
+    color: #6c757d;
+    font-size: 0.8em;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.editable-orden:hover::after {
+    opacity: 1;
+}
+</style>
+
 <div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true" style="display: none;">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -138,7 +162,15 @@
                 searchable: false
             },
             {
-                data: 'orden'
+                data: 'orden',
+                createdCell: function(td, cellData, rowData) {
+                    // Agregar atributos para edición inline
+                    $(td).attr('data-id', rowData.id);
+                    $(td).attr('data-orden', cellData);
+                    $(td).addClass('editable-orden');
+                    $(td).attr('title', 'Doble clic para editar');
+                    $(td).css('cursor', 'pointer');
+                }
             },
             {
                 data: 'estado_html',
@@ -165,6 +197,110 @@
         $("#perfil_id_filter").val(document.getElementById('perfil_id').value);
         $("#modalEliminacion").modal("show");
     });
+
+    // ============= EDICIÓN INLINE DEL ORDEN =============
+    // Variable para controlar si hay una edición en progreso
+    let editingCell = null;
+
+    // Doble clic para editar el orden
+    $('body').on('dblclick', '.editable-orden', function() {
+        // Si ya hay una celda en edición, ignorar
+        if (editingCell !== null) {
+            return;
+        }
+
+        const $cell = $(this);
+        const id = $cell.data('id');
+        const currentOrden = $cell.data('orden');
+        
+        // Guardar referencia a la celda en edición
+        editingCell = $cell;
+        
+        // Reemplazar contenido con input
+        const $input = $('<input>', {
+            type: 'number',
+            class: 'form-control form-control-sm',
+            value: currentOrden,
+            style: 'width: 80px; text-align: center;'
+        });
+        
+        $cell.html($input);
+        $input.focus().select();
+        
+        // Guardar al perder el foco
+        $input.on('blur', function() {
+            saveOrden($cell, id, $(this).val());
+        });
+        
+        // Guardar al presionar Enter
+        $input.on('keypress', function(e) {
+            if (e.which === 13) { // Enter
+                e.preventDefault();
+                saveOrden($cell, id, $(this).val());
+            }
+        });
+        
+        // Cancelar con Escape
+        $input.on('keydown', function(e) {
+            if (e.which === 27) { // Escape
+                $cell.text(currentOrden);
+                editingCell = null;
+            }
+        });
+    });
+
+    // Función para guardar el nuevo orden
+    function saveOrden($cell, id, newOrden) {
+        // Si ya no hay celda en edición, salir
+        if (editingCell === null) {
+            return;
+        }
+
+        // Validar que sea un número
+        if (newOrden === '' || isNaN(newOrden)) {
+            alert('El orden debe ser un número válido');
+            $cell.text($cell.data('orden'));
+            editingCell = null;
+            return;
+        }
+        
+        // Mostrar indicador de carga
+        $cell.html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+        
+        // Enviar AJAX
+        $.ajax({
+            url: '<?= base_url('dashboard/perfil-detalle/updateOrden') ?>',
+            type: 'POST',
+            data: {
+                id: id,
+                orden: newOrden,
+                <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Actualizar el valor en la celda
+                    $cell.text(newOrden);
+                    $cell.data('orden', newOrden);
+                    
+                    // Mostrar mensaje de éxito temporal
+                    $cell.css('background-color', '#d4edda');
+                    setTimeout(function() {
+                        $cell.css('background-color', '');
+                    }, 1000);
+                } else {
+                    alert('Error: ' + (response.message || 'No se pudo actualizar el orden'));
+                    $cell.text($cell.data('orden'));
+                }
+                editingCell = null;
+            },
+            error: function(xhr, status, error) {
+                console.error('Error AJAX:', error);
+                alert('Error al actualizar el orden. Por favor, intenta de nuevo.');
+                $cell.text($cell.data('orden'));
+                editingCell = null;
+            }
+        });
+    }
 </script>
 
 <script>

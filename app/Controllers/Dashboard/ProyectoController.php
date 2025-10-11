@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\ModuloDetalle;
 use App\Models\Proyecto;
 use App\Models\Imagen;
+use App\Models\Cliente;
 
 class ProyectoController extends BaseController
 {
@@ -102,7 +103,28 @@ class ProyectoController extends BaseController
         $proyecto = new Proyecto();
         $imagen = new Imagen();
         $draw = intval($this->request->getGet("draw"));
-        $proyectos = $proyecto->orderBy('fcreacion', 'DESC')->findAll();
+        
+        // Obtener filtros
+        $tipo_proyecto = $this->request->getGet('tipo_proyecto');
+        $estado = $this->request->getGet('estado');
+        $cliente = $this->request->getGet('cliente');
+        
+        // Construir consulta
+        $query = $proyecto;
+        
+        if (!empty($tipo_proyecto)) {
+            $query = $query->where('tipo_proyecto', $tipo_proyecto);
+        }
+        
+        if (!empty($estado)) {
+            $query = $query->where('estado', $estado);
+        }
+        
+        if (!empty($cliente)) {
+            $query = $query->where('cliente', $cliente);
+        }
+        
+        $proyectos = $query->orderBy('fcreacion', 'DESC')->findAll();
 
         $data = array();
         foreach ($proyectos as $r) {
@@ -129,10 +151,27 @@ class ProyectoController extends BaseController
                 <button type="button" value="' . $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>'
             );
         }
+        // Contar registros filtrados
+        $queryCount = new Proyecto();
+        
+        if (!empty($tipo_proyecto)) {
+            $queryCount = $queryCount->where('tipo_proyecto', $tipo_proyecto);
+        }
+        
+        if (!empty($estado)) {
+            $queryCount = $queryCount->where('estado', $estado);
+        }
+        
+        if (!empty($cliente)) {
+            $queryCount = $queryCount->where('cliente', $cliente);
+        }
+        
+        $recordsFiltered = $queryCount->countAllResults(false);
+        
         $output = array(
             "draw" => $draw,
             "recordsTotal" => $proyecto->countAll(),
-            "recordsFiltered" => $proyecto->countAll(),
+            "recordsFiltered" => $recordsFiltered,
             "data" => $data
         );
 
@@ -374,5 +413,37 @@ class ProyectoController extends BaseController
         } else {
             return $this->response->setJSON(['success' => false, 'message' => 'Error al eliminar imagen']);
         }
+    }
+
+    /**
+     * Obtener lista de clientes únicos de proyectos para el filtro
+     */
+    public function getClientesSelect()
+    {
+        // Verificar autenticación
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $proyecto = new Proyecto();
+        
+        // Obtener todos los clientes únicos de los proyectos
+        $clientes = $proyecto->select('cliente')
+                            ->where('cliente IS NOT NULL')
+                            ->where('cliente !=', '')
+                            ->distinct()
+                            ->orderBy('cliente', 'ASC')
+                            ->findAll();
+
+        $data = [];
+        foreach ($clientes as $c) {
+            if (!empty($c->cliente)) {
+                $data[] = [
+                    'nombre' => $c->cliente
+                ];
+            }
+        }
+
+        return $this->response->setJSON($data);
     }
 }

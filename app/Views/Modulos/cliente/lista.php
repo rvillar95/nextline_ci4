@@ -53,22 +53,24 @@
                         </div>
                     </div>
 
-                    <!-- Tabla -->
-                    <table id="tablaClientes" class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Nombre/Razón Social</th>
-                                <th>Tipo</th>
-                                <th>Estado</th>
-                                <th>Contacto</th>
-                                <th>Dirección</th>
-                                <th>Comuna</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                    <!-- Tabla con contenedor responsive -->
+                    <div class="table-responsive">
+                        <table id="tablaClientes" class="table table-bordered table-striped nowrap" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Nombre/Razón Social</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Contacto</th>
+                                    <th>Dirección</th>
+                                    <th>Comuna</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -76,6 +78,99 @@
 </div>
 
 <?= $this->include('components/modals') ?>
+
+<style>
+/* Estilos para mejorar la visualización responsive de la tabla */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Mejorar la visualización de botones en móvil */
+@media screen and (max-width: 768px) {
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+        display: inline-block;
+        width: auto;
+    }
+    
+    /* Ajustar los filtros en móvil */
+    .row.mb-3 .col-md-2,
+    .row.mb-3 .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Mejorar la visualización de badges */
+    .badge {
+        display: inline-block;
+        white-space: nowrap;
+    }
+}
+
+/* Estilos para el control de expansión de DataTables Responsive */
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.child,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th.child,
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.dataTables_empty {
+    cursor: default !important;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > td:first-child:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr[role="row"] > th:first-child:before {
+    top: 50%;
+    left: 4px;
+    height: 14px;
+    width: 14px;
+    margin-top: -7px;
+    display: block;
+    position: absolute;
+    color: white;
+    border: 2px solid white;
+    border-radius: 14px;
+    box-shadow: 0 0 3px #444;
+    box-sizing: content-box;
+    text-align: center;
+    text-indent: 0 !important;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 14px;
+    content: '+';
+    background-color: #31b131;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td:first-child:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th:first-child:before {
+    content: '-';
+    background-color: #d33333;
+}
+
+/* Ajustar el padding de las celdas cuando hay control de expansión */
+table.dataTable.dtr-inline.collapsed > tbody > tr > td:first-child,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th:first-child {
+    position: relative;
+    padding-left: 30px;
+    cursor: pointer;
+}
+
+/* Mejorar espaciado de los detalles expandidos */
+table.dataTable.dtr-inline.collapsed > tbody > tr.child ul {
+    display: inline-block;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr.child ul li {
+    border-bottom: 1px solid #efefef;
+    padding: 0.5em 0;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr.child span.dtr-title {
+    display: inline-block;
+    min-width: 100px;
+    font-weight: bold;
+}
+</style>
 
 <script src="<?= base_url('lib/js/modals.js') ?>"></script>
 <script>
@@ -105,7 +200,22 @@ $(document).ready(function() {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
         },
         "responsive": true,
-        "pageLength": 25
+        "autoWidth": false,
+        "pageLength": 25,
+        "columnDefs": [
+            {
+                "targets": 0, // Columna de nombre - MÁXIMA PRIORIDAD
+                "responsivePriority": 1 // Siempre visible
+            },
+            {
+                "targets": -1, // Columna de acciones
+                "responsivePriority": 2 // Segunda prioridad
+            },
+            {
+                "targets": 1, // Columna de tipo
+                "responsivePriority": 3 // Tercera prioridad
+            }
+        ]
     });
 
     // Aplicar filtros
