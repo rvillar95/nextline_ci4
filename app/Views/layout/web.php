@@ -65,6 +65,33 @@ $empresaContacto = [
             scroll-behavior: smooth;
         }
         
+        /* ===== WRAPPER Y BODY ===== */
+        #wrapper {
+            background: transparent !important;
+        }
+        
+        body {
+            background-color: #ffffff;
+        }
+        
+        #content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Asegurar que las secciones estén debajo del menú móvil */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-section-modern,
+        .no-bottom,
+        .no-top {
+            position: relative;
+            z-index: 1;
+        }
+        
         /* ===== HEADER Y NAVBAR MODERNO ===== */
         
         /* Topbar Moderno */
@@ -73,7 +100,7 @@ $empresaContacto = [
             padding: 3px 0;
             border-bottom: 1px solid rgba(240, 132, 26, 0.2);
             position: relative;
-            z-index: 1000;
+            z-index: 9998;
         }
         
         .topbar-content-modern {
@@ -164,12 +191,12 @@ $empresaContacto = [
         
         /* Header Moderno */
         .header-modern {
-            background: #1d2844;
+            background: #1d2844 !important;
             backdrop-filter: blur(10px);
             padding: 5px 0;
             position: sticky;
             top: 0;
-            z-index: 999;
+            z-index: 9999;
             box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
             border-bottom: 1px solid rgba(240, 132, 26, 0.2);
             transition: box-shadow 0.3s ease;
@@ -179,6 +206,7 @@ $empresaContacto = [
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: transparent;
         }
         
         /* Logo Moderno */
@@ -311,12 +339,19 @@ $empresaContacto = [
             display: none;
             flex-direction: column;
             justify-content: space-around;
-            width: 30px;
-            height: 30px;
-            background: transparent;
-            border: none;
+            width: 35px;
+            height: 35px;
+            background: rgba(240, 132, 26, 0.1);
+            border: 2px solid #f0841a;
+            border-radius: 8px;
             cursor: pointer;
-            padding: 0;
+            padding: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-btn-modern:hover {
+            background: rgba(240, 132, 26, 0.2);
+            transform: scale(1.05);
         }
         
         .mobile-menu-btn-modern span {
@@ -325,6 +360,18 @@ $empresaContacto = [
             background: #f0841a;
             border-radius: 2px;
             transition: all 0.3s ease;
+        }
+        
+        /* Animación para menú móvil */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         /* Responsive Design */
@@ -342,43 +389,32 @@ $empresaContacto = [
             }
         }
         
-        @media (max-width: 992px) {
+        @media (max-width: 993px) {
+            /* Ocultar topbar en tablets y móviles */
             .topbar-modern {
                 display: none;
             }
             
-            .header-content-modern {
-                flex-wrap: wrap;
-            }
-            
-            .nav-modern {
-                order: 3;
-                width: 100%;
-                margin-top: 15px;
-            }
-            
-            .nav-menu-modern {
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            
-            .nav-link-modern {
-                padding: 8px 12px;
-            }
-            
-            .nav-link-modern span {
-                font-size: 0.8rem;
-            }
-        }
-        
-        @media (max-width: 768px) {
+            /* Sobrescribir el CSS del template para header-mobile */
+            header.header-mobile,
+            header.header-modern.header-mobile,
             .header-modern {
-                padding: 10px 0;
+                padding: 15px 0 !important;
+                min-height: 120px !important;
+                height: 120px !important;
+                display: flex !important;
+                align-items: center !important;
+                overflow: visible !important;
+            }
+            
+            .header-content-modern {
+                flex-wrap: nowrap;
+                width: 100%;
             }
             
             .logo-img-modern {
-                height: 60px;
+                height: 70px !important;
+                width: auto;
             }
             
             .phone-modern {
@@ -387,33 +423,113 @@ $empresaContacto = [
             
             .mobile-menu-btn-modern {
                 display: flex;
+                flex-shrink: 0;
             }
             
+            /* Menú móvil desde 993px hacia abajo */
             .nav-modern {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: rgba(29, 40, 68, 0.98);
+                display: block !important;
+                position: fixed !important;
+                top: 120px !important;
+                left: 0 !important;
+                right: 0 !important;
+                background: #1d2844 !important;
                 backdrop-filter: blur(10px);
-                padding: 20px;
-                box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
+                padding: 20px !important;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+                border-top: 2px solid #f0841a !important;
+                z-index: 2147483647 !important;
+                max-height: calc(100vh - 120px) !important;
+                min-height: 450px !important;
+                overflow-y: auto !important;
+                width: 100% !important;
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+                pointer-events: none;
             }
             
             .nav-modern.active {
-                display: block;
+                transform: translateY(0) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+                min-height: 450px !important;
+                display: block !important;
+                z-index: 2147483647 !important;
             }
             
             .nav-menu-modern {
+                display: flex !important;
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
+                width: 100%;
             }
             
             .nav-link-modern {
-                padding: 15px 20px;
-                border-radius: 8px;
-                background: rgba(240, 132, 26, 0.1);
+                padding: 16px 20px;
+                border-radius: 10px;
+                background: rgba(240, 132, 26, 0.15);
+                border: 1px solid rgba(240, 132, 26, 0.3);
+                color: #f3d7b0 !important;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .nav-link-modern i {
+                font-size: 1.2rem;
+                color: #f0841a;
+                margin-bottom: 0;
+            }
+            
+            .nav-link-modern span {
+                color: #f3d7b0 !important;
+                font-weight: 600;
+            }
+            
+            .nav-link-modern:hover {
+                background: rgba(240, 132, 26, 0.25);
+                transform: translateX(5px);
+                border-color: #f0841a;
+            }
+            
+            .nav-link-modern.active {
+                background: linear-gradient(135deg, #f0841a, #ff6b35);
+                color: white !important;
+                box-shadow: 0 4px 15px rgba(240, 132, 26, 0.4);
+                border-color: transparent;
+            }
+            
+            .nav-link-modern.active i,
+            .nav-link-modern.active span {
+                color: white !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* Ajustes adicionales para móviles pequeños */
+            header.header-mobile,
+            header.header-modern.header-mobile,
+            .header-modern {
+                min-height: 100px !important;
+                height: 100px !important;
+            }
+            
+            .logo-img-modern {
+                height: 60px !important;
+                width: auto;
+            }
+            
+            .nav-modern {
+                top: 100px !important;
+                max-height: calc(100vh - 100px) !important;
+                min-height: 400px !important;
+                z-index: 2147483647 !important;
             }
         }
         
@@ -1302,10 +1418,35 @@ $empresaContacto = [
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const navModern = document.querySelector('.nav-modern');
+        const header = document.querySelector('.header-modern');
+        
+        // Función para posicionar el menú correctamente
+        function positionMenu() {
+            if (navModern && header) {
+                const headerHeight = header.offsetHeight;
+                const topbarHeight = document.querySelector('.topbar-modern')?.offsetHeight || 0;
+                navModern.style.top = (headerHeight) + 'px';
+                console.log('Menu posicionado en:', headerHeight + 'px');
+            }
+        }
         
         if (mobileMenuBtn && navModern) {
-            mobileMenuBtn.addEventListener('click', function() {
+            console.log('Menu mobile inicializado correctamente');
+            
+            // Posicionar menú al cargar
+            positionMenu();
+            
+            // Toggle del menú móvil
+            mobileMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Click en hamburguesa');
                 navModern.classList.toggle('active');
+                console.log('Clase active:', navModern.classList.contains('active'));
+                
+                // Posicionar menú debajo del header
+                positionMenu();
                 
                 // Animate hamburger menu
                 const spans = this.querySelectorAll('span');
@@ -1342,6 +1483,11 @@ $empresaContacto = [
                     spans[2].style.transform = 'none';
                 }
             });
+            
+            // Reposicionar menú al hacer resize
+            window.addEventListener('resize', function() {
+                positionMenu();
+            });
         }
         
         // Smooth scrolling for anchor links
@@ -1362,7 +1508,6 @@ $empresaContacto = [
         });
         
         // Header scroll effect - Solo cambia la sombra, sin cambios de padding
-        const header = document.querySelector('.header-modern');
         if (header) {
             let ticking = false;
             
