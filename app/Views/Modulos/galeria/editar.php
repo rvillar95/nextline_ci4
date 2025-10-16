@@ -2,128 +2,389 @@
 
 <?= $this->section('galeria/editar') ?>
 
+<style>
+    /* Estilos generales para las cards de sección */
+    .section-card {
+        background: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+        padding: 30px;
+        border-left: 6px solid #ff9800; /* Naranja para edición */
+        transition: all 0.3s ease;
+    }
+
+    .section-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .section-title .step-number {
+        background: #ff9800; /* Naranja para edición */
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+    }
+
+    .section-title span {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .section-subtitle {
+        font-size: 1.05rem;
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-label .icon-label {
+        color: #ff9800; /* Naranja para edición */
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #ff9800; /* Naranja para edición */
+        box-shadow: 0 0 0 0.2rem rgba(255, 152, 0, 0.25);
+    }
+
+    .help-text {
+        font-size: 0.875rem;
+        color: #888;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .help-text .fas {
+        color: #ff9800; /* Naranja para edición */
+    }
+
+    .main-header {
+        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); /* Gradiente naranja */
+        padding: 30px 40px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        color: white;
+        box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
+    }
+
+    .main-header h2 {
+        color: white;
+        font-weight: 700;
+        font-size: 2rem;
+        margin-bottom: 5px;
+    }
+
+    .main-header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+    }
+
+    .btn-light {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 10px 25px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-light:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-submit {
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+        border: none;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    }
+    
+    .btn-cancel {
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 2px solid #6c757d;
+        color: #495057 !important;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white !important;
+    }
+
+    .required {
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+    .current-image-preview {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px dashed #dee2e6;
+    }
+</style>
+
 <div class="container-fluid">
+    <div class="main-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 style="color: white;"><i class="fas fa-edit me-2"></i> Editar Galería</h2>
+                <p style="color: white;">Actualice la información de la galería: <strong><?= esc($galeria->nombre) ?></strong></p>
+            </div>
+            <a href="<?= base_url('dashboard/galeria/lista') ?>" class="btn btn-light">
+                <i class="fas fa-arrow-left me-2"></i> Volver
+            </a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-edit"></i> Editar Galería
-                    </h3>
-                    <div class="card-tools">
-                        <a href="<?= base_url('dashboard/galeria/lista') ?>" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Volver
-                        </a>
+            <?php if (session()->getFlashdata('errors')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i> Errores de Validación</h5>
+                    <ul class="mb-0">
+                        <?php 
+                        $errors = session()->getFlashdata('errors');
+                        if (is_array($errors)):
+                            foreach ($errors as $field => $error): ?>
+                                <li><strong><?= esc(ucfirst(str_replace('_', ' ', $field))) ?>:</strong> <?= esc($error) ?></li>
+                            <?php endforeach;
+                        else: ?>
+                            <li><?= esc($errors) ?></li>
+                        <?php endif; ?>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> <?= esc(session()->getFlashdata('success')) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <form method="post" action="<?= base_url('dashboard/galeria/update') ?>" enctype="multipart/form-data">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= $galeria->id ?>">
+                
+                <!-- PASO 1: Información General -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <span class="step-number">1</span>
+                        <span><i class="fas fa-info-circle icon-label"></i> Información General</span>
+                    </div>
+                    <p class="section-subtitle">
+                        Datos básicos para identificar la galería de imágenes.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-heading icon-label"></i>
+                                    Nombre de la Galería <span class="required">*</span>
+                                </label>
+                                <input type="text" name="nombre" class="form-control" 
+                                       value="<?= old('nombre', $galeria->nombre) ?>" required 
+                                       placeholder="Ej: Quincho Principal, Casa Residencial">
+                                <small class="help-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Nombre descriptivo y claro para identificar esta galería.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-folder icon-label"></i>
+                                    Categoría <span class="required">*</span>
+                                </label>
+                                <select name="categoria_id" class="form-control" required>
+                                    <option value="">-- Seleccionar categoría --</option>
+                                    <?php foreach ($categorias as $categoria): ?>
+                                        <option value="<?= $categoria->id; ?>" 
+                                            <?= ($galeria->categoria_id == $categoria->id) ? 'selected' : ''; ?>>
+                                            📁 <?= esc($categoria->nombre); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <small class="help-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Categoría que ayuda a organizar y filtrar las galerías.
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <?php if (session()->getFlashdata('errors')): ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                    <li><?= esc($error) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
+
+                <!-- PASO 2: Configuración Visual -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <span class="step-number">2</span>
+                        <span><i class="fas fa-cog icon-label"></i> Configuración Visual</span>
+                    </div>
+                    <p class="section-subtitle">
+                        Configure el estado de visibilidad y actualice la imagen de portada si lo desea.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-toggle-on icon-label"></i>
+                                    Estado de Publicación
+                                </label>
+                                <select name="estado" class="form-control">
+                                    <option value="A" <?= $galeria->estado == 'A' ? 'selected' : '' ?>>✅ Activo (Visible públicamente)</option>
+                                    <option value="I" <?= $galeria->estado == 'I' ? 'selected' : '' ?>>❌ Inactivo (Oculto)</option>
+                                </select>
+                                <small class="help-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Si está "Activo", la galería será visible en su sitio web.
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-image icon-label"></i>
+                                    Nueva Imagen de Portada
+                                </label>
+                                <input type="file" name="portada" class="form-control" accept="image/*">
+                                <small class="help-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Solo suba una imagen si desea cambiar la actual (JPG, PNG, GIF - máx. 5MB).
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <?php if ($galeria->portada): ?>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="current-image-preview">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="<?= base_url($galeria->portada) ?>" 
+                                             alt="Portada actual" 
+                                             class="img-thumbnail" 
+                                             style="max-width: 200px; height: auto; border-radius: 8px;">
+                                        <div>
+                                            <strong class="d-block mb-2"><i class="fas fa-image me-2"></i> Imagen Actual</strong>
+                                            <p class="mb-0 text-muted">Se mantendrá esta imagen si no sube una nueva.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     <?php endif; ?>
-
-                    <form method="post" action="<?= base_url('dashboard/galeria/update') ?>" enctype="multipart/form-data">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="id" value="<?= $galeria->id ?>">
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Nombre de la Galería *</label>
-                                    <input type="text" name="nombre" class="form-control" 
-                                           value="<?= old('nombre', $galeria->nombre) ?>" required placeholder="Ej: Quincho Principal, Casa Residencial...">
-                                    <small class="text-muted">Nombre descriptivo de la galería</small>
-                                    <?php if (session()->getFlashdata('errors')['nombre'] ?? false): ?>
-                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['nombre']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Categoría *</label>
-                                    <select name="categoria_id" class="form-control" required>
-                                        <option value="">Seleccionar categoría...</option>
-                                        <?php foreach ($categorias as $categoria): ?>
-                                            <option value="<?= $categoria->id; ?>" 
-                                                <?= ($galeria->categoria_id == $categoria->id) ? 'selected' : ''; ?>>
-                                                <?= $categoria->nombre; ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <small class="text-muted">Categoría de la galería (obligatorio)</small>
-                                    <?php if (session()->getFlashdata('errors')['categoria_id'] ?? false): ?>
-                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['categoria_id']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Estado</label>
-                                    <select name="estado" class="form-control">
-                                        <option value="A" <?= $galeria->estado == 'A' ? 'selected' : '' ?>>Activo</option>
-                                        <option value="I" <?= $galeria->estado == 'I' ? 'selected' : '' ?>>Inactivo</option>
-                                    </select>
-                                    <?php if (session()->getFlashdata('errors')['estado'] ?? false): ?>
-                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['estado']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">Imagen de Portada</label>
-                                    <input type="file" name="portada" class="form-control" accept="image/*">
-                                    <small class="text-muted">Nueva imagen (JPG, PNG, GIF - máximo 5MB)</small>
-                                    <?php if ($galeria->portada): ?>
-                                        <div class="mt-2">
-                                            <img src="<?= base_url($galeria->portada) ?>" alt="Imagen actual" class="img-thumbnail" style="max-width: 200px;">
-                                            <small class="text-muted d-block">Imagen actual</small>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if (session()->getFlashdata('errors')['portada'] ?? false): ?>
-                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['portada']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea name="descripcion" class="form-control" rows="3" 
-                                              placeholder="Descripción de la galería..."><?= old('descripcion', $galeria->descripcion) ?></textarea>
-                                    <small class="text-muted">Descripción opcional de la galería</small>
-                                    <?php if (session()->getFlashdata('errors')['descripcion'] ?? false): ?>
-                                        <div class="text-danger"><?= esc(session()->getFlashdata('errors')['descripcion']) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Espaciado adicional antes de los botones -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Actualizar Galería
-                                    </button>
-                                    <a href="<?= base_url('dashboard/galeria/lista') ?>" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> Cancelar
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
                 </div>
-            </div>
+
+                <!-- PASO 3: Descripción -->
+                <div class="section-card">
+                    <div class="section-title">
+                        <span class="step-number">3</span>
+                        <span><i class="fas fa-align-left icon-label"></i> Descripción</span>
+                    </div>
+                    <p class="section-subtitle">
+                        Agregue una descripción opcional para brindar más contexto sobre esta galería.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-paragraph icon-label"></i>
+                                    Descripción de la Galería
+                                </label>
+                                <textarea name="descripcion" class="form-control" rows="4"
+                                          placeholder="Descripción opcional de la galería, contexto del proyecto, detalles técnicos, etc."><?= old('descripcion', $galeria->descripcion) ?></textarea>
+                                <small class="help-text">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Esta descripción ayuda a los visitantes a entender mejor el contexto de las imágenes (opcional).
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="section-card" style="border-left-color: #28a745;">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex gap-3 justify-content-center">
+                                <button type="submit" class="btn btn-primary btn-submit">
+                                    <i class="fas fa-save me-2"></i> Actualizar Galería
+                                </button>
+                                <a href="<?= base_url('dashboard/galeria/lista') ?>" class="btn btn-secondary btn-cancel">
+                                    <i class="fas fa-times me-2"></i> Cancelar
+                                </a>
+                            </div>
+                            <p class="text-center mt-3 mb-0 text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Revise toda la información antes de guardar los cambios
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
         </div>
     </div>
 </div>

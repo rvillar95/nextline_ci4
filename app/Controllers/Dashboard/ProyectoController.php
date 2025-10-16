@@ -248,7 +248,7 @@ class ProyectoController extends BaseController
         if ($proyecto->delete($id)) {
             return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto eliminado con éxito');
         } else {
-            return redirect()->back()->with('errors', 'Error al eliminar el proyecto');
+            return redirect()->back()->with('error', 'Error al eliminar el proyecto');
         }
     }
 
@@ -299,7 +299,7 @@ class ProyectoController extends BaseController
             
             return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto editado con éxito');
         } else {
-            return redirect()->back()->withInput()->with('errors', 'Error al editar el proyecto');
+            return redirect()->back()->withInput()->with('error', 'Error al editar el proyecto');
         }
     }
 

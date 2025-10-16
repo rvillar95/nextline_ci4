@@ -127,12 +127,28 @@ class PerfilController extends BaseController
     {
         $perfilModel = new Perfil();
         $id = $this->request->getPost('id');
-        // Intenta eliminar el usuario
+        
+        // Verificar si hay usuarios asociados a este perfil
+        $db = \Config\Database::connect();
+        $usuariosAsociados = $db->table('usuario')->where('perfil_id', $id)->countAllResults();
+        
+        if ($usuariosAsociados > 0) {
+            return redirect()->to(base_url('dashboard/perfil/lista'))
+                ->with('errors', 'No se puede eliminar el perfil porque tiene ' . $usuariosAsociados . ' usuario(s) asociado(s). Primero debe reasignar o eliminar esos usuarios.');
+        }
+        
+        // Verificar si hay módulos/permisos asociados a este perfil
+        $modulosAsociados = $db->table('perfil_modulo')->where('perfil_id', $id)->countAllResults();
+        
+        if ($modulosAsociados > 0) {
+            // Eliminar primero los permisos asociados
+            $db->table('perfil_modulo')->where('perfil_id', $id)->delete();
+        }
+        
+        // Intenta eliminar el perfil
         if ($perfilModel->delete($id)) {
-            // Usuario eliminado con éxito
             return redirect()->to(base_url('dashboard/perfil/lista'))->with('success', 'Perfil eliminado con éxito.');
         } else {
-            // Error al eliminar el usuario
             return redirect()->to(base_url('dashboard/perfil/lista'))->with('errors', 'No se pudo eliminar el perfil.');
         }
     }

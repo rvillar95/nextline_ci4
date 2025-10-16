@@ -124,7 +124,6 @@ class ServicioController extends BaseController
             $data[] = array(
                 $r->nombre,
                 $r->categoria_nombre ?? 'Sin categoría',
-                $r->descripcionCorta,
                 $precio,
                 $r->estado == 'A' ? '<span class="badge badge-success mb-2 me-4">Activo</span>' : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
                 $r->destacado == 'S' ? '<span class="badge badge-warning mb-2 me-4">⭐ Destacado</span>' : '<span class="badge badge-secondary mb-2 me-4">Normal</span>',

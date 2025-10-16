@@ -167,6 +167,35 @@ exit(); */
                 #sidebar ul.menu-categories li.menu {
                     margin-bottom: 5px !important;     /* Espacio consistente entre elementos */
                 }
+
+                /* SOLUCIÓN PARA EL SCROLL EN MÓVILES */
+                /* Permitir que el sidebar tenga scroll en todas las resoluciones */
+                #sidebar {
+                    overflow-y: auto !important;        /* Permitir scroll vertical */
+                    overflow-x: hidden !important;      /* Ocultar scroll horizontal */
+                    -webkit-overflow-scrolling: touch;  /* Scroll suave en iOS */
+                    max-height: 100vh !important;       /* Altura máxima de la ventana */
+                }
+
+                /* Permitir que el contenedor del menú tenga scroll */
+                #sidebar ul.menu-categories {
+                    overflow-y: visible !important;     /* Permitir que el contenido sea visible */
+                    overflow-x: hidden !important;
+                }
+
+                /* En móviles, asegurar que el sidebar tenga altura correcta */
+                @media (max-width: 991px) {
+                    .sidebar-wrapper {
+                        overflow-y: auto !important;
+                        -webkit-overflow-scrolling: touch;
+                    }
+                    
+                    #sidebar {
+                        height: 100vh !important;
+                        overflow-y: auto !important;
+                        padding-bottom: 50px !important;
+                    }
+                }
             </style>
             
             <ul class="list-unstyled menu-categories" id="accordionExample">

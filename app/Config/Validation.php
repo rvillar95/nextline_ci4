@@ -713,9 +713,8 @@ class Validation extends BaseConfig
         ],
         'descripcion' => [
             'label' => 'Descripción',
-            'rules' => 'required|max_length[500]',
+            'rules' => 'permit_empty|max_length[500]',
             'errors' => [
-                'required' => 'El campo {field} es obligatorio.',
                 'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
             ],
         ],
@@ -763,9 +762,8 @@ class Validation extends BaseConfig
         ],
         'descripcion' => [
             'label' => 'Descripción',
-            'rules' => 'required|max_length[500]',
+            'rules' => 'permit_empty|max_length[500]',
             'errors' => [
-                'required' => 'El campo {field} es obligatorio.',
                 'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.'
             ],
         ],

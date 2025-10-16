@@ -146,7 +146,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getTestimonios', 'Dashboard\TestimonioController::getTestimonios'); //get Data
         $routes2->post('registrar', 'Dashboard\TestimonioController::registrar'); //accion
         $routes2->post('update', 'Dashboard\TestimonioController::update'); //accion
-        $routes2->get('eliminar/(:num)', 'Dashboard\TestimonioController::eliminar/$1'); //accion
+        $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar'); //accion
     });
 
     $routes->group('cliente', function ($routes2) {

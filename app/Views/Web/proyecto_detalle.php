@@ -93,16 +93,6 @@
                                         <span class="info-value-modern"><?= number_format($proyecto->area_construida, 0, ',', '.') ?> m²</span>
                                     </div>
                                 </div>
-                            <?php else: ?>
-                                <div class="info-item-modern">
-                                    <div class="info-icon-modern">
-                                        <i class="fas fa-ruler-combined"></i>
-                                    </div>
-                                    <div class="info-content-modern">
-                                        <span class="info-label-modern">Área Construida</span>
-                                        <span class="info-value-modern"><em>Por especificar</em></span>
-                                    </div>
-                                </div>
                             <?php endif; ?>
                             
                             <?php if ($proyecto->presupuesto && $proyecto->mostrar_presupuesto): ?>
@@ -180,16 +170,6 @@
                                 <p><?= nl2br(esc($proyecto->caracteristicas_tecnicas)) ?></p>
                             </div>
                         </div>
-                    <?php else: ?>
-                        <div class="content-section-modern">
-                            <h2 class="section-title-modern">
-                                <i class="fas fa-cogs"></i>
-                                Características Técnicas
-                            </h2>
-                            <div class="section-content-modern">
-                                <p><em>Las características técnicas de este proyecto se pueden agregar desde el panel de administración.</em></p>
-                            </div>
-                        </div>
                     <?php endif; ?>
                     
                     <!-- Materiales -->
@@ -200,17 +180,7 @@
                                 Materiales Principales
                             </h2>
                             <div class="section-content-modern">
-                                <p><?= esc($proyecto->materiales_principales) ?></p>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="content-section-modern">
-                            <h2 class="section-title-modern">
-                                <i class="fas fa-hammer"></i>
-                                Materiales Principales
-                            </h2>
-                            <div class="section-content-modern">
-                                <p><em>Los materiales principales utilizados en este proyecto se pueden especificar desde el panel de administración.</em></p>
+                                <p><?= nl2br(esc($proyecto->materiales_principales)) ?></p>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -231,23 +201,6 @@
                                         <?php if ($proyecto->cliente): ?>
                                             <span class="author-role-modern">Cliente del proyecto</span>
                                         <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="testimonial-section-modern">
-                            <h2 class="section-title-modern">
-                                <i class="fas fa-quote-left"></i>
-                                Testimonio del Cliente
-                            </h2>
-                            <div class="testimonial-card-modern">
-                                <div class="testimonial-content-modern">
-                                    <i class="fas fa-quote-left testimonial-quote-modern"></i>
-                                    <p class="testimonial-text-modern"><em>El testimonio del cliente se puede agregar desde el panel de administración.</em></p>
-                                    <div class="testimonial-author-modern">
-                                        <strong>Cliente</strong>
-                                        <span class="author-role-modern">Testimonio pendiente</span>
                                     </div>
                                 </div>
                             </div>
