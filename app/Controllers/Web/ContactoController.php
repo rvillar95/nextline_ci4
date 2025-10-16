@@ -110,8 +110,8 @@ final class ContactoController extends BaseController
         $fecha = date('d/m/Y H:i');
         $nombre = esc($data['nombre'] ?? '');
         $correo = esc($data['correo'] ?? '');
-        $telefono = esc($data['telefono'] ?? 'No proporcionado');
-        $mensaje = esc($data['mensaje'] ?? 'Sin mensaje');
+        $telefono = esc($data['telefono'] ?? '');
+        $mensaje = esc($data['mensaje'] ?? '');
         
         return <<<HTML
 <!DOCTYPE html>

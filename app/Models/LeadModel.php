@@ -22,8 +22,8 @@ final class LeadModel extends Model
     protected $validationRules = [
         'nombre'  => 'required|string|min_length[2]|max_length[100]',
         'correo'  => 'required|valid_email|max_length[150]',
-        'telefono'=> 'permit_empty|chilean_phone|max_length[50]',
-        'mensaje' => 'permit_empty|max_length[2000]',
+        'telefono'=> 'required|string|min_length[9]|max_length[50]',
+        'mensaje' => 'required|string|min_length[10]|max_length[2000]',
         'servicio_id' => 'required|is_natural_no_zero',
     ];
 
@@ -40,10 +40,15 @@ final class LeadModel extends Model
             'max_length' => 'El campo correo no puede exceder de 150 caracteres.'
         ],
         'telefono' => [
-            'max_length' => 'El campo teléfono no puede exceder de 50 caracteres.',
-            'chilean_phone' => 'El campo teléfono debe ser un número chileno válido (ej: +56912345678 o 912345678).'
+            'required' => 'El campo teléfono es obligatorio.',
+            'string' => 'El campo teléfono debe ser una cadena de texto.',
+            'min_length' => 'El campo teléfono debe tener al menos 9 caracteres.',
+            'max_length' => 'El campo teléfono no puede exceder de 50 caracteres.'
         ],
         'mensaje' => [
+            'required' => 'El campo mensaje es obligatorio.',
+            'string' => 'El campo mensaje debe ser una cadena de texto.',
+            'min_length' => 'El campo mensaje debe tener al menos 10 caracteres.',
             'max_length' => 'El campo mensaje no puede exceder de 2000 caracteres.'
         ],
         'servicio_id' => [
