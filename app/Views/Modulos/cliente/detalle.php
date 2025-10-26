@@ -170,9 +170,13 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row text-center">
-                                        <div class="col-12">
+                                        <div class="col-6">
                                             <h3 class="text-primary"><?= count($cotizaciones) ?></h3>
-                                            <p class="text-muted">Cotizaciones</p>
+                                            <p class="text-muted mb-0">Cotizaciones</p>
+                                        </div>
+                                        <div class="col-6">
+                                            <h3 class="text-success"><?= count($listados_materiales) ?></h3>
+                                            <p class="text-muted mb-0">Listados de Materiales</p>
                                         </div>
                                     </div>
                                 </div>
@@ -189,10 +193,13 @@
                                     <a href="<?= base_url('dashboard/cotizacion/registro?cliente_id=' . $cliente->id) ?>" class="btn btn-success btn-block mb-2">
                                         <i class="fas fa-plus"></i> Nueva Cotización
                                     </a>
+                                    <a href="<?= base_url('dashboard/listado-material/registro?cliente_id=' . $cliente->id) ?>" class="btn btn-info btn-block mb-2">
+                                        <i class="fas fa-boxes"></i> Nueva Lista de Materiales
+                                    </a>
                                     <a href="<?= base_url('dashboard/cliente/editar/' . $cliente->id) ?>" class="btn btn-primary btn-block mb-2">
                                         <i class="fas fa-edit"></i> Editar Cliente
                                     </a>
-                                    <button class="btn btn-danger btn-block" onclick="eliminarCliente(<?= $cliente->id ?>)">
+                                    <button class="btn btn-danger btn-block mb-2" onclick="eliminarCliente(<?= $cliente->id ?>)">
                                         <i class="fas fa-trash"></i> Eliminar Cliente
                                     </button>
                                 </div>
@@ -249,6 +256,81 @@
                                                         </a>
                                                         <a href="<?= base_url('dashboard/cotizacion/editar/' . $cotizacion->id) ?>" class="btn btn-sm btn-primary">
                                                             <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Listados de Materiales del Cliente -->
+                    <?php if (!empty($listados_materiales)): ?>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-boxes"></i> Listados de Materiales del Cliente
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Número</th>
+                                                    <th>Título</th>
+                                                    <th>Proyecto</th>
+                                                    <th>Estado</th>
+                                                    <th>Fecha</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($listados_materiales as $listado): ?>
+                                                <tr>
+                                                    <td><?= esc($listado->numero_listado) ?></td>
+                                                    <td><?= esc($listado->titulo) ?></td>
+                                                    <td>
+                                                        <?php
+                                                        // Obtener nombre del proyecto si existe
+                                                        if ($listado->proyecto_id) {
+                                                            $proyectoModel = new \App\Models\Proyecto();
+                                                            $proyecto = $proyectoModel->find($listado->proyecto_id);
+                                                            echo $proyecto ? esc($proyecto->nombre) : 'N/A';
+                                                        } else {
+                                                            echo 'N/A';
+                                                        }
+                                                        ?>
+                                                    </td>
+                                                    <td>
+                                                        <?php
+                                                        $estadoBadge = match ($listado->estado ?? 'borrador') {
+                                                            'borrador' => '<span class="badge badge-secondary">Borrador</span>',
+                                                            'finalizado' => '<span class="badge badge-success">Finalizado</span>',
+                                                            'enviado' => '<span class="badge badge-info">Enviado</span>',
+                                                            'archivado' => '<span class="badge badge-warning">Archivado</span>',
+                                                            default => '<span class="badge badge-secondary">N/A</span>',
+                                                        };
+                                                        echo $estadoBadge;
+                                                        ?>
+                                                    </td>
+                                                    <td><?= date('d/m/Y', strtotime($listado->fecha_listado)) ?></td>
+                                                    <td>
+                                                        <a href="<?= base_url('dashboard/listado-material/detalle/' . $listado->id) ?>" class="btn btn-sm btn-info">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="<?= base_url('dashboard/listado-material/editar/' . $listado->id) ?>" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="<?= base_url('dashboard/listado-material/generarPDF/' . $listado->id) ?>" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-file-pdf"></i>
                                                         </a>
                                                     </td>
                                                 </tr>

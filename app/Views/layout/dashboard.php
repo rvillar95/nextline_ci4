@@ -379,7 +379,13 @@ exit(); */
                     
                     <!-- Secciones de Empresa -->
                     <?php echo $this->renderSection("empresa/registro"); ?>
-                    <!-- END Section Modulo Testimonio-->
+                    
+                    <!-- Secciones de Listado de Materiales -->
+                    <?php echo $this->renderSection("listado_material/lista"); ?>
+                    <?php echo $this->renderSection("listado_material/registro"); ?>
+                    <?php echo $this->renderSection("listado_material/editar"); ?>
+                    <?php echo $this->renderSection("listado_material/detalle"); ?>
+                    <!-- END Section Listado de Materiales-->
                 </div>
 
             </div>

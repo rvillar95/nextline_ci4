@@ -320,6 +320,12 @@ class ClienteController extends BaseController
                                               ->orderBy('fecha_cotizacion', 'DESC')
                                               ->findAll();
 
+        // Obtener listados de materiales del cliente
+        $listadoMaterialModel = new \App\Models\ListadoMaterial();
+        $data['listados_materiales'] = $listadoMaterialModel->where('cliente_id', $id)
+                                                           ->orderBy('fecha_listado', 'DESC')
+                                                           ->findAll();
+
         return view('Modulos/cliente/detalle', $data);
     }
 
