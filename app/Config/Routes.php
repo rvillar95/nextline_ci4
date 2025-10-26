@@ -17,6 +17,9 @@ $routes->get('/layout', 'ViewController::layout');
 
 $routes->group('dashboard', function ($routes) {
     $routes->get('inicio', 'ViewController::index');
+    
+    // Ruta para renovar la sesión (keepalive)
+    $routes->get('keepalive', 'Dashboard\UsuarioController::keepalive');
 
     $routes->get('registro/usuario', 'ViewController::registro');
     $routes->get('menu', 'ViewController::menu');

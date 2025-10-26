@@ -211,4 +211,27 @@ class UsuarioController extends BaseController
 
         return redirect()->to(base_url('login'));
     }
+
+    /**
+     * Mantener la sesión activa (keepalive)
+     * Esta ruta se llama periódicamente para renovar la sesión del usuario
+     */
+    public function keepalive()
+    {
+        // Solo verificar que la sesión esté activa
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Sesión no encontrada'
+            ])->setStatusCode(401);
+        }
+
+        // Responder con éxito
+        // El SessionFilter ya se encarga de renovar la sesión automáticamente
+        return $this->response->setJSON([
+            'status' => 'success',
+            'message' => 'Sesión renovada',
+            'timestamp' => time()
+        ]);
+    }
 }

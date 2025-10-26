@@ -59,7 +59,7 @@ class CotizacionController extends BaseController
         if (!empty($busqueda)) {
             $query->groupStart()
                   ->like('cotizaciones.numero_cotizacion', $busqueda)
-                  ->orLike('cotizaciones.titulo', $busqueda)
+                  ->orLike('cotizaciones.proyecto_nombre', $busqueda)
                   ->orLike('c.nombre_razon_social', $busqueda)
                   ->groupEnd();
         }

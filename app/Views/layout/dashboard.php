@@ -385,4 +385,199 @@ exit(); */
             </div>
 
         </div>
+        
+        <!-- Modal de Advertencia de Sesión -->
+        <div class="modal fade" id="sessionExpirationModal" tabindex="-1" role="dialog" aria-labelledby="sessionExpirationModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title" id="sessionExpirationModalLabel">
+                            <i class="fas fa-clock me-2"></i> ⏰ Tu sesión está por expirar
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #f0ad4e;"></i>
+                        </div>
+                        <h5 class="mb-3">Tu sesión expirará en <span id="sessionTimeRemaining" class="text-danger fw-bold">5:00</span> minutos</h5>
+                        <p class="text-muted">
+                            Si estás llenando un formulario, guarda tu trabajo o extiende tu sesión haciendo clic en el botón de abajo.
+                        </p>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-success btn-lg" id="extendSessionBtn">
+                            <i class="fas fa-sync-alt me-2"></i> Extender Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script de Monitoreo de Sesión -->
+        <script>
+        (function() {
+            // Configuración de la sesión (en segundos)
+            const SESSION_DURATION = <?= config('Session')->expiration ?>; // 7200 segundos (2 horas)
+            const WARNING_TIME = 300; // Mostrar advertencia 5 minutos antes (300 segundos)
+            
+            // MODO PRUEBA: Descomentar las siguientes líneas para pruebas rápidas (modal aparece en 30 segundos)
+            // const SESSION_DURATION = 90; // PRUEBA: 90 segundos (1.5 minutos)
+            // const WARNING_TIME = 60; // PRUEBA: Advertencia 60 segundos antes (1 minuto)
+            
+            let sessionStartTime = Date.now();
+            let warningShown = false;
+            let countdownInterval = null;
+            
+            // Función para verificar el tiempo de sesión
+            function checkSessionExpiration() {
+                const currentTime = Date.now();
+                const elapsedSeconds = Math.floor((currentTime - sessionStartTime) / 1000);
+                const remainingSeconds = SESSION_DURATION - elapsedSeconds;
+                
+                // Si quedan menos de WARNING_TIME segundos, mostrar advertencia
+                if (remainingSeconds <= WARNING_TIME && !warningShown) {
+                    showExpirationWarning(remainingSeconds);
+                }
+                
+                // Si la sesión expiró, redirigir al login
+                if (remainingSeconds <= 0) {
+                    sessionExpired();
+                }
+            }
+            
+            // Mostrar modal de advertencia
+            function showExpirationWarning(remainingSeconds) {
+                warningShown = true;
+                const modal = new bootstrap.Modal(document.getElementById('sessionExpirationModal'));
+                modal.show();
+                
+                // Iniciar countdown
+                startCountdown(remainingSeconds);
+            }
+            
+            // Countdown en el modal
+            function startCountdown(seconds) {
+                const timeDisplay = document.getElementById('sessionTimeRemaining');
+                let remaining = seconds;
+                
+                countdownInterval = setInterval(() => {
+                    remaining--;
+                    
+                    if (remaining <= 0) {
+                        clearInterval(countdownInterval);
+                        sessionExpired();
+                        return;
+                    }
+                    
+                    const minutes = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    timeDisplay.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+                    
+                    // Cambiar color según el tiempo restante
+                    if (remaining <= 60) {
+                        timeDisplay.classList.remove('text-warning');
+                        timeDisplay.classList.add('text-danger', 'blink');
+                    } else if (remaining <= 180) {
+                        timeDisplay.classList.add('text-warning');
+                    }
+                }, 1000);
+            }
+            
+            // Extender sesión
+            function extendSession() {
+                // Hacer una petición AJAX a la ruta keepalive para renovar la sesión
+                fetch('<?= base_url('dashboard/keepalive') ?>', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Reiniciar el timer
+                        sessionStartTime = Date.now();
+                        warningShown = false;
+                        
+                        // Cerrar modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('sessionExpirationModal'));
+                        modal.hide();
+                        
+                        // Limpiar countdown
+                        if (countdownInterval) {
+                            clearInterval(countdownInterval);
+                            countdownInterval = null;
+                        }
+                        
+                        // Mostrar notificación de éxito
+                        showSuccessNotification();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al extender la sesión:', error);
+                });
+            }
+            
+            // Sesión expirada
+            function sessionExpired() {
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+                
+                // Mostrar mensaje y redirigir
+                alert('Tu sesión ha expirado. Serás redirigido al inicio de sesión.');
+                window.location.href = '<?= base_url('login') ?>';
+            }
+            
+            // Notificación de éxito
+            function showSuccessNotification() {
+                // Crear un toast o alerta temporal
+                const toast = document.createElement('div');
+                toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+                toast.style.zIndex = '9999';
+                toast.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>¡Sesión extendida!</strong> Tu sesión ha sido renovada por 2 horas más.
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+            
+            // Event listener para el botón de extender sesión
+            document.getElementById('extendSessionBtn').addEventListener('click', extendSession);
+            
+            // Verificar cada 30 segundos
+            setInterval(checkSessionExpiration, 30000);
+            
+            // También extender sesión automáticamente en cualquier actividad del usuario
+            let activityTimeout = null;
+            function resetActivityTimer() {
+                clearTimeout(activityTimeout);
+                activityTimeout = setTimeout(() => {
+                    // Si el usuario ha estado activo, extender silenciosamente la sesión
+                    if (!warningShown) {
+                        sessionStartTime = Date.now();
+                    }
+                }, 60000); // Después de 1 minuto de actividad
+            }
+            
+            // Detectar actividad del usuario
+            ['mousedown', 'keypress', 'scroll', 'touchstart'].forEach(event => {
+                document.addEventListener(event, resetActivityTimer, true);
+            });
+        })();
+        </script>
+        
+        <style>
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+        .blink {
+            animation: blink 1s infinite;
+        }
+        </style>
+        
         <?= view('template/footer') ?>
