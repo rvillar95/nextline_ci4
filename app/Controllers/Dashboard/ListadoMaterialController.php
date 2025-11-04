@@ -160,6 +160,16 @@ class ListadoMaterialController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        // Validar que haya al menos un material
+        $materiales = $this->request->getPost('materiales') ?? [];
+        $materialesValidos = array_filter($materiales, function($material) {
+            return !empty($material['nombre_material']);
+        });
+
+        if (empty($materialesValidos)) {
+            return redirect()->back()->withInput()->with('error', 'Debe agregar al menos un material al listado');
+        }
+
         $dataListado = [
             'titulo' => $this->request->getPost('titulo'),
             'cliente_id' => $this->request->getPost('cliente_id') ?: null,
@@ -176,7 +186,6 @@ class ListadoMaterialController extends BaseController
         }
 
         // Guardar items
-        $materiales = $this->request->getPost('materiales') ?? [];
         $this->guardarItems($listadoId, $materiales);
 
         return redirect()->to(base_url('dashboard/listado-material/detalle/' . $listadoId))
@@ -236,6 +245,16 @@ class ListadoMaterialController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        // Validar que haya al menos un material
+        $materiales = $this->request->getPost('materiales') ?? [];
+        $materialesValidos = array_filter($materiales, function($material) {
+            return !empty($material['nombre_material']);
+        });
+
+        if (empty($materialesValidos)) {
+            return redirect()->back()->withInput()->with('error', 'Debe agregar al menos un material al listado');
+        }
+
         $dataListado = [
             'titulo' => $this->request->getPost('titulo'),
             'cliente_id' => $this->request->getPost('cliente_id') ?: null,
@@ -251,7 +270,6 @@ class ListadoMaterialController extends BaseController
 
         // Eliminar items antiguos y guardar nuevos
         $this->listadoMaterialItemModel->deleteByListado($id);
-        $materiales = $this->request->getPost('materiales') ?? [];
         $this->guardarItems($id, $materiales);
 
         return redirect()->to(base_url('dashboard/listado-material/detalle/' . $id))
@@ -473,8 +491,7 @@ class ListadoMaterialController extends BaseController
                 .items-table .number { text-align: center; width: 50px; }
                 .items-table .quantity { text-align: center; width: 100px; }
                 .items-table .unit { text-align: center; width: 100px; }
-                .material-nombre { font-weight: bold; color: #333; }
-                .material-descripcion { font-size: 10px; color: #666; font-style: italic; margin-top: 3px; }
+                .material-nombre { color: #333; line-height: 1.5; }
                 .footer { margin-top: 40px; font-size: 10px; color: #666; }
                 .observaciones { margin-top: 20px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; }
                 .observaciones h3 { color: #856404; margin-bottom: 10px; font-size: 14px; }
@@ -543,13 +560,7 @@ class ListadoMaterialController extends BaseController
                     <tr>
                         <td class="number">' . $contador . '</td>
                         <td>
-                            <div class="material-nombre">' . esc($item->nombre_material) . '</div>';
-                
-                if (!empty($item->descripcion)) {
-                    $html .= '<div class="material-descripcion">' . esc($item->descripcion) . '</div>';
-                }
-                
-                $html .= '
+                            <div class="material-nombre">' . nl2br(esc($item->nombre_material)) . '</div>
                         </td>
                         <td class="unit">' . esc($item->unidad_medida ?? '-') . '</td>
                         <td class="quantity">' . ($item->cantidad !== null ? number_format($item->cantidad, 2, ',', '.') : '-') . '</td>

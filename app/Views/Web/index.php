@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Justica - Lawyer and Attorney Website Template</title>
-    <link rel="icon" href="lib/images/icon.png" type="image/gif" sizes="16x16" />
+    <link rel="icon" href="lib/images/logo_transparente_grande.ico" type="image/x-icon" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta
       content="Justica - Lawyer and Attorney Website Template"

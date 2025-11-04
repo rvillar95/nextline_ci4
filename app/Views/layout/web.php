@@ -14,7 +14,7 @@ $empresaContacto = [
 <head>
     <meta charset="utf-8" />
     <title><?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?></title>
-    <link rel="icon" href="<?= base_url('lib/images/icon.png') ?>" type="image/gif" sizes="16x16" />
+    <link rel="icon" href="<?= base_url('lib/images/logo_transparente_grande.ico') ?>" type="image/x-icon" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta content="<?= $description ?? 'MANSANCHEZ - Constructor profesional con años de experiencia en construcción residencial y comercial' ?>" name="description" />
     <meta content="<?= $keywords ?? 'mansanchez, constructor, construcción, obras, proyectos, remodelación, chile' ?>" name="keywords" />
