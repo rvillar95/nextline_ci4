@@ -28,22 +28,41 @@ class Email extends BaseConfig
     /**
      * SMTP Server Hostname
      */
-    public string $SMTPHost = 'mail.nextline.cl';
+    public string $SMTPHost = '';
 
     /**
      * SMTP Username
      */
-    public string $SMTPUser = 'contacto@nextline.cl';
+    public string $SMTPUser = '';
 
     /**
      * SMTP Password
      */
-    public string $SMTPPass = '84358544Rafa';
+    public string $SMTPPass = '';
 
     /**
      * SMTP Port
      */
     public int $SMTPPort = 465;
+
+    /**
+     * SMTP Crypto (ssl, tls)
+     */
+    public string $SMTPCrypto = 'ssl';
+    
+    public function __construct()
+    {
+        parent::__construct();
+        
+        // Cargar configuración desde .env
+        $this->fromEmail = env('email.fromEmail', '');
+        $this->fromName = env('email.fromName', '');
+        $this->SMTPHost = env('email.SMTPHost', '');
+        $this->SMTPUser = env('email.SMTPUser', '');
+        $this->SMTPPass = env('email.SMTPPass', '');
+        $this->SMTPPort = (int) env('email.SMTPPort', 465);
+        $this->SMTPCrypto = env('email.SMTPCrypto', 'ssl');
+    }
 
     /**
      * SMTP Timeout (in seconds)
@@ -54,15 +73,6 @@ class Email extends BaseConfig
      * Enable persistent SMTP connections
      */
     public bool $SMTPKeepAlive = false;
-
-    /**
-     * SMTP Encryption.
-     *
-     * @var string '', 'tls' or 'ssl'. 'tls' will issue a STARTTLS command
-     *             to the server. 'ssl' means implicit SSL. Connection on port
-     *             465 should set this to ''.
-     */
-    public string $SMTPCrypto = 'ssl';
 
     /**
      * Enable word-wrap

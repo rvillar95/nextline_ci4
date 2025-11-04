@@ -280,8 +280,8 @@ HTML;
      */
     private function validarRecaptcha(): bool
     {
-        // Verificar si reCAPTCHA está habilitado
-        if (!env('recaptcha.enabled', true)) {
+        // Verificar si reCAPTCHA está habilitado desde .env
+        if (!filter_var(env('recaptcha.enabled', 'true'), FILTER_VALIDATE_BOOLEAN)) {
             return true; // Si está deshabilitado, permitir el envío
         }
 
@@ -295,7 +295,7 @@ HTML;
         $secretKey = env('recaptcha.secretKey');
         
         if (empty($secretKey)) {
-            log_message('error', 'reCAPTCHA: Secret key no configurada');
+            log_message('error', 'reCAPTCHA: Secret key no configurada en .env');
             return true; // Permitir si no está configurado (para desarrollo)
         }
 

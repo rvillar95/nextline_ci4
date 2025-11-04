@@ -236,4 +236,8 @@ $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
 
+// Políticas
+$routes->get('politica-privacidad', 'Web\PoliticasController::privacidad');
+$routes->get('terminos-condiciones', 'Web\PoliticasController::terminos');
+
 //$routes->get('/getPerfil', 'PerfilController::getPerfil');

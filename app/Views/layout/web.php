@@ -1301,6 +1301,8 @@ $empresaContacto = [
                                 <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-cogs"></i> Servicios</a></li>
                                 <li><a href="<?= base_url('proyectos') ?>"><i class="fas fa-building"></i> Proyectos</a></li>
                                 <li><a href="<?= base_url('contacto') ?>"><i class="fas fa-envelope"></i> Contacto</a></li>
+                                <li><a href="<?= base_url('politica-privacidad') ?>"><i class="fas fa-shield-alt"></i> Privacidad</a></li>
+                                <li><a href="<?= base_url('terminos-condiciones') ?>"><i class="fas fa-file-contract"></i> Términos</a></li>
                             </ul>
                         </div>
                     </div>
@@ -1365,7 +1367,9 @@ $empresaContacto = [
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-md-6">
                             <p class="copyright-modern">
-                                &copy; Copyright <?= date('Y') ?> - MANSANCHEZ Constructor. Todos los derechos reservados.
+                                &copy; <?= date('Y') ?> <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.9); text-decoration: none;"><span style="color: #6aff99;">N</span>ext<span style="color: #6aff99;">L</span>ine</a> - <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.7); text-decoration: none;">Nextline.cl</a> | 
+                                <a href="<?= base_url('politica-privacidad') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacidad</a> | 
+                                <a href="<?= base_url('terminos-condiciones') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Términos</a>
                             </p>
                         </div>
                         <div class="col-lg-6 col-md-6 text-md-end">

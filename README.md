@@ -1,68 +1,345 @@
-# CodeIgniter 4 Application Starter
+# MANSANCHEZ - Sistema de Gestión para Constructora
 
-## What is CodeIgniter?
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![PHP](https://img.shields.io/badge/PHP-8.1%2B-777BB4.svg)
+![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.x-EF4223.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Sistema web completo para la gestión de construcción, proyectos, servicios y contactos de MANSANCHEZ Constructor.
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## 🏗️ Características Principales
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+### Sitio Web Público
+- **Home moderno y responsivo** con diseño profesional
+- **Catálogo de Servicios** con categorías y detalles
+- **Galería de Proyectos** con imágenes y especificaciones
+- **Formulario de Contacto** con reCAPTCHA v3 y validación
+- **Páginas legales** (Política de Privacidad, Términos y Condiciones)
+- **SEO optimizado** con robots.txt y sitemap.xml
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+### Panel de Administración (Dashboard)
+- Sistema de **autenticación** con sesiones seguras
+- Gestión de **Usuarios y Perfiles**
+- Gestión de **Proyectos** con imágenes y detalles
+- Gestión de **Servicios** y categorías
+- **Galería** con categorización de imágenes
+- **Listado de Materiales** con generación de PDF
+- Gestión de **Clientes** y contactos
+- Sistema de **Testimonios** con calificaciones
+- **Cotizaciones** con archivos adjuntos
 
-## Installation & updates
+## 🚀 Tecnologías Utilizadas
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+- **Backend**: PHP 8.1+ con CodeIgniter 4.x
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **UI Framework**: Bootstrap 5
+- **Base de Datos**: MySQL/MariaDB
+- **PDF Generation**: DomPDF
+- **Email**: PHPMailer con SMTP
+- **Security**: reCAPTCHA v3, CSRF Protection, XSS Filtering
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## 📋 Requisitos del Sistema
 
-## Setup
+### Servidor
+- PHP 8.1 o superior
+- MySQL 5.7+ o MariaDB 10.3+
+- Apache 2.4+ o Nginx
+- Composer 2.x
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+### Extensiones PHP Requeridas
+- `intl`
+- `mbstring`
+- `json`
+- `mysqlnd`
+- `curl`
+- `xml`
+- `gd` (para procesamiento de imágenes)
 
-## Important Change with index.php
+### Módulos Apache Recomendados
+- `mod_rewrite` (requerido)
+- `mod_headers` (para seguridad)
+- `mod_expires` (para caché)
+- `mod_deflate` (para compresión)
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## 🔧 Instalación
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+### 1. Clonar el Repositorio
 
-**Please** read the user guide for a better explanation of how CI4 works!
+```bash
+git clone https://github.com/tu-usuario/mansanchez.git
+cd mansanchez
+```
 
-## Repository Management
+### 2. Instalar Dependencias
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+```bash
+composer install
+```
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+### 3. Configurar Variables de Entorno
 
-## Server Requirements
+Crear archivo `.env` basado en el archivo de configuración (ver `CONFIGURACION_ENV.md`):
 
-PHP version 8.1 or higher is required, with the following extensions installed:
+```bash
+# Copiar y editar con tus credenciales
+nano .env
+```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+**Configuraciones esenciales:**
+```env
+CI_ENVIRONMENT = production
+app.baseURL = 'https://mansanchez.cl/'
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
+database.default.hostname = localhost
+database.default.database = tu_base_datos
+database.default.username = tu_usuario
+database.default.password = tu_password
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+email.SMTPHost = mail.mansanchez.cl
+email.SMTPUser = contacto@mansanchez.cl
+email.SMTPPass = tu_password_email
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+recaptcha.siteKey = tu_site_key
+recaptcha.secretKey = tu_secret_key
+```
+
+### 4. Importar Base de Datos
+
+```bash
+mysql -u usuario -p nombre_bd < nextline_constructor.sql
+mysql -u usuario -p nombre_bd < database_listado_material.sql
+mysql -u usuario -p nombre_bd < permisos_listado_material.sql
+```
+
+### 5. Configurar Permisos
+
+```bash
+chmod -R 777 writable/
+chmod -R 755 uploads/
+chmod -R 755 public/uploads/
+```
+
+### 6. Configurar Servidor Web
+
+#### Apache (ejemplo de Virtual Host)
+
+```apache
+<VirtualHost *:80>
+    ServerName mansanchez.cl
+    ServerAlias www.mansanchez.cl
+    DocumentRoot /var/www/mansanchez/public
+    
+    <Directory /var/www/mansanchez/public>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/mansanchez_error.log
+    CustomLog ${APACHE_LOG_DIR}/mansanchez_access.log combined
+</VirtualHost>
+```
+
+#### Nginx (ejemplo)
+
+```nginx
+server {
+    listen 80;
+    server_name mansanchez.cl www.mansanchez.cl;
+    root /var/www/mansanchez/public;
+    index index.php;
+    
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+```
+
+## 🔐 Seguridad
+
+El sistema incluye múltiples capas de seguridad:
+
+- ✅ **CSRF Protection** activado globalmente
+- ✅ **XSS Filtering** en todas las entradas
+- ✅ **SQL Injection** prevención con Query Builder
+- ✅ **Password Hashing** con bcrypt
+- ✅ **reCAPTCHA v3** en formularios públicos
+- ✅ **Security Headers** configurados en `.htaccess`
+- ✅ **Session Management** con regeneración automática
+- ✅ **File Upload** validación estricta
+- ✅ **Rate Limiting** en formularios de contacto
+
+## 📁 Estructura del Proyecto
+
+```
+mansanchez/
+├── app/
+│   ├── Config/          # Configuraciones
+│   ├── Controllers/     # Controladores
+│   │   ├── Dashboard/   # Panel de administración
+│   │   └── Web/         # Sitio público
+│   ├── Models/          # Modelos de datos
+│   ├── Views/           # Vistas
+│   │   ├── Web/         # Vistas públicas
+│   │   ├── Modulos/     # Vistas del dashboard
+│   │   └── layout/      # Layouts
+│   ├── Libraries/       # Librerías personalizadas
+│   ├── Validation/      # Reglas de validación
+│   └── Filters/         # Filtros (autenticación, etc.)
+├── public/              # Punto de entrada web
+│   ├── uploads/         # Archivos subidos
+│   └── index.php        # Front controller
+├── writable/            # Archivos temporales y logs
+├── lib/                 # Assets frontend (CSS, JS, imágenes)
+├── uploads/             # Uploads de proyectos
+├── .htaccess            # Configuración Apache
+├── robots.txt           # SEO - Directivas para bots
+├── sitemap.xml          # SEO - Mapa del sitio
+└── README.md            # Este archivo
+```
+
+## 🎨 Módulos Principales
+
+### Módulo de Proyectos
+- Galería con imágenes portada
+- Especificaciones técnicas (área, ubicación, etc.)
+- Estado del proyecto (planificación, construcción, finalizado)
+- Filtros y categorización
+
+### Módulo de Listado de Materiales
+- Creación y edición de listados
+- Asignación a clientes y proyectos
+- **Vista móvil optimizada** para adultos
+- Generación automática de PDF
+- Envío por email
+
+### Módulo de Cotizaciones
+- Sistema completo de cotizaciones
+- Adjuntar archivos PDF
+- Estados de cotización
+- Historial de versiones
+
+### Módulo de Testimonios
+- Sistema de calificaciones (1-5 estrellas)
+- Aprobación y moderación
+- Mostrar en home destacados
+
+## 📊 Base de Datos
+
+Tablas principales:
+- `usuario` - Usuarios del sistema
+- `perfil` - Perfiles y roles
+- `proyecto` - Proyectos de construcción
+- `servicio` - Servicios ofrecidos
+- `cliente` - Base de datos de clientes
+- `listado_material` - Listados de materiales
+- `cotizacion` - Cotizaciones generadas
+- `testimonio` - Testimonios de clientes
+- `galeria` - Imágenes organizadas
+- `lead` - Contactos desde formulario web
+
+## 🌐 SEO y Performance
+
+- **robots.txt** configurado para bots
+- **sitemap.xml** con todas las páginas
+- **Open Graph** meta tags (pendiente implementar)
+- **Compresión GZIP** activada
+- **Browser Caching** configurado
+- **Lazy loading** de imágenes
+- **Minificación** de assets (pendiente)
+
+## 📱 Responsive Design
+
+- Diseño **mobile-first**
+- Breakpoints optimizados
+- Formularios **adaptados para adultos** (textos grandes, botones amplios)
+- Testing en dispositivos reales
+
+## 🔄 Deployment a Producción
+
+### Checklist Pre-Deployment
+
+- [ ] Configurar archivo `.env` de producción
+- [ ] Cambiar `CI_ENVIRONMENT` a `production`
+- [ ] Actualizar `app.baseURL` a dominio real
+- [ ] Configurar credenciales de base de datos
+- [ ] Configurar credenciales de email
+- [ ] Generar claves reCAPTCHA de producción
+- [ ] Importar base de datos
+- [ ] Configurar permisos de archivos
+- [ ] Configurar SSL/HTTPS
+- [ ] Descomentar HSTS en `.htaccess`
+- [ ] Configurar backup automático
+- [ ] Verificar logs (`writable/logs/`)
+
+### Comandos Útiles
+
+```bash
+# Limpiar caché
+php spark cache:clear
+
+# Ver rutas
+php spark routes
+
+# Ejecutar migraciones
+php spark migrate
+
+# Ver versión
+php spark --version
+```
+
+## 📝 Documentación Adicional
+
+- [CONFIGURACION_ENV.md](CONFIGURACION_ENV.md) - Guía de variables de entorno
+- [INSTRUCCIONES_LISTADO_MATERIAL.md](INSTRUCCIONES_LISTADO_MATERIAL.md) - Módulo de materiales
+
+## 👥 Credenciales por Defecto
+
+**⚠️ CAMBIAR INMEDIATAMENTE EN PRODUCCIÓN**
+
+Panel de administración:
+- URL: `https://mansanchez.cl/login`
+- Usuario: (verificar en base de datos)
+- Contraseña: (verificar en base de datos)
+
+## 🐛 Troubleshooting
+
+### Error 500 - Internal Server Error
+- Verificar permisos de `writable/`
+- Revisar logs en `writable/logs/`
+- Verificar configuración de `.env`
+
+### Email no se envía
+- Verificar credenciales SMTP en `.env`
+- Revisar logs de email
+- Verificar puerto y encriptación
+
+### reCAPTCHA falla
+- Verificar claves en `.env`
+- Verificar dominio en Google reCAPTCHA
+- Revisar consola del navegador
+
+## 📞 Soporte
+
+Para soporte técnico o consultas:
+- Email: info@mansanchez.cl
+- Sitio Web: https://mansanchez.cl
+
+## 📄 Licencia
+
+Este proyecto es propiedad de MANSANCHEZ Constructor. Todos los derechos reservados.
+
+## 🙏 Créditos
+
+Desarrollado con ❤️ usando CodeIgniter 4
+
+---
+
+**MANSANCHEZ Constructor** - Construyendo tus sueños desde 2008

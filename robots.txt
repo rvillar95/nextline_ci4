@@ -1,0 +1,42 @@
+# robots.txt para MANSANCHEZ Constructor
+# https://mansanchez.cl
+
+User-agent: *
+Allow: /
+
+# Bloquear acceso a directorios del sistema
+Disallow: /writable/
+Disallow: /vendor/
+Disallow: /app/
+Disallow: /system/
+Disallow: /tests/
+Disallow: /dashboard/
+Disallow: /login
+
+# Permitir acceso a recursos públicos
+Allow: /lib/
+Allow: /uploads/
+
+# Sitemap
+Sitemap: https://mansanchez.cl/sitemap.xml
+
+# Rastreadores específicos
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Bloquear bots maliciosos comunes
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+

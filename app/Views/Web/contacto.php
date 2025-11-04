@@ -435,7 +435,7 @@
 </style>
 
 <!-- Google reCAPTCHA v3 -->
-<script src="https://www.google.com/recaptcha/api.js?render=6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=<?= env('recaptcha.siteKey', '') ?>"></script>
 <script>
     // Configurar reCAPTCHA v3
     grecaptcha.ready(function() {
@@ -451,8 +451,8 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
             
-            // Obtener token de reCAPTCHA
-            grecaptcha.execute('6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_', {action: 'submit'})
+            // Obtener token de reCAPTCHA usando la clave desde .env
+            grecaptcha.execute('<?= env('recaptcha.siteKey', '') ?>', {action: 'submit'})
                 .then(function(token) {
                     // Insertar token en el campo oculto
                     document.getElementById('g-recaptcha-response').value = token;
