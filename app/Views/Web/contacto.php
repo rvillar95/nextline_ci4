@@ -431,11 +431,21 @@
         padding: 15px 30px;
         font-size: 1rem;
     }
+
 }
 </style>
 
 <!-- Google reCAPTCHA v3 -->
 <script src="https://www.google.com/recaptcha/api.js?render=<?= env('recaptcha.siteKey', '') ?>"></script>
+<script>
+    // Aplicar z-index al badge de reCAPTCHA después de 2 segundos
+    setTimeout(function() {
+        const badge = document.querySelector('.grecaptcha-badge');
+        if (badge) {
+            badge.style.zIndex = '9999';
+        }
+    }, 2000);
+</script>
 <script>
     // Configurar reCAPTCHA v3
     grecaptcha.ready(function() {
