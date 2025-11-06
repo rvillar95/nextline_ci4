@@ -1330,39 +1330,9 @@ function mostrarEstrellas($calificacion) {
 
 /* ===== ESTILOS MODERNOS PARA NAVEGACIÓN DEL CARRUSEL DE TESTIMONIOS ===== */
 
-/* Flechas de navegación */
+/* Flechas de navegación - Ocultas */
 #testimonial-carousel-modern .owl-nav {
-    margin-top: 50px;
-    text-align: center;
-}
-
-#testimonial-carousel-modern .owl-nav button {
-    width: 60px;
-    height: 60px;
-    background: white !important;
-    color: #1d2844 !important;
-    border-radius: 50% !important;
-    font-size: 24px !important;
-    margin: 0 10px !important;
-    transition: all 0.3s ease !important;
-    border: 3px solid white !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
-    position: relative;
-    overflow: hidden;
-}
-
-#testimonial-carousel-modern .owl-nav button:hover {
-    background: #1d2844 !important;
-    color: white !important;
-    transform: translateY(-5px) scale(1.1);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3) !important;
-    border-color: #1d2844 !important;
-}
-
-#testimonial-carousel-modern .owl-nav button span {
-    line-height: 60px;
-    display: block;
-    font-weight: bold;
+    display: none !important;
 }
 
 /* Puntos indicadores */
@@ -1528,22 +1498,7 @@ function mostrarEstrellas($calificacion) {
         font-size: 1.1rem;
     }
     
-    /* Flechas y puntos del carrusel en tablets */
-    #testimonial-carousel-modern .owl-nav button {
-        width: 55px;
-        height: 55px;
-        font-size: 22px !important;
-        border-width: 3px !important;
-    }
-    
-    #testimonial-carousel-modern .owl-nav button span {
-        line-height: 55px;
-    }
-    
-    #testimonial-carousel-modern .owl-nav {
-        margin-top: 35px;
-    }
-    
+    /* Puntos del carrusel en tablets */
     #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
         width: 13px !important;
         height: 13px !important;
@@ -1626,23 +1581,7 @@ function mostrarEstrellas($calificacion) {
         font-size: 1rem;
     }
     
-    /* Flechas y puntos del carrusel en móviles pequeños */
-    #testimonial-carousel-modern .owl-nav button {
-        width: 48px;
-        height: 48px;
-        font-size: 18px !important;
-        margin: 0 4px !important;
-        border-width: 2.5px !important;
-    }
-    
-    #testimonial-carousel-modern .owl-nav button span {
-        line-height: 48px;
-    }
-    
-    #testimonial-carousel-modern .owl-nav {
-        margin-top: 25px;
-    }
-    
+    /* Puntos del carrusel en móviles pequeños */
     #testimonial-carousel-modern.owl-theme .owl-dots {
         margin-top: 15px !important;
     }
