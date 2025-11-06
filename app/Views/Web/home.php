@@ -1365,10 +1365,9 @@ function mostrarEstrellas($calificacion) {
     font-weight: bold;
 }
 
-/* Puntos indicadores */
+/* Puntos indicadores - Ocultos */
 #testimonial-carousel-modern.owl-theme .owl-dots {
-    text-align: center;
-    margin-top: 30px;
+    display: none !important;
 }
 
 #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot {
