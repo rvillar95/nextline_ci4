@@ -1339,25 +1339,24 @@ function mostrarEstrellas($calificacion) {
 #testimonial-carousel-modern .owl-nav button {
     width: 60px;
     height: 60px;
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: white !important;
     color: #1d2844 !important;
     border-radius: 50% !important;
     font-size: 24px !important;
     margin: 0 10px !important;
     transition: all 0.3s ease !important;
-    border: 2px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-    backdrop-filter: blur(10px) !important;
+    border: 3px solid white !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
     position: relative;
     overflow: hidden;
 }
 
 #testimonial-carousel-modern .owl-nav button:hover {
-    background: #f0841a !important;
+    background: #1d2844 !important;
     color: white !important;
     transform: translateY(-5px) scale(1.1);
-    box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4) !important;
-    border-color: #f0841a !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3) !important;
+    border-color: #1d2844 !important;
 }
 
 #testimonial-carousel-modern .owl-nav button span {
@@ -1380,18 +1379,19 @@ function mostrarEstrellas($calificacion) {
 #testimonial-carousel-modern .owl-dots .owl-dot span {
     width: 14px;
     height: 14px;
-    background: rgba(255, 255, 255, 0.4) !important;
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 2px solid white;
     display: block;
     border-radius: 50%;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 #testimonial-carousel-modern .owl-dots .owl-dot:hover span {
-    background: rgba(255, 255, 255, 0.7) !important;
-    transform: scale(1.2);
-    border-color: rgba(255, 255, 255, 0.9);
+    background: white !important;
+    transform: scale(1.3);
+    border-color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
 }
 
 #testimonial-carousel-modern .owl-dots .owl-dot.active span {
@@ -1400,7 +1400,7 @@ function mostrarEstrellas($calificacion) {
     background: white !important;
     border-radius: 10px;
     border-color: white;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Responsive Design */
@@ -1532,6 +1532,7 @@ function mostrarEstrellas($calificacion) {
         width: 55px;
         height: 55px;
         font-size: 22px !important;
+        border-width: 3px !important;
     }
     
     #testimonial-carousel-modern .owl-nav button span {
@@ -1542,8 +1543,14 @@ function mostrarEstrellas($calificacion) {
         margin-top: 35px;
     }
     
+    #testimonial-carousel-modern .owl-dots .owl-dot span {
+        width: 13px;
+        height: 13px;
+    }
+    
     #testimonial-carousel-modern .owl-dots .owl-dot.active span {
         width: 35px;
+        height: 13px;
     }
 }
 
@@ -1624,6 +1631,7 @@ function mostrarEstrellas($calificacion) {
         height: 48px;
         font-size: 18px !important;
         margin: 0 4px !important;
+        border-width: 2.5px !important;
     }
     
     #testimonial-carousel-modern .owl-nav button span {
@@ -1639,17 +1647,17 @@ function mostrarEstrellas($calificacion) {
     }
     
     #testimonial-carousel-modern .owl-dots .owl-dot {
-        margin: 0 4px;
+        margin: 0 5px;
     }
     
     #testimonial-carousel-modern .owl-dots .owl-dot span {
-        width: 12px;
-        height: 12px;
+        width: 11px;
+        height: 11px;
     }
     
     #testimonial-carousel-modern .owl-dots .owl-dot.active span {
         width: 28px;
-        height: 12px;
+        height: 11px;
     }
 }
 .projects-grid {
