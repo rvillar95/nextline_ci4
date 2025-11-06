@@ -20,6 +20,24 @@ $empresaContacto = [
     <meta content="<?= $keywords ?? 'mansanchez, constructor, construcción, obras, proyectos, remodelación, chile' ?>" name="keywords" />
     <meta content="MANSANCHEZ" name="author" />
     
+        <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="<?= current_url() ?>" />
+    <meta property="og:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
+    <meta property="og:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial en Chile' ?>" />
+    <meta property="og:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="MANSANCHEZ Constructor" />
+    <meta property="og:locale" content="es_CL" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="<?= current_url() ?>" />
+    <meta name="twitter:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
+    <meta name="twitter:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial' ?>" />
+    <meta name="twitter:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    
     <!-- CSS Files -->
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" />

@@ -150,17 +150,17 @@
                             <div class="alert alert-info mt-3">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Nota:</strong> Los campos de Unidad y Cantidad son opcionales. Si no se completan, no se mostrarán en el PDF.
-                            </div>
+                </div>
 
-                            <!-- Botones -->
+                <!-- Botones -->
                             <div class="mt-4">
-                                <div class="d-flex justify-content-end gap-2">
+                    <div class="d-flex justify-content-end gap-2">
                                     <a href="<?= base_url('dashboard/listado-material/detalle/' . $listado->id) ?>" class="btn btn-light btn-accion-mobile">
-                                        <i class="fas fa-times me-2"></i>Cancelar
-                                    </a>
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
                                     <button type="submit" class="btn btn-warning btn-accion-mobile">
-                                        <i class="fas fa-save me-2"></i>Actualizar Listado
-                                    </button>
+                            <i class="fas fa-save me-2"></i>Actualizar Listado
+                        </button>
                                 </div>
                             </div>
                         </div>
@@ -317,7 +317,7 @@
         if (card) {
             card.remove();
         }
-        actualizarNumeracion();
+            actualizarNumeracion();
     }
 
     function actualizarNumeracion() {

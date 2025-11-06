@@ -83,7 +83,8 @@ final class ContactoController extends BaseController
         // Configurar email manualmente (sin initialize)
         $email = Services::email();
                         
-        $email->setFrom('no-reply@mansanchez.cl', 'Sistema MANSANCHEZ');
+        // Usar la configuración del .env
+        $email->setFrom(env('email.fromEmail', ''), env('email.fromName', ''));
         $email->setTo($empresa->email);
         $email->setSubject('🔔 Nueva Consulta desde el Sitio Web');
         
