@@ -174,7 +174,7 @@ function mostrarEstrellas($calificacion) {
                     <div class="col-lg-4 col-md-6 service-item-modern">
                         <div class="service-card-modern">
                             <div class="service-image-modern">
-                                <img src="<?= base_url($servicio->foto) ?>" alt="<?= esc($servicio->nombre) ?>" class="img-fluid">
+                                <img src="<?= base_url($servicio->foto) ?>" alt="<?= esc($servicio->nombre) ?>" class="img-fluid" loading="lazy">
                                 <div class="service-overlay-modern">
                                     <div class="service-icon-modern">
                                         <i class="fas fa-cog"></i>
@@ -203,7 +203,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Residencial" class="img-fluid">
+                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Residencial" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-home"></i>
@@ -229,7 +229,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Comercial" class="img-fluid">
+                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Comercial" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-building"></i>
@@ -255,7 +255,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/services/remodelation.jpg') ?>" alt="Remodelaciones" class="img-fluid">
+                            <img src="<?= base_url('lib/images/services/remodelation.jpg') ?>" alt="Remodelaciones" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-tools"></i>
@@ -409,9 +409,9 @@ function mostrarEstrellas($calificacion) {
                             <div class="project-card">
                                 <div class="project-image">
                                     <?php if (!empty($proyecto->imagen_portada)): ?>
-                                        <img src="<?= base_url($proyecto->imagen_portada->ruta) ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" />
+                                        <img src="<?= base_url($proyecto->imagen_portada->ruta) ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
                                     <?php else: ?>
-                                        <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" />
+                                        <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
                                     <?php endif; ?>
                                     <div class="project-overlay">
                                         <div class="project-badge">

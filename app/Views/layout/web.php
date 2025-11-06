@@ -38,28 +38,41 @@ $empresaContacto = [
     <meta name="twitter:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial' ?>" />
     <meta name="twitter:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
     
-    <!-- CSS Files -->
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    
+    <!-- CSS Files - Critical CSS first -->
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.carousel.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.theme.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.transitions.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/magnific-popup.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/jquery.countdown.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/style.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Font Awesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" />
-    <!-- Icofont Icons -->
-    <link href="<?= base_url('lib/css/icofont.min.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- color scheme -->
-    <link href="<?= base_url('lib/css/colors/scheme-01.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/coloring.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Colores corporativos MANSANCHEZ -->
+    <link href="<?= base_url('lib/css/navigation.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/mansanchez-colors.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- RS5.0 Stylesheet -->
-    <link rel="stylesheet" href="<?= base_url('lib/css/settings.css') ?>" type="text/css" />
-    <link rel="stylesheet" href="<?= base_url('lib/css/layers.css') ?>" type="text/css" />
-    <link rel="stylesheet" href="<?= base_url('lib/css/navigation.css') ?>" type="text/css" />
+    
+    <!-- Non-critical CSS - Deferred loading -->
+    <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.carousel.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.theme.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.transitions.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/magnific-popup.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/jquery.countdown.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- Font Awesome Icons - Deferred -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" /></noscript>
+    
+    <!-- Icofont Icons - Deferred -->
+    <link href="<?= base_url('lib/css/icofont.min.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- Color schemes - Deferred -->
+    <link href="<?= base_url('lib/css/colors/scheme-01.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/coloring.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- RS5.0 Stylesheet - Deferred -->
+    <link rel="stylesheet" href="<?= base_url('lib/css/settings.css') ?>" type="text/css" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="<?= base_url('lib/css/layers.css') ?>" type="text/css" media="print" onload="this.media='all'" />
     
     <!-- Custom CSS for page spacing and navbar -->
     <style>
@@ -1198,7 +1211,7 @@ $empresaContacto = [
                     <!-- Logo -->
                     <div class="logo-modern">
                         <a href="<?= base_url() ?>" class="logo-link-modern">
-                            <img src="<?= base_url('lib/images/logo-min.jpg') ?>" alt="MANSANCHEZ Constructor" class="logo-img-modern">
+                            <img src="<?= base_url('lib/images/logo-min.jpg') ?>" alt="MANSANCHEZ Constructor" class="logo-img-modern" width="150" height="60" loading="eager">
                         </a>
                     </div>
                     
@@ -1266,9 +1279,11 @@ $empresaContacto = [
         </header>
 
         <!-- Content -->
-        <div class="no-bottom no-top" id="content">
-            <?= $this->renderSection('content') ?>
-        </div>
+        <main role="main" aria-label="Contenido principal">
+            <div class="no-bottom no-top" id="content">
+                <?= $this->renderSection('content') ?>
+            </div>
+        </main>
 
         <!-- Footer Moderno -->
         <footer class="footer-modern">
@@ -1280,7 +1295,7 @@ $empresaContacto = [
                         <div class="footer-widget-modern">
                             <div class="footer-logo-modern">
                                 <a href="<?= base_url() ?>">
-                                    <img alt="MANSANCHEZ Constructor" src="<?= base_url('lib/images/logo-min.jpg') ?>" />
+                                    <img alt="MANSANCHEZ Constructor" src="<?= base_url('lib/images/logo-min.jpg') ?>" width="120" height="48" loading="lazy" />
                                 </a>
                                 <h3 class="company-name-modern">MANSANCHEZ</h3>
                             </div>
