@@ -1328,6 +1328,81 @@ function mostrarEstrellas($calificacion) {
     width: 100%;
 }
 
+/* ===== ESTILOS MODERNOS PARA NAVEGACIÓN DEL CARRUSEL DE TESTIMONIOS ===== */
+
+/* Flechas de navegación */
+#testimonial-carousel-modern .owl-nav {
+    margin-top: 50px;
+    text-align: center;
+}
+
+#testimonial-carousel-modern .owl-nav button {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #1d2844 !important;
+    border-radius: 50% !important;
+    font-size: 24px !important;
+    margin: 0 10px !important;
+    transition: all 0.3s ease !important;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+#testimonial-carousel-modern .owl-nav button:hover {
+    background: #f0841a !important;
+    color: white !important;
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4) !important;
+    border-color: #f0841a !important;
+}
+
+#testimonial-carousel-modern .owl-nav button span {
+    line-height: 60px;
+    display: block;
+    font-weight: bold;
+}
+
+/* Puntos indicadores */
+#testimonial-carousel-modern .owl-dots {
+    text-align: center;
+    margin-top: 30px;
+}
+
+#testimonial-carousel-modern .owl-dots .owl-dot {
+    display: inline-block;
+    margin: 0 8px;
+}
+
+#testimonial-carousel-modern .owl-dots .owl-dot span {
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    display: block;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#testimonial-carousel-modern .owl-dots .owl-dot:hover span {
+    background: rgba(255, 255, 255, 0.7) !important;
+    transform: scale(1.2);
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+#testimonial-carousel-modern .owl-dots .owl-dot.active span {
+    width: 40px;
+    height: 14px;
+    background: white !important;
+    border-radius: 10px;
+    border-color: white;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.5);
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .hero-title-modern {
@@ -1451,6 +1526,25 @@ function mostrarEstrellas($calificacion) {
     .testimonial-text-modern {
         font-size: 1.1rem;
     }
+    
+    /* Flechas y puntos del carrusel en tablets */
+    #testimonial-carousel-modern .owl-nav button {
+        width: 55px;
+        height: 55px;
+        font-size: 22px !important;
+    }
+    
+    #testimonial-carousel-modern .owl-nav button span {
+        line-height: 55px;
+    }
+    
+    #testimonial-carousel-modern .owl-nav {
+        margin-top: 35px;
+    }
+    
+    #testimonial-carousel-modern .owl-dots .owl-dot.active span {
+        width: 35px;
+    }
 }
 
 @media (max-width: 576px) {
@@ -1522,6 +1616,40 @@ function mostrarEstrellas($calificacion) {
     
     .testimonial-text-modern {
         font-size: 1rem;
+    }
+    
+    /* Flechas y puntos del carrusel en móviles pequeños */
+    #testimonial-carousel-modern .owl-nav button {
+        width: 48px;
+        height: 48px;
+        font-size: 18px !important;
+        margin: 0 4px !important;
+    }
+    
+    #testimonial-carousel-modern .owl-nav button span {
+        line-height: 48px;
+    }
+    
+    #testimonial-carousel-modern .owl-nav {
+        margin-top: 25px;
+    }
+    
+    #testimonial-carousel-modern .owl-dots {
+        margin-top: 15px;
+    }
+    
+    #testimonial-carousel-modern .owl-dots .owl-dot {
+        margin: 0 4px;
+    }
+    
+    #testimonial-carousel-modern .owl-dots .owl-dot span {
+        width: 12px;
+        height: 12px;
+    }
+    
+    #testimonial-carousel-modern .owl-dots .owl-dot.active span {
+        width: 28px;
+        height: 12px;
     }
 }
 .projects-grid {
