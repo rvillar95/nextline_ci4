@@ -39,33 +39,83 @@ class CotizacionController extends BaseController
         $cotizacion = new Cotizacion();
         $draw = intval($this->request->getGet("draw"));
         
-        // Obtener filtros
+        // Obtener parámetros de DataTables
+        $start = intval($this->request->getGet("start"));
+        $length = intval($this->request->getGet("length"));
+        $searchValue = $this->request->getGet("search[value]");
+        
+        // Obtener ordenamiento
+        $orderColumn = intval($this->request->getGet("order[0][column]"));
+        $orderDir = $this->request->getGet("order[0][dir]") ?? 'desc';
+        
+        // Mapeo de columnas para ordenamiento
+        $columns = [
+            0 => 'cotizaciones.numero_cotizacion',
+            1 => 'cotizaciones.proyecto_nombre',
+            2 => 'c.nombre_razon_social',
+            3 => 'cotizaciones.estado',
+            4 => 'cotizaciones.prioridad',
+            5 => 'cotizaciones.total_general',
+            6 => 'cotizaciones.fecha_cotizacion'
+        ];
+        
+        $orderBy = $columns[$orderColumn] ?? 'cotizaciones.fecha_cotizacion';
+        
+        // Obtener filtros personalizados
         $estado = $this->request->getGet('estado');
         $cliente_id = $this->request->getGet('cliente_id');
         $busqueda = $this->request->getGet('busqueda');
         
-        // Construir consulta con JOIN
-        $query = $cotizacion->select('cotizaciones.*, c.nombre_razon_social as cliente_nombre, c.tipo_cliente')
-                          ->join('clientes c', 'c.id = cotizaciones.cliente_id', 'left');
+        // Construir consulta base con JOIN
+        $builder = $cotizacion->db->table('cotizaciones')
+                                  ->select('cotizaciones.*, c.nombre_razon_social as cliente_nombre, c.tipo_cliente')
+                                  ->join('clientes c', 'c.id = cotizaciones.cliente_id', 'left');
         
+        // Aplicar filtros personalizados
         if (!empty($estado)) {
-            $query->where('cotizaciones.estado', $estado);
+            $builder->where('cotizaciones.estado', $estado);
         }
         
         if (!empty($cliente_id)) {
-            $query->where('cotizaciones.cliente_id', $cliente_id);
+            $builder->where('cotizaciones.cliente_id', $cliente_id);
         }
         
+        // Búsqueda personalizada (desde el filtro)
         if (!empty($busqueda)) {
-            $query->groupStart()
-                  ->like('cotizaciones.numero_cotizacion', $busqueda)
-                  ->orLike('cotizaciones.proyecto_nombre', $busqueda)
-                  ->orLike('c.nombre_razon_social', $busqueda)
-                  ->groupEnd();
+            $builder->groupStart()
+                   ->like('cotizaciones.numero_cotizacion', $busqueda)
+                   ->orLike('cotizaciones.proyecto_nombre', $busqueda)
+                   ->orLike('c.nombre_razon_social', $busqueda)
+                   ->groupEnd();
         }
         
-        $rows = $query->orderBy('cotizaciones.fecha_cotizacion', 'DESC')
-                     ->findAll();
+        // Búsqueda global de DataTables
+        if (!empty($searchValue)) {
+            $builder->groupStart()
+                   ->like('cotizaciones.numero_cotizacion', $searchValue)
+                   ->orLike('cotizaciones.proyecto_nombre', $searchValue)
+                   ->orLike('c.nombre_razon_social', $searchValue)
+                   ->orLike('cotizaciones.estado', $searchValue)
+                   ->orLike('cotizaciones.prioridad', $searchValue)
+                   ->groupEnd();
+        }
+        
+        // Contar total de registros filtrados (antes de paginación)
+        $recordsFiltered = $builder->countAllResults(false);
+        
+        // Aplicar ordenamiento
+        $builder->orderBy($orderBy, $orderDir);
+        
+        // Aplicar paginación
+        if ($length > 0) {
+            $builder->limit($length, $start);
+        }
+        
+        // Ejecutar consulta
+        $rows = $builder->get()->getResult();
+        
+        // Contar total de registros sin filtros
+        $recordsTotal = $cotizacion->countAllResults();
 
         $data = array();
         foreach ($rows as $r) {
@@ -113,8 +163,8 @@ class CotizacionController extends BaseController
 
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $cotizacion->countAllResults(),
-            "recordsFiltered" => count($data),
+            "recordsTotal" => $recordsTotal,
+            "recordsFiltered" => $recordsFiltered,
             "data" => $data
         );
 
