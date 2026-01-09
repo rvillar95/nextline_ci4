@@ -1549,7 +1549,7 @@ class Validation extends BaseConfig
     public $formCotizacionRegister = [
         'cliente_id' => 'required|integer',
         'titulo' => 'required|string|max_length[255]',
-        'descripcion' => 'permit_empty|string|max_length[1000]',
+        'descripcion' => 'permit_empty|string|max_length[20000]',
         'fecha_cotizacion' => 'required|valid_date',
         'fecha_validez' => 'permit_empty|valid_date',
         'estado_cotizacion' => 'required|in_list[borrador,enviada,revisada,aprobada,rechazada,expirada]',
@@ -1568,7 +1568,7 @@ class Validation extends BaseConfig
         'id' => 'required|integer',
         'cliente_id' => 'required|integer',
         'titulo' => 'required|string|max_length[255]',
-        'descripcion' => 'permit_empty|string|max_length[1000]',
+        'descripcion' => 'permit_empty|string|max_length[20000]',
         'fecha_cotizacion' => 'required|valid_date',
         'fecha_validez' => 'permit_empty|valid_date',
         'estado_cotizacion' => 'required|in_list[borrador,enviada,revisada,aprobada,rechazada,expirada]',
