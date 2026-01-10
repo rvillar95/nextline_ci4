@@ -386,6 +386,43 @@ exit(); */
                     <?php echo $this->renderSection("listado_material/editar"); ?>
                     <?php echo $this->renderSection("listado_material/detalle"); ?>
                     <!-- END Section Listado de Materiales-->
+                    
+                    <!-- ============================================ -->
+                    <!-- SECCIONES DE MÓDULOS DE NUTRICIONISTAS -->
+                    <!-- ============================================ -->
+                    
+                    <!-- Secciones de Pacientes -->
+                    <?php echo $this->renderSection("paciente/lista"); ?>
+                    <?php echo $this->renderSection("paciente/registro"); ?>
+                    <?php echo $this->renderSection("paciente/editar"); ?>
+                    <?php echo $this->renderSection("paciente/detalle"); ?>
+                    <!-- END Section Pacientes -->
+                    
+                    <!-- Secciones de Agenda -->
+                    <?php echo $this->renderSection("agenda/lista"); ?>
+                    <?php echo $this->renderSection("agenda/gestionar"); ?>
+                    <?php echo $this->renderSection("agenda/calendario"); ?>
+                    <!-- END Section Agenda -->
+                    
+                    <!-- Secciones de Documentos -->
+                    <?php echo $this->renderSection("documento/lista"); ?>
+                    <?php echo $this->renderSection("documento/registro"); ?>
+                    <?php echo $this->renderSection("documento/editar"); ?>
+                    <?php echo $this->renderSection("documento/detalle"); ?>
+                    <!-- END Section Documentos -->
+                    
+                    <!-- Secciones de Historial Clínico -->
+                    <?php echo $this->renderSection("historial/lista"); ?>
+                    <?php echo $this->renderSection("historial/registro"); ?>
+                    <?php echo $this->renderSection("historial/editar"); ?>
+                    <?php echo $this->renderSection("historial/detalle"); ?>
+                    <!-- END Section Historial Clínico -->
+                    
+                    <!-- Secciones de Pagos -->
+                    <?php echo $this->renderSection("pago/lista"); ?>
+                    <?php echo $this->renderSection("pago/registro"); ?>
+                    <?php echo $this->renderSection("pago/editar"); ?>
+                    <!-- END Section Pagos -->
                 </div>
 
             </div>

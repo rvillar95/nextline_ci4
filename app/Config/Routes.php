@@ -147,6 +147,46 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'Dashboard\TestimonioController::editar/$1'); //vista
         $routes2->get('lista', 'Dashboard\TestimonioController::lista'); //vista
         $routes2->get('getTestimonios', 'Dashboard\TestimonioController::getTestimonios'); //get Data
+    });
+
+    // ============================================
+    // MÓDULOS DE NUTRICIONISTAS
+    // ============================================
+    
+    $routes->group('paciente', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\PacienteController::lista');
+        $routes2->get('registro', 'Dashboard\PacienteController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\PacienteController::editar/$1');
+        $routes2->get('detalle/(:num)', 'Dashboard\PacienteController::detalle/$1');
+        $routes2->get('getPacientes', 'Dashboard\PacienteController::getPacientes');
+        $routes2->get('getPacientesSelect', 'Dashboard\PacienteController::getPacientesSelect');
+        $routes2->post('registrar', 'Dashboard\PacienteController::registrar');
+        $routes2->post('update', 'Dashboard\PacienteController::update');
+        $routes2->post('eliminar', 'Dashboard\PacienteController::eliminar');
+    });
+
+    $routes->group('documento', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\DocumentoController::lista');
+        $routes2->get('registro', 'Dashboard\DocumentoController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\DocumentoController::editar/$1');
+        $routes2->get('detalle/(:num)', 'Dashboard\DocumentoController::detalle/$1');
+        $routes2->get('getDocumentos', 'Dashboard\DocumentoController::getDocumentos');
+        $routes2->post('registrar', 'Dashboard\DocumentoController::registrar');
+        $routes2->post('update', 'Dashboard\DocumentoController::update');
+        $routes2->post('eliminar', 'Dashboard\DocumentoController::eliminar');
+        $routes2->post('enviar/(:num)', 'Dashboard\DocumentoController::enviar/$1');
+    });
+
+    $routes->group('historial', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\HistorialController::lista');
+        $routes2->get('registro', 'Dashboard\HistorialController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\HistorialController::editar/$1');
+        $routes2->get('detalle/(:num)', 'Dashboard\HistorialController::detalle/$1');
+        $routes2->get('getHistorial', 'Dashboard\HistorialController::getHistorial');
+        $routes2->get('getHistorialPaciente/(:num)', 'Dashboard\HistorialController::getHistorialPaciente/$1');
+        $routes2->post('registrar', 'Dashboard\HistorialController::registrar');
+        $routes2->post('update', 'Dashboard\HistorialController::update');
+        $routes2->post('eliminar', 'Dashboard\HistorialController::eliminar');
         $routes2->post('registrar', 'Dashboard\TestimonioController::registrar'); //accion
         $routes2->post('update', 'Dashboard\TestimonioController::update'); //accion
         $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar'); //accion
@@ -210,6 +250,35 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('update/(:num)', 'Dashboard\ListadoMaterialController::update/$1'); // Accion update
         $routes2->post('eliminar', 'Dashboard\ListadoMaterialController::eliminar'); // Accion eliminar
         $routes2->get('generarPDF/(:num)', 'Dashboard\ListadoMaterialController::generarPDF/$1'); // Generar PDF
+    });
+
+    // ============================================
+    // MÓDULOS DE NUTRICIONISTAS
+    // ============================================
+    
+    $routes->group('agenda', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\AgendaController::lista');
+        $routes2->get('gestionar', 'Dashboard\AgendaController::gestionar');
+        $routes2->get('calendario', 'Dashboard\AgendaController::calendario');
+        $routes2->get('getAgendas', 'Dashboard\AgendaController::getAgendas');
+        $routes2->get('getEventos', 'Dashboard\AgendaController::getEventos');
+        $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');
+        $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
+        $routes2->post('crearHorarios', 'Dashboard\AgendaController::crearHorarios');
+        $routes2->post('eliminarHorarios', 'Dashboard\AgendaController::eliminarHorarios');
+        $routes2->post('actualizarModalidad', 'Dashboard\AgendaController::actualizarModalidad');
+        $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
+        $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
+    });
+
+    $routes->group('pago', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\PagoController::lista');
+        $routes2->get('registro', 'Dashboard\PagoController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\PagoController::editar/$1');
+        $routes2->get('getPagos', 'Dashboard\PagoController::getPagos');
+        $routes2->post('registrar', 'Dashboard\PagoController::registrar');
+        $routes2->post('update', 'Dashboard\PagoController::update');
+        $routes2->post('procesar', 'Dashboard\PagoController::procesar');
     });
 });
 

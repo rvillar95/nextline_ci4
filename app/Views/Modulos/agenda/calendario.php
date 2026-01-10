@@ -1,0 +1,1035 @@
+<?= $this->extend('layout/dashboard') ?>
+
+<?= $this->section('agenda/calendario') ?>
+
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css' rel='stylesheet' />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/locales/es.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #f5576c;
+    }
+    
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+    }
+    
+    .fc-daygrid-event {
+        border-radius: 6px;
+        padding: 3px 6px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .fc-daygrid-event:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        opacity: 0.95;
+    }
+    
+    .fc-event-title {
+        font-size: 0.9em;
+        line-height: 1.3;
+    }
+    
+    /* Mejorar contraste para accesibilidad */
+    .fc-event {
+        filter: brightness(1.05);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white;"><i class="fas fa-calendar-alt me-2"></i> Agenda de Citas</h2>
+                        <p style="color: white;">Gestione las citas y horarios de sus pacientes</p>
+                    </div>
+                    <div>
+                        <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-light me-2">
+                            <i class="fas fa-list me-2"></i> Vista Lista
+                        </a>
+                        <button class="btn btn-light me-2" onclick="abrirModalAgendar()">
+                            <i class="fas fa-plus me-2"></i> Agendar Cita
+                        </button>
+                        <button class="btn btn-light me-2" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
+                            <i class="fas fa-clock me-2"></i> Crear Horarios
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <!-- Leyenda Rediseñada: Estados y Modalidades Separados -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
+                            <div class="card-body py-3">
+                                <div class="row">
+                                    <!-- Sección: ESTADOS (Colores) -->
+                                    <div class="col-lg-7 mb-3 mb-lg-0">
+                                        <h6 class="mb-3 text-primary">
+                                            <i class="fas fa-palette me-2"></i>Estados de Cita
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(107, 203, 119, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #6BCB77; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Disponible</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(74, 144, 226, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #4A90E2; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Confirmada</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255, 167, 38, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #FFA726; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">En Proceso</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(229, 115, 115, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #E57373; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Cancelada</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(189, 189, 189, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #BDBDBD; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">No Disponible</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(144, 164, 174, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #90A4AE; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Completada</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Sección: MODALIDADES (Iconos) -->
+                                    <div class="col-lg-5">
+                                        <h6 class="mb-3 text-secondary">
+                                            <i class="fas fa-tag me-2"></i>Modalidades
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-12">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(0, 0, 0, 0.02);">
+                                                    <span class="me-2" style="font-size: 1.2em;">🏥</span>
+                                                    <span class="small fw-semibold">Presencial</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(0, 0, 0, 0.02);">
+                                                    <span class="me-2" style="font-size: 1.2em;">💻</span>
+                                                    <span class="small fw-semibold">Online</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(0, 0, 0, 0.02);">
+                                                    <span class="me-2" style="font-size: 1.2em;">❔</span>
+                                                    <span class="small fw-semibold">No Definido</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-3 border-top">
+                                    <p class="small text-muted mb-0">
+                                        <i class="fas fa-lightbulb me-1"></i>
+                                        <strong>Tip:</strong> El color indica el estado de la cita. El ícono muestra la modalidad (Presencial/Online).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para configurar y crear horarios -->
+<div class="modal fade" id="modalConfirmarCrearHorarios" tabindex="-1" aria-labelledby="modalConfirmarCrearHorariosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="modalConfirmarCrearHorariosLabel">
+                    <i class="fas fa-clock me-2"></i> Configurar Horarios Disponibles
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <form id="formCrearHorarios">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Fecha de inicio <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>" required>
+                                <small class="form-text text-muted">Fecha desde la cual crear horarios</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Días a crear <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="dias_crear" name="dias" value="30" min="1" max="365" required>
+                                <small class="form-text text-muted">Número de días laborables</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Duración de cada cita (minutos) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="duracion_cita" name="duracion" value="30" min="5" max="480" step="1" required>
+                                <small class="form-text text-muted">Duración de cada horario disponible (mínimo 5 minutos)</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="mb-3"><i class="fas fa-calendar me-2"></i> Días de la Semana</h6>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_lunes" name="dias_semana[]" value="1" checked>
+                                    <label class="form-check-label" for="dia_lunes">Lunes</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_martes" name="dias_semana[]" value="2" checked>
+                                    <label class="form-check-label" for="dia_martes">Martes</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_miercoles" name="dias_semana[]" value="3" checked>
+                                    <label class="form-check-label" for="dia_miercoles">Miércoles</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_jueves" name="dias_semana[]" value="4" checked>
+                                    <label class="form-check-label" for="dia_jueves">Jueves</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_viernes" name="dias_semana[]" value="5" checked>
+                                    <label class="form-check-label" for="dia_viernes">Viernes</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_sabado" name="dias_semana[]" value="6">
+                                    <label class="form-check-label" for="dia_sabado">Sábado</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="dia_domingo" name="dias_semana[]" value="0">
+                                    <label class="form-check-label" for="dia_domingo">Domingo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="mb-3"><i class="fas fa-clock me-2"></i> Horarios</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nota:</strong> Puedes configurar horarios diferentes para cada día o usar el mismo horario para todos los días seleccionados.
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Hora de Inicio <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" value="09:00" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Hora de Fin <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="hora_fin" name="hora_fin" value="18:00" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="incluir_almuerzo" name="incluir_almuerzo">
+                            <label class="form-check-label" for="incluir_almuerzo">
+                                Excluir horario de almuerzo
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="horario_almuerzo" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Inicio Almuerzo</label>
+                                    <input type="time" class="form-control" id="almuerzo_inicio" name="almuerzo_inicio" value="13:00">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Fin Almuerzo</label>
+                                    <input type="time" class="form-control" id="almuerzo_fin" name="almuerzo_fin" value="14:00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-group">
+                        <label>Modalidad por Defecto <span class="text-danger">*</span></label>
+                        <select class="form-control" id="modalidad_id" name="modalidad_id" required>
+                            <option value="">-- Seleccione una modalidad --</option>
+                            <?php foreach ($modalidades as $modalidad) : ?>
+                                <option value="<?= $modalidad->id ?>" <?= $modalidad->id == 3 ? 'selected' : '' ?>>
+                                    <?= esc($modalidad->nombre) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted">
+                            Esta será la modalidad para la mayoría de los horarios creados. Podrás editarla individualmente después.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="btnConfirmarCrearHorarios">
+                        <i class="fas fa-check me-2"></i> Crear Horarios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agendar cita -->
+<div class="modal fade" id="modalAgendar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i> Agendar Cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <form id="formAgendar">
+                <div class="modal-body">
+                    <input type="hidden" id="detalle_agenda_id" name="detalle_agenda_id">
+                    <input type="hidden" id="fecha_seleccionada" name="fecha_seleccionada">
+                    <input type="hidden" id="hora_seleccionada" name="hora_seleccionada">
+                    
+                    <div class="form-group">
+                        <label>Paciente <span class="text-danger">*</span></label>
+                        <select name="paciente_id" id="paciente_id" class="form-control" required>
+                            <option value="">-- Seleccione un paciente --</option>
+                            <?php foreach ($pacientes as $paciente) : ?>
+                                <option value="<?= $paciente->id ?>"><?= esc($paciente->nombre_completo ?? ($paciente->nombre . ' ' . $paciente->apellido)) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tipo de Consulta</label>
+                        <select name="tipo_consulta" id="tipo_consulta" class="form-control">
+                            <option value="control">Control</option>
+                            <option value="primera_vez">Primera Vez</option>
+                            <option value="seguimiento">Seguimiento</option>
+                            <option value="emergencia">Emergencia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Motivo</label>
+                        <textarea name="motivo" id="motivo" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea name="observaciones" id="observaciones" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-calendar-check me-2"></i> Agendar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para elegir acción (Agendar o Editar Modalidad) -->
+<div class="modal fade" id="modalElegirAccion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-question-circle me-2"></i> ¿Qué desea hacer?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Horario seleccionado:</strong> <span id="horario_elegir_accion"></span>
+                </div>
+                <p class="mb-4">Seleccione la acción que desea realizar con este horario:</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg" id="btnAgendarDesdeElegir">
+                        <i class="fas fa-calendar-check me-2"></i> Agendar Cita
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-lg" id="btnEditarModalidadDesdeElegir">
+                        <i class="fas fa-edit me-2"></i> Editar Modalidad
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar modalidad de un horario -->
+<div class="modal fade" id="modalEditarModalidad" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Editar Modalidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <form id="formEditarModalidad">
+                <div class="modal-body">
+                    <input type="hidden" id="detalle_agenda_id_modalidad" name="detalle_agenda_id">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Horario:</strong> <span id="horario_mostrar"></span>
+                    </div>
+                    <div class="form-group">
+                        <label>Modalidad <span class="text-danger">*</span></label>
+                        <select name="modalidad_id" id="modalidad_id_editar" class="form-control" required>
+                            <option value="">-- Seleccione una modalidad --</option>
+                            <?php foreach ($modalidades as $modalidad) : ?>
+                                <option value="<?= $modalidad->id ?>"><?= esc($modalidad->nombre) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configurar toastr
+toastr.options = {
+    "closeButton": true,
+    "debug": false,
+    "newestOnTop": true,
+    "progressBar": true,
+    "positionClass": "toast-top-right",
+    "preventDuplicates": false,
+    "onclick": null,
+    "showDuration": "300",
+    "hideDuration": "1000",
+    "timeOut": "5000",
+    "extendedTimeOut": "1000",
+    "showEasing": "swing",
+    "hideEasing": "linear",
+    "showMethod": "fadeIn",
+    "hideMethod": "fadeOut"
+};
+
+// Función para obtener el token CSRF de la cookie (método más confiable con cookie protection)
+function obtenerTokenCSRF() {
+    // Intentar obtener de la cookie primero (método preferido con cookie protection)
+    // CodeIgniter usa 'csrf_cookie_name' como nombre de cookie (según Security.php)
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        // Buscar cookie que contenga 'csrf_cookie_name' (puede tener prefijo)
+        if (cookie.indexOf('csrf_cookie_name=') !== -1) {
+            var parts = cookie.split('=');
+            if (parts.length >= 2) {
+                // Decodificar y obtener el valor
+                var token = decodeURIComponent(parts.slice(1).join('='));
+                if (token && token.length > 0) {
+                    return token;
+                }
+            }
+        }
+    }
+    // Si no está en la cookie, intentar del meta tag
+    var metaToken = $('meta[name="csrf-token"]').attr('content');
+    if (metaToken) {
+        return metaToken;
+    }
+    // Último recurso: del input hidden si existe
+    var inputToken = $('input[name="csrf_test_name"]').val();
+    if (inputToken) {
+        return inputToken;
+    }
+    return null;
+}
+
+// Función global para actualizar el token CSRF después de cada petición
+function actualizarTokenCSRF(xhr) {
+    // Con cookie protection, CodeIgniter actualiza la cookie automáticamente
+    // Leemos el nuevo token de la cookie
+    var nuevoToken = obtenerTokenCSRF();
+    if (nuevoToken) {
+        // Actualizar el meta tag para futuras referencias
+        $('meta[name="csrf-token"]').attr('content', nuevoToken);
+        // También actualizar en cualquier input hidden que pueda existir
+        $('input[name="csrf_test_name"]').val(nuevoToken);
+    }
+    // También intentar obtener del header si está disponible
+    var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+    if (headerToken) {
+        $('meta[name="csrf-token"]').attr('content', headerToken);
+        $('input[name="csrf_test_name"]').val(headerToken);
+    }
+    // O de la respuesta JSON si está disponible
+    else if (xhr.responseJSON && xhr.responseJSON.csrf_token) {
+        var jsonToken = xhr.responseJSON.csrf_token;
+        $('meta[name="csrf-token"]').attr('content', jsonToken);
+        $('input[name="csrf_test_name"]').val(jsonToken);
+    }
+}
+
+var calendar;
+var selectedEvent = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si debemos abrir el modal de crear horarios
+    if (sessionStorage.getItem('abrirModalCrearHorarios') === 'true') {
+        sessionStorage.removeItem('abrirModalCrearHorarios');
+        setTimeout(function() {
+            $('#modalConfirmarCrearHorarios').modal('show');
+        }, 500);
+    }
+    
+    var calendarEl = document.getElementById('calendar');
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            $.ajax({
+                url: '<?= base_url('dashboard/agenda/getEventos') ?>',
+                type: 'GET',
+                data: {
+                    start: fetchInfo.startStr,
+                    end: fetchInfo.endStr
+                },
+                success: function(response) {
+                    if (Array.isArray(response) && response.length === 0) {
+                        // Si no hay eventos, mostrar mensaje informativo
+                        toastr.info('No hay horarios disponibles en este período. Por favor, crea horarios disponibles primero.', 'Sin Horarios', {
+                            timeOut: 6000,
+                            progressBar: true
+                        });
+                    }
+                    successCallback(response);
+                },
+                error: function(xhr) {
+                    console.error('Error al cargar eventos:', xhr);
+                    toastr.error('Error al cargar los eventos del calendario', 'Error', {
+                        timeOut: 4000,
+                        progressBar: true
+                    });
+                    failureCallback();
+                }
+            });
+        },
+        eventClick: function(info) {
+            selectedEvent = info.event;
+            var estadoCita = info.event.extendedProps.estado_cita || 'disponible';
+            var pacienteId = info.event.extendedProps.paciente_id || null;
+            var modalidadId = info.event.extendedProps.modalidad_id || 3;
+            
+            // Guardar datos del evento para usar en los modales
+            window.selectedEventData = {
+                id: info.event.id,
+                fecha: info.event.startStr.split('T')[0],
+                hora: info.event.startStr.split('T')[1] ? info.event.startStr.split('T')[1].substring(0, 5) : '',
+                modalidadId: modalidadId
+            };
+            
+            // Si el evento está disponible (sin paciente o estado 'disponible')
+            if (!pacienteId && (estadoCita === 'disponible' || !estadoCita || estadoCita === null)) {
+                // Mostrar modal para elegir acción
+                var fechaHora = info.event.startStr.split('T');
+                var fecha = fechaHora[0];
+                var hora = fechaHora[1] ? fechaHora[1].substring(0, 5) : '';
+                
+                // Convertir fecha de YYYY-MM-DD a DD-MM-YYYY
+                var fechaFormateada = fecha;
+                if (fecha.match(/^(\d{4})-(\d{2})-(\d{2})$/)) {
+                    fechaFormateada = fecha.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1');
+                }
+                $('#horario_elegir_accion').text(fechaFormateada + ' ' + hora);
+                $('#modalElegirAccion').modal('show');
+            } else {
+                // Si ya tiene paciente, mostrar información
+                var mensaje = 'Cita: ' + info.event.title;
+                if (estadoCita && estadoCita !== 'disponible') {
+                    mensaje += '<br>Estado: ' + estadoCita.charAt(0).toUpperCase() + estadoCita.slice(1).replace('_', ' ');
+                }
+                toastr.info(mensaje, 'Información de Cita', {
+                    timeOut: 4000,
+                    progressBar: true
+                });
+            }
+        },
+        dateClick: function(info) {
+            // Al hacer clic en una fecha vacía, buscar horarios disponibles para esa fecha
+            $('#fecha_seleccionada').val(info.dateStr);
+            $('#detalle_agenda_id').val(''); // Limpiar porque no hay evento específico
+            $('#hora_seleccionada').val('');
+            
+            // Mostrar mensaje indicando que debe seleccionar un horario disponible
+            toastr.warning('Por favor, seleccione un horario disponible del calendario para agendar la cita.', 'Seleccione un Horario', {
+                timeOut: 4000,
+                progressBar: true
+            });
+        },
+        eventDidMount: function(info) {
+            // Personalizar el estilo de los eventos según su estado
+            if (info.event.extendedProps.estado_cita) {
+                var estado = info.event.extendedProps.estado_cita;
+                var color = {
+                    'agendada': '#3498db',
+                    'confirmada': '#2ecc71',
+                    'en_proceso': '#f39c12',
+                    'completada': '#95a5a6',
+                    'cancelada': '#e74c3c',
+                    'no_asistio': '#9b59b6'
+                }[estado] || '#95a5a6';
+                info.el.style.backgroundColor = color;
+                info.el.style.borderColor = color;
+            }
+        }
+    });
+    
+    calendar.render();
+});
+
+function abrirModalAgendar() {
+    $('#formAgendar')[0].reset();
+    $('#detalle_agenda_id').val('');
+    $('#fecha_seleccionada').val('');
+    $('#hora_seleccionada').val('');
+    $('#modalAgendar').modal('show');
+    
+    toastr.warning('Por favor, seleccione un horario disponible del calendario haciendo clic en un evento disponible (verde).', 'Seleccione un Horario', {
+        timeOut: 5000,
+        progressBar: true
+    });
+}
+
+function crearHorarios() {
+    // Resetear formulario
+    $('#formCrearHorarios')[0].reset();
+    $('#dias_crear').val(30);
+    $('#duracion_cita').val(30);
+    $('#hora_inicio').val('09:00');
+    $('#hora_fin').val('18:00');
+    $('#almuerzo_inicio').val('13:00');
+    $('#almuerzo_fin').val('14:00');
+    // Marcar días por defecto
+    $('#dia_lunes, #dia_martes, #dia_miercoles, #dia_jueves, #dia_viernes').prop('checked', true);
+    $('#dia_sabado, #dia_domingo').prop('checked', false);
+    $('#incluir_almuerzo').prop('checked', false);
+    $('#horario_almuerzo').hide();
+    
+    $('#modalConfirmarCrearHorarios').modal('show');
+}
+
+// Mostrar/ocultar horario de almuerzo
+$('#incluir_almuerzo').on('change', function() {
+    if ($(this).is(':checked')) {
+        $('#horario_almuerzo').slideDown();
+    } else {
+        $('#horario_almuerzo').slideUp();
+    }
+});
+
+// Manejar envío del formulario
+$('#formCrearHorarios').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Validar que al menos un día esté seleccionado
+    var diasSeleccionados = $('input[name="dias_semana[]"]:checked').length;
+    if (diasSeleccionados === 0) {
+        toastr.error('Debe seleccionar al menos un día de la semana', 'Error de Validación', {
+            timeOut: 4000,
+            progressBar: true
+        });
+        return;
+    }
+    
+    // Validar que hora fin sea mayor que hora inicio
+    var horaInicio = $('#hora_inicio').val();
+    var horaFin = $('#hora_fin').val();
+    if (horaFin <= horaInicio) {
+        toastr.error('La hora de fin debe ser mayor que la hora de inicio', 'Error de Validación', {
+            timeOut: 4000,
+            progressBar: true
+        });
+        return;
+    }
+    
+    $('#modalConfirmarCrearHorarios').modal('hide');
+    ejecutarCrearHorarios();
+});
+
+function ejecutarCrearHorarios() {
+    // Obtener datos del formulario como objeto
+    var formDataObj = {
+        fecha_inicio: $('#fecha_inicio').val(),
+        dias: $('#dias_crear').val(),
+        duracion: $('#duracion_cita').val(),
+        hora_inicio: $('#hora_inicio').val(),
+        hora_fin: $('#hora_fin').val(),
+        incluir_almuerzo: $('#incluir_almuerzo').is(':checked') ? 'on' : '',
+        almuerzo_inicio: $('#almuerzo_inicio').val(),
+        almuerzo_fin: $('#almuerzo_fin').val(),
+        modalidad_id: $('#modalidad_id').val() || 3
+    };
+    
+    // Obtener días seleccionados
+    formDataObj['dias_semana'] = [];
+    $('input[name="dias_semana[]"]:checked').each(function() {
+        formDataObj['dias_semana'].push($(this).val());
+    });
+    
+    // Obtener token CSRF de la cookie (método más confiable)
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name'; // Nombre fijo según app/Config/Security.php
+    formDataObj[csrfName] = csrfToken;
+    
+    toastr.info('Creando horarios disponibles...', 'Procesando', {
+        timeOut: 2000,
+        progressBar: true
+    });
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/crearHorarios') ?>',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        data: formDataObj,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            // Actualizar token CSRF después de petición exitosa
+            actualizarTokenCSRF(xhr);
+            
+            if (response.success) {
+                toastr.success('Se crearon ' + (response.horarios_creados || 0) + ' horarios disponibles exitosamente.', 'Éxito', {
+                    timeOut: 4000,
+                    progressBar: true
+                });
+                calendar.refetchEvents();
+            } else {
+                var mensaje = response.message || 'Error al crear horarios';
+                toastr.error(mensaje, 'Error', {
+                    timeOut: 5000,
+                    progressBar: true,
+                    closeButton: true
+                });
+            }
+        },
+        error: function(xhr) {
+            var errorMsg = 'Error al crear horarios';
+            var errorTitle = 'Error';
+            
+            if (xhr.status === 404) {
+                errorMsg = 'No se encontró la ruta solicitada. Por favor, recargue la página.';
+                errorTitle = 'Ruta no encontrada';
+            } else if (xhr.status === 403) {
+                errorMsg = 'No tiene permisos para realizar esta acción o su sesión ha expirado. Por favor, recargue la página.';
+                errorTitle = 'Acceso Denegado';
+            } else if (xhr.status === 400) {
+                errorTitle = 'Error de Validación';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errors = Object.values(xhr.responseJSON.errors);
+                        errorMsg = errors.join('<br>');
+                    }
+                }
+            } else if (xhr.status === 500) {
+                errorTitle = 'Error del Servidor';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else {
+                    errorMsg = 'Ocurrió un error en el servidor. Por favor, intente nuevamente.';
+                }
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            
+            toastr.error(errorMsg, errorTitle, {
+                timeOut: 5000,
+                progressBar: true,
+                closeButton: true
+            });
+        }
+    });
+}
+
+$('#formAgendar').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Validar que se haya seleccionado un horario
+    var detalleAgendaId = $('#detalle_agenda_id').val();
+    if (!detalleAgendaId || detalleAgendaId === '') {
+        toastr.error('Debe seleccionar un horario disponible del calendario haciendo clic en un evento disponible.', 'Horario Requerido', {
+            timeOut: 5000,
+            progressBar: true
+        });
+        return;
+    }
+    
+    // Validar que se haya seleccionado un paciente
+    var pacienteId = $('#paciente_id').val();
+    if (!pacienteId || pacienteId === '') {
+        toastr.error('Debe seleccionar un paciente.', 'Paciente Requerido', {
+            timeOut: 3000,
+            progressBar: true
+        });
+        return;
+    }
+    
+    var formData = $(this).serialize();
+    
+    // Obtener token CSRF de la cookie (método más confiable)
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || $('input[name="csrf_test_name"]').val() || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name'; // Nombre fijo según app/Config/Security.php
+    
+    // Agregar CSRF token a los datos si no está ya incluido
+    if (formData.indexOf(csrfName) === -1) {
+        formData += '&' + encodeURIComponent(csrfName) + '=' + encodeURIComponent(csrfToken);
+    }
+    
+    // Mostrar indicador de carga
+    var $submitBtn = $(this).find('button[type="submit"]');
+    var originalText = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Agendando...');
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/agendar') ?>',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        data: formData,
+        success: function(response, textStatus, xhr) {
+            // Actualizar token CSRF después de petición exitosa
+            actualizarTokenCSRF(xhr);
+            
+            if (response.success) {
+                toastr.success('Cita agendada con éxito', 'Éxito', {
+                    timeOut: 3000,
+                    progressBar: true
+                });
+                $('#modalAgendar').modal('hide');
+                $('#formAgendar')[0].reset();
+                calendar.refetchEvents();
+            } else {
+                toastr.error(response.error || 'Error al agendar la cita', 'Error', {
+                    timeOut: 4000,
+                    progressBar: true
+                });
+            }
+        },
+        error: function(xhr) {
+            // Intentar actualizar token incluso en errores (puede venir en el header)
+            actualizarTokenCSRF(xhr);
+            
+            var errorMsg = 'Error al agendar la cita';
+            var errorTitle = 'Error';
+            
+            if (xhr.status === 403) {
+                errorMsg = 'No tiene permisos para realizar esta acción o su sesión ha expirado. Por favor, recargue la página.';
+                errorTitle = 'Acceso Denegado';
+            } else if (xhr.status === 400) {
+                errorTitle = 'Error de Validación';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        var errors = Object.values(xhr.responseJSON.errors);
+                        errorMsg = errors.join('<br>');
+                    }
+                }
+            } else if (xhr.status === 500) {
+                errorTitle = 'Error del Servidor';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else {
+                    errorMsg = 'Ocurrió un error en el servidor. Por favor, intente nuevamente.';
+                }
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            
+            toastr.error(errorMsg, errorTitle, {
+                timeOut: 5000,
+                progressBar: true,
+                closeButton: true
+            });
+        },
+        complete: function() {
+            // Restaurar botón
+            $submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+});
+
+// Manejar botones del modal de elegir acción
+$('#btnAgendarDesdeElegir').on('click', function() {
+    if (window.selectedEventData) {
+        $('#detalle_agenda_id').val(window.selectedEventData.id);
+        $('#fecha_seleccionada').val(window.selectedEventData.fecha);
+        $('#hora_seleccionada').val(window.selectedEventData.hora);
+        $('#modalidad_cita').val(window.selectedEventData.modalidadId);
+        $('#modalElegirAccion').modal('hide');
+        $('#modalAgendar').modal('show');
+    }
+});
+
+$('#btnEditarModalidadDesdeElegir').on('click', function() {
+    if (window.selectedEventData) {
+        $('#detalle_agenda_id_modalidad').val(window.selectedEventData.id);
+        $('#modalidad_id_editar').val(window.selectedEventData.modalidadId);
+        // Convertir fecha de YYYY-MM-DD a DD-MM-YYYY
+        var fechaFormateada = window.selectedEventData.fecha;
+        if (window.selectedEventData.fecha && window.selectedEventData.fecha.match(/^(\d{4})-(\d{2})-(\d{2})$/)) {
+            fechaFormateada = window.selectedEventData.fecha.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1');
+        }
+        $('#horario_mostrar').text(fechaFormateada + ' ' + window.selectedEventData.hora);
+        $('#modalElegirAccion').modal('hide');
+        $('#modalEditarModalidad').modal('show');
+    }
+});
+
+// Manejar formulario de editar modalidad
+$('#formEditarModalidad').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Obtener token CSRF de la cookie (método más confiable)
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name';
+    
+    var formData = {
+        detalle_agenda_id: $('#detalle_agenda_id_modalidad').val(),
+        modalidad_id: $('#modalidad_id_editar').val(),
+        [csrfName]: csrfToken
+    };
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/actualizarModalidad') ?>',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        data: formData,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            // Actualizar token CSRF después de petición exitosa
+            actualizarTokenCSRF(xhr);
+            
+            if (response.success) {
+                toastr.success(response.message || 'Modalidad actualizada correctamente', 'Éxito', {
+                    timeOut: 3000,
+                    progressBar: true
+                });
+                $('#formEditarModalidad')[0].reset();
+                $('#modalEditarModalidad').modal('hide');
+                calendar.refetchEvents();
+            } else {
+                toastr.error(response.error || 'Error al actualizar la modalidad', 'Error', {
+                    timeOut: 4000,
+                    progressBar: true
+                });
+            }
+        },
+        error: function(xhr) {
+            // Intentar actualizar token incluso en errores (puede venir en el header)
+            actualizarTokenCSRF(xhr);
+            
+            var errorMsg = 'Error al actualizar la modalidad';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            toastr.error(errorMsg, 'Error', {
+                timeOut: 4000,
+                progressBar: true
+            });
+        }
+    });
+});
+
+</script>
+
+<?= $this->endSection() ?>

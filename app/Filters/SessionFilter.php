@@ -82,6 +82,17 @@ final class SessionFilter implements FilterInterface
         }
 
         // 4) Evaluar ruta contra patrones
+        // Log temporal para debugging de agenda
+        if (strpos($path, 'agenda/agendar') !== false) {
+            log_message('debug', 'SessionFilter: Evaluando ruta: ' . $path);
+            log_message('debug', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
+            foreach ($allowed as $idx => $rule) {
+                if (strpos($rule['pattern'], 'agenda') !== false) {
+                    log_message('debug', "SessionFilter: Regla #{$idx}: pattern={$rule['pattern']}, allowTailNum=" . ($rule['allowTailNum'] ? 'true' : 'false'));
+                }
+            }
+        }
+        
         foreach ($allowed as $rule) {
             $pattern      = $rule['pattern'];              // p.ej. /dashboard/perfil/editar
             $allowTailNum = (bool)($rule['allowTailNum'] ?? false);
@@ -89,8 +100,8 @@ final class SessionFilter implements FilterInterface
             //            //echo $pattern." vs ".$path."<br>";
             // Igualdad exacta (ignora slash final)
             if ($this->isDirectMatch($path, $pattern)) {
-                if (strpos($path, 'generarPDF') !== false) {
-                    log_message('debug', 'SessionFilter: Ruta generarPDF PERMITIDA por igualdad exacta con: ' . $pattern);
+                if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false) {
+                    log_message('debug', 'SessionFilter: Ruta ' . $path . ' PERMITIDA por igualdad exacta con: ' . $pattern);
                 }
                 return;
             }
@@ -122,8 +133,14 @@ final class SessionFilter implements FilterInterface
         //exit();
 
         // 5) Denegar si nada coincide
-        if (strpos($path, 'generarPDF') !== false) {
-            log_message('debug', 'SessionFilter: Ruta generarPDF DENEGADA - no tiene permisos');
+        if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false) {
+            log_message('debug', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
+            log_message('debug', 'SessionFilter: Rutas permitidas que contienen "agenda":');
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], 'agenda') !== false) {
+                    log_message('debug', '  - ' . $rule['pattern']);
+                }
+            }
         }
         return $this->deny('No tiene permisos para esta funcionalidad');
     }
@@ -183,8 +200,22 @@ final class SessionFilter implements FilterInterface
 
             // Acciones efectivas
             $allowedActions = $this->effectiveActions($r['acciones_csv'] ?? null, $r['permisos'] ?? []);
+            
+            // Log temporal para debugging de agenda
+            if (isset($r['detalle_ruta']) && strpos($r['detalle_ruta'], 'agendar') !== false) {
+                log_message('debug', 'SessionFilter: Procesando detalle agendar');
+                log_message('debug', '  - modulo_ruta: ' . ($r['modulo_ruta'] ?? 'N/A'));
+                log_message('debug', '  - detalle_ruta: ' . ($r['detalle_ruta'] ?? 'N/A'));
+                log_message('debug', '  - acciones_csv: ' . ($r['acciones_csv'] ?? 'N/A'));
+                log_message('debug', '  - permisos: ' . json_encode($r['permisos'] ?? []));
+                log_message('debug', '  - allowedActions: ' . json_encode($allowedActions));
+            }
+            
             if (($r['acciones_csv'] ?? null) !== null && empty($allowedActions)) {
                 // El detalle define acciones pero ninguna efectiva -> descartar
+                if (isset($r['detalle_ruta']) && strpos($r['detalle_ruta'], 'agendar') !== false) {
+                    log_message('debug', 'SessionFilter: DESCARTA regla agendar porque allowedActions está vacío');
+                }
                 continue;
             }
 
