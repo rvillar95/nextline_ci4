@@ -2,124 +2,292 @@
 
 <?= $this->section("modulo_detalle/registro") ?>
 
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <div class="mb-3">
-                        <h4>Registro de Modulo Detalle</h4>
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .section-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #34495e;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .icon-label {
+        color: #667eea;
+        font-size: 1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+    
+    .required {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        background: linear-gradient(135deg, #764ba2 0%, #5a3d7a 100%);
+        color: white;
+    }
+    
+    .btn-cancel {
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 2px solid #6c757d;
+        color: #495057 !important;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white !important;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white; margin: 0;">
+                            <i class="fas fa-list-alt me-2"></i> Nuevo Detalle de Módulo
+                        </h2>
+                        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">
+                            Complete la información para crear un nuevo detalle de módulo
+                        </p>
                     </div>
+                    <a href="<?= base_url('dashboard/modulo-detalle/lista') ?>" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i> Volver
+                    </a>
                 </div>
             </div>
-        </div>
-        <div class="widget-content widget-content-area">
 
-            <div class="row">
-                <div class="col-lg-12 col-12 ">
-
-                    <div class="form-group">
-                        <form method="POST" action="<?= base_url('dashboard/modulo-detalle/registrar'); ?>">
-                            <?= csrf_field(); ?>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Seleccione el Modulo</label>
-                                    <select class="form-select" id="modulo" name="modulo" value="<?php set_value('modulo'); ?>">
-                                        <?php foreach ($modulos as $modulo) : ?>
-                                            <option value="<?= esc($modulo['id']) ?>"><?= esc($modulo['nombre']) ?> (<?= esc($modulo['descripcion']) ?>)</option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
-                                        <p style="color:red; font-weight:bold;">
-                                            <?= session()->getFlashdata('errors')['modulo']; ?>
-                                        </p>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Descripcion</label>
-                                    <input type="text" id="descripcion" name="descripcion" value="<?= set_value('descripcion'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['descripcion']; ?>
-                                    <p>
-                                    <?php endif; ?>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Ruta</label>
-                                    <input type="text" id="ruta" name="ruta" value="<?= set_value('ruta'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['ruta'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['ruta']; ?>
-                                    <p>
-                                    <?php endif; ?>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Accion</label>
-                                    <input type="text" id="accion" name="accion" value="<?= set_value('accion'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['accion'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['accion']; ?>
-                                    <p>
-                                    <?php endif; ?>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Orden</label>
-                                    <input type="number" min="0" id="orden" name="orden" value="<?= set_value('orden'); ?>" class="form-control" autofocus>
-                                </div>
-                                <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
-                                    <p style="color:red; font-weight:bold;">
-                                        <?= session()->getFlashdata('errors')['orden']; ?>
-                                    <p>
-                                    <?php endif; ?>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Seleccione el Estado</label>
-                                    <select class="form-select" id="estado" name="estado" value="<?php set_value('estado'); ?>">
-                                        <option value="A">Activo</option>
-                                        <option value="I">Inactivo</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="mb-3">
-                                    <label class="form-label">Desea que se muestre?</label>
-                                    <select class="form-select" id="mostrar" name="mostrar" value="<?php set_value('mostrar'); ?>">
-                                        <option value="S">Si</option>
-                                        <option value="N">No</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <?php if (session()->getFlashdata('success') !== null) : ?>
-                                <div class="alert alert-success my-3" role="alert">
-                                    <?= session()->getFlashdata('success'); ?>
-                                </div>
-                            <?php endif; ?>
-                            <?php if (session()->getFlashdata('errors') !== null) : ?>
-                                <p style="color:red; font-weight:bold;">
-                                    <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                                        <?= session()->getFlashdata('errors'); ?>
-                                    <?php endif; ?>
-                                </p>
-                            <?php endif; ?>
-                            <div class="col-12">
-                                <div class="mb-4">
-                                    <button type="submit" class="btn btn-secondary w-100">Crear</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+            <!-- MENSAJES -->
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle"></i> <?= esc(session()->getFlashdata('success')) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('errors')): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Errores de Validación</h5>
+                    <ul class="mb-0">
+                        <?php if (is_array(session()->getFlashdata('errors'))): ?>
+                            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                <li><?= esc($error) ?></li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li><?= esc(session()->getFlashdata('errors')) ?></li>
+                        <?php endif; ?>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- FORMULARIO -->
+            <div class="section-card">
+                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/registrar'); ?>">
+                    <?= csrf_field(); ?>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-cube icon-label"></i>
+                                    Módulo
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="modulo" name="modulo" required>
+                                    <option value="">-- Seleccione un módulo --</option>
+                                    <?php foreach ($modulos as $modulo) : ?>
+                                        <option value="<?= esc($modulo['id']) ?>" <?= old('modulo') == $modulo['id'] ? 'selected' : '' ?>>
+                                            <?= esc($modulo['nombre']) ?> (<?= esc($modulo['descripcion']) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['modulo']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-align-left icon-label"></i>
+                                    Descripción
+                                </label>
+                                <input type="text" id="descripcion" name="descripcion" 
+                                       value="<?= old('descripcion') ?>" 
+                                       class="form-control" 
+                                       placeholder="Descripción del detalle">
+                                <?php if (isset(session()->getFlashdata('errors')['descripcion'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['descripcion']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-route icon-label"></i>
+                                    Ruta
+                                </label>
+                                <input type="text" id="ruta" name="ruta" 
+                                       value="<?= old('ruta') ?>" 
+                                       class="form-control" 
+                                       placeholder="Ej: dashboard/usuario/lista">
+                                <?php if (isset(session()->getFlashdata('errors')['ruta'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['ruta']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-bolt icon-label"></i>
+                                    Acción
+                                </label>
+                                <input type="text" id="accion" name="accion" 
+                                       value="<?= old('accion') ?>" 
+                                       class="form-control" 
+                                       placeholder="Ej: lista, registro, editar">
+                                <?php if (isset(session()->getFlashdata('errors')['accion'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['accion']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-sort-numeric-down icon-label"></i>
+                                    Orden
+                                </label>
+                                <input type="number" min="0" id="orden" name="orden" 
+                                       value="<?= old('orden', 0) ?>" 
+                                       class="form-control">
+                                <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['orden']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-toggle-on icon-label"></i>
+                                    Estado
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="estado" name="estado" required>
+                                    <option value="A" <?= old('estado', 'A') == 'A' ? 'selected' : '' ?>>Activo</option>
+                                    <option value="I" <?= old('estado') == 'I' ? 'selected' : '' ?>>Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-eye icon-label"></i>
+                                    ¿Mostrar?
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="mostrar" name="mostrar" required>
+                                    <option value="S" <?= old('mostrar', 'S') == 'S' ? 'selected' : '' ?>>Sí</option>
+                                    <option value="N" <?= old('mostrar') == 'N' ? 'selected' : '' ?>>No</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-3 justify-content-end">
+                                <button type="submit" class="btn btn-submit">
+                                    <i class="fas fa-save me-2"></i> Crear Detalle
+                                </button>
+                                <a href="<?= base_url('dashboard/modulo-detalle/lista') ?>" class="btn btn-cancel">
+                                    <i class="fas fa-times me-2"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
 <?= $this->endSection() ?>

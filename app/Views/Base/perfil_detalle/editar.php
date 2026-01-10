@@ -1,188 +1,384 @@
 <?php $this->extend('layout/dashboard') ?>
 
-<?php
-//echo "<pre>";
-//print_r($perfil);
-//echo "</pre>";
-//exit();
-?>
-
 <?= $this->section("perfil_detalle/detalle") ?>
-<div class="row">
-    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12">
-        <div class="col-md-12">
-            <div class="mb-3">
-                <h4>Detalle de Detalle Perfil</h4>
+
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #f0841a 0%, #e67e00 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid #f0841a;
+        transition: all 0.3s ease;
+    }
+    
+    .section-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #34495e;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .icon-label {
+        color: #f0841a;
+        font-size: 1rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #f0841a;
+        box-shadow: 0 0 0 0.2rem rgba(240, 132, 26, 0.15);
+    }
+    
+    .required {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    .permission-group {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-left: 3px solid #f0841a;
+    }
+    
+    .permission-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+    
+    .form-check-label {
+        margin-left: 8px;
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #f0841a 0%, #e67e00 100%);
+        border: none;
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(240, 132, 26, 0.3);
+        transition: all 0.3s ease;
+        color: white;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(240, 132, 26, 0.4);
+        background: linear-gradient(135deg, #e67e00 0%, #cc6f00 100%);
+        color: white;
+    }
+    
+    .btn-cancel {
+        padding: 12px 35px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        border-radius: 8px;
+        border: 2px solid #6c757d;
+        color: #495057 !important;
+        background: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #6c757d;
+        border-color: #6c757d;
+        color: white !important;
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white; margin: 0;">
+                            <i class="fas fa-edit me-2"></i> Editar Permiso de Perfil
+                        </h2>
+                        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">
+                            Modifique los permisos del perfil para este módulo
+                        </p>
+                    </div>
+                    <a href="<?= base_url('dashboard/perfil-detalle/lista') ?>" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i> Volver
+                    </a>
+                </div>
+            </div>
+
+            <!-- MENSAJES -->
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check-circle"></i> <?= esc(session()->getFlashdata('success')) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('errors')): ?>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Errores de Validación</h5>
+                    <ul class="mb-0">
+                        <?php if (is_array(session()->getFlashdata('errors'))): ?>
+                            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                                <li><?= esc($error) ?></li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li><?= esc(session()->getFlashdata('errors')) ?></li>
+                        <?php endif; ?>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endif; ?>
+
+            <!-- FORMULARIO -->
+            <div class="section-card">
+                <form method="POST" action="<?= base_url('dashboard/perfil-detalle/update'); ?>">
+                    <?= csrf_field(); ?>
+                    <input type="hidden" id="id" name="id" value="<?= esc($perfil['id']) ?>">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user-shield icon-label"></i>
+                                    Perfil
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="perfil" name="perfil" required>
+                                    <?php foreach ($perfiles as $per) : ?>
+                                        <option value="<?= esc($per['id']) ?>" <?= ($perfil['perfil_id'] ?? 0) == $per['id'] ? 'selected' : '' ?>>
+                                            <?= esc($per['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if (isset(session()->getFlashdata('errors')['perfil'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['perfil']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-cube icon-label"></i>
+                                    Módulo
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="modulo" name="modulo" required>
+                                    <?php foreach ($modulos as $modulo) : ?>
+                                        <option value="<?= esc($modulo['id']) ?>" <?= ($perfil['modulo_id'] ?? 0) == $modulo['id'] ? 'selected' : '' ?>>
+                                            <?= esc($modulo['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['modulo']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Permisos -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="permission-group">
+                                <label class="permission-label">
+                                    <i class="fas fa-eye me-2" style="color: #f0841a;"></i> Ver
+                                </label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="ver" value="1" id="ver_si" <?= ($perfil['ver'] ?? 1) == 1 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="ver_si">
+                                            Sí
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="ver" value="0" id="ver_no" <?= ($perfil['ver'] ?? 0) == 0 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="ver_no">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['ver'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['ver']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="permission-group">
+                                <label class="permission-label">
+                                    <i class="fas fa-plus me-2" style="color: #f0841a;"></i> Registrar
+                                </label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="registrar" value="1" id="registrar_si" <?= ($perfil['registrar'] ?? 1) == 1 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="registrar_si">
+                                            Sí
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="registrar" value="0" id="registrar_no" <?= ($perfil['registrar'] ?? 0) == 0 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="registrar_no">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['registrar'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['registrar']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="permission-group">
+                                <label class="permission-label">
+                                    <i class="fas fa-edit me-2" style="color: #f0841a;"></i> Editar
+                                </label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="editar" value="1" id="editar_si" <?= ($perfil['editar'] ?? 1) == 1 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="editar_si">
+                                            Sí
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="editar" value="0" id="editar_no" <?= ($perfil['editar'] ?? 0) == 0 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="editar_no">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['editar'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['editar']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="permission-group">
+                                <label class="permission-label">
+                                    <i class="fas fa-trash me-2" style="color: #f0841a;"></i> Eliminar
+                                </label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="eliminar" value="1" id="eliminar_si" <?= ($perfil['eliminar'] ?? 1) == 1 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="eliminar_si">
+                                            Sí
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="eliminar" value="0" id="eliminar_no" <?= ($perfil['eliminar'] ?? 0) == 0 ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="eliminar_no">
+                                            No
+                                        </label>
+                                    </div>
+                                </div>
+                                <?php if (isset(session()->getFlashdata('errors')['eliminar'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['eliminar']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-sort-numeric-down icon-label"></i>
+                                    Orden
+                                </label>
+                                <input type="number" min="0" id="orden" name="orden" 
+                                       value="<?= esc($perfil['orden'] ?? 0) ?>" 
+                                       class="form-control">
+                                <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
+                                    <small class="text-danger">
+                                        <?= session()->getFlashdata('errors')['orden']; ?>
+                                    </small>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-toggle-on icon-label"></i>
+                                    Estado
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-select" id="estado" name="estado" required>
+                                    <option value="A" <?= ($perfil['estado'] ?? 'A') == 'A' ? 'selected' : '' ?>>Activo</option>
+                                    <option value="I" <?= ($perfil['estado'] ?? '') == 'I' ? 'selected' : '' ?>>Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-3 justify-content-end">
+                                <button type="submit" class="btn btn-submit">
+                                    <i class="fas fa-save me-2"></i> Guardar Cambios
+                                </button>
+                                <a href="<?= base_url('dashboard/perfil-detalle/lista') ?>" class="btn btn-cancel">
+                                    <i class="fas fa-times me-2"></i> Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
-        <form method="POST" action="<?= base_url('dashboard/perfil-detalle/update'); ?>">
-            <div class="row">
-                <?= csrf_field(); ?>
-                <input type="hidden" id="id" name="id" value="<?= $perfil['id']; ?>" class="form-control" autofocus>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Seleccione el Perfil</label>
-                        <select class="form-select" id="perfil" name="perfil">
-                            <?php foreach ($perfiles as $per) : ?>
-                                <option value="<?= esc($per['id']) ?>" <?= set_select('perfil', $per['id'], $perfil['perfil_id'] == $per['id']); ?>>
-                                    <?= esc($per['nombre']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if (isset(session()->getFlashdata('errors')['perfil'])) : ?>
-                            <p style="color:red; font-weight:bold;">
-                                <?= session()->getFlashdata('errors')['perfil']; ?>
-                            </p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Seleccione el Modulo</label>
-                        <select class="form-select" id="modulo" name="modulo">
-                            <?php foreach ($modulos as $modulo) : ?>
-                                <option value="<?= esc($modulo['id']) ?>" <?= set_select('modulo', $modulo['id'], $perfil['modulo_id'] == $modulo['id']); ?>>
-                                    <?= esc($modulo['nombre']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <?php if (isset(session()->getFlashdata('errors')['modulo'])) : ?>
-                            <p style="color:red; font-weight:bold;">
-                                <?= session()->getFlashdata('errors')['modulo']; ?>
-                            </p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Orden</label>
-                        <input type="text" id="orden" name="orden" value="<?= $perfil['orden']; ?>" class="form-control" autofocus>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['orden'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['orden']; ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Seleccione el Estado</label>
-                        <select class="form-select" id="estado" name="estado" value="<?php $perfil['estado']; ?>">
-                            <option value="A" <?= $perfil['estado'] == 'A' ? 'selected' : '' ?>>Activo</option>
-                            <option value="I" <?= $perfil['estado'] == 'I' ? 'selected' : '' ?>>Inactivo</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3 form-check form-check-primary form-check-inline">
-                        <label class="form-check-label">Ver</label> <br>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="ver" value="1" id="form-check-radio-default-checked" <?= $perfil['ver'] == 1 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default-checked">
-                                Si
-                            </label>
-                        </div>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="ver" value="0" id="form-check-radio-default" <?= $perfil['ver'] == 0 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default">
-                                No
-                            </label>
-                        </div>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['ver'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['ver']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3 form-check form-check-primary form-check-inline">
-                        <label class="form-check-label">Registrar</label> <br>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="registrar" value="1" id="form-check-radio-default-checked" <?= $perfil['registrar'] == 1 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default-checked">
-                                Si
-                            </label>
-                        </div>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="registrar" value="0" id="form-check-radio-default" <?= $perfil['registrar'] == 0 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default">
-                                No
-                            </label>
-                        </div>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['registrar'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['registrar']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="mb-3 form-check form-check-primary form-check-inline">
-                        <label class="form-check-label">Editar</label> <br>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="editar" value="1" id="form-check-radio-default-checked" <?= $perfil['editar'] == 1 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default-checked">
-                                Si
-                            </label>
-                        </div>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="editar" value="0" id="form-check-radio-default" <?= $perfil['editar'] == 0 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default">
-                                No
-                            </label>
-                        </div>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['editar'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['editar']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3 form-check form-check-primary form-check-inline">
-                        <label class="form-check-label">Eliminar</label> <br>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="eliminar" value="1" id="form-check-radio-default-checked" <?= $perfil['eliminar'] == 1 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default-checked">
-                                Si
-                            </label>
-                        </div>
-                        <div class="form-check form-check-primary form-check-inline">
-                            <input class="form-check-input" type="radio" name="eliminar" value="0" id="form-check-radio-default" <?= $perfil['eliminar'] == 0 ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="form-check-radio-default">
-                                No
-                            </label>
-                        </div>
-                    </div>
-                    <?php if (isset(session()->getFlashdata('errors')['eliminar'])) : ?>
-                        <p style="color:red; font-weight:bold;">
-                            <?= session()->getFlashdata('errors')['eliminar']; ?>
-                        <p>
-                        <?php endif; ?>
-                </div>
-                <?php if (session()->getFlashdata('success') !== null) : ?>
-                    <div class="alert alert-success my-3" role="alert">
-                        <?= session()->getFlashdata('success'); ?>
-                    </div>
-                <?php endif; ?>
-                <?php if (session()->getFlashdata('errors') !== null) : ?>
-                    <p style="color:red; font-weight:bold;">
-                        <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                            <?= session()->getFlashdata('errors'); ?>
-                        <?php endif; ?>
-                    </p>
-                <?php endif; ?>
-                <div class="col-12">
-                    <div class="mb-4">
-                        <button type="submit" class="btn btn-secondary w-100">Editar</button>
-                    </div>
-                </div>
-            </div>
-        </form>
     </div>
 </div>
 

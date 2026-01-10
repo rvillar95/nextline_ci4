@@ -1,48 +1,138 @@
 <?php $this->extend('layout/dashboard') ?>
 
-
 <?= $this->section("modulo/lista") ?>
 
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <div class="mb-3">
-                        <h4>Lista de Modulo</h4>
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 25px;
+        border-bottom: none;
+    }
+    
+    .card-header-modern h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .table-modern {
+        margin: 0;
+    }
+    
+    .table-modern thead {
+        background: #f8f9fa;
+    }
+    
+    .table-modern thead th {
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        padding: 15px;
+    }
+    
+    .table-modern tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    
+    .btn-action {
+        padding: 6px 12px;
+        margin: 0 2px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white; margin: 0;">
+                            <i class="fas fa-cube me-2"></i> Gestión de Módulos
+                        </h2>
+                        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">
+                            Administra los módulos del sistema
+                        </p>
                     </div>
+                    <a href="<?= base_url('dashboard/modulo/registro') ?>" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i> Nuevo Módulo
+                    </a>
                 </div>
             </div>
-        </div>
-        <div class="widget-content widget-content-area">
 
-            <div class="row">
-                <div class="col-lg-12 col-12 ">
+            <!-- CARD -->
+            <div class="card card-modern">
+                <div class="card-header card-header-modern">
+                    <h3 class="card-title">
+                        <i class="fas fa-list me-2"></i> Lista de Módulos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes -->
                     <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <p style="color:red; font-weight:bold;">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
                                 <?= session()->getFlashdata('errors'); ?>
+                            <?php else: ?>
+                                <ul class="mb-0">
+                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
+                                        <li><?= esc($error) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
                             <?php endif; ?>
-                        </p>
-                    <?php endif; ?>
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success my-3" role="alert">
-                            <?= session()->getFlashdata('success'); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('success') !== null) : ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <?= session()->getFlashdata('success'); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Tabla -->
                     <div class="table-responsive">
-                        <table class="table table-bordered getModulo">
+                        <table class="table table-bordered table-striped table-modern getModulo" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Descripción</th>
                                     <th>Ruta</th>
-                                    <th>Modulo SA</th>
+                                    <th>Módulo SA</th>
                                     <th>Estado</th>
                                     <th>Mostrar</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
+                            <tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -51,27 +141,32 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<!-- Modal de Eliminación -->
+<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminacionTitle">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalEliminacionTitle">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="modal-text">¿Estás seguro de que deseas eliminar este modulo? Esta acción no se puede deshacer.</p>
+                <p class="mb-0">
+                    <i class="fas fa-info-circle text-warning me-2"></i>
+                    ¿Estás seguro de que deseas eliminar este módulo? Esta acción no se puede deshacer.
+                </p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/modulo/eliminar'); ?>"> 
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> Cancelar
+                </button>
+                <form method="POST" action="<?= base_url('dashboard/modulo/eliminar'); ?>" style="display: inline;">
                     <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
-                    <button class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar">Eliminar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i> Eliminar
+                    </button>
                 </form>
             </div>
         </div>

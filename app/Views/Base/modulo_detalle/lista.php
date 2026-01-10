@@ -1,51 +1,151 @@
 <?php $this->extend('layout/dashboard') ?>
 
-
 <?= $this->section("modulo_detalle/lista") ?>
 
-<div id="basic" class="col-lg-12 layout-spacing">
-    <div class="statbox widget box box-shadow">
-        <div class="widget-header">
-            <div class="row">
-                <div class="col-xl-12 col-md-12 col-sm-12 col-12">
-                    <div class="mb-3">
-                        <h4>Lista de Modulo Detalle</h4>
+<style>
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .card-modern {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 25px;
+        border-bottom: none;
+    }
+    
+    .card-header-modern h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .table-modern {
+        margin: 0;
+    }
+    
+    .table-modern thead {
+        background: #f8f9fa;
+    }
+    
+    .table-modern thead th {
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        color: #495057;
+        padding: 15px;
+    }
+    
+    .table-modern tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    
+    .form-select-sm {
+        border: 2px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 8px 12px;
+    }
+    
+    .form-select-sm:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- HEADER -->
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white; margin: 0;">
+                            <i class="fas fa-list-alt me-2"></i> Gestión de Detalles de Módulos
+                        </h2>
+                        <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">
+                            Administra los detalles y submenús de los módulos
+                        </p>
                     </div>
+                    <a href="<?= base_url('dashboard/modulo-detalle/registro') ?>" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i> Nuevo Detalle
+                    </a>
                 </div>
             </div>
-        </div>
-        <div class="widget-content widget-content-area">
 
-            <div class="row">
-                <div class="col-lg-12 col-12 ">
-                    <div class="row">
-                        <div class="col-lg-4 col-4 ">
-                            <label for="perfil_id" class="me-2">Filtro por Módulo:</label>
-                            <select name="modulo_id" id="modulo_id" class="form-select form-select-sm">
-                                <option value="">Todos</option>
-                                <?php foreach ($modulos as $m): ?>
-                                    <option value="<?= (int)$m['id'] ?>" <?= (int)$selectedModuloId === (int)$m['id'] ? 'selected' : '' ?>>
-                                        <?= esc($m['nombre']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <br>
-                        </div>
-                    </div>
+            <!-- CARD -->
+            <div class="card card-modern">
+                <div class="card-header card-header-modern">
+                    <h3 class="card-title">
+                        <i class="fas fa-list me-2"></i> Lista de Detalles de Módulos
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Mensajes -->
                     <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <p style="color:red; font-weight:bold;">
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
                                 <?= session()->getFlashdata('errors'); ?>
+                            <?php else: ?>
+                                <ul class="mb-0">
+                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
+                                        <li><?= esc($error) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
                             <?php endif; ?>
-                        </p>
-                    <?php endif; ?>
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success my-3" role="alert">
-                            <?= session()->getFlashdata('success'); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('success') !== null) : ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <?= session()->getFlashdata('success'); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Filtro -->
+                    <div class="filter-card">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <label for="modulo_id" class="form-label mb-2">
+                                    <i class="fas fa-filter me-2"></i>Filtro por Módulo:
+                                </label>
+                                <select name="modulo_id" id="modulo_id" class="form-select form-select-sm">
+                                    <option value="">Todos los módulos</option>
+                                    <?php foreach ($modulos as $m): ?>
+                                        <option value="<?= (int)$m['id'] ?>" <?= (int)$selectedModuloId === (int)$m['id'] ? 'selected' : '' ?>>
+                                            <?= esc($m['nombre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla -->
                     <div class="table-responsive">
-                        <table class="table table-bordered" id="tabla-modulo-detalle">
+                        <table class="table table-bordered table-striped table-modern" id="tabla-modulo-detalle" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Módulo</th>
@@ -58,6 +158,8 @@
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
+                            <tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -66,44 +168,39 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<!-- Modal de Eliminación -->
+<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminacionTitle">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalEliminacionTitle">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="modal-text">¿Estás seguro de que deseas eliminar este modulo detalle? Esta acción no se puede deshacer.</p>
+                <p class="mb-0">
+                    <i class="fas fa-info-circle text-warning me-2"></i>
+                    ¿Estás seguro de que deseas eliminar este detalle de módulo? Esta acción no se puede deshacer.
+                </p>
             </div>
             <div class="modal-footer">
-                <button type="button"
-                    class="btn btn-light-dark _effect--ripple waves-effect waves-light"
-                    data-bs-dismiss="modal">
-                    Cancelar
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> Cancelar
                 </button>
-                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>"
-                    onsubmit="this.querySelector('button[type=submit]').disabled = true;">
+                <form method="POST" action="<?= base_url('dashboard/modulo-detalle/eliminar'); ?>" onsubmit="this.querySelector('button[type=submit]').disabled = true;" style="display: inline;">
                     <?= csrf_field() ?>
                     <input type="hidden" id="id" name="id" value="">
                     <input type="hidden" id="modulo_id_filter" name="modulo_id_filter" value="">
-                    <button type="submit"
-                        class="btn btn-danger"
-                        data-bs-toggle="tooltip"
-                        data-bs-placement="top"
-                        title="Eliminar">
-                        Eliminar
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i> Eliminar
                     </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
 <script>
     const dt = $('#tabla-modulo-detalle').DataTable({
         serverSide: true,
@@ -163,4 +260,5 @@
         $('#modalEliminacion').modal('show');
     });
 </script>
+
 <?= $this->endSection() ?>
