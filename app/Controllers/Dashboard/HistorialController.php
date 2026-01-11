@@ -378,4 +378,115 @@ class HistorialController extends BaseController
 
         return view('Modulos/historial/detalle', $data);
     }
+
+    /**
+     * Vista de comparación de historiales clínicos
+     */
+    public function comparar()
+    {
+        $menuTotal = array();
+        $modulo = new ModuloDetalle();
+        $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
+
+        foreach ($data['menu'] as $entity) {
+            $submenu = $modulo->getSubMenu($entity['id']);
+            array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
+        }
+        $data['data'] = $menuTotal;
+
+        // Obtener lista de pacientes con historiales
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+        
+        // Obtener lista de pacientes con historiales
+        $pacientes = $db->query("
+            SELECT p.id, p.nombre, p.apellido, COUNT(hc.id) as total_historiales
+            FROM historial_clinico hc
+            INNER JOIN pacientes p ON p.id = hc.paciente_id
+            WHERE hc.nutricionista_id = ?
+              AND hc.estado = 'A'
+            GROUP BY p.id, p.nombre, p.apellido
+            HAVING COUNT(hc.id) > 0
+            ORDER BY p.nombre ASC
+        ", [$usuario_id])->getResultArray();
+        
+        $data['pacientes'] = $pacientes;
+
+        return view('Modulos/historial/comparar', $data);
+    }
+
+    /**
+     * Obtener historiales de un paciente (AJAX)
+     */
+    public function getHistorialesPaciente()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $pacienteId = $this->request->getGet('paciente_id');
+        if (!$pacienteId) {
+            return $this->response->setJSON(['error' => 'ID de paciente requerido'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+
+        $historiales = $db->table('historial_clinico hc')
+            ->select('hc.id, hc.fecha_consulta, hc.hora_consulta, hc.tipo_registro, 
+                      hc.peso_actual, hc.altura_actual, hc.imc_actual,
+                      hc.circunferencia_cintura, hc.circunferencia_cadera,
+                      hc.grasa_corporal, hc.masa_muscular,
+                      hc.suma_pliegues, hc.grasa_corporal_calculada,
+                      da.fecha as fecha_detalle, da.hora_inicio')
+            ->join('detalle_agenda da', 'da.id = hc.detalle_agenda_id', 'left')
+            ->where('hc.paciente_id', $pacienteId)
+            ->where('hc.nutricionista_id', $usuario_id)
+            ->where('hc.estado', 'A')
+            ->orderBy('hc.fecha_consulta', 'ASC')
+            ->orderBy('hc.hora_consulta', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON($historiales);
+    }
+
+    /**
+     * Obtener datos para comparación de múltiples historiales (AJAX)
+     */
+    public function compararHistoriales()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $historialIds = $this->request->getPost('historial_ids');
+        if (!$historialIds || !is_array($historialIds) || count($historialIds) < 2) {
+            return $this->response->setJSON(['error' => 'Se requieren al menos 2 historiales para comparar'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+
+        $historiales = $db->table('historial_clinico hc')
+            ->select('hc.id, hc.fecha_consulta, hc.hora_consulta, hc.tipo_registro,
+                      hc.peso_actual, hc.altura_actual, hc.imc_actual,
+                      hc.circunferencia_cintura, hc.circunferencia_cadera,
+                      hc.grasa_corporal, hc.masa_muscular,
+                      hc.suma_pliegues, hc.grasa_corporal_calculada,
+                      hc.pliegue_tricipital, hc.pliegue_bicipital, hc.pliegue_subescapular,
+                      hc.pliegue_suprailíaco, hc.pliegue_abdominal,
+                      hc.pliegue_muslo_anterior, hc.pliegue_pantorrilla_medial,
+                      da.fecha as fecha_detalle, da.hora_inicio')
+            ->join('detalle_agenda da', 'da.id = hc.detalle_agenda_id', 'left')
+            ->whereIn('hc.id', $historialIds)
+            ->where('hc.nutricionista_id', $usuario_id)
+            ->where('hc.estado', 'A')
+            ->orderBy('hc.fecha_consulta', 'ASC')
+            ->orderBy('hc.hora_consulta', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON($historiales);
+    }
 }

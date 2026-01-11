@@ -150,6 +150,94 @@
             </div>
             <?php endif; ?>
 
+            <!-- Consulta Anterior (Solo Referencia) -->
+            <?php if (!empty($consulta_anterior)): ?>
+            <div class="section-card" style="border-left: 4px solid #90A4AE !important; background: linear-gradient(135deg, #ECEFF1 0%, #FFFFFF 100%);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-secondary mb-0">
+                        <i class="fas fa-history me-2"></i> Consulta Anterior (Referencia)
+                    </h5>
+                    <span class="badge bg-secondary">
+                        <?= $consulta_anterior->fecha ?: $consulta_anterior->fecha_agenda ?> 
+                        <?= date('H:i', strtotime($consulta_anterior->hora_inicio)) ?>
+                    </span>
+                </div>
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-info-circle me-1"></i> Información de la última consulta completada. Solo para referencia, no afecta esta consulta.
+                </p>
+                
+                <div class="row">
+                    <?php if (!empty($consulta_anterior->objetivos)): ?>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-success"><i class="fas fa-bullseye me-2"></i> Objetivos Establecidos</h6>
+                        <div class="alert alert-light border-start border-success border-3" style="max-height: 150px; overflow-y: auto;">
+                            <?= $consulta_anterior->objetivos ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($consulta_anterior->plan_alimentacion)): ?>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-info"><i class="fas fa-utensils me-2"></i> Plan de Alimentación</h6>
+                        <div class="alert alert-light border-start border-info border-3" style="max-height: 150px; overflow-y: auto;">
+                            <?= $consulta_anterior->plan_alimentacion ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($consulta_anterior->recomendaciones)): ?>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-warning"><i class="fas fa-lightbulb me-2"></i> Recomendaciones</h6>
+                        <div class="alert alert-light border-start border-warning border-3" style="max-height: 150px; overflow-y: auto;">
+                            <?= $consulta_anterior->recomendaciones ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($consulta_anterior->notas_consulta)): ?>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-primary"><i class="fas fa-sticky-note me-2"></i> Notas de Consulta</h6>
+                        <div class="alert alert-light border-start border-primary border-3" style="max-height: 150px; overflow-y: auto;">
+                            <?= $consulta_anterior->notas_consulta ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <?php if ($consulta_anterior->peso_anterior || $consulta_anterior->imc_anterior): ?>
+                <div class="mt-3 pt-3 border-top">
+                    <h6 class="text-secondary"><i class="fas fa-chart-line me-2"></i> Mediciones de Referencia</h6>
+                    <div class="row">
+                        <?php if ($consulta_anterior->peso_anterior): ?>
+                        <div class="col-md-3">
+                            <small class="text-muted">Peso</small>
+                            <div class="fw-bold"><?= number_format($consulta_anterior->peso_anterior, 1) ?> kg</div>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($consulta_anterior->imc_anterior): ?>
+                        <div class="col-md-3">
+                            <small class="text-muted">IMC</small>
+                            <div class="fw-bold"><?= number_format($consulta_anterior->imc_anterior, 2) ?></div>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($consulta_anterior->cintura_anterior): ?>
+                        <div class="col-md-3">
+                            <small class="text-muted">Cintura</small>
+                            <div class="fw-bold"><?= number_format($consulta_anterior->cintura_anterior, 1) ?> cm</div>
+                        </div>
+                        <?php endif; ?>
+                        <?php if ($consulta_anterior->grasa_anterior): ?>
+                        <div class="col-md-3">
+                            <small class="text-muted">Grasa Corporal</small>
+                            <div class="fw-bold"><?= number_format($consulta_anterior->grasa_anterior, 1) ?>%</div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <!-- Control de Consulta -->
             <div class="section-card">
                 <div class="text-center">
@@ -203,6 +291,162 @@
                             </div>
                         <?php endif; ?>
                     </div>
+                </div>
+            </div>
+
+            <!-- Sección de Mediciones Corporales (Colapsable) - PRIMERO para primera consulta -->
+            <div class="section-card" style="border-left: 4px solid #4A90E2 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-primary mb-0">
+                        <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales y Registro Clínico
+                    </h5>
+                    <button 
+                        type="button" 
+                        class="btn btn-outline-primary btn-sm" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#medicionesCollapse"
+                        aria-expanded="false"
+                        aria-controls="medicionesCollapse"
+                        id="btnToggleMediciones"
+                    >
+                        <i class="fas fa-chevron-down me-2"></i> Mostrar/Ocultar
+                    </button>
+                </div>
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-info-circle me-1"></i> Registra las mediciones corporales, pliegues cutáneos y datos clínicos de esta consulta. Estos datos se guardarán en el historial clínico del paciente.
+                </p>
+                
+                <div class="collapse" id="medicionesCollapse">
+                    <form id="formMediciones" onsubmit="guardarMediciones(event)">
+                        <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
+                        <input type="hidden" name="paciente_id" value="<?= $cita->paciente_id ?>">
+                        <input type="hidden" name="historial_id" id="historial_id" value="<?= isset($historial) && $historial ? $historial->id : '' ?>">
+                        
+                        <!-- Medidas Básicas -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-weight me-2"></i> Medidas Básicas</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Peso (kg) *</label>
+                                <input type="number" name="peso_actual" id="peso_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 70.5">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Altura (cm) *</label>
+                                <input type="number" name="altura_actual" id="altura_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 170">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">IMC</label>
+                                <input type="number" name="imc_actual" id="imc_actual" class="form-control" step="0.01" readonly>
+                                <small class="text-muted">Se calcula automáticamente</small>
+                            </div>
+                        </div>
+
+                        <!-- Circunferencias -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-circle-notch me-2"></i> Circunferencias</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cintura (cm)</label>
+                                <input type="number" name="circunferencia_cintura" id="circunferencia_cintura" class="form-control" step="0.01" min="0" placeholder="Ej: 85.5">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cadera (cm)</label>
+                                <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control" step="0.01" min="0" placeholder="Ej: 95.0">
+                            </div>
+                        </div>
+
+                        <!-- Pliegues Cutáneos -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-hand-paper me-2"></i> Pliegues Cutáneos (mm)</h6>
+                                <p class="text-muted small">Medición con plicómetro. Se mide en milímetros (mm).</p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Tricipital</label>
+                                <input type="number" name="pliegue_tricipital" id="pliegue_tricipital" class="form-control" step="0.01" min="0" placeholder="Ej: 12.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Bicipital</label>
+                                <input type="number" name="pliegue_bicipital" id="pliegue_bicipital" class="form-control" step="0.01" min="0" placeholder="Ej: 8.3">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Subescapular</label>
+                                <input type="number" name="pliegue_subescapular" id="pliegue_subescapular" class="form-control" step="0.01" min="0" placeholder="Ej: 15.2">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Suprailíaco</label>
+                                <input type="number" name="pliegue_suprailíaco" id="pliegue_suprailíaco" class="form-control" step="0.01" min="0" placeholder="Ej: 18.7">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Abdominal</label>
+                                <input type="number" name="pliegue_abdominal" id="pliegue_abdominal" class="form-control" step="0.01" min="0" placeholder="Ej: 22.1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Muslo Anterior</label>
+                                <input type="number" name="pliegue_muslo_anterior" id="pliegue_muslo_anterior" class="form-control" step="0.01" min="0" placeholder="Ej: 20.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pantorrilla Medial</label>
+                                <input type="number" name="pliegue_pantorrilla_medial" id="pliegue_pantorrilla_medial" class="form-control" step="0.01" min="0" placeholder="Ej: 10.8">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Suma de Pliegues (mm)</label>
+                                <input type="number" name="suma_pliegues" id="suma_pliegues" class="form-control" step="0.01" readonly>
+                                <small class="text-muted">Se calcula automáticamente</small>
+                            </div>
+                        </div>
+
+                        <!-- Composición Corporal -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-chart-pie me-2"></i> Composición Corporal</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Grasa Corporal (%)</label>
+                                <input type="number" name="grasa_corporal" id="grasa_corporal" class="form-control" step="0.01" min="0" max="100" placeholder="Ej: 25.5">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Grasa Corporal Calculada (%)</label>
+                                <input type="number" name="grasa_corporal_calculada" id="grasa_corporal_calculada" class="form-control" step="0.01" readonly>
+                                <small class="text-muted">Se calcula a partir de los pliegues</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Masa Muscular (kg)</label>
+                                <input type="number" name="masa_muscular" id="masa_muscular" class="form-control" step="0.01" min="0" placeholder="Ej: 45.2">
+                            </div>
+                        </div>
+
+                        <!-- Información Clínica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-stethoscope me-2"></i> Información Clínica</h6>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Anamnesis</label>
+                                <textarea name="anamnesis" id="anamnesis" class="form-control" rows="4" placeholder="Historia clínica del paciente, antecedentes, síntomas..."></textarea>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Diagnóstico Nutricional</label>
+                                <textarea name="diagnostico" id="diagnostico" class="form-control" rows="3" placeholder="Diagnóstico nutricional establecido..."></textarea>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Plan de Tratamiento</label>
+                                <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="3" placeholder="Plan de tratamiento propuesto..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" onclick="limpiarFormularioMediciones()">
+                                <i class="fas fa-eraser me-2"></i> Limpiar
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Guardar Mediciones
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -356,7 +600,29 @@ toastr.options = {
 };
 
 var consultaIniciada = <?= $cita->fecha_inicio_real ? 'true' : 'false' ?>;
-var fechaInicio = <?= $cita->fecha_inicio_real ? "'" . date('Y-m-d H:i:s', strtotime($cita->fecha_inicio_real)) . "'" : 'null' ?>;
+var fechaInicio = <?php 
+    if ($cita->fecha_inicio_real) {
+        // Asegurar que la fecha esté en formato correcto para JavaScript
+        $fecha = $cita->fecha_inicio_real;
+        // Si viene como string DATETIME de MySQL, ya está en formato YYYY-MM-DD HH:MM:SS
+        // Si viene como objeto DateTime, convertir a string
+        if (is_object($fecha)) {
+            $fecha = $fecha->format('Y-m-d H:i:s');
+        } elseif (is_string($fecha)) {
+            // Verificar si ya está en formato correcto
+            if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $fecha)) {
+                // Intentar convertir si está en otro formato
+                $timestamp = strtotime($fecha);
+                if ($timestamp !== false) {
+                    $fecha = date('Y-m-d H:i:s', $timestamp);
+                }
+            }
+        }
+        echo "'" . $fecha . "'";
+    } else {
+        echo 'null';
+    }
+?>;
 var timerInterval = null;
 
 // Función para obtener token CSRF
@@ -386,13 +652,37 @@ function actualizarTokenCSRF(xhr) {
 
 // Timer para consulta en curso
 function iniciarTimer() {
-    if (!fechaInicio) return;
+    if (!fechaInicio) {
+        console.error('No se puede iniciar el timer: fechaInicio es null');
+        return;
+    }
     
-    var inicio = new Date(fechaInicio.replace(' ', 'T'));
+    // Limpiar timer anterior si existe
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
     
-    timerInterval = setInterval(function() {
+    // Convertir fecha a formato ISO para JavaScript
+    var fechaISO = fechaInicio.replace(' ', 'T');
+    var inicio = new Date(fechaISO);
+    
+    // Verificar que la fecha sea válida
+    if (isNaN(inicio.getTime())) {
+        console.error('Fecha de inicio inválida:', fechaInicio);
+        return;
+    }
+    
+    // Actualizar inmediatamente
+    function actualizarTimer() {
         var ahora = new Date();
         var diff = ahora - inicio;
+        
+        // Si la diferencia es negativa, la fecha de inicio es futura (no debería pasar)
+        if (diff < 0) {
+            console.warn('La fecha de inicio es futura, usando fecha actual');
+            inicio = ahora;
+            diff = 0;
+        }
         
         var horas = Math.floor(diff / (1000 * 60 * 60));
         var minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -402,8 +692,19 @@ function iniciarTimer() {
                      String(minutos).padStart(2, '0') + ':' + 
                      String(segundos).padStart(2, '0');
         
-        $('#timerDisplay').text(tiempo);
-    }, 1000);
+        var $timerDisplay = $('#timerDisplay');
+        if ($timerDisplay.length) {
+            $timerDisplay.text(tiempo);
+        } else {
+            console.warn('Elemento #timerDisplay no encontrado');
+        }
+    }
+    
+    // Actualizar inmediatamente
+    actualizarTimer();
+    
+    // Actualizar cada segundo
+    timerInterval = setInterval(actualizarTimer, 1000);
 }
 
 // Iniciar consulta
@@ -614,6 +915,155 @@ function guardarTodoYFinalizar() {
     }, 500);
 }
 
+// ============================================
+// FUNCIONES PARA MEDICIONES CORPORALES
+// ============================================
+
+<?php if (!empty($historial)): ?>
+// Cargar datos existentes del historial
+$(document).ready(function() {
+    var historial = <?= json_encode($historial) ?>;
+    
+    if (historial) {
+        $('#historial_id').val(historial.id);
+        $('#peso_actual').val(historial.peso_actual || '');
+        $('#altura_actual').val(historial.altura_actual || '');
+        $('#imc_actual').val(historial.imc_actual || '');
+        $('#circunferencia_cintura').val(historial.circunferencia_cintura || '');
+        $('#circunferencia_cadera').val(historial.circunferencia_cadera || '');
+        $('#grasa_corporal').val(historial.grasa_corporal || '');
+        $('#masa_muscular').val(historial.masa_muscular || '');
+        $('#pliegue_tricipital').val(historial.pliegue_tricipital || '');
+        $('#pliegue_bicipital').val(historial.pliegue_bicipital || '');
+        $('#pliegue_subescapular').val(historial.pliegue_subescapular || '');
+        $('#pliegue_suprailíaco').val(historial.pliegue_suprailíaco || '');
+        $('#pliegue_abdominal').val(historial.pliegue_abdominal || '');
+        $('#pliegue_muslo_anterior').val(historial.pliegue_muslo_anterior || '');
+        $('#pliegue_pantorrilla_medial').val(historial.pliegue_pantorrilla_medial || '');
+        $('#suma_pliegues').val(historial.suma_pliegues || '');
+        $('#grasa_corporal_calculada').val(historial.grasa_corporal_calculada || '');
+        $('#anamnesis').val(historial.anamnesis || '');
+        $('#diagnostico').val(historial.diagnostico || '');
+        $('#plan_tratamiento').val(historial.plan_tratamiento || '');
+        
+        // La sección permanece colapsada por defecto (no se abre automáticamente)
+    }
+});
+<?php endif; ?>
+
+// Calcular IMC automáticamente
+function calcularIMC() {
+    var peso = parseFloat($('#peso_actual').val());
+    var altura = parseFloat($('#altura_actual').val());
+    
+    if (peso > 0 && altura > 0) {
+        var alturaMetros = altura / 100;
+        var imc = peso / (alturaMetros * alturaMetros);
+        $('#imc_actual').val(imc.toFixed(2));
+    } else {
+        $('#imc_actual').val('');
+    }
+}
+
+// Calcular suma de pliegues automáticamente
+function calcularSumaPliegues() {
+    var pliegues = [
+        'pliegue_tricipital',
+        'pliegue_bicipital',
+        'pliegue_subescapular',
+        'pliegue_suprailíaco',
+        'pliegue_abdominal',
+        'pliegue_muslo_anterior',
+        'pliegue_pantorrilla_medial'
+    ];
+    
+    var suma = 0;
+    pliegues.forEach(function(pliegue) {
+        var valor = parseFloat($('#' + pliegue).val());
+        if (!isNaN(valor) && valor > 0) {
+            suma += valor;
+        }
+    });
+    
+    if (suma > 0) {
+        $('#suma_pliegues').val(suma.toFixed(2));
+        
+        // Calcular grasa corporal aproximada (fórmula simplificada)
+        var peso = parseFloat($('#peso_actual').val());
+        if (peso > 0) {
+            var grasaCalculada = (suma * 0.5) + 5; // Fórmula simplificada
+            $('#grasa_corporal_calculada').val(grasaCalculada.toFixed(2));
+        }
+    } else {
+        $('#suma_pliegues').val('');
+        $('#grasa_corporal_calculada').val('');
+    }
+}
+
+// Event listeners para cálculos automáticos
+$(document).ready(function() {
+    $('#peso_actual, #altura_actual').on('input', calcularIMC);
+    
+    $('input[name^="pliegue_"]').on('input', calcularSumaPliegues);
+});
+
+// Guardar mediciones
+function guardarMediciones(event) {
+    event.preventDefault();
+    
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name';
+    
+    var formData = $('#formMediciones').serialize();
+    formData += '&' + csrfName + '=' + csrfToken;
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/guardarMediciones') ?>',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        data: formData,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            
+            if (response.success) {
+                toastr.success(response.message || 'Mediciones guardadas correctamente', 'Éxito', {
+                    timeOut: 3000
+                });
+                
+                // Actualizar historial_id si es nuevo registro
+                if (response.historial_id && !$('#historial_id').val()) {
+                    $('#historial_id').val(response.historial_id);
+                }
+            } else {
+                toastr.error(response.error || 'Error al guardar', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var errorMsg = 'Error al guardar las mediciones';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            toastr.error(errorMsg, 'Error');
+        }
+    });
+}
+
+// Limpiar formulario de mediciones
+function limpiarFormularioMediciones() {
+    if (confirm('¿Está seguro de limpiar todos los campos de mediciones?')) {
+        $('#formMediciones')[0].reset();
+        $('#historial_id').val('');
+        $('#imc_actual').val('');
+        $('#suma_pliegues').val('');
+        $('#grasa_corporal_calculada').val('');
+    }
+}
+
 // Auto-guardar cada 2 minutos si hay cambios
 var ultimoContenido = {
     notas: '',
@@ -702,30 +1152,29 @@ $(document).ready(function() {
         iniciarTimer();
     }
     
-    // Configuración común de TinyMCE
+    // Función para inicializar TinyMCE cuando esté listo
+    function inicializarTinyMCE() {
+        // Verificar que TinyMCE esté cargado
+        if (typeof tinymce === 'undefined') {
+            console.error('TinyMCE no está cargado. Reintentando en 500ms...');
+            setTimeout(inicializarTinyMCE, 500);
+            return;
+        }
+        
+        console.log('TinyMCE está cargado, procediendo a inicializar editores...');
+    
+    // Configuración común de TinyMCE (simplificada para evitar errores)
     var tinymceConfig = {
         height: 300,
         menubar: false,
         plugins: [
-            // Core editing features
-            'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-            // Premium features (trial hasta Jan 24, 2026)
-            'checklist', 'mediaembed', 'casechange', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'advtemplate', 'ai', 'uploadcare', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown', 'importword', 'exportword', 'exportpdf'
+            'lists', 'link', 'table', 'code', 'wordcount'
         ],
-        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+        toolbar: 'undo redo | formatselect | bold italic underline strikethrough | alignleft aligncenter alignright | bullist numlist | link table | code',
         content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
         language: 'es',
         branding: false,
         promotion: false,
-        tinycomments_mode: 'embedded',
-        tinycomments_author: 'Nutricionista',
-        mergetags_list: [
-            { value: 'Paciente.Nombre', title: 'Nombre del Paciente' },
-            { value: 'Paciente.Email', title: 'Email del Paciente' },
-            { value: 'Fecha.Consulta', title: 'Fecha de Consulta' },
-        ],
-        ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
-        uploadcare_public_key: '4aa5df577992e10cc5b1',
         setup: function(editor) {
             // Auto-guardar cuando se hace un cambio (después de 2 segundos de inactividad)
             var timeout;
@@ -740,33 +1189,47 @@ $(document).ready(function() {
         }
     };
 
-    // Inicializar TinyMCE para el editor de notas (más alto)
-    var notasConfig = Object.assign({}, tinymceConfig, {
-        selector: '#notas_consulta',
-        height: 400
-    });
-    tinymce.init(notasConfig);
+    // Función para inicializar TinyMCE con manejo de errores
+    function inicializarEditor(selector, height) {
+        if (!$(selector).length) {
+            console.error('Elemento no encontrado:', selector);
+            return;
+        }
+        
+        try {
+            var config = Object.assign({}, tinymceConfig, {
+                selector: selector,
+                height: height
+            });
+            
+            tinymce.init(config).then(function(editors) {
+                console.log('TinyMCE inicializado correctamente para:', selector);
+            }).catch(function(error) {
+                console.error('Error al inicializar TinyMCE para ' + selector + ':', error);
+            });
+        } catch (error) {
+            console.error('Error al inicializar TinyMCE para ' + selector + ':', error);
+        }
+    }
 
-    // Inicializar TinyMCE para Objetivos
-    var objetivosConfig = Object.assign({}, tinymceConfig, {
-        selector: '#objetivos',
-        height: 250
-    });
-    tinymce.init(objetivosConfig);
+        // Esperar un momento para asegurar que el DOM esté completamente cargado
+        setTimeout(function() {
+            // Inicializar TinyMCE para el editor de notas (más alto)
+            inicializarEditor('#notas_consulta', 400);
 
-    // Inicializar TinyMCE para Plan de Alimentación
-    var planConfig = Object.assign({}, tinymceConfig, {
-        selector: '#plan_alimentacion',
-        height: 250
-    });
-    tinymce.init(planConfig);
+            // Inicializar TinyMCE para Objetivos
+            inicializarEditor('#objetivos', 250);
 
-    // Inicializar TinyMCE para Recomendaciones
-    var recomendacionesConfig = Object.assign({}, tinymceConfig, {
-        selector: '#recomendaciones',
-        height: 200
-    });
-    tinymce.init(recomendacionesConfig);
+            // Inicializar TinyMCE para Plan de Alimentación
+            inicializarEditor('#plan_alimentacion', 250);
+
+            // Inicializar TinyMCE para Recomendaciones
+            inicializarEditor('#recomendaciones', 200);
+        }, 100);
+    }
+    
+    // Iniciar la inicialización de TinyMCE
+    inicializarTinyMCE();
     
     // Inicializar Flatpickr para el selector de fecha
     var fechaProximaCita = <?= $cita->proxima_cita_recomendada ? "'" . date('d-m-Y', strtotime($cita->proxima_cita_recomendada)) . "'" : 'null' ?>;

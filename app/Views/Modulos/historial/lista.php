@@ -11,9 +11,14 @@
                         <h2 style="color: white;"><i class="fas fa-history me-2"></i> Historial Clínico</h2>
                         <p style="color: white;">Registro de consultas y evolución de pacientes</p>
                     </div>
-                    <a href="<?= base_url('dashboard/historial/registro') ?>" class="btn btn-light">
-                        <i class="fas fa-plus me-2"></i> Nueva Consulta
-                    </a>
+                    <div>
+                        <a href="<?= base_url('dashboard/historial/comparar') ?>" class="btn btn-light me-2">
+                            <i class="fas fa-chart-line me-2"></i> Comparar Historiales
+                        </a>
+                        <a href="<?= base_url('dashboard/historial/registro') ?>" class="btn btn-light">
+                            <i class="fas fa-plus me-2"></i> Nueva Consulta
+                        </a>
+                    </div>
                 </div>
             </div>
 

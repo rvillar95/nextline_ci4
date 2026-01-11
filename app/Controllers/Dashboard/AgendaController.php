@@ -5,6 +5,7 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\BaseController;
 use App\Models\AgendaPaciente;
 use App\Models\Paciente;
+use App\Models\HistorialClinico;
 use App\Models\ModuloDetalle;
 use App\Traits\MaintainsFilters;
 use Config\Services;
@@ -1451,6 +1452,35 @@ class AgendaController extends BaseController
         $data['cita'] = $cita;
         $data['fecha'] = $cita->fecha ?: $cita->fecha_agenda;
 
+        // Buscar si ya existe un registro de historial clínico para esta cita
+        $historialModel = new HistorialClinico();
+        $historialExistente = $historialModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('paciente_id', $cita->paciente_id)
+            ->first();
+        
+        $data['historial'] = $historialExistente;
+
+        // Buscar la última consulta completada del mismo paciente (para mostrar como referencia)
+        $consultaAnterior = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha as fecha_agenda,
+                      hc.peso_actual as peso_anterior, hc.altura_actual as altura_anterior, 
+                      hc.imc_actual as imc_anterior, hc.circunferencia_cintura as cintura_anterior,
+                      hc.circunferencia_cadera as cadera_anterior, hc.grasa_corporal as grasa_anterior,
+                      hc.masa_muscular as masa_muscular_anterior')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->join('historial_clinico hc', 'hc.detalle_agenda_id = da.id', 'left')
+            ->where('da.paciente_id', $cita->paciente_id)
+            ->where('da.usuario_id', $usuario_id)
+            ->where('da.estado_cita', 'completada')
+            ->where('da.id !=', $detalleAgendaId) // Excluir la consulta actual
+            ->where('da.fecha_fin_real IS NOT NULL') // Solo consultas terminadas
+            ->orderBy('da.fecha_fin_real', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getRow();
+        
+        $data['consulta_anterior'] = $consultaAnterior;
+
         return view('Modulos/agenda/consulta', $data);
     }
 
@@ -1735,6 +1765,190 @@ class AgendaController extends BaseController
         }
 
         return $this->response->setJSON($proximas);
+    }
+
+    /**
+     * Guardar o actualizar mediciones corporales en historial clínico
+     */
+    public function guardarMediciones()
+    {
+        $this->response->setContentType('application/json');
+        
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $post = $this->request->getPost();
+        $detalleAgendaId = $post['detalle_agenda_id'] ?? null;
+        $pacienteId = $post['paciente_id'] ?? null;
+        $historialId = $post['historial_id'] ?? null;
+
+        if (!$detalleAgendaId || !$pacienteId) {
+            return $this->response->setJSON([
+                'error' => 'Datos incompletos',
+                'message' => 'Faltan datos requeridos (detalle_agenda_id, paciente_id)'
+            ])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+
+        // Verificar que el detalle_agenda pertenece al usuario y tiene el paciente correcto
+        $detalle = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->where('usuario_id', $usuario_id)
+            ->where('paciente_id', $pacienteId)
+            ->get()
+            ->getRow();
+
+        if (!$detalle) {
+            return $this->response->setJSON([
+                'error' => 'No autorizado',
+                'message' => 'No tiene permiso para modificar esta consulta'
+            ])->setStatusCode(403);
+        }
+
+        // Obtener fecha y hora de la cita
+        $agenda = $db->table('agenda')
+            ->where('id', $detalle->agenda_id)
+            ->get()
+            ->getRow();
+
+        $historialModel = new HistorialClinico();
+
+        // Calcular IMC si hay peso y altura
+        $imc_actual = null;
+        if (!empty($post['peso_actual']) && !empty($post['altura_actual'])) {
+            $imc_actual = $historialModel->calcularIMC($post['peso_actual'], $post['altura_actual']);
+        }
+
+        // Calcular suma de pliegues
+        $suma_pliegues = null;
+        $pliegues = [
+            'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular',
+            'pliegue_suprailíaco', 'pliegue_abdominal', 'pliegue_muslo_anterior',
+            'pliegue_pantorrilla_medial'
+        ];
+        $suma = 0;
+        $tiene_pliegues = false;
+        foreach ($pliegues as $pliegue) {
+            if (!empty($post[$pliegue])) {
+                $suma += floatval($post[$pliegue]);
+                $tiene_pliegues = true;
+            }
+        }
+        if ($tiene_pliegues) {
+            $suma_pliegues = round($suma, 2);
+        }
+
+        // Calcular grasa corporal a partir de pliegues (fórmula simplificada)
+        // Nota: Se puede mejorar con fórmulas específicas por género y edad
+        $grasa_corporal_calculada = null;
+        if ($suma_pliegues && !empty($post['peso_actual']) && !empty($post['altura_actual'])) {
+            // Fórmula de Durnin-Womersley simplificada (requiere edad, pero usamos una aproximación)
+            // Por ahora, una fórmula básica basada en suma de pliegues
+            // Esto se puede mejorar con fórmulas más específicas
+            $grasa_corporal_calculada = round(($suma_pliegues * 0.5) + 5, 2); // Fórmula simplificada
+        }
+
+        // Obtener fecha en formato DD-MM-YYYY (igual que agenda y detalle_agenda)
+        $fechaConsulta = $detalle->fecha ?: ($agenda->fecha ?? null);
+        
+        // Si no hay fecha, usar la fecha actual en formato DD-MM-YYYY
+        if (!$fechaConsulta) {
+            $fechaConsulta = date('d-m-Y');
+        }
+        
+        // Asegurar que la fecha esté en formato DD-MM-YYYY
+        // Si viene en YYYY-MM-DD, convertir a DD-MM-YYYY
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $fechaConsulta, $matches)) {
+            $fechaConsulta = $matches[3] . '-' . $matches[2] . '-' . $matches[1]; // Convertir a DD-MM-YYYY
+        } elseif (!preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaConsulta)) {
+            // Si no está en ningún formato reconocido, usar fecha actual
+            $fechaConsulta = date('d-m-Y');
+        }
+
+        $dataHistorial = [
+            'paciente_id' => $pacienteId,
+            'nutricionista_id' => $usuario_id,
+            'agenda_id' => $detalle->agenda_id,
+            'detalle_agenda_id' => $detalleAgendaId,
+            'tipo_registro' => $detalle->tipo_consulta ?? 'consulta',
+            'fecha_consulta' => $fechaConsulta,
+            'hora_consulta' => $detalle->hora_inicio,
+            'peso_actual' => !empty($post['peso_actual']) ? $post['peso_actual'] : null,
+            'altura_actual' => !empty($post['altura_actual']) ? $post['altura_actual'] : null,
+            'imc_actual' => $imc_actual,
+            'circunferencia_cintura' => !empty($post['circunferencia_cintura']) ? $post['circunferencia_cintura'] : null,
+            'circunferencia_cadera' => !empty($post['circunferencia_cadera']) ? $post['circunferencia_cadera'] : null,
+            'grasa_corporal' => !empty($post['grasa_corporal']) ? $post['grasa_corporal'] : null,
+            'masa_muscular' => !empty($post['masa_muscular']) ? $post['masa_muscular'] : null,
+            'pliegue_tricipital' => !empty($post['pliegue_tricipital']) ? $post['pliegue_tricipital'] : null,
+            'pliegue_bicipital' => !empty($post['pliegue_bicipital']) ? $post['pliegue_bicipital'] : null,
+            'pliegue_subescapular' => !empty($post['pliegue_subescapular']) ? $post['pliegue_subescapular'] : null,
+            'pliegue_suprailíaco' => !empty($post['pliegue_suprailíaco']) ? $post['pliegue_suprailíaco'] : null,
+            'pliegue_abdominal' => !empty($post['pliegue_abdominal']) ? $post['pliegue_abdominal'] : null,
+            'pliegue_muslo_anterior' => !empty($post['pliegue_muslo_anterior']) ? $post['pliegue_muslo_anterior'] : null,
+            'pliegue_pantorrilla_medial' => !empty($post['pliegue_pantorrilla_medial']) ? $post['pliegue_pantorrilla_medial'] : null,
+            'suma_pliegues' => $suma_pliegues,
+            'grasa_corporal_calculada' => $grasa_corporal_calculada,
+            'anamnesis' => !empty($post['anamnesis']) ? $post['anamnesis'] : null,
+            'diagnostico' => !empty($post['diagnostico']) ? $post['diagnostico'] : null,
+            'plan_tratamiento' => !empty($post['plan_tratamiento']) ? $post['plan_tratamiento'] : null,
+            'estado' => 'A'
+        ];
+
+        // Sincronizar datos de detalle_agenda si están disponibles
+        if (!empty($detalle->motivo)) {
+            $dataHistorial['motivo_consulta'] = $detalle->motivo;
+        }
+        if (!empty($detalle->notas_consulta)) {
+            $dataHistorial['anamnesis'] = $dataHistorial['anamnesis'] ? 
+                $dataHistorial['anamnesis'] . "\n\n" . $detalle->notas_consulta : 
+                $detalle->notas_consulta;
+        }
+        if (!empty($detalle->objetivos)) {
+            $dataHistorial['diagnostico'] = $dataHistorial['diagnostico'] ? 
+                $dataHistorial['diagnostico'] . "\n\nObjetivos: " . $detalle->objetivos : 
+                "Objetivos: " . $detalle->objetivos;
+        }
+        if (!empty($detalle->plan_alimentacion)) {
+            $dataHistorial['plan_tratamiento'] = $dataHistorial['plan_tratamiento'] ? 
+                $dataHistorial['plan_tratamiento'] . "\n\nPlan Alimentación: " . $detalle->plan_alimentacion : 
+                "Plan Alimentación: " . $detalle->plan_alimentacion;
+        }
+        if (!empty($detalle->recomendaciones)) {
+            $dataHistorial['recomendaciones'] = $detalle->recomendaciones;
+        }
+
+        try {
+            if ($historialId) {
+                // Actualizar registro existente
+                $historialModel->update($historialId, $dataHistorial);
+                $mensaje = 'Mediciones actualizadas correctamente';
+            } else {
+                // Crear nuevo registro
+                $nuevoId = $historialModel->insert($dataHistorial);
+                $mensaje = 'Mediciones guardadas correctamente';
+                $historialId = $nuevoId;
+            }
+
+            $response = $this->response->setJSON([
+                'success' => true,
+                'message' => $mensaje,
+                'historial_id' => $historialId,
+                'csrf_token' => csrf_hash()
+            ]);
+            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+            return $response;
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error al guardar mediciones: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => 'Error al guardar',
+                'message' => 'Ocurrió un error al guardar las mediciones: ' . $e->getMessage()
+            ])->setStatusCode(500);
+        }
     }
 
     /**

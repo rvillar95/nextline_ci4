@@ -418,6 +418,7 @@ exit(); */
                     <?php echo $this->renderSection("historial/registro"); ?>
                     <?php echo $this->renderSection("historial/editar"); ?>
                     <?php echo $this->renderSection("historial/detalle"); ?>
+                    <?php echo $this->renderSection("historial/comparar"); ?>
                     <!-- END Section Historial Clínico -->
                     
                     <!-- Secciones de Pagos -->

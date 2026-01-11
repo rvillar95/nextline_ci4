@@ -13,9 +13,13 @@ class HistorialClinico extends Model
     protected $useSoftDeletes = true;
     protected $protectFields = true;
     protected $allowedFields = [
-        'paciente_id', 'nutricionista_id', 'agenda_id', 'tipo_registro', 'fecha_consulta', 'hora_consulta',
+        'paciente_id', 'nutricionista_id', 'agenda_id', 'detalle_agenda_id', 'tipo_registro', 'fecha_consulta', 'hora_consulta',
         'peso_actual', 'altura_actual', 'imc_actual', 'circunferencia_cintura', 'circunferencia_cadera',
-        'grasa_corporal', 'masa_muscular', 'motivo_consulta', 'anamnesis', 'diagnostico',
+        'grasa_corporal', 'masa_muscular', 
+        'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular', 'pliegue_suprailíaco',
+        'pliegue_abdominal', 'pliegue_muslo_anterior', 'pliegue_pantorrilla_medial',
+        'suma_pliegues', 'grasa_corporal_calculada',
+        'motivo_consulta', 'anamnesis', 'diagnostico',
         'plan_tratamiento', 'recomendaciones', 'observaciones', 'proxima_cita', 'estado'
     ];
 
