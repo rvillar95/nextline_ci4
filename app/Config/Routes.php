@@ -262,11 +262,20 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('calendario', 'Dashboard\AgendaController::calendario');
         $routes2->get('getAgendas', 'Dashboard\AgendaController::getAgendas');
         $routes2->get('getEventos', 'Dashboard\AgendaController::getEventos');
+        $routes2->get('getDetalleCita', 'Dashboard\AgendaController::getDetalleCita');
         $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');
         $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
         $routes2->post('crearHorarios', 'Dashboard\AgendaController::crearHorarios');
         $routes2->post('eliminarHorarios', 'Dashboard\AgendaController::eliminarHorarios');
         $routes2->post('actualizarModalidad', 'Dashboard\AgendaController::actualizarModalidad');
+        $routes2->post('actualizarNotasNutricionista', 'Dashboard\AgendaController::actualizarNotasNutricionista');
+        $routes2->get('consulta', 'Dashboard\AgendaController::consulta');
+        $routes2->post('iniciarConsulta', 'Dashboard\AgendaController::iniciarConsulta');
+        $routes2->post('terminarConsulta', 'Dashboard\AgendaController::terminarConsulta');
+        $routes2->post('guardarNotasConsulta', 'Dashboard\AgendaController::guardarNotasConsulta');
+        $routes2->get('estadisticas', 'Dashboard\AgendaController::estadisticas');
+        $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
+        $routes2->get('getEstadisticas', 'Dashboard\AgendaController::getEstadisticas');
         $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
     });
@@ -304,6 +313,13 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+// Rutas públicas para confirmar/cancelar citas desde email
+$routes->get('confirmar-cita', 'Dashboard\AgendaController::confirmarDesdeEmail');
+$routes->get('cancelar-cita', 'Dashboard\AgendaController::cancelarDesdeEmail');
+
+// Prueba de Email (solo para desarrollo local)
+$routes->get('test-email', 'TestEmail::index');
 
 // Políticas
 $routes->get('politica-privacidad', 'Web\PoliticasController::privacidad');

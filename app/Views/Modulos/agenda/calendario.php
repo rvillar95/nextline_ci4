@@ -37,26 +37,136 @@
     
     .fc-daygrid-event {
         border-radius: 6px;
-        padding: 3px 6px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 4px 8px;
+        border: none !important;
         font-weight: 500;
         transition: all 0.2s ease;
+    }
+    
+    /* Aplicar color de fondo directamente - FullCalendar usa el atributo 'color' */
+    .fc-event {
+        /* No sobrescribir, dejar que FullCalendar y eventDidMount manejen los colores */
     }
     
     .fc-daygrid-event:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         opacity: 0.95;
+        filter: brightness(1.1);
     }
     
     .fc-event-title {
         font-size: 0.9em;
         line-height: 1.3;
+        color: #FFFFFF !important; /* Texto blanco para todos los estados */
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Sombra para mejor legibilidad */
     }
     
-    /* Mejorar contraste para accesibilidad */
+    /* Tooltip personalizado para eventos */
+    .fc-event-tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85em;
+        z-index: 10000;
+        pointer-events: none;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        margin-top: 5px;
+    }
+    
+    .fc-event-tooltip.show {
+        opacity: 1;
+    }
+    
+    .fc-event-tooltip::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: 15px;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 5px solid rgba(0, 0, 0, 0.9);
+    }
+    
+    .fc-event-tooltip .tooltip-estado {
+        font-weight: 600;
+        margin-right: 8px;
+    }
+    
+    .fc-event-tooltip .tooltip-separator {
+        margin: 0 8px;
+        opacity: 0.5;
+    }
+    
+    .fc-event-tooltip .tooltip-modalidad {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-right: 6px;
+    }
+    
+    .fc-event-tooltip .tooltip-duracion {
+        opacity: 0.9;
+    }
+    
+    /* Asegurar que el texto sea blanco en todos los eventos */
+    .fc-event-time,
+    .fc-event-title-container {
+        color: #FFFFFF !important;
+    }
+    
+    /* Mejorar contraste para accesibilidad - mantener pero ajustar */
     .fc-event {
-        filter: brightness(1.05);
+        filter: brightness(1.02);
+    }
+    
+    /* Estilo especial para citas completadas - hacerlas más visibles */
+    .fc-event-completada {
+        border-width: 2px !important;
+        border-style: solid !important;
+        border-color: #607D8B !important;
+        background: repeating-linear-gradient(
+            45deg,
+            #90A4AE,
+            #90A4AE 10px,
+            #A5B9C7 10px,
+            #A5B9C7 20px
+        ) !important;
+        opacity: 0.9;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(96, 125, 139, 0.3);
+    }
+    
+    .fc-event-completada:hover {
+        opacity: 1;
+        box-shadow: 0 3px 6px rgba(96, 125, 139, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    /* Alternativa más sutil: solo borde más grueso y sombra */
+    .fc-event-completada-alt {
+        border-width: 3px !important;
+        border-color: #607D8B !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(96, 125, 139, 0.4);
+        position: relative;
+    }
+    
+    .fc-event-completada-alt::after {
+        content: '✓';
+        position: absolute;
+        right: 4px;
+        top: 2px;
+        font-size: 0.8em;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 </style>
 
@@ -97,8 +207,8 @@
                                         </h6>
                                         <div class="row g-2">
                                             <div class="col-6 col-md-4">
-                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(107, 203, 119, 0.1);">
-                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #6BCB77; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(123, 203, 135, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #7BCB87; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                                     <span class="small fw-semibold">Disponible</span>
                                                 </div>
                                             </div>
@@ -109,8 +219,14 @@
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-4">
-                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255, 167, 38, 0.1);">
-                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #FFA726; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255, 183, 77, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #FFB74D; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Pendiente</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255, 152, 0, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #FF9800; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                                     <span class="small fw-semibold">En Proceso</span>
                                                 </div>
                                             </div>
@@ -428,6 +544,33 @@
     </div>
 </div>
 
+<!-- Modal para ver información completa de la cita -->
+<div class="modal fade" id="modalVerCita" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #4A90E2 0%, #6BCB77 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i> Información de la Cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenidoCita">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando información...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para editar modalidad de un horario -->
 <div class="modal fade" id="modalEditarModalidad" tabindex="-1">
     <div class="modal-dialog">
@@ -624,15 +767,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 $('#horario_elegir_accion').text(fechaFormateada + ' ' + hora);
                 $('#modalElegirAccion').modal('show');
             } else {
-                // Si ya tiene paciente, mostrar información
-                var mensaje = 'Cita: ' + info.event.title;
-                if (estadoCita && estadoCita !== 'disponible') {
-                    mensaje += '<br>Estado: ' + estadoCita.charAt(0).toUpperCase() + estadoCita.slice(1).replace('_', ' ');
-                }
-                toastr.info(mensaje, 'Información de Cita', {
-                    timeOut: 4000,
-                    progressBar: true
-                });
+                // Si ya tiene paciente, cargar y mostrar información completa
+                cargarInformacionCita(info.event.id);
             }
         },
         dateClick: function(info) {
@@ -648,19 +784,120 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventDidMount: function(info) {
-            // Personalizar el estilo de los eventos según su estado
-            if (info.event.extendedProps.estado_cita) {
-                var estado = info.event.extendedProps.estado_cita;
-                var color = {
-                    'agendada': '#3498db',
-                    'confirmada': '#2ecc71',
-                    'en_proceso': '#f39c12',
-                    'completada': '#95a5a6',
-                    'cancelada': '#e74c3c',
-                    'no_asistio': '#9b59b6'
-                }[estado] || '#95a5a6';
-                info.el.style.backgroundColor = color;
-                info.el.style.borderColor = color;
+            // PRIMERO: Usar el color que viene del servidor (FullCalendar lo pasa aquí)
+            var colorFondo = info.event.backgroundColor || info.event.color;
+            
+            // Si no hay color del servidor, usar la paleta según el estado
+            if (!colorFondo || colorFondo === 'inherit' || colorFondo === 'transparent') {
+                var estado = info.event.extendedProps.estado_cita || 'disponible';
+                
+                // Paleta de colores profesional (COLOR = ESTADO)
+                // Optimizada para uso prolongado (ergonomía visual)
+                var coloresPaleta = {
+                    'disponible': '#7BCB87',      // Verde suave (saturación reducida para fatiga visual)
+                    'pendiente': '#FFB74D',        // Naranjo claro - esperando confirmación del paciente
+                    'confirmada': '#4A90E2',      // Azul confiable - confirmada por paciente
+                    'en_proceso': '#FF9800',       // Naranjo intenso - consulta en curso
+                    'completada': '#90A4AE',      // Gris azulado - consulta finalizada
+                    'cancelada': '#E57373',        // Rojo suave
+                    'no_asistio': '#BA68C8',       // Morado suave
+                    'bloqueado': '#BDBDBD',        // Gris claro
+                    'no_disponible': '#BDBDBD'     // Gris claro
+                };
+                
+                colorFondo = coloresPaleta[estado] || '#BDBDBD';
+            }
+            
+            var estado = info.event.extendedProps.estado_cita;
+            
+            // Aplicar color al fondo completo del evento - FORZAR con !important
+            if (colorFondo) {
+                info.el.style.setProperty('background-color', colorFondo, 'important');
+                info.el.style.setProperty('border-color', colorFondo, 'important');
+            }
+            
+            info.el.style.borderWidth = '0';
+            info.el.style.borderRadius = '6px';
+            
+            // Asegurar que el texto sea blanco con buena legibilidad
+            var textoElementos = info.el.querySelectorAll('.fc-event-title, .fc-event-time, .fc-event-title-container, .fc-event-main');
+            textoElementos.forEach(function(el) {
+                el.style.setProperty('color', '#FFFFFF', 'important');
+                el.style.textShadow = '0 1px 2px rgba(0, 0, 0, 0.3)';
+                el.style.fontWeight = '600';
+            });
+            
+            // Para citas completadas, agregar estilo especial
+            if (estado === 'completada') {
+                info.el.classList.add('fc-event-completada-alt');
+                info.el.style.borderWidth = '2px';
+                info.el.style.borderColor = '#607D8B';
+            }
+        },
+        eventMouseEnter: function(info) {
+            // Solo mostrar tooltip para bloques disponibles
+            var estado = info.event.extendedProps.estado_cita || 'disponible';
+            var pacienteId = info.event.extendedProps.paciente_id;
+            
+            if (!pacienteId && (estado === 'disponible' || !estado || estado === null)) {
+                var modalidadId = info.event.extendedProps.modalidad_id || 3;
+                var inicio = new Date(info.event.start);
+                var fin = new Date(info.event.end);
+                var duracionMinutos = Math.round((fin - inicio) / (1000 * 60));
+                
+                // Iconos de modalidad
+                var iconoModalidad = '';
+                var nombreModalidad = '';
+                if (modalidadId == 1) {
+                    iconoModalidad = '🏥';
+                    nombreModalidad = 'Presencial';
+                } else if (modalidadId == 2) {
+                    iconoModalidad = '💻';
+                    nombreModalidad = 'Online';
+                } else {
+                    iconoModalidad = '❔';
+                    nombreModalidad = 'No Definido';
+                }
+                
+                // Crear tooltip
+                var tooltip = document.createElement('div');
+                tooltip.className = 'fc-event-tooltip';
+                tooltip.innerHTML = '<span class="tooltip-estado">Disponible</span>' +
+                    '<span class="tooltip-separator">|</span>' +
+                    '<span class="tooltip-modalidad">' + iconoModalidad + ' ' + nombreModalidad + '</span>' +
+                    '<span class="tooltip-separator">•</span>' +
+                    '<span class="tooltip-duracion">' + duracionMinutos + ' min</span>';
+                
+                // Posicionar tooltip
+                var rect = info.el.getBoundingClientRect();
+                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+                
+                tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
+                tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2)) + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                
+                document.body.appendChild(tooltip);
+                
+                // Mostrar tooltip con animación
+                setTimeout(function() {
+                    tooltip.classList.add('show');
+                }, 10);
+                
+                // Guardar referencia para limpiar
+                info.el._tooltip = tooltip;
+            }
+        },
+        eventMouseLeave: function(info) {
+            // Remover tooltip si existe
+            if (info.el._tooltip) {
+                info.el._tooltip.classList.remove('show');
+                setTimeout(function() {
+                    if (info.el._tooltip && info.el._tooltip.parentNode) {
+                        info.el._tooltip.parentNode.removeChild(info.el._tooltip);
+                    }
+                    info.el._tooltip = null;
+                }, 200);
             }
         }
     });
@@ -887,7 +1124,7 @@ $('#formAgendar').on('submit', function(e) {
             actualizarTokenCSRF(xhr);
             
             if (response.success) {
-                toastr.success('Cita agendada con éxito', 'Éxito', {
+                toastr.success('Cita agendada con éxito. Se envió un correo al paciente para confirmación.', 'Éxito', {
                     timeOut: 3000,
                     progressBar: true
                 });
@@ -1029,6 +1266,333 @@ $('#formEditarModalidad').on('submit', function(e) {
         }
     });
 });
+
+// Función para cargar información completa de una cita
+function cargarInformacionCita(detalleAgendaId) {
+    $('#modalVerCita').modal('show');
+    $('#contenidoCita').html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando información...</p></div>');
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/getDetalleCita') ?>',
+        type: 'GET',
+        data: { id: detalleAgendaId },
+        dataType: 'json',
+        success: function(response) {
+            if (response.error) {
+                $('#contenidoCita').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>' + response.error + '</div>');
+                return;
+            }
+            
+            // Construir HTML con la información
+            var html = '<div class="row">';
+            
+            // Información básica de la cita
+            html += '<div class="col-md-6 mb-3">';
+            html += '<div class="card border-0 shadow-sm h-100">';
+            html += '<div class="card-body">';
+            html += '<h6 class="card-title text-primary"><i class="fas fa-calendar-alt me-2"></i>Información de la Cita</h6>';
+            html += '<hr>';
+            html += '<p class="mb-2"><strong>Fecha:</strong> ' + response.fecha + '</p>';
+            html += '<p class="mb-2"><strong>Hora:</strong> ' + response.hora_inicio + ' - ' + response.hora_fin + '</p>';
+            html += '<p class="mb-2"><strong>Modalidad:</strong> ';
+            if (response.modalidad.id == 1) {
+                html += '<span class="badge bg-info">🏥 ' + response.modalidad.nombre + '</span>';
+            } else if (response.modalidad.id == 2) {
+                html += '<span class="badge bg-primary">💻 ' + response.modalidad.nombre + '</span>';
+            } else {
+                html += '<span class="badge bg-secondary">❔ ' + response.modalidad.nombre + '</span>';
+            }
+            html += '</p>';
+            html += '<p class="mb-2"><strong>Estado del Horario:</strong> ';
+            html += response.estado == 'disponible' ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-warning">Ocupado</span>';
+            html += '</p>';
+            if (response.estado_cita) {
+                var estadoBadge = {
+                    'pendiente': '<span class="badge" style="background-color: #FFA726; color: white;">Pendiente</span>',
+                    'confirmada': '<span class="badge" style="background-color: #4A90E2; color: white;">Confirmada</span>',
+                    'en_proceso': '<span class="badge" style="background-color: #FFA726; color: white;">En Proceso</span>',
+                    'completada': '<span class="badge" style="background-color: #90A4AE; color: white;">Completada</span>',
+                    'cancelada': '<span class="badge bg-danger">Cancelada</span>',
+                    'no_asistio': '<span class="badge bg-secondary">No Asistió</span>'
+                }[response.estado_cita] || '<span class="badge bg-secondary">' + response.estado_cita + '</span>';
+                html += '<p class="mb-2"><strong>Estado de la Cita:</strong> ' + estadoBadge + '</p>';
+            }
+            html += '</div></div></div>';
+            
+            // Información del paciente (si existe)
+            if (response.paciente) {
+                html += '<div class="col-md-6 mb-3">';
+                html += '<div class="card border-0 shadow-sm h-100">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-success"><i class="fas fa-user me-2"></i>Información del Paciente</h6>';
+                html += '<hr>';
+                html += '<p class="mb-2"><strong>Nombre:</strong> ' + response.paciente.nombre + '</p>';
+                if (response.paciente.rut_dni) {
+                    html += '<p class="mb-2"><strong>RUT/DNI:</strong> ' + response.paciente.rut_dni + '</p>';
+                }
+                if (response.paciente.telefono) {
+                    html += '<p class="mb-2"><strong>Teléfono:</strong> <a href="tel:' + response.paciente.telefono + '">' + response.paciente.telefono + '</a></p>';
+                }
+                if (response.paciente.email) {
+                    html += '<p class="mb-2"><strong>Email:</strong> <a href="mailto:' + response.paciente.email + '">' + response.paciente.email + '</a></p>';
+                }
+                html += '</div></div></div>';
+            }
+            
+            html += '</div>';
+            
+            // Información adicional de la consulta
+            if (response.tipo_consulta || response.motivo || response.observaciones) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-info"><i class="fas fa-file-medical me-2"></i>Detalles de la Consulta</h6>';
+                html += '<hr>';
+                if (response.tipo_consulta) {
+                    var tipoConsulta = response.tipo_consulta.charAt(0).toUpperCase() + response.tipo_consulta.slice(1).replace('_', ' ');
+                    html += '<p class="mb-2"><strong>Tipo de Consulta:</strong> ' + tipoConsulta + '</p>';
+                }
+                if (response.motivo) {
+                    html += '<p class="mb-2"><strong>Motivo:</strong></p>';
+                    html += '<p class="text-muted">' + response.motivo + '</p>';
+                }
+                if (response.observaciones) {
+                    html += '<p class="mb-2"><strong>Observaciones:</strong></p>';
+                    html += '<p class="text-muted">' + response.observaciones + '</p>';
+                }
+                html += '</div></div></div></div>';
+            }
+            
+            // Información de fechas importantes
+            if (response.fecha_confirmacion || response.fecha_cancelacion) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-warning"><i class="fas fa-clock me-2"></i>Historial</h6>';
+                html += '<hr>';
+                if (response.fecha_confirmacion) {
+                    html += '<p class="mb-2"><strong>Fecha de Confirmación:</strong> ' + response.fecha_confirmacion + '</p>';
+                }
+                if (response.fecha_cancelacion) {
+                    html += '<p class="mb-2"><strong>Fecha de Cancelación:</strong> ' + response.fecha_cancelacion + '</p>';
+                    if (response.motivo_cancelacion) {
+                        html += '<p class="mb-2"><strong>Motivo de Cancelación:</strong></p>';
+                        html += '<p class="text-muted">' + response.motivo_cancelacion + '</p>';
+                    }
+                }
+                html += '</div></div></div></div>';
+            }
+            
+            // Mostrar notas de consulta si existen (con formato HTML)
+            if (response.notas_consulta) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm" style="border-left: 4px solid #667eea !important;">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-primary"><i class="fas fa-sticky-note me-2"></i>Notas de la Consulta</h6>';
+                html += '<hr>';
+                html += '<div class="notas-consulta">' + response.notas_consulta + '</div>';
+                html += '</div></div></div></div>';
+            }
+            
+            // Mostrar objetivos si existen
+            if (response.objetivos) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm" style="border-left: 4px solid #6BCB77 !important;">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-success"><i class="fas fa-bullseye me-2"></i>Objetivos Establecidos</h6>';
+                html += '<hr>';
+                html += '<div class="objetivos-consulta">' + response.objetivos + '</div>';
+                html += '</div></div></div></div>';
+            }
+            
+            // Mostrar plan de alimentación si existe
+            if (response.plan_alimentacion) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm" style="border-left: 4px solid #4A90E2 !important;">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-info"><i class="fas fa-utensils me-2"></i>Plan de Alimentación</h6>';
+                html += '<hr>';
+                html += '<div class="plan-alimentacion">' + response.plan_alimentacion + '</div>';
+                html += '</div></div></div></div>';
+            }
+            
+            // Mostrar recomendaciones si existen
+            if (response.recomendaciones) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12">';
+                html += '<div class="card border-0 shadow-sm" style="border-left: 4px solid #FFA726 !important;">';
+                html += '<div class="card-body">';
+                html += '<h6 class="card-title text-warning"><i class="fas fa-lightbulb me-2"></i>Recomendaciones</h6>';
+                html += '<hr>';
+                html += '<div class="recomendaciones">' + response.recomendaciones + '</div>';
+                html += '</div></div></div></div>';
+            }
+            
+            // Botón para iniciar consulta (solo si está confirmada y no iniciada)
+            if (response.paciente && response.estado_cita === 'confirmada' && !response.fecha_inicio_real) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12 text-center">';
+                html += '<a href="<?= base_url('dashboard/agenda/consulta?id=') ?>' + response.id + '" class="btn btn-success btn-lg">';
+                html += '<i class="fas fa-play-circle me-2"></i>Iniciar Consulta';
+                html += '</a>';
+                html += '</div></div>';
+            }
+            
+            // Si la consulta está en curso, mostrar botón para continuar
+            if (response.paciente && response.fecha_inicio_real && !response.fecha_fin_real) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12 text-center">';
+                html += '<a href="<?= base_url('dashboard/agenda/consulta?id=') ?>' + response.id + '" class="btn btn-warning btn-lg">';
+                html += '<i class="fas fa-clock me-2"></i>Consulta en Curso - Continuar';
+                html += '</a>';
+                html += '</div></div>';
+            }
+            
+            // Si la consulta está completada, mostrar botón para ver detalles
+            if (response.paciente && response.estado_cita === 'completada' && response.fecha_fin_real) {
+                html += '<div class="row mt-3">';
+                html += '<div class="col-12 text-center">';
+                html += '<a href="<?= base_url('dashboard/agenda/consulta?id=') ?>' + response.id + '" class="btn btn-info btn-lg">';
+                html += '<i class="fas fa-eye me-2"></i>Ver Detalles de la Consulta';
+                html += '</a>';
+                html += '</div></div>';
+            }
+            
+            // Sección de Notas del Nutricionista (siempre visible, editable)
+            html += '<div class="row mt-3">';
+            html += '<div class="col-12">';
+            html += '<div class="card border-0 shadow-sm" style="border-left: 4px solid #FFA726 !important;">';
+            html += '<div class="card-body">';
+            html += '<h6 class="card-title text-warning"><i class="fas fa-sticky-note me-2"></i>Notas y Recordatorios</h6>';
+            html += '<hr>';
+            html += '<form id="formNotasNutricionista" onsubmit="guardarNotasNutricionista(event, ' + response.id + ')">';
+            html += '<div class="mb-3">';
+            html += '<label for="notas_nutricionista" class="form-label"><small class="text-muted">Puntos clave, recordatorios o notas para esta consulta:</small></label>';
+            html += '<textarea class="form-control" id="notas_nutricionista" name="notas_nutricionista" rows="4" placeholder="Ej: Revisar resultados de análisis, recordar hablar sobre dieta sin gluten, preparar plan de ejercicios...">' + (response.notas_nutricionista || '') + '</textarea>';
+            html += '<small class="form-text text-muted">Estas notas son privadas y solo visibles para ti.</small>';
+            html += '</div>';
+            html += '<div class="d-flex justify-content-end">';
+            html += '<button type="submit" class="btn btn-warning btn-sm">';
+            html += '<i class="fas fa-save me-2"></i>Guardar Notas';
+            html += '</button>';
+            html += '</div>';
+            html += '</form>';
+            html += '</div></div></div></div>';
+            
+            $('#contenidoCita').html(html);
+        },
+        error: function(xhr) {
+            var errorMsg = 'Error al cargar la información de la cita';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                errorMsg = xhr.responseJSON.error;
+            }
+            $('#contenidoCita').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-2"></i>' + errorMsg + '</div>');
+        }
+    });
+}
+
+// Función para guardar las notas del nutricionista
+function guardarNotasNutricionista(event, detalleAgendaId) {
+    event.preventDefault();
+    
+    var notas = $('#notas_nutricionista').val();
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name';
+    
+    var formData = {
+        detalle_agenda_id: detalleAgendaId,
+        notas_nutricionista: notas,
+        [csrfName]: csrfToken
+    };
+    
+    var $submitBtn = $('#formNotasNutricionista button[type="submit"]');
+    var originalText = $submitBtn.html();
+    $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Guardando...');
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/actualizarNotasNutricionista') ?>',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
+        data: formData,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            // Actualizar token CSRF después de petición exitosa
+            actualizarTokenCSRF(xhr);
+            
+            if (response.success) {
+                toastr.success(response.message || 'Notas guardadas correctamente', 'Éxito', {
+                    timeOut: 3000,
+                    progressBar: true
+                });
+                $submitBtn.prop('disabled', false).html(originalText);
+            } else {
+                toastr.error(response.error || 'Error al guardar las notas', 'Error', {
+                    timeOut: 4000,
+                    progressBar: true
+                });
+                $submitBtn.prop('disabled', false).html(originalText);
+            }
+        },
+        error: function(xhr) {
+            // Intentar actualizar token incluso en errores
+            actualizarTokenCSRF(xhr);
+            
+            var errorMsg = 'Error al guardar las notas';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            toastr.error(errorMsg, 'Error', {
+                timeOut: 4000,
+                progressBar: true
+            });
+            $submitBtn.prop('disabled', false).html(originalText);
+        }
+    });
+}
+
+// Sistema de notificaciones para consultas próximas
+function verificarConsultasProximas() {
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/getConsultasProximas') ?>',
+        type: 'GET',
+        data: { minutos: 15 }, // Notificar 15 minutos antes
+        dataType: 'json',
+        success: function(consultas) {
+            if (consultas && consultas.length > 0) {
+                consultas.forEach(function(cita) {
+                    var mensaje = 'Consulta próxima: ' + cita.paciente + ' a las ' + cita.hora;
+                    if (cita.minutos_restantes <= 5) {
+                        toastr.warning(mensaje + ' (en ' + cita.minutos_restantes + ' minutos)', '¡Consulta Próxima!', {
+                            timeOut: 10000,
+                            progressBar: true
+                        });
+                    } else {
+                        toastr.info(mensaje + ' (en ' + cita.minutos_restantes + ' minutos)', 'Recordatorio', {
+                            timeOut: 5000,
+                            progressBar: true
+                        });
+                    }
+                });
+            }
+        },
+        error: function(xhr) {
+            console.error('Error al verificar consultas próximas:', xhr);
+        }
+    });
+}
+
+// Verificar consultas próximas cada 5 minutos
+setInterval(verificarConsultasProximas, 300000); // 5 minutos
+// Verificar inmediatamente al cargar (después de 5 segundos)
+setTimeout(verificarConsultasProximas, 5000);
 
 </script>
 

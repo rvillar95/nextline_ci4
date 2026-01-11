@@ -18,11 +18,11 @@
 
 | Estado | Color HEX | Descripción | Uso |
 |--------|-----------|-------------|-----|
-| **Disponible** | `#6BCB77` | Verde suave | Horarios libres que pueden ser agendados |
+| **Disponible** | `#7BCB87` | Verde suave (saturación reducida) | Horarios libres que pueden ser agendados |
 | **Confirmada** | `#4A90E2` | Azul confiable | Citas confirmadas por el paciente |
 | **Agendada** | `#4A90E2` | Azul confiable | Citas agendadas (mismo que confirmada) |
-| **En Proceso** | `#FFA726` | Naranjo cálido | Cita en curso o pendiente de acción |
-| **Pendiente** | `#FFA726` | Naranjo cálido | Estado intermedio (mismo que en proceso) |
+| **Pendiente** | `#FFB74D` | Naranjo claro | Esperando confirmación del paciente |
+| **En Proceso** | `#FF9800` | Naranjo intenso | Cita en curso, consulta activa |
 | **Completada** | `#90A4AE` | Gris azulado | Cita finalizada exitosamente |
 | **Cancelada** | `#E57373` | Rojo suave | Cita cancelada (no agresivo) |
 | **No Asistió** | `#BA68C8` | Morado suave | Paciente no se presentó |

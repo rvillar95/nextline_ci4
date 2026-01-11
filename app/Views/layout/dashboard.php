@@ -402,6 +402,8 @@ exit(); */
                     <?php echo $this->renderSection("agenda/lista"); ?>
                     <?php echo $this->renderSection("agenda/gestionar"); ?>
                     <?php echo $this->renderSection("agenda/calendario"); ?>
+                    <?php echo $this->renderSection("agenda/consulta"); ?>
+                    <?php echo $this->renderSection("agenda/estadisticas"); ?>
                     <!-- END Section Agenda -->
                     
                     <!-- Secciones de Documentos -->
