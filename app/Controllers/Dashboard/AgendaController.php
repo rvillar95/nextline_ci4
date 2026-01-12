@@ -8,6 +8,8 @@ use App\Models\Paciente;
 use App\Models\HistorialClinico;
 use App\Models\ModuloDetalle;
 use App\Traits\MaintainsFilters;
+use App\Libraries\WhatsAppService;
+use App\Libraries\CalendarService;
 use Config\Services;
 
 class AgendaController extends BaseController
@@ -443,13 +445,24 @@ class AgendaController extends BaseController
             }
 
             if ($updated) {
-                // Enviar email de confirmación al paciente
-                try {
-                    $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
-                } catch (\Exception $e) {
-                    // No fallar el agendamiento si el email falla, solo loguear
-                    log_message('error', 'Error al enviar email de confirmación: ' . $e->getMessage());
+                // Verificar configuración del usuario para enviar email
+                $configuracionModel = new \App\Models\UsuarioConfiguracion();
+                $configuracion = $configuracionModel->obtenerConfiguracion($usuario_id);
+                
+                // Enviar email de confirmación al paciente (solo si está habilitado en configuraciones)
+                if ($configuracion['enviar_email'] ?? 1) {
+                    try {
+                        $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
+                    } catch (\Exception $e) {
+                        // No fallar el agendamiento si el email falla, solo loguear
+                        log_message('error', 'Error al enviar email de confirmación: ' . $e->getMessage());
+                    }
+                } else {
+                    log_message('info', 'Email deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
                 }
+
+                // El evento del calendario se crea cuando el paciente confirma desde el email
+                // (similar a cómo se envía el WhatsApp)
 
                 $response = $this->response->setJSON([
                     'success' => true, 
@@ -521,6 +534,33 @@ class AgendaController extends BaseController
             ]);
 
         if ($updated) {
+            // Obtener configuraciones del nutricionista
+            $configuracionModel = new \App\Models\UsuarioConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracion($usuario_id);
+
+            // Enviar WhatsApp cuando se confirma la cita (solo si está habilitado)
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                try {
+                    $this->enviarWhatsAppConfirmacion($id, $detalle->paciente_id);
+                } catch (\Exception $e) {
+                    log_message('error', 'Error al enviar WhatsApp de confirmación: ' . $e->getMessage());
+                }
+            } else {
+                log_message('info', 'WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
+            }
+
+            // Crear evento en el calendario del nutricionista cuando se confirma manualmente (solo si está habilitado)
+            if ($configuracion['crear_evento_calendario'] ?? 1) {
+                try {
+                    $this->crearEventoCalendario($id, $usuario_id);
+                } catch (\Exception $e) {
+                    // No fallar la confirmación si el calendario falla, solo loguear
+                    log_message('error', 'Error al crear evento en calendario desde confirmación manual: ' . $e->getMessage());
+                }
+            } else {
+                log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuario_id);
+            }
+
             $response = $this->response->setJSON([
                 'success' => true, 
                 'message' => 'Cita confirmada',
@@ -1203,6 +1243,34 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Enviar confirmación de cita por WhatsApp
+     */
+    private function enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId)
+    {
+        // Verificar si WhatsApp está configurado
+        if (empty(env('WHATSAPP_PROVIDER'))) {
+            log_message('debug', 'WhatsApp no configurado, omitiendo envío');
+            return false;
+        }
+
+        try {
+            $whatsappService = new WhatsAppService();
+            $resultado = $whatsappService->enviarConfirmacionCita($detalleAgendaId, $pacienteId);
+            
+            if ($resultado['success']) {
+                log_message('info', 'WhatsApp de confirmación enviado para cita ID: ' . $detalleAgendaId);
+                return true;
+            } else {
+                log_message('warning', 'Error al enviar WhatsApp: ' . ($resultado['error'] ?? 'Error desconocido'));
+                return false;
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Excepción al enviar WhatsApp: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Confirmar cita desde el email (público, sin autenticación)
      */
     public function confirmarDesdeEmail()
@@ -1293,6 +1361,39 @@ class AgendaController extends BaseController
                     'estado_cita' => 'confirmada',
                     'fecha_confirmacion' => date('Y-m-d H:i:s')
                 ]);
+
+            // Obtener usuario_id del nutricionista para crear el evento en su calendario
+            $usuarioId = $cita->usuario_id ?? null;
+
+            // Obtener configuraciones del nutricionista
+            $configuracionModel = new \App\Models\UsuarioConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+
+            // Enviar WhatsApp de confirmación cuando el paciente confirma desde el email (solo si está habilitado)
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                try {
+                    $this->enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId);
+                } catch (\Exception $e) {
+                    // No fallar la confirmación si WhatsApp falla, solo loguear
+                    log_message('error', 'Error al enviar WhatsApp después de confirmación: ' . $e->getMessage());
+                }
+            } else {
+                log_message('info', 'WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
+            }
+
+            // Crear evento en el calendario del nutricionista cuando el paciente confirma (solo si está habilitado)
+            if ($usuarioId && ($configuracion['crear_evento_calendario'] ?? 1)) {
+                try {
+                    $this->crearEventoCalendario($detalleAgendaId, $usuarioId);
+                } catch (\Exception $e) {
+                    // No fallar la confirmación si el calendario falla, solo loguear
+                    log_message('error', 'Error al crear evento en calendario desde confirmación email: ' . $e->getMessage());
+                }
+            } else {
+                if (!($configuracion['crear_evento_calendario'] ?? 1)) {
+                    log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuarioId);
+                }
+            }
 
             return view('emails/respuesta_cita', [
                 'exito' => true,
@@ -2069,5 +2170,286 @@ class AgendaController extends BaseController
             'graficos' => $graficos,
             'consultas' => $tablaData
         ]);
+    }
+
+    /**
+     * Iniciar autorización OAuth2 con calendario
+     */
+    public function conectarCalendario()
+    {
+        // ============================================
+        // LOGS DE DEBUGGING - INICIO DE CONEXIÓN
+        // ============================================
+        log_message('info', '========================================');
+        log_message('info', 'CONECTAR CALENDARIO EJECUTADO');
+        log_message('info', '========================================');
+        log_message('info', 'Timestamp: ' . date('Y-m-d H:i:s'));
+        log_message('info', 'URL actual: ' . current_url());
+        
+        if (!session()->get('usuario')) {
+            log_message('error', 'No hay sesión de usuario');
+            return redirect()->to(base_url('login'));
+        }
+
+        $usuarioId = session()->get('usuario')['id'];
+        log_message('info', 'Usuario ID: ' . $usuarioId);
+        
+        try {
+            $calendarService = new CalendarService($usuarioId);
+            $authUrl = $calendarService->getAuthUrl($usuarioId);
+            
+            log_message('info', 'URL de autorización generada: ' . $authUrl);
+            log_message('info', 'Redirigiendo a Google...');
+            log_message('info', '========================================');
+            
+            return redirect()->to($authUrl);
+        } catch (\Exception $e) {
+            log_message('error', 'Error al conectar calendario: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return redirect()->back()->with('error', 'Error al conectar con el calendario: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Callback de OAuth2 después de autorizar
+     */
+    public function calendarCallback()
+    {
+        // ============================================
+        // LOGS DE DEBUGGING - INICIO DEL CALLBACK
+        // ============================================
+        log_message('info', '========================================');
+        log_message('info', 'CALLBACK DE CALENDARIO EJECUTADO');
+        log_message('info', '========================================');
+        log_message('info', 'Timestamp: ' . date('Y-m-d H:i:s'));
+        log_message('info', 'IP del cliente: ' . $this->request->getIPAddress());
+        log_message('info', 'URL completa: ' . current_url());
+        log_message('info', 'Método HTTP: ' . $this->request->getMethod());
+        log_message('info', 'GET params: ' . json_encode($this->request->getGet()));
+        log_message('info', '========================================');
+        
+        $code = $this->request->getGet('code');
+        $state = $this->request->getGet('state');
+        $error = $this->request->getGet('error');
+        
+        log_message('info', 'Code presente: ' . ($code ? 'SÍ (' . substr($code, 0, 20) . '...)' : 'NO'));
+        log_message('info', 'State presente: ' . ($state ? 'SÍ (' . substr($state, 0, 20) . '...)' : 'NO'));
+        log_message('info', 'Error presente: ' . ($error ? 'SÍ (' . $error . ')' : 'NO'));
+        
+        // Si hay un error de Google
+        if ($error) {
+            log_message('error', 'Error de Google OAuth: ' . $error);
+            return redirect()->to(base_url('dashboard/agenda/calendario'))->with('error', 'Error de autorización: ' . $error);
+        }
+        
+        if (!$code || !$state) {
+            log_message('error', 'Callback sin código o state. Code: ' . ($code ? 'presente' : 'ausente') . ', State: ' . ($state ? 'presente' : 'ausente'));
+            log_message('error', 'IP del cliente: ' . $this->request->getIPAddress());
+            return redirect()->to(base_url('dashboard/agenda/calendario'))->with('error', 'Error en la autorización: faltan parámetros');
+        }
+        
+        try {
+            // Decodificar y validar state
+            $stateDecoded = base64_decode($state, true);
+            if ($stateDecoded === false) {
+                log_message('error', 'State no es base64 válido. IP: ' . $this->request->getIPAddress());
+                throw new \Exception('State inválido: formato incorrecto');
+            }
+            
+            $stateData = json_decode($stateDecoded, true);
+            
+            if (!$stateData || !is_array($stateData)) {
+                log_message('error', 'State no es JSON válido. IP: ' . $this->request->getIPAddress());
+                throw new \Exception('State inválido: datos corruptos');
+            }
+            
+            $usuarioId = $stateData['usuario_id'] ?? null;
+            $provider = $stateData['provider'] ?? null;
+            $timestamp = $stateData['timestamp'] ?? null;
+            
+            // Validar que el usuario_id sea numérico y válido
+            if (!$usuarioId || !is_numeric($usuarioId) || $usuarioId <= 0) {
+                log_message('error', 'Usuario ID inválido en state. IP: ' . $this->request->getIPAddress());
+                throw new \Exception('Usuario no identificado en el state');
+            }
+            
+            // Validar que el usuario existe en la base de datos
+            $db = \Config\Database::connect();
+            $usuario = $db->table('usuario')
+                ->where('id', $usuarioId)
+                ->where('estado', 'A')
+                ->get()
+                ->getRow();
+            
+            if (!$usuario) {
+                log_message('error', 'Usuario ID ' . $usuarioId . ' no existe o está inactivo. IP: ' . $this->request->getIPAddress());
+                throw new \Exception('Usuario no válido');
+            }
+            
+            // Validar timestamp (opcional: el state no debe ser muy antiguo, máximo 10 minutos)
+            if ($timestamp && (time() - $timestamp) > 600) {
+                log_message('error', 'State expirado. IP: ' . $this->request->getIPAddress());
+                throw new \Exception('La autorización expiró. Por favor, intenta de nuevo.');
+            }
+            
+            log_message('info', 'State validado correctamente para usuario ID: ' . $usuarioId);
+            log_message('info', 'Procesando callback de calendario para usuario ID: ' . $usuarioId);
+            
+            // El código de autorización solo es válido una vez y por tiempo limitado
+            // Google valida esto, pero aún así es seguro
+            $calendarService = new CalendarService($usuarioId);
+            $tokenData = $calendarService->exchangeCodeForToken($code, $usuarioId);
+            
+            log_message('info', 'Tokens guardados exitosamente para usuario ID: ' . $usuarioId);
+            
+            return redirect()->to(base_url('dashboard/agenda/calendario'))->with('success', 'Calendario conectado exitosamente');
+        } catch (\Exception $e) {
+            log_message('error', 'Error en callback de calendario: ' . $e->getMessage());
+            log_message('error', 'IP del cliente: ' . $this->request->getIPAddress());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return redirect()->to(base_url('dashboard/agenda/calendario'))->with('error', 'Error al conectar: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Crear evento en el calendario cuando se agenda una cita
+     */
+    private function crearEventoCalendario($detalleAgendaId, $usuarioId)
+    {
+        // Verificar si el calendario está configurado
+        if (empty(env('CALENDAR_PROVIDER'))) {
+            return false;
+        }
+        
+        try {
+            $calendarService = new CalendarService($usuarioId);
+            
+            // Obtener información completa de la cita
+            $db = \Config\Database::connect();
+            $cita = $db->table('detalle_agenda da')
+                ->select('da.*, a.fecha, p.nombre, p.apellido, p.email as email_paciente, 
+                         u.nombre as nombre_nutricionista, u.correo as email_nutricionista, ma.nombre as modalidad')
+                ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                ->join('pacientes p', 'p.id = da.paciente_id', 'left')
+                ->join('usuario u', 'u.id = da.usuario_id', 'left')
+                ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+                ->where('da.id', $detalleAgendaId)
+                ->get()
+                ->getRow();
+            
+            if (!$cita) {
+                return false;
+            }
+            
+            $citaData = [
+                'detalle_agenda_id' => $detalleAgendaId,
+                'usuario_id' => $usuarioId, // Necesario para cargar/refrescar token
+                'fecha' => $cita->fecha,
+                'hora_inicio' => $cita->hora_inicio,
+                'hora_fin' => $cita->hora_fin,
+                'nombre_paciente' => trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? '')),
+                'email_paciente' => $cita->email_paciente ?? null,
+                'nombre_nutricionista' => $cita->nombre_nutricionista ?? 'Nutricionista',
+                'email_nutricionista' => $cita->email_nutricionista ?? null, // Email del nutricionista (organizador del evento)
+                'tipo_consulta' => ucfirst(str_replace('_', ' ', $cita->tipo_consulta ?? 'control')),
+                'modalidad' => $cita->modalidad ?? 'No definida',
+                'motivo' => $cita->motivo ?? ''
+            ];
+            
+            $resultado = $calendarService->crearEvento($detalleAgendaId, $citaData);
+            
+            if ($resultado['success']) {
+                log_message('info', 'Evento creado en calendario para cita ID: ' . $detalleAgendaId);
+            }
+            
+            return $resultado;
+        } catch (\Exception $e) {
+            log_message('error', 'Error al crear evento en calendario: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Actualizar evento en calendario cuando cambia el estado de la cita
+     */
+    private function actualizarEventoCalendario($detalleAgendaId, $usuarioId)
+    {
+        if (empty(env('CALENDAR_PROVIDER'))) {
+            return false;
+        }
+        
+        try {
+            $db = \Config\Database::connect();
+            $cita = $db->table('detalle_agenda da')
+                ->select('da.*, a.fecha, da.calendar_event_id, p.nombre, p.apellido, 
+                         u.nombre as nombre_nutricionista, ma.nombre as modalidad')
+                ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                ->join('pacientes p', 'p.id = da.paciente_id', 'left')
+                ->join('usuario u', 'u.id = da.usuario_id', 'left')
+                ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+                ->where('da.id', $detalleAgendaId)
+                ->get()
+                ->getRow();
+            
+            if (!$cita || empty($cita->calendar_event_id)) {
+                return false; // No hay evento para actualizar
+            }
+            
+            $calendarService = new CalendarService($usuarioId);
+            
+            $citaData = [
+                'fecha' => $cita->fecha,
+                'hora_inicio' => $cita->hora_inicio,
+                'hora_fin' => $cita->hora_fin,
+                'nombre_paciente' => trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? '')),
+                'nombre_nutricionista' => $cita->nombre_nutricionista ?? 'Nutricionista',
+                'tipo_consulta' => ucfirst(str_replace('_', ' ', $cita->tipo_consulta ?? 'control')),
+                'modalidad' => $cita->modalidad ?? 'No definida',
+                'estado_cita' => $cita->estado_cita ?? 'pendiente'
+            ];
+            
+            $calendarService->actualizarEvento($cita->calendar_event_id, $citaData);
+            
+            return true;
+        } catch (\Exception $e) {
+            log_message('error', 'Error al actualizar evento en calendario: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Eliminar evento del calendario cuando se cancela/elimina una cita
+     */
+    private function eliminarEventoCalendario($detalleAgendaId, $usuarioId)
+    {
+        if (empty(env('CALENDAR_PROVIDER'))) {
+            return false;
+        }
+        
+        try {
+            $db = \Config\Database::connect();
+            $cita = $db->table('detalle_agenda')
+                ->select('calendar_event_id')
+                ->where('id', $detalleAgendaId)
+                ->get()
+                ->getRow();
+            
+            if (!$cita || empty($cita->calendar_event_id)) {
+                return false;
+            }
+            
+            $calendarService = new CalendarService($usuarioId);
+            $calendarService->eliminarEvento($cita->calendar_event_id);
+            
+            // Limpiar calendar_event_id
+            $db->table('detalle_agenda')
+                ->where('id', $detalleAgendaId)
+                ->update(['calendar_event_id' => null]);
+            
+            return true;
+        } catch (\Exception $e) {
+            log_message('error', 'Error al eliminar evento del calendario: ' . $e->getMessage());
+            return false;
+        }
     }
 }

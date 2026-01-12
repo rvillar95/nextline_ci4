@@ -426,6 +426,10 @@ exit(); */
                     <?php echo $this->renderSection("pago/registro"); ?>
                     <?php echo $this->renderSection("pago/editar"); ?>
                     <!-- END Section Pagos -->
+                    
+                    <!-- Secciones de Configuraciones -->
+                    <?php echo $this->renderSection("configuracion/index"); ?>
+                    <!-- END Section Configuraciones -->
                 </div>
 
             </div>

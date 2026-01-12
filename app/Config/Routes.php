@@ -266,6 +266,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getDetalleCita', 'Dashboard\AgendaController::getDetalleCita');
         $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');
         $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
+        // Rutas para integración con calendario
+        $routes2->get('calendario/connect', 'Dashboard\AgendaController::conectarCalendario');
         $routes2->post('crearHorarios', 'Dashboard\AgendaController::crearHorarios');
         $routes2->post('eliminarHorarios', 'Dashboard\AgendaController::eliminarHorarios');
         $routes2->post('actualizarModalidad', 'Dashboard\AgendaController::actualizarModalidad');
@@ -319,9 +321,20 @@ $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
 // Rutas públicas para confirmar/cancelar citas desde email
 $routes->get('confirmar-cita', 'Dashboard\AgendaController::confirmarDesdeEmail');
 $routes->get('cancelar-cita', 'Dashboard\AgendaController::cancelarDesdeEmail');
+// Callback público de OAuth2 para calendario (no requiere autenticación porque Google lo llama directamente)
+$routes->get('dashboard/agenda/calendario/callback', 'Dashboard\AgendaController::calendarCallback');
+
+    $routes->group('configuracion', function ($routes2) {
+        $routes2->get('', 'Dashboard\ConfiguracionController::index');
+        $routes2->post('guardar', 'Dashboard\ConfiguracionController::guardar');
+    });
 
 // Prueba de Email (solo para desarrollo local)
 $routes->get('test-email', 'TestEmail::index');
+
+// Webhooks de WhatsApp (públicos, sin autenticación)
+$routes->get('whatsapp/webhook', 'WhatsAppWebhookController::verify');
+$routes->post('whatsapp/webhook', 'WhatsAppWebhookController::webhook');
 
 // Políticas
 $routes->get('politica-privacidad', 'Web\PoliticasController::privacidad');
