@@ -63,6 +63,128 @@
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* Sombra para mejor legibilidad */
     }
     
+    /* Estilos específicos para vista semanal (timeGridWeek) */
+    .fc-timeGridWeek-view .fc-event-title {
+        font-size: 0.95em !important;
+        line-height: 1.4 !important;
+        padding: 2px 4px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        overflow: visible !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-event {
+        min-height: 30px !important;
+        padding: 4px 6px !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-event-time {
+        font-size: 0.85em !important;
+        font-weight: 600 !important;
+        margin-bottom: 2px !important;
+        display: block !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-event-title-container {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+    }
+    
+    /* Asegurar que los eventos en vista semanal tengan suficiente espacio */
+    .fc-timeGridWeek-view .fc-timegrid-event {
+        margin: 1px 2px !important;
+        border-radius: 4px !important;
+    }
+    
+    /* Mejorar legibilidad en celdas pequeñas */
+    .fc-timeGridWeek-view .fc-event-main {
+        padding: 3px 5px !important;
+    }
+    
+    /* Aumentar altura de cada slot de hora en vista semanal */
+    .fc-timeGridWeek-view .fc-timegrid-slot {
+        height: 60px !important;
+        min-height: 60px !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-timegrid-slot-lane {
+        height: 60px !important;
+        min-height: 60px !important;
+    }
+    
+    /* Ajustar altura de las filas de tiempo */
+    .fc-timeGridWeek-view .fc-timegrid-col-frame {
+        min-height: 60px !important;
+    }
+    
+    /* Forzar altura en las celdas de tiempo */
+    .fc-timeGridWeek-view .fc-timegrid-slot-table {
+        height: auto !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-timegrid-slot-minor {
+        height: 30px !important;
+        min-height: 30px !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-timegrid-slot-major {
+        height: 60px !important;
+        min-height: 60px !important;
+    }
+    
+    /* Asegurar que las filas tengan la altura correcta */
+    .fc-timeGridWeek-view tbody tr {
+        height: 60px !important;
+    }
+    
+    .fc-timeGridWeek-view .fc-timegrid-slot-label {
+        height: 60px !important;
+    }
+    
+    /* La línea del divider debe tener altura 0 */
+    .fc-timegrid-divider.fc-cell-shaded,
+    tr.fc-scrollgrid-section.fc-scrollgrid-section-body .fc-timegrid-divider {
+       /* height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;*/
+    }
+    
+    tr.fc-scrollgrid-section[role="presentation"] .fc-timegrid-divider {
+        /*height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;*/
+    }
+    
+    /* Padding para vista de día */
+    .fc-timeGridDay-view .fc-timegrid-event {
+        padding: 6px 8px !important;
+        margin: 2px 4px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-event-main {
+        padding: 4px 6px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-event-title {
+        padding: 2px 4px !important;
+    }
+    
+    /* Aumentar altura de slots en vista de día también */
+    .fc-timeGridDay-view .fc-timegrid-slot {
+        height: 60px !important;
+        min-height: 60px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-timegrid-slot-lane {
+        height: 60px !important;
+        min-height: 60px !important;
+    }
+    
     /* Tooltip personalizado para eventos */
     .fc-event-tooltip {
         position: absolute;
@@ -703,8 +825,11 @@ document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');
     
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek',
         locale: 'es',
+        slotMinTime: '09:00:00', // Hora mínima por defecto, se actualizará dinámicamente
+        height: 'auto', // Altura automática
+        contentHeight: 'auto', // Altura de contenido automática
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -719,14 +844,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     end: fetchInfo.endStr
                 },
                 success: function(response) {
-                    if (Array.isArray(response) && response.length === 0) {
+                    // Obtener los eventos (puede ser array directo o response.events)
+                    var eventos = Array.isArray(response) ? response : (response.events || []);
+                    
+                    // Si la respuesta incluye slotMinTime, actualizar el calendario
+                    if (response.slotMinTime && !Array.isArray(response)) {
+                        calendar.setOption('slotMinTime', response.slotMinTime);
+                    }
+                    
+                    if (eventos.length === 0) {
                         // Si no hay eventos, mostrar mensaje informativo
                         toastr.info('No hay horarios disponibles en este período. Por favor, crea horarios disponibles primero.', 'Sin Horarios', {
                             timeOut: 6000,
                             progressBar: true
                         });
                     }
-                    successCallback(response);
+                    successCallback(eventos);
                 },
                 error: function(xhr) {
                     console.error('Error al cargar eventos:', xhr);
@@ -782,6 +915,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 timeOut: 4000,
                 progressBar: true
             });
+        },
+        viewDidMount: function(arg) {
+            // Ajustar altura de los slots después de que se renderice la vista
+            ajustarAlturaSlots();
+        },
+        datesSet: function(arg) {
+            // Ajustar altura cuando cambian las fechas
+            if (arg.view.type === 'timeGridWeek') {
+                setTimeout(ajustarAlturaSlots, 100);
+            }
         },
         eventDidMount: function(info) {
             // PRIMERO: Usar el color que viene del servidor (FullCalendar lo pasa aquí)
@@ -903,6 +1046,65 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     calendar.render();
+    
+    // Función para ajustar altura de los slots
+    function ajustarAlturaSlots() {
+        // Forzar altura mínima de 60px en cada slot
+        var slots = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot, .fc-timeGridDay-view .fc-timegrid-slot');
+        slots.forEach(function(slot) {
+            if (slot.offsetHeight < 60) {
+                slot.style.height = '60px';
+                slot.style.minHeight = '60px';
+            }
+        });
+        
+        var slotLanes = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot-lane, .fc-timeGridDay-view .fc-timegrid-slot-lane');
+        slotLanes.forEach(function(lane) {
+            if (lane.offsetHeight < 60) {
+                lane.style.height = '60px';
+                lane.style.minHeight = '60px';
+            }
+        });
+        
+        // Ajustar también las filas de la tabla, pero NO las que tienen fc-timegrid-divider
+        var rows = document.querySelectorAll('.fc-timeGridWeek-view tbody tr, .fc-timeGridDay-view tbody tr');
+        rows.forEach(function(row) {
+            // Saltar las filas que tienen el divider
+            if (row.querySelector('.fc-timegrid-divider')) {
+                //row.style.height = '0';
+                //row.style.minHeight = '0';
+                //row.style.maxHeight = '0';
+                return;
+            }
+            if (row.offsetHeight < 60 && !row.classList.contains('fc-scrollgrid-section')) {
+                row.style.height = '60px';
+                row.style.minHeight = '60px';
+            }
+        });
+        
+        // Asegurar que el divider tenga altura 0
+        var dividers = document.querySelectorAll('.fc-timegrid-divider');
+        dividers.forEach(function(divider) {
+            //divider.style.height = '0';
+            //divider.style.minHeight = '0';
+            //divider.style.maxHeight = '0';
+        });
+        
+        var dividerRows = document.querySelectorAll('tr.fc-scrollgrid-section .fc-timegrid-divider');
+        dividerRows.forEach(function(row) {
+            //row.style.height = '0';
+            //row.style.minHeight = '0';
+            //row.style.maxHeight = '0';
+        });
+    }
+    
+    // Ajustar altura después del render inicial
+    setTimeout(ajustarAlturaSlots, 200);
+    
+    // Ajustar altura cuando cambia el tamaño de la ventana
+    window.addEventListener('resize', function() {
+        setTimeout(ajustarAlturaSlots, 100);
+    });
 });
 
 function abrirModalAgendar() {

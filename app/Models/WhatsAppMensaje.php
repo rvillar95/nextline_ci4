@@ -18,9 +18,8 @@ class WhatsAppMensaje extends Model
         'fecha_envio', 'fecha_entrega', 'fecha_lectura', 'error_mensaje', 'metadata'
     ];
 
-    protected $useTimestamps = true;
+    protected $useTimestamps = false; // Deshabilitar timestamps automáticos, manejar fcreacion manualmente
     protected $dateFormat = 'datetime';
-    protected $createdField = 'fcreacion';
 
     protected $validationRules = [
         'tipo_mensaje' => 'required|in_list[agendamiento,recordatorio,confirmacion,cancelacion,documento,otro]',
@@ -40,6 +39,7 @@ class WhatsAppMensaje extends Model
         $data['direccion'] = 'enviado';
         $data['estado_envio'] = 'pendiente';
         $data['fecha_envio'] = date('Y-m-d H:i:s');
+        $data['fcreacion'] = date('Y-m-d H:i:s'); // Agregar manualmente el timestamp de creación
         
         return $this->insert($data);
     }

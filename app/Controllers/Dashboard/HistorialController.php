@@ -432,6 +432,7 @@ class HistorialController extends BaseController
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
 
+        // Obtener historiales sin ordenar primero
         $historiales = $db->table('historial_clinico hc')
             ->select('hc.id, hc.fecha_consulta, hc.hora_consulta, hc.tipo_registro, 
                       hc.peso_actual, hc.altura_actual, hc.imc_actual,
@@ -443,10 +444,63 @@ class HistorialController extends BaseController
             ->where('hc.paciente_id', $pacienteId)
             ->where('hc.nutricionista_id', $usuario_id)
             ->where('hc.estado', 'A')
-            ->orderBy('hc.fecha_consulta', 'ASC')
-            ->orderBy('hc.hora_consulta', 'ASC')
             ->get()
             ->getResultArray();
+
+        // Ordenar manualmente para asegurar orden correcto (más antigua a más nueva)
+        usort($historiales, function($a, $b) {
+            // Función auxiliar para convertir fecha a timestamp
+            $convertirFechaATimestamp = function($fechaStr) {
+                if (empty($fechaStr) || $fechaStr === '0000-00-00' || $fechaStr === 'N/A') {
+                    return 0;
+                }
+                
+                // Si ya está en formato YYYY-MM-DD, convertir directamente
+                if (preg_match('/^\d{4}-\d{2}-\d{2}/', $fechaStr)) {
+                    return strtotime($fechaStr);
+                }
+                
+                // Si está en formato DD-MM-YYYY, convertir
+                if (preg_match('/^(\d{2})-(\d{2})-(\d{4})/', $fechaStr, $matches)) {
+                    return strtotime($matches[3] . '-' . $matches[2] . '-' . $matches[1]);
+                }
+                
+                // Si está en formato DD/MM/YYYY, convertir
+                if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})/', $fechaStr, $matches)) {
+                    return strtotime($matches[3] . '-' . $matches[2] . '-' . $matches[1]);
+                }
+                
+                // Intentar parseo directo
+                $timestamp = strtotime($fechaStr);
+                return $timestamp !== false ? $timestamp : 0;
+            };
+            
+            // Usar fecha_consulta como prioridad, si no existe usar fecha_detalle
+            $fechaA = $a['fecha_consulta'] ?? $a['fecha_detalle'] ?? null;
+            $fechaB = $b['fecha_consulta'] ?? $b['fecha_detalle'] ?? null;
+            
+            // Convertir fechas a timestamps para comparar correctamente
+            $timestampA = $convertirFechaATimestamp($fechaA);
+            $timestampB = $convertirFechaATimestamp($fechaB);
+            
+            // Comparar timestamps
+            if ($timestampA !== $timestampB) {
+                return $timestampA <=> $timestampB; // Ordenar de más antigua (menor timestamp) a más nueva (mayor timestamp)
+            }
+            
+            // Si las fechas son iguales, ordenar por hora
+            $horaA = $a['hora_consulta'] ?? $a['hora_inicio'] ?? '00:00:00';
+            $horaB = $b['hora_consulta'] ?? $b['hora_inicio'] ?? '00:00:00';
+            
+            return strcmp($horaA, $horaB);
+        });
+
+        // Log para debugging
+        log_message('info', 'Historiales ordenados para paciente ID: ' . $pacienteId);
+        foreach ($historiales as $idx => $h) {
+            $fecha = $h['fecha_consulta'] ?? $h['fecha_detalle'] ?? 'N/A';
+            log_message('info', '  [' . $idx . '] ID: ' . $h['id'] . ', Fecha: ' . $fecha);
+        }
 
         return $this->response->setJSON($historiales);
     }
@@ -468,6 +522,7 @@ class HistorialController extends BaseController
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
 
+        // Obtener historiales sin ordenar primero
         $historiales = $db->table('historial_clinico hc')
             ->select('hc.id, hc.fecha_consulta, hc.hora_consulta, hc.tipo_registro,
                       hc.peso_actual, hc.altura_actual, hc.imc_actual,
@@ -482,11 +537,70 @@ class HistorialController extends BaseController
             ->whereIn('hc.id', $historialIds)
             ->where('hc.nutricionista_id', $usuario_id)
             ->where('hc.estado', 'A')
-            ->orderBy('hc.fecha_consulta', 'ASC')
-            ->orderBy('hc.hora_consulta', 'ASC')
             ->get()
             ->getResultArray();
 
-        return $this->response->setJSON($historiales);
+        // Ordenar manualmente para asegurar orden correcto (más antigua a más nueva)
+        usort($historiales, function($a, $b) {
+            // Función auxiliar para convertir fecha a timestamp
+            $convertirFechaATimestamp = function($fechaStr) {
+                if (empty($fechaStr) || $fechaStr === '0000-00-00' || $fechaStr === 'N/A') {
+                    return 0;
+                }
+                
+                // Si ya está en formato YYYY-MM-DD, convertir directamente
+                if (preg_match('/^\d{4}-\d{2}-\d{2}/', $fechaStr)) {
+                    return strtotime($fechaStr);
+                }
+                
+                // Si está en formato DD-MM-YYYY, convertir
+                if (preg_match('/^(\d{2})-(\d{2})-(\d{4})/', $fechaStr, $matches)) {
+                    return strtotime($matches[3] . '-' . $matches[2] . '-' . $matches[1]);
+                }
+                
+                // Si está en formato DD/MM/YYYY, convertir
+                if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})/', $fechaStr, $matches)) {
+                    return strtotime($matches[3] . '-' . $matches[2] . '-' . $matches[1]);
+                }
+                
+                // Intentar parseo directo
+                $timestamp = strtotime($fechaStr);
+                return $timestamp !== false ? $timestamp : 0;
+            };
+            
+            // Usar fecha_consulta como prioridad, si no existe usar fecha_detalle
+            $fechaA = $a['fecha_consulta'] ?? $a['fecha_detalle'] ?? null;
+            $fechaB = $b['fecha_consulta'] ?? $b['fecha_detalle'] ?? null;
+            
+            // Convertir fechas a timestamps para comparar correctamente
+            $timestampA = $convertirFechaATimestamp($fechaA);
+            $timestampB = $convertirFechaATimestamp($fechaB);
+            
+            // Comparar timestamps
+            if ($timestampA !== $timestampB) {
+                return $timestampA <=> $timestampB; // Ordenar de más antigua (menor timestamp) a más nueva (mayor timestamp)
+            }
+            
+            // Si las fechas son iguales, ordenar por hora
+            $horaA = $a['hora_consulta'] ?? $a['hora_inicio'] ?? '00:00:00';
+            $horaB = $b['hora_consulta'] ?? $b['hora_inicio'] ?? '00:00:00';
+            
+            return strcmp($horaA, $horaB);
+        });
+
+        // Log para debugging
+        log_message('info', 'Historiales ordenados para comparación. IDs: ' . implode(', ', $historialIds));
+        foreach ($historiales as $idx => $h) {
+            $fecha = $h['fecha_consulta'] ?? $h['fecha_detalle'] ?? 'N/A';
+            log_message('info', '  [' . $idx . '] ID: ' . $h['id'] . ', Fecha: ' . $fecha);
+        }
+
+        // Incluir el nuevo token CSRF en la respuesta para que el frontend lo actualice
+        $response = [
+            'historiales' => $historiales,
+            'csrf_token' => csrf_hash()
+        ];
+
+        return $this->response->setJSON($response);
     }
 }

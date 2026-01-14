@@ -101,6 +101,30 @@ class AgendaController extends BaseController
             // Mostrar tanto disponibles (estado = 1) como ocupados (estado = 2)
 
         $eventos = $builder->get()->getResult();
+        
+        // Obtener la hora mínima del horario del usuario para configurar slotMinTime
+        $horaMinima = $db->table('agenda a')
+            ->select('MIN(a.hora_inicio) as hora_minima')
+            ->join('detalle_agenda da', 'da.agenda_id = a.id', 'inner')
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $start)
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $end)
+            ->where('da.usuario_id', $nutricionista_id)
+            ->get()
+            ->getRow();
+        
+        // Si no hay eventos en el rango, buscar la hora mínima global del usuario
+        if (!$horaMinima || !$horaMinima->hora_minima) {
+            $horaMinima = $db->table('agenda a')
+                ->select('MIN(a.hora_inicio) as hora_minima')
+                ->join('detalle_agenda da', 'da.agenda_id = a.id', 'inner')
+                ->where('da.usuario_id', $nutricionista_id)
+                ->get()
+                ->getRow();
+        }
+        
+        $horaMinimaStr = $horaMinima && $horaMinima->hora_minima ? $horaMinima->hora_minima : '09:00:00';
+        // FullCalendar espera formato HH:MM:SS, así que mantenemos el formato completo
+        $horaMinimaFormateada = $horaMinimaStr; // Ya viene en formato HH:MM:SS desde la BD
 
         $data = [];
         foreach ($eventos as $evento) {
@@ -182,7 +206,11 @@ class AgendaController extends BaseController
             ];
         }
 
-        return $this->response->setJSON($data);
+        // Incluir la hora mínima en la respuesta para configurar slotMinTime
+        return $this->response->setJSON([
+            'events' => $data,
+            'slotMinTime' => $horaMinimaFormateada
+        ]);
     }
 
     /**
@@ -489,11 +517,25 @@ class AgendaController extends BaseController
 
     public function confirmarCita()
     {
+        error_log('========================================');
+        error_log('CONFIRMAR CITA - MÉTODO EJECUTADO (error_log)');
+        error_log('Timestamp: ' . date('Y-m-d H:i:s'));
+        error_log('URL: ' . (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'N/A'));
+        error_log('========================================');
+        
+        log_message('error', '========================================');
+        log_message('error', 'CONFIRMAR CITA - MÉTODO EJECUTADO');
+        log_message('error', 'Timestamp: ' . date('Y-m-d H:i:s'));
+        log_message('error', 'URL: ' . current_url());
+        log_message('error', '========================================');
+        
         if (!session()->get('usuario')) {
+            log_message('warning', 'CONFIRMAR CITA: No hay sesión de usuario');
             return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
         }
 
         $id = $this->request->getPost('id');
+        log_message('info', 'CONFIRMAR CITA: ID recibido=' . ($id ?? 'N/A'));
         
         if (!$id) {
             return $this->response->setJSON(['error' => 'ID requerido'])->setStatusCode(400);
@@ -538,27 +580,41 @@ class AgendaController extends BaseController
             $configuracionModel = new \App\Models\UsuarioConfiguracion();
             $configuracion = $configuracionModel->obtenerConfiguracion($usuario_id);
 
-            // Enviar WhatsApp cuando se confirma la cita (solo si está habilitado)
-            if ($configuracion['enviar_whatsapp'] ?? 1) {
-                try {
-                    $this->enviarWhatsAppConfirmacion($id, $detalle->paciente_id);
-                } catch (\Exception $e) {
-                    log_message('error', 'Error al enviar WhatsApp de confirmación: ' . $e->getMessage());
-                }
-            } else {
-                log_message('info', 'WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
-            }
+            $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
             // Crear evento en el calendario del nutricionista cuando se confirma manualmente (solo si está habilitado)
+            // IMPORTANTE: Crear primero el evento para obtener el enlace de Meet si es online
             if ($configuracion['crear_evento_calendario'] ?? 1) {
                 try {
-                    $this->crearEventoCalendario($id, $usuario_id);
+                    $resultadoCalendario = $this->crearEventoCalendario($id, $usuario_id);
+                    if ($resultadoCalendario && isset($resultadoCalendario['meet_link'])) {
+                        $meetLink = $resultadoCalendario['meet_link'];
+                        log_message('info', 'Enlace de Google Meet obtenido: ' . $meetLink);
+                    }
                 } catch (\Exception $e) {
                     // No fallar la confirmación si el calendario falla, solo loguear
                     log_message('error', 'Error al crear evento en calendario desde confirmación manual: ' . $e->getMessage());
                 }
             } else {
                 log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuario_id);
+            }
+
+            // Enviar WhatsApp cuando se confirma la cita (solo si está habilitado)
+            // Incluir el enlace de Meet si está disponible (para citas online)
+            log_message('info', 'CONFIRMAR CITA (Dashboard): Verificando configuración de WhatsApp');
+            log_message('info', 'CONFIRMAR CITA (Dashboard): enviar_whatsapp=' . ($configuracion['enviar_whatsapp'] ?? 'N/A'));
+            
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                log_message('info', 'CONFIRMAR CITA (Dashboard): WhatsApp habilitado, procediendo a enviar');
+                log_message('info', 'CONFIRMAR CITA (Dashboard): id=' . $id . ', paciente_id=' . ($detalle->paciente_id ?? 'N/A') . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
+                try {
+                    $this->enviarWhatsAppConfirmacion($id, $detalle->paciente_id, $meetLink);
+                } catch (\Exception $e) {
+                    log_message('error', 'CONFIRMAR CITA (Dashboard): Excepción al enviar WhatsApp: ' . $e->getMessage());
+                    log_message('error', 'CONFIRMAR CITA (Dashboard): Stack trace: ' . $e->getTraceAsString());
+                }
+            } else {
+                log_message('info', 'CONFIRMAR CITA (Dashboard): WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
             }
 
             $response = $this->response->setJSON([
@@ -1243,29 +1299,159 @@ class AgendaController extends BaseController
     }
 
     /**
-     * Enviar confirmación de cita por WhatsApp
+     * Enviar notificación de cancelación de cita al nutricionista por email
      */
-    private function enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId)
+    private function enviarEmailCancelacionNutricionista($cita)
     {
+        log_message('info', '========================================');
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN NUTRICIONISTA - INICIO');
+        log_message('info', '========================================');
+        
+        if (!$cita) {
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: cita es NULL');
+            log_message('info', '========================================');
+            return false;
+        }
+        
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Verificando datos de cita');
+        log_message('info', '  - Cita ID: ' . ($cita->id ?? 'N/A'));
+        log_message('info', '  - Usuario ID: ' . ($cita->usuario_id ?? 'N/A'));
+        log_message('info', '  - Nutricionista nombre: ' . ($cita->nutricionista_nombre ?? 'N/A') . ' ' . ($cita->nutricionista_apellido ?? 'N/A'));
+        log_message('info', '  - Nutricionista email: ' . ($cita->nutricionista_email ?? 'VACÍO'));
+        
+        if (empty($cita->nutricionista_email)) {
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: nutricionista_email está vacío');
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: Datos completos de cita: ' . json_encode([
+                'id' => $cita->id ?? 'N/A',
+                'usuario_id' => $cita->usuario_id ?? 'N/A',
+                'nutricionista_nombre' => $cita->nutricionista_nombre ?? 'N/A',
+                'nutricionista_apellido' => $cita->nutricionista_apellido ?? 'N/A',
+                'nutricionista_email' => $cita->nutricionista_email ?? 'VACÍO',
+                'fecha' => $cita->fecha ?? 'N/A',
+                'hora_inicio' => $cita->hora_inicio ?? 'N/A'
+            ]));
+            log_message('info', '========================================');
+            return false;
+        }
+
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Preparando datos para el email');
+        log_message('info', '  - Email destino: ' . $cita->nutricionista_email);
+
+        // Preparar datos para el email
+        $fechaFormateada = $cita->fecha; // Ya está en DD-MM-YYYY
+        $horaInicio = date('H:i', strtotime($cita->hora_inicio));
+        $horaFin = date('H:i', strtotime($cita->hora_fin));
+        $nombrePaciente = trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? ''));
+        $nombreNutricionista = trim(($cita->nutricionista_nombre ?? '') . ' ' . ($cita->nutricionista_apellido ?? ''));
+        $modalidadNombre = $cita->modalidad_nombre ?? 'No definida';
+        $tipoConsulta = ucfirst(str_replace('_', ' ', $cita->tipo_consulta ?? 'control'));
+
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Datos preparados');
+        log_message('info', '  - Paciente: ' . $nombrePaciente);
+        log_message('info', '  - Nutricionista: ' . $nombreNutricionista);
+        log_message('info', '  - Fecha: ' . $fechaFormateada);
+        log_message('info', '  - Hora: ' . $horaInicio . ' - ' . $horaFin);
+        log_message('info', '  - Modalidad: ' . $modalidadNombre);
+        log_message('info', '  - Tipo consulta: ' . $tipoConsulta);
+
+        // Crear el mensaje HTML
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Generando vista del email');
+        try {
+            $mensaje = view('emails/cancelacion_cita_nutricionista', [
+                'nombreNutricionista' => $nombreNutricionista,
+                'nombrePaciente' => $nombrePaciente,
+                'fecha' => $fechaFormateada,
+                'horaInicio' => $horaInicio,
+                'horaFin' => $horaFin,
+                'modalidad' => $modalidadNombre,
+                'tipoConsulta' => $tipoConsulta,
+                'motivo' => $cita->motivo ?? '',
+                'baseUrl' => base_url()
+            ]);
+            log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Vista generada exitosamente (longitud: ' . strlen($mensaje) . ' caracteres)');
+        } catch (\Exception $e) {
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: Error al generar vista: ' . $e->getMessage());
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: Stack trace: ' . $e->getTraceAsString());
+            log_message('info', '========================================');
+            return false;
+        }
+
+        // Enviar email
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Configurando email');
+        $email = Services::email();
+        $fromEmail = env('email.fromEmail', 'noreply@example.com');
+        $fromName = env('email.fromName', 'Sistema de Agenda');
+        
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: From: ' . $fromEmail . ' (' . $fromName . ')');
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: To: ' . $cita->nutricionista_email);
+        
+        $email->setFrom($fromEmail, $fromName);
+        $email->setTo($cita->nutricionista_email);
+        
+        $subject = '❌ Cita Cancelada - ' . $nombrePaciente . ' - ' . $fechaFormateada . ' a las ' . $horaInicio;
+        $email->setSubject($subject);
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Subject: ' . $subject);
+        
+        $email->setMessage($mensaje);
+
+        log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Intentando enviar email...');
+        if ($email->send()) {
+            log_message('info', 'ENVIAR EMAIL CANCELACIÓN: ✅ Email enviado exitosamente al nutricionista: ' . $cita->nutricionista_email);
+            log_message('info', '========================================');
+            return true;
+        } else {
+            $debugInfo = $email->printDebugger(['headers']);
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: ❌ Error al enviar email');
+            log_message('error', 'ENVIAR EMAIL CANCELACIÓN: Debug info: ' . $debugInfo);
+            log_message('info', '========================================');
+            return false;
+        }
+    }
+
+    /**
+     * Enviar confirmación de cita por WhatsApp
+     * @param int $detalleAgendaId ID del detalle de agenda
+     * @param int $pacienteId ID del paciente
+     * @param string|null $meetLink Enlace de Google Meet (opcional, para citas online)
+     */
+    private function enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId, $meetLink = null)
+    {
+        log_message('error', '========================================');
+        log_message('error', 'ENVIAR WHATSAPP CONFIRMACIÓN - INICIO');
+        log_message('error', 'detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . $pacienteId . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
+        log_message('error', '========================================');
+        
         // Verificar si WhatsApp está configurado
-        if (empty(env('WHATSAPP_PROVIDER'))) {
-            log_message('debug', 'WhatsApp no configurado, omitiendo envío');
+        $whatsappProvider = env('WHATSAPP_PROVIDER');
+        log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp Provider configurado: ' . ($whatsappProvider ? $whatsappProvider : 'NO'));
+        
+        if (empty($whatsappProvider)) {
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp no configurado, omitiendo envío');
             return false;
         }
 
         try {
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Instanciando WhatsAppService');
             $whatsappService = new WhatsAppService();
-            $resultado = $whatsappService->enviarConfirmacionCita($detalleAgendaId, $pacienteId);
+            
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Llamando a enviarConfirmacionCita()');
+            $resultado = $whatsappService->enviarConfirmacionCita($detalleAgendaId, $pacienteId, $meetLink);
+            
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Resultado recibido. success=' . ($resultado['success'] ? 'SÍ' : 'NO'));
             
             if ($resultado['success']) {
-                log_message('info', 'WhatsApp de confirmación enviado para cita ID: ' . $detalleAgendaId);
+                log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp de confirmación enviado exitosamente para cita ID: ' . $detalleAgendaId . ($meetLink ? ' (con enlace Meet)' : ''));
+                log_message('error', '========================================');
                 return true;
             } else {
-                log_message('warning', 'Error al enviar WhatsApp: ' . ($resultado['error'] ?? 'Error desconocido'));
+                log_message('error', 'WHATSAPP CONFIRMACIÓN: Error al enviar WhatsApp: ' . ($resultado['error'] ?? 'Error desconocido'));
+                log_message('error', '========================================');
                 return false;
             }
         } catch (\Exception $e) {
-            log_message('error', 'Excepción al enviar WhatsApp: ' . $e->getMessage());
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Excepción al enviar WhatsApp: ' . $e->getMessage());
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Stack trace: ' . $e->getTraceAsString());
+            log_message('error', '========================================');
             return false;
         }
     }
@@ -1275,7 +1461,20 @@ class AgendaController extends BaseController
      */
     public function confirmarDesdeEmail()
     {
+        error_log('========================================');
+        error_log('CONFIRMAR DESDE EMAIL - MÉTODO EJECUTADO (error_log)');
+        error_log('Timestamp: ' . date('Y-m-d H:i:s'));
+        error_log('URL: ' . (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'N/A'));
+        error_log('========================================');
+        
+        log_message('error', '========================================');
+        log_message('error', 'CONFIRMAR DESDE EMAIL - MÉTODO EJECUTADO');
+        log_message('error', 'Timestamp: ' . date('Y-m-d H:i:s'));
+        log_message('error', 'URL: ' . current_url());
+        log_message('error', '========================================');
+        
         $token = $this->request->getGet('token');
+        log_message('info', 'CONFIRMAR DESDE EMAIL: Token recibido=' . ($token ? substr($token, 0, 30) . '...' : 'NO'));
         
         if (!$token) {
             return view('emails/respuesta_cita', [
@@ -1369,22 +1568,17 @@ class AgendaController extends BaseController
             $configuracionModel = new \App\Models\UsuarioConfiguracion();
             $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
 
-            // Enviar WhatsApp de confirmación cuando el paciente confirma desde el email (solo si está habilitado)
-            if ($configuracion['enviar_whatsapp'] ?? 1) {
-                try {
-                    $this->enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId);
-                } catch (\Exception $e) {
-                    // No fallar la confirmación si WhatsApp falla, solo loguear
-                    log_message('error', 'Error al enviar WhatsApp después de confirmación: ' . $e->getMessage());
-                }
-            } else {
-                log_message('info', 'WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
-            }
+            $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
             // Crear evento en el calendario del nutricionista cuando el paciente confirma (solo si está habilitado)
+            // IMPORTANTE: Crear primero el evento para obtener el enlace de Meet si es online
             if ($usuarioId && ($configuracion['crear_evento_calendario'] ?? 1)) {
                 try {
-                    $this->crearEventoCalendario($detalleAgendaId, $usuarioId);
+                    $resultadoCalendario = $this->crearEventoCalendario($detalleAgendaId, $usuarioId);
+                    if ($resultadoCalendario && isset($resultadoCalendario['meet_link'])) {
+                        $meetLink = $resultadoCalendario['meet_link'];
+                        log_message('info', 'Enlace de Google Meet obtenido: ' . $meetLink);
+                    }
                 } catch (\Exception $e) {
                     // No fallar la confirmación si el calendario falla, solo loguear
                     log_message('error', 'Error al crear evento en calendario desde confirmación email: ' . $e->getMessage());
@@ -1393,6 +1587,25 @@ class AgendaController extends BaseController
                 if (!($configuracion['crear_evento_calendario'] ?? 1)) {
                     log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuarioId);
                 }
+            }
+
+            // Enviar WhatsApp de confirmación cuando el paciente confirma desde el email (solo si está habilitado)
+            // Incluir el enlace de Meet si está disponible (para citas online)
+            log_message('info', 'CONFIRMAR DESDE EMAIL: Verificando configuración de WhatsApp');
+            log_message('info', 'CONFIRMAR DESDE EMAIL: enviar_whatsapp=' . ($configuracion['enviar_whatsapp'] ?? 'N/A') . ', usuarioId=' . ($usuarioId ?? 'N/A'));
+            
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                log_message('info', 'CONFIRMAR DESDE EMAIL: WhatsApp habilitado, procediendo a enviar');
+                log_message('info', 'CONFIRMAR DESDE EMAIL: detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . $pacienteId . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
+                try {
+                    $this->enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId, $meetLink);
+                } catch (\Exception $e) {
+                    // No fallar la confirmación si WhatsApp falla, solo loguear
+                    log_message('error', 'CONFIRMAR DESDE EMAIL: Excepción al enviar WhatsApp: ' . $e->getMessage());
+                    log_message('error', 'CONFIRMAR DESDE EMAIL: Stack trace: ' . $e->getTraceAsString());
+                }
+            } else {
+                log_message('info', 'CONFIRMAR DESDE EMAIL: WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
             }
 
             return view('emails/respuesta_cita', [
@@ -1413,9 +1626,28 @@ class AgendaController extends BaseController
      */
     public function cancelarDesdeEmail()
     {
+        // Log inmediato con error_log también para asegurar que se ejecuta
+        error_log('========================================');
+        error_log('CANCELAR DESDE EMAIL - MÉTODO EJECUTADO (error_log)');
+        error_log('Timestamp: ' . date('Y-m-d H:i:s'));
+        error_log('URL: ' . (isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : 'N/A'));
+        error_log('GET params: ' . json_encode($_GET));
+        error_log('========================================');
+        
+        log_message('info', '========================================');
+        log_message('info', 'CANCELAR DESDE EMAIL - INICIO');
+        log_message('info', '========================================');
+        log_message('info', 'Timestamp: ' . date('Y-m-d H:i:s'));
+        log_message('info', 'URL: ' . current_url());
+        log_message('info', 'REQUEST_URI: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+        log_message('info', 'GET completo: ' . json_encode($this->request->getGet()));
+        
         $token = $this->request->getGet('token');
+        log_message('info', 'Token recibido: ' . ($token ? substr($token, 0, 30) . '...' : 'NO'));
+        error_log('Token recibido: ' . ($token ? substr($token, 0, 30) . '...' : 'NO'));
         
         if (!$token) {
+            log_message('warning', 'CANCELAR DESDE EMAIL: Token faltante');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Token inválido o faltante.'
@@ -1425,6 +1657,7 @@ class AgendaController extends BaseController
         // Decodificar y validar token
         $datos = base64_decode($token);
         if (!$datos) {
+            log_message('warning', 'CANCELAR DESDE EMAIL: Token no se pudo decodificar');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Token inválido o corrupto.'
@@ -1433,7 +1666,10 @@ class AgendaController extends BaseController
 
         // Validar que el token tenga el formato correcto
         $partes = explode('|', $datos);
+        log_message('info', 'CANCELAR DESDE EMAIL: Partes del token: ' . count($partes));
+        
         if (count($partes) !== 3) {
+            log_message('warning', 'CANCELAR DESDE EMAIL: Token con formato inválido (partes: ' . count($partes) . ')');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Token con formato inválido.'
@@ -1441,9 +1677,11 @@ class AgendaController extends BaseController
         }
 
         list($detalleAgendaId, $pacienteId, $hash) = $partes;
+        log_message('info', 'CANCELAR DESDE EMAIL: detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . $pacienteId);
         
         // Validar que los IDs sean numéricos
         if (!is_numeric($detalleAgendaId) || !is_numeric($pacienteId)) {
+            log_message('warning', 'CANCELAR DESDE EMAIL: IDs no numéricos');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Token contiene datos inválidos.'
@@ -1453,16 +1691,20 @@ class AgendaController extends BaseController
         // Validar hash
         $hashEsperado = hash('sha256', $detalleAgendaId . $pacienteId . 'cancelar');
         if ($hash !== $hashEsperado) {
+            log_message('warning', 'CANCELAR DESDE EMAIL: Hash inválido. Esperado: ' . substr($hashEsperado, 0, 20) . '..., Recibido: ' . substr($hash, 0, 20) . '...');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Token inválido o manipulado.'
             ]);
         }
 
+        log_message('info', 'CANCELAR DESDE EMAIL: Token validado correctamente');
+
         try {
             $db = \Config\Database::connect();
             
             // Verificar que la cita existe y pertenece al paciente
+            log_message('info', 'CANCELAR DESDE EMAIL: Buscando cita detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . $pacienteId);
             $cita = $db->table('detalle_agenda')
                 ->where('id', $detalleAgendaId)
                 ->where('paciente_id', $pacienteId)
@@ -1470,21 +1712,54 @@ class AgendaController extends BaseController
                 ->getRow();
 
             if (!$cita) {
+                log_message('warning', 'CANCELAR DESDE EMAIL: Cita no encontrada');
                 return view('emails/respuesta_cita', [
                     'exito' => false,
                     'mensaje' => 'La cita no existe o ya fue cancelada.'
                 ]);
             }
 
+            log_message('info', 'CANCELAR DESDE EMAIL: Cita encontrada. Estado actual: ' . ($cita->estado_cita ?? 'N/A'));
+
             // Verificar que la cita no esté ya cancelada
             if ($cita->estado_cita === 'cancelada') {
+                log_message('info', 'CANCELAR DESDE EMAIL: Cita ya estaba cancelada previamente');
                 return view('emails/respuesta_cita', [
                     'exito' => true,
                     'mensaje' => 'La cita ya estaba cancelada previamente.'
                 ]);
             }
 
+            // Obtener información completa de la cita ANTES de cancelarla (incluyendo datos del paciente para WhatsApp)
+            log_message('info', 'CANCELAR DESDE EMAIL: Obteniendo información completa de la cita');
+            $citaCompleta = $db->table('detalle_agenda da')
+                ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo, da.calendar_event_id,
+                          a.fecha, a.usuario_id,
+                          p.id as paciente_id_db, p.nombre, p.apellido, p.email as paciente_email, p.telefono as paciente_telefono,
+                          u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, u.correo as nutricionista_email,
+                          ma.nombre as modalidad_nombre')
+                ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                ->join('pacientes p', 'p.id = da.paciente_id', 'left')
+                ->join('usuario u', 'u.id = a.usuario_id', 'left')
+                ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+                ->where('da.id', $detalleAgendaId)
+                ->where('da.paciente_id', $pacienteId)
+                ->get()
+                ->getRow();
+
+            if ($citaCompleta) {
+                log_message('info', 'CANCELAR DESDE EMAIL: Información completa obtenida');
+                log_message('info', '  - Nutricionista: ' . ($citaCompleta->nutricionista_nombre ?? 'N/A') . ' ' . ($citaCompleta->nutricionista_apellido ?? 'N/A'));
+                log_message('info', '  - Email nutricionista: ' . ($citaCompleta->nutricionista_email ?? 'NO'));
+                log_message('info', '  - Usuario ID: ' . ($citaCompleta->usuario_id ?? 'N/A'));
+                log_message('info', '  - Paciente: ' . ($citaCompleta->nombre ?? 'N/A') . ' ' . ($citaCompleta->apellido ?? 'N/A'));
+                log_message('info', '  - Fecha: ' . ($citaCompleta->fecha ?? 'N/A'));
+            } else {
+                log_message('warning', 'CANCELAR DESDE EMAIL: No se pudo obtener información completa de la cita');
+            }
+
             // Cancelar la cita y liberar el horario
+            log_message('info', 'CANCELAR DESDE EMAIL: Cancelando cita en base de datos');
             $db->table('detalle_agenda')
                 ->where('id', $detalleAgendaId)
                 ->update([
@@ -1493,13 +1768,93 @@ class AgendaController extends BaseController
                     'paciente_id' => null,
                     'estado' => 1 // Disponible nuevamente
                 ]);
+            log_message('info', 'CANCELAR DESDE EMAIL: Cita cancelada exitosamente en BD');
+
+            // Obtener configuraciones del nutricionista
+            $configuracionModel = new \App\Models\UsuarioConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracion($citaCompleta->usuario_id ?? null);
+
+            // Eliminar evento del calendario si existe (solo si está habilitado)
+            if ($citaCompleta && ($configuracion['crear_evento_calendario'] ?? 1)) {
+                try {
+                    log_message('info', 'CANCELAR DESDE EMAIL: Intentando eliminar evento del calendario');
+                    $this->eliminarEventoCalendario($detalleAgendaId, $citaCompleta->usuario_id);
+                    log_message('info', 'CANCELAR DESDE EMAIL: Evento del calendario eliminado (o no existía)');
+                } catch (\Exception $e) {
+                    // No fallar la cancelación si la eliminación del calendario falla, solo loguear
+                    log_message('error', 'CANCELAR DESDE EMAIL: Error al eliminar evento del calendario: ' . $e->getMessage());
+                }
+            }
+
+            // Enviar WhatsApp al paciente cuando se cancela desde el email (solo si está habilitado)
+            // IMPORTANTE: Usar pacienteId y datos de citaCompleta porque paciente_id ya fue puesto en null
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                try {
+                    log_message('info', 'CANCELAR DESDE EMAIL: Enviando WhatsApp de cancelación al paciente');
+                    log_message('info', 'CANCELAR DESDE EMAIL: pacienteId=' . $pacienteId . ', telefono=' . ($citaCompleta->paciente_telefono ?? 'N/A'));
+                    
+                    // Verificar que tenemos teléfono del paciente
+                    if (empty($citaCompleta->paciente_telefono)) {
+                        log_message('warning', 'CANCELAR DESDE EMAIL: No se puede enviar WhatsApp - paciente sin teléfono');
+                    } else {
+                        $whatsappService = new WhatsAppService();
+                        $resultado = $whatsappService->enviarCancelacionCita($detalleAgendaId, $pacienteId);
+                        if ($resultado['success']) {
+                            log_message('info', 'CANCELAR DESDE EMAIL: WhatsApp de cancelación enviado al paciente exitosamente');
+                        } else {
+                            log_message('warning', 'CANCELAR DESDE EMAIL: Error al enviar WhatsApp: ' . ($resultado['error'] ?? 'Error desconocido'));
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // No fallar la cancelación si WhatsApp falla, solo loguear
+                    log_message('error', 'CANCELAR DESDE EMAIL: Excepción al enviar WhatsApp de cancelación: ' . $e->getMessage());
+                    log_message('error', 'CANCELAR DESDE EMAIL: Stack trace: ' . $e->getTraceAsString());
+                }
+            } else {
+                log_message('info', 'CANCELAR DESDE EMAIL: WhatsApp deshabilitado en configuraciones del usuario ID: ' . ($citaCompleta->usuario_id ?? 'N/A'));
+            }
+
+            // Enviar notificación por email al nutricionista sobre el rechazo
+            log_message('info', 'CANCELAR DESDE EMAIL: Verificando condiciones para enviar email al nutricionista');
+            log_message('info', '  - citaCompleta existe: ' . ($citaCompleta ? 'SÍ' : 'NO'));
+            log_message('info', '  - nutricionista_email: ' . (!empty($citaCompleta->nutricionista_email) ? $citaCompleta->nutricionista_email : 'VACÍO'));
+            
+            if ($citaCompleta && !empty($citaCompleta->nutricionista_email)) {
+                log_message('info', 'CANCELAR DESDE EMAIL: Condiciones cumplidas, procediendo a enviar email');
+                try {
+                    log_message('info', 'CANCELAR DESDE EMAIL: Configuración obtenida. enviar_email=' . ($configuracion['enviar_email'] ?? 'N/A'));
+                    
+                    if ($configuracion['enviar_email'] ?? 1) {
+                        log_message('info', 'CANCELAR DESDE EMAIL: Email habilitado, llamando a enviarEmailCancelacionNutricionista()');
+                        $resultado = $this->enviarEmailCancelacionNutricionista($citaCompleta);
+                        log_message('info', 'CANCELAR DESDE EMAIL: Resultado de enviarEmailCancelacionNutricionista: ' . ($resultado ? 'ÉXITO' : 'FALLO'));
+                    } else {
+                        log_message('info', 'CANCELAR DESDE EMAIL: Email deshabilitado en configuraciones del usuario ID: ' . $citaCompleta->usuario_id);
+                    }
+                } catch (\Exception $e) {
+                    // No fallar la cancelación si el email falla, solo loguear
+                    log_message('error', 'CANCELAR DESDE EMAIL: Excepción al enviar email de cancelación al nutricionista: ' . $e->getMessage());
+                    log_message('error', 'CANCELAR DESDE EMAIL: Stack trace: ' . $e->getTraceAsString());
+                }
+            } else {
+                if (!$citaCompleta) {
+                    log_message('warning', 'CANCELAR DESDE EMAIL: No se enviará email porque citaCompleta es NULL');
+                } else {
+                    log_message('warning', 'CANCELAR DESDE EMAIL: No se enviará email porque nutricionista_email está vacío');
+                }
+            }
+
+            log_message('info', 'CANCELAR DESDE EMAIL: Proceso completado exitosamente');
+            log_message('info', '========================================');
 
             return view('emails/respuesta_cita', [
                 'exito' => true,
                 'mensaje' => 'Cita cancelada exitosamente. El horario ha sido liberado.'
             ]);
         } catch (\Exception $e) {
-            log_message('error', 'Error al cancelar cita desde email: ' . $e->getMessage());
+            log_message('error', 'CANCELAR DESDE EMAIL: Excepción general: ' . $e->getMessage());
+            log_message('error', 'CANCELAR DESDE EMAIL: Stack trace: ' . $e->getTraceAsString());
+            log_message('info', '========================================');
             return view('emails/respuesta_cita', [
                 'exito' => false,
                 'mensaje' => 'Ocurrió un error al procesar la cancelación. Por favor, contacta con tu nutricionista.'
@@ -2195,7 +2550,9 @@ class AgendaController extends BaseController
         log_message('info', 'Usuario ID: ' . $usuarioId);
         
         try {
-            $calendarService = new CalendarService($usuarioId);
+            // No pasar $usuarioId al constructor para evitar cargar token inexistente/expirado
+            // Solo necesitamos generar la URL de autorización
+            $calendarService = new CalendarService();
             $authUrl = $calendarService->getAuthUrl($usuarioId);
             
             log_message('info', 'URL de autorización generada: ' . $authUrl);
@@ -2297,7 +2654,10 @@ class AgendaController extends BaseController
             
             // El código de autorización solo es válido una vez y por tiempo limitado
             // Google valida esto, pero aún así es seguro
-            $calendarService = new CalendarService($usuarioId);
+            // No pasar $usuarioId al constructor para evitar cargar token expirado
+            // El token se guardará después de intercambiar el código
+            $calendarService = new CalendarService();
+            $calendarService->setProvider($provider ?? 'google'); // Establecer el provider desde el state
             $tokenData = $calendarService->exchangeCodeForToken($code, $usuarioId);
             
             log_message('info', 'Tokens guardados exitosamente para usuario ID: ' . $usuarioId);
@@ -2308,6 +2668,35 @@ class AgendaController extends BaseController
             log_message('error', 'IP del cliente: ' . $this->request->getIPAddress());
             log_message('error', 'Stack trace: ' . $e->getTraceAsString());
             return redirect()->to(base_url('dashboard/agenda/calendario'))->with('error', 'Error al conectar: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Verificar y renovar token de calendario automáticamente
+     * Este endpoint se puede llamar periódicamente mientras el usuario está activo
+     */
+    public function verificarTokenCalendario()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'No hay sesión de usuario'
+            ]);
+        }
+
+        $usuarioId = session()->get('usuario')['id'];
+        
+        try {
+            $calendarService = new CalendarService();
+            $resultado = $calendarService->verificarYRenovarTokenAutomatico($usuarioId);
+            
+            return $this->response->setJSON($resultado);
+        } catch (\Exception $e) {
+            log_message('error', 'Error al verificar token de calendario: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error al verificar token: ' . $e->getMessage()
+            ]);
         }
     }
 

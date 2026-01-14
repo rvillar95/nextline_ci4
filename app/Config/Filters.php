@@ -14,6 +14,7 @@ use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 
 use App\Filters\SessionFilter;
+use App\Filters\CSRFExceptWebhook;
 
 class Filters extends BaseFilters
 {
@@ -27,7 +28,7 @@ class Filters extends BaseFilters
      * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
-        'csrf'          => CSRF::class,
+        'csrf'          => CSRFExceptWebhook::class, // CSRF con excepción para webhook de WhatsApp
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,

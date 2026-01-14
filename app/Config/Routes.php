@@ -268,6 +268,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
         // Rutas para integración con calendario
         $routes2->get('calendario/connect', 'Dashboard\AgendaController::conectarCalendario');
+        $routes2->get('calendario/verificar-token', 'Dashboard\AgendaController::verificarTokenCalendario');
         $routes2->post('crearHorarios', 'Dashboard\AgendaController::crearHorarios');
         $routes2->post('eliminarHorarios', 'Dashboard\AgendaController::eliminarHorarios');
         $routes2->post('actualizarModalidad', 'Dashboard\AgendaController::actualizarModalidad');

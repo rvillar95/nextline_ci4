@@ -218,6 +218,60 @@ let historialesDisponibles = [];
 let historialesSeleccionados = [];
 let charts = {};
 
+// Función para obtener el token CSRF
+function obtenerTokenCSRF() {
+    // Intentar obtener de la cookie primero
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.indexOf('csrf_cookie_name=') !== -1) {
+            var parts = cookie.split('=');
+            if (parts.length >= 2) {
+                var token = decodeURIComponent(parts.slice(1).join('='));
+                if (token && token.length > 0) {
+                    return token;
+                }
+            }
+        }
+    }
+    // Si no está en la cookie, intentar del meta tag
+    var metaToken = $('meta[name="csrf-token"]').attr('content');
+    if (metaToken) {
+        return metaToken;
+    }
+    // Último recurso: del input hidden si existe
+    var inputToken = $('input[name="csrf_test_name"]').val();
+    if (inputToken) {
+        return inputToken;
+    }
+    // Si no hay nada, usar el hash del servidor
+    return '<?= csrf_hash() ?>';
+}
+
+// Función para actualizar el token CSRF después de cada petición
+function actualizarTokenCSRF(xhr) {
+    // Intentar obtener del header
+    var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+    if (headerToken) {
+        $('meta[name="csrf-token"]').attr('content', headerToken);
+        $('input[name="csrf_test_name"]').val(headerToken);
+        return;
+    }
+    // O de la respuesta JSON si está disponible
+    if (xhr.responseJSON && xhr.responseJSON.csrf_token) {
+        var jsonToken = xhr.responseJSON.csrf_token;
+        $('meta[name="csrf-token"]').attr('content', jsonToken);
+        $('input[name="csrf_test_name"]').val(jsonToken);
+        return;
+    }
+    // Leer de la cookie actualizada
+    var nuevoToken = obtenerTokenCSRF();
+    if (nuevoToken) {
+        $('meta[name="csrf-token"]').attr('content', nuevoToken);
+        $('input[name="csrf_test_name"]').val(nuevoToken);
+    }
+}
+
 $(document).ready(function() {
     // Seleccionar paciente
     $('#selectPaciente').on('change', function() {
@@ -254,6 +308,14 @@ function cargarHistoriales(pacienteId) {
         data: { paciente_id: pacienteId },
         dataType: 'json',
         success: function(response) {
+            // Los historiales ya vienen ordenados del backend (más antigua a más nueva)
+            // No debemos reordenarlos, solo usarlos en el orden que vienen
+            console.log('Historiales recibidos del backend:', response);
+            console.log('Orden de fechas:', response.map(h => ({
+                id: h.id,
+                fecha: h.fecha_consulta || h.fecha_detalle || 'N/A'
+            })));
+            
             historialesDisponibles = response;
             historialesSeleccionados = [];
             actualizarListaHistoriales();
@@ -329,23 +391,66 @@ function toggleHistorial(historialId) {
 }
 
 function compararHistoriales() {
+    console.log('Comparando historiales. IDs seleccionados:', historialesSeleccionados);
+    
+    // Obtener token CSRF actualizado (siempre obtener el más reciente antes de cada petición)
+    var csrfToken = obtenerTokenCSRF();
+    var csrfName = '<?= csrf_token() ?>'; // Nombre del token CSRF
+    
+    console.log('Token CSRF a usar:', csrfToken ? csrfToken.substring(0, 20) + '...' : 'NO ENCONTRADO');
+    
     $.ajax({
         url: '<?= base_url('dashboard/historial/compararHistoriales') ?>',
         type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken
+        },
         data: {
             historial_ids: historialesSeleccionados,
-            csrf_test_name: $('meta[name="csrf-token"]').attr('content')
+            [csrfName]: csrfToken
         },
         dataType: 'json',
-        success: function(response) {
+        success: function(response, textStatus, xhr) {
+            // Actualizar token CSRF después de la petición
+            actualizarTokenCSRF(xhr);
+            
+            // Si la respuesta tiene un formato diferente (con historiales dentro)
             if (response.error) {
                 alert(response.error);
                 return;
             }
-            mostrarComparacion(response);
+            
+            // Extraer historiales de la respuesta (puede venir directamente o dentro de 'historiales')
+            var historiales = response.historiales || response;
+            
+            console.log('Historiales recibidos para comparación:', historiales);
+            console.log('Orden de fechas en respuesta:', historiales.map(h => ({
+                id: h.id,
+                fecha: h.fecha_consulta || h.fecha_detalle || 'N/A'
+            })));
+            
+            // Si hay un nuevo token CSRF en la respuesta, actualizarlo
+            if (response.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                $('input[name="csrf_test_name"]').val(response.csrf_token);
+                console.log('Token CSRF actualizado desde respuesta:', response.csrf_token);
+            }
+            
+            mostrarComparacion(historiales);
         },
-        error: function() {
-            alert('Error al comparar historiales');
+        error: function(xhr) {
+            // Actualizar token CSRF incluso en caso de error
+            actualizarTokenCSRF(xhr);
+            
+            var errorMsg = 'Error al comparar historiales';
+            if (xhr.status === 403) {
+                errorMsg = 'Error 403: Token CSRF inválido o expirado. Por favor, recarga la página e intenta de nuevo.';
+            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            alert(errorMsg);
+            console.error('Error al comparar historiales:', xhr);
         }
     });
 }
@@ -354,8 +459,72 @@ function mostrarComparacion(historiales) {
     $('#seccionComparacion').show();
     $('html, body').animate({ scrollTop: $('#seccionComparacion').offset().top - 100 }, 500);
 
-    // Preparar datos para gráficos
-    const fechas = historiales.map(h => h.fecha_consulta || h.fecha_detalle || 'N/A');
+    // Función auxiliar para convertir fecha a objeto Date y formatearla
+    function parsearFecha(fechaStr) {
+        if (!fechaStr || fechaStr === 'N/A') return null;
+        
+        // Intentar diferentes formatos de fecha
+        // Formato YYYY-MM-DD
+        if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+            return new Date(fechaStr);
+        }
+        // Formato DD-MM-YYYY
+        if (fechaStr.match(/^\d{2}-\d{2}-\d{4}/)) {
+            const partes = fechaStr.split('-');
+            return new Date(partes[2], partes[1] - 1, partes[0]);
+        }
+        // Formato DD/MM/YYYY
+        if (fechaStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+            const partes = fechaStr.split('/');
+            return new Date(partes[2], partes[1] - 1, partes[0]);
+        }
+        
+        // Intentar parseo directo
+        const fecha = new Date(fechaStr);
+        return isNaN(fecha.getTime()) ? null : fecha;
+    }
+
+    // IMPORTANTE: Los historiales ya vienen ordenados del backend (más antigua a más nueva)
+    // No debemos reordenarlos, solo usarlos en el orden que vienen
+    
+    console.log('Historiales recibidos del backend (orden original):', historiales.map(h => ({
+        id: h.id,
+        fecha: h.fecha_consulta || h.fecha_detalle
+    })));
+    
+    // Preparar datos para gráficos - mantener el orden original del backend
+    const fechasFormateadas = historiales.map(h => {
+        const fechaStr = h.fecha_consulta || h.fecha_detalle || null;
+        if (!fechaStr || fechaStr === 'N/A') return 'N/A';
+        
+        // Parsear fecha para formatearla correctamente
+        let fecha;
+        if (fechaStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+            // Formato YYYY-MM-DD
+            fecha = new Date(fechaStr);
+        } else if (fechaStr.match(/^\d{2}-\d{2}-\d{4}/)) {
+            // Formato DD-MM-YYYY
+            const partes = fechaStr.split('-');
+            fecha = new Date(partes[2], partes[1] - 1, partes[0]);
+        } else if (fechaStr.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+            // Formato DD/MM/YYYY
+            const partes = fechaStr.split('/');
+            fecha = new Date(partes[2], partes[1] - 1, partes[0]);
+        } else {
+            fecha = new Date(fechaStr);
+        }
+        
+        if (isNaN(fecha.getTime())) return fechaStr; // Si no se puede parsear, devolver original
+        
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const año = fecha.getFullYear();
+        return `${dia}-${mes}-${año}`;
+    });
+
+    console.log('Fechas formateadas (orden original):', fechasFormateadas);
+
+    // Extraer datos manteniendo el orden original del backend
     const pesos = historiales.map(h => h.peso_actual ? parseFloat(h.peso_actual) : null);
     const imcs = historiales.map(h => h.imc_actual ? parseFloat(h.imc_actual) : null);
     const cinturas = historiales.map(h => h.circunferencia_cintura ? parseFloat(h.circunferencia_cintura) : null);
@@ -363,12 +532,13 @@ function mostrarComparacion(historiales) {
     const grasas = historiales.map(h => h.grasa_corporal ? parseFloat(h.grasa_corporal) : null);
     const pliegues = historiales.map(h => h.suma_pliegues ? parseFloat(h.suma_pliegues) : null);
 
-    // Crear gráficos
-    crearGrafico('chartPeso', 'Evolución del Peso', fechas, pesos, 'kg', 'rgba(54, 162, 235, 0.6)');
-    crearGrafico('chartIMC', 'Evolución del IMC', fechas, imcs, '', 'rgba(255, 99, 132, 0.6)');
-    crearGraficoDual('chartCircunferencias', 'Evolución de Circunferencias', fechas, cinturas, caderas, 'cm');
-    crearGrafico('chartGrasa', 'Evolución de Grasa Corporal', fechas, grasas, '%', 'rgba(255, 206, 86, 0.6)');
-    crearGrafico('chartPliegues', 'Evolución de Suma de Pliegues', fechas, pliegues, 'mm', 'rgba(75, 192, 192, 0.6)');
+    // Crear gráficos - los datos ya vienen ordenados del backend
+    // Pasamos las fechas formateadas y los datos en el mismo orden
+    crearGrafico('chartPeso', 'Evolución del Peso', fechasFormateadas, pesos, 'kg', 'rgba(54, 162, 235, 0.6)');
+    crearGrafico('chartIMC', 'Evolución del IMC', fechasFormateadas, imcs, '', 'rgba(255, 99, 132, 0.6)');
+    crearGraficoDual('chartCircunferencias', 'Evolución de Circunferencias', fechasFormateadas, cinturas, caderas, 'cm');
+    crearGrafico('chartGrasa', 'Evolución de Grasa Corporal', fechasFormateadas, grasas, '%', 'rgba(255, 206, 86, 0.6)');
+    crearGrafico('chartPliegues', 'Evolución de Suma de Pliegues', fechasFormateadas, pliegues, 'mm', 'rgba(75, 192, 192, 0.6)');
 
     // Llenar tabla
     llenarTablaComparacion(historiales);
@@ -383,13 +553,16 @@ function crearGrafico(canvasId, titulo, labels, data, unidad, color) {
         charts[canvasId].destroy();
     }
     
+    // Los labels y data ya vienen ordenados del backend (más antigua a más nueva)
+    // NO debemos reordenarlos, solo usarlos tal como vienen
+    
     charts[canvasId] = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: labels, // Usar labels directamente en el orden que vienen
             datasets: [{
                 label: titulo,
-                data: data,
+                data: data, // Usar data directamente en el orden que vienen
                 borderColor: color.replace('0.6', '1'),
                 backgroundColor: color,
                 borderWidth: 3,
@@ -402,6 +575,10 @@ function crearGrafico(canvasId, titulo, labels, data, unidad, color) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
             plugins: {
                 title: {
                     display: true,
@@ -420,6 +597,15 @@ function crearGrafico(canvasId, titulo, labels, data, unidad, color) {
                 }
             },
             scales: {
+                x: {
+                    display: true,
+                    ticks: {
+                        // Mostrar todos los labels sin saltar ninguno
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
                 y: {
                     beginAtZero: false,
                     title: {
@@ -438,14 +624,17 @@ function crearGraficoDual(canvasId, titulo, labels, data1, data2, unidad) {
         charts[canvasId].destroy();
     }
     
+    // Los labels y data ya vienen ordenados del backend (más antigua a más nueva)
+    // NO debemos reordenarlos, solo usarlos tal como vienen
+    
     charts[canvasId] = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: labels,
+            labels: labels, // Usar labels directamente en el orden que vienen
             datasets: [
                 {
                     label: 'Cintura',
-                    data: data1,
+                    data: data1, // Usar data directamente en el orden que vienen
                     borderColor: 'rgba(54, 162, 235, 1)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderWidth: 3,
@@ -454,7 +643,7 @@ function crearGraficoDual(canvasId, titulo, labels, data1, data2, unidad) {
                 },
                 {
                     label: 'Cadera',
-                    data: data2,
+                    data: data2, // Usar data directamente en el orden que vienen
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderWidth: 3,
@@ -466,6 +655,10 @@ function crearGraficoDual(canvasId, titulo, labels, data1, data2, unidad) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
             plugins: {
                 title: {
                     display: true,
@@ -481,6 +674,15 @@ function crearGraficoDual(canvasId, titulo, labels, data1, data2, unidad) {
                 }
             },
             scales: {
+                x: {
+                    display: true,
+                    ticks: {
+                        // Mostrar todos los labels sin saltar ninguno
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
                 y: {
                     beginAtZero: false,
                     title: {

@@ -52,6 +52,17 @@ abstract class BaseController extends Controller
     {
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
+        
+        // Log temporal para debugging de cancelar-cita
+        $uri = $request->getUri();
+        $path = $uri->getPath();
+        if (strpos($path, 'cancelar-cita') !== false || strpos($path, 'confirmar-cita') !== false) {
+            error_log('BaseController::initController - Ruta: ' . $path);
+            error_log('BaseController::initController - URI completa: ' . (string)$uri);
+            log_message('info', 'BaseController::initController - Ruta: ' . $path);
+            log_message('info', 'BaseController::initController - URI completa: ' . (string)$uri);
+        }
+        
         $this->session = \Config\Services::session();
         $this->poder = (int) (session('usuario')['poder'] ?? 0);
     }

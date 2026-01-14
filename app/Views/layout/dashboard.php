@@ -618,6 +618,51 @@ exit(); */
                 document.addEventListener(event, resetActivityTimer, true);
             });
         })();
+
+        // ============================================
+        // VERIFICACIÓN Y RENOVACIÓN AUTOMÁTICA DE TOKEN DE CALENDARIO
+        // ============================================
+        (function() {
+            // Verificar y renovar token de calendario cada 30 minutos
+            const TOKEN_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutos en milisegundos
+            
+            function verificarTokenCalendario() {
+                fetch('<?= base_url('dashboard/agenda/calendario/verificar-token') ?>', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.renovado) {
+                            console.log('✅ Token de calendario renovado automáticamente:', data.message);
+                        } else {
+                            console.log('ℹ️ Token de calendario verificado:', data.message);
+                            if (data.minutos_restantes !== undefined) {
+                                console.log('   Minutos restantes:', data.minutos_restantes);
+                            }
+                        }
+                    } else {
+                        console.warn('⚠️ Advertencia de token de calendario:', data.message);
+                        if (data.necesita_autorizar) {
+                            console.warn('   El usuario necesita re-autorizar el calendario');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al verificar token de calendario:', error);
+                });
+            }
+            
+            // Verificar inmediatamente al cargar la página (si el usuario tiene token configurado)
+            // Esperar 5 segundos para no interferir con la carga inicial
+            setTimeout(verificarTokenCalendario, 5000);
+            
+            // Verificar periódicamente cada 30 minutos
+            setInterval(verificarTokenCalendario, TOKEN_CHECK_INTERVAL);
+        })();
         </script>
         
         <style>

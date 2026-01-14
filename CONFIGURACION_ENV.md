@@ -58,6 +58,26 @@ recaptcha.secretKey = tu_secret_key_de_recaptcha_aqui
 #--------------------------------------------------------------------
 
 logger.threshold = 4
+
+#--------------------------------------------------------------------
+# WHATSAPP / TWILIO
+#--------------------------------------------------------------------
+
+# Proveedor de WhatsApp (twilio o whatsapp_business)
+WHATSAPP_PROVIDER=twilio
+
+# Configuración de Twilio
+TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+TWILIO_AUTH_TOKEN=tu_auth_token_aqui
+TWILIO_WHATSAPP_FROM=whatsapp:+1234567890
+
+# Plantilla de Twilio para confirmaciones (opcional)
+# Si no se configura, se usará mensaje de texto simple
+TWILIO_CONTENT_SID_CONFIRMACION=HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Deshabilitar verificación SSL para desarrollo local (solo si hay problemas con certificados)
+# En producción, dejar en false o no configurar
+TWILIO_DISABLE_SSL_VERIFY=true
 ```
 
 ## Cómo usar variables de entorno en tu código

@@ -31,6 +31,11 @@ final class SessionFilter implements FilterInterface
         '/dashboard/ubicacion/comuna-info/(:any)',
         '/dashboard/ubicacion/validar',
         '/dashboard/ubicacion/estadisticas',
+        // Rutas públicas para confirmar/cancelar citas desde email
+        '/confirmar-cita',
+        '/cancelar-cita',
+        // Callback público de OAuth2 para calendario (Google/Microsoft llama esta URL directamente)
+        '/dashboard/agenda/calendario/callback',
     ];
 
     /**
@@ -45,6 +50,26 @@ final class SessionFilter implements FilterInterface
     {
         $path = $this->sanitizePath($this->currentPath($request));
         
+        // Log para debugging de cancelar-cita y confirmar-cita
+        if (strpos($path, 'cancelar-cita') !== false || strpos($path, 'confirmar-cita') !== false) {
+            error_log('========================================');
+            error_log('SessionFilter: Procesando ruta: ' . $path);
+            error_log('SessionFilter: URI completa: ' . (string)$request->getUri());
+            error_log('SessionFilter: Método: ' . $request->getMethod());
+            log_message('info', '========================================');
+            log_message('info', 'SessionFilter: Procesando ruta: ' . $path);
+            log_message('info', 'SessionFilter: URI completa: ' . (string)$request->getUri());
+            log_message('info', 'SessionFilter: Método: ' . $request->getMethod());
+        }
+        
+        // Log para debugging de calendario
+        /*
+        if (strpos($path, 'calendar') !== false) {
+            log_message('info', '========================================');
+            log_message('info', 'SessionFilter: Procesando ruta de calendario: ' . $path);
+            log_message('info', '========================================');
+        }*/
+        
         // Log para debugging
         if (strpos($path, 'generarPDF') !== false) {
             log_message('debug', 'SessionFilter: Procesando ruta generarPDF: ' . $path);
@@ -53,11 +78,21 @@ final class SessionFilter implements FilterInterface
         // 1) Públicos fuera del filtro
         foreach (self::PUBLIC_PATHS as $pub) {
             if ($this->matchesPattern($path, $pub)) {
+                if (strpos($path, 'cancelar-cita') !== false || strpos($path, 'confirmar-cita') !== false) {
+                    error_log('SessionFilter: Ruta ' . $path . ' encontrada en PUBLIC_PATHS - PERMITIDA');
+                    log_message('info', 'SessionFilter: Ruta ' . $path . ' encontrada en PUBLIC_PATHS - PERMITIDA');
+                }
                 if (strpos($path, 'generarPDF') !== false) {
                     log_message('debug', 'SessionFilter: Ruta generarPDF encontrada en PUBLIC_PATHS');
                 }
                 return;
             }
+        }
+        
+        // Log si no se encontró en PUBLIC_PATHS
+        if (strpos($path, 'cancelar-cita') !== false || strpos($path, 'confirmar-cita') !== false) {
+            error_log('SessionFilter: Ruta ' . $path . ' NO encontrada en PUBLIC_PATHS - Continuando con validación');
+            log_message('warning', 'SessionFilter: Ruta ' . $path . ' NO encontrada en PUBLIC_PATHS - Continuando con validación');
         }
 
         // 2) Requiere sesión
@@ -84,8 +119,8 @@ final class SessionFilter implements FilterInterface
         // 4) Evaluar ruta contra patrones
         // Log temporal para debugging de agenda
         if (strpos($path, 'agenda/agendar') !== false) {
-            log_message('debug', 'SessionFilter: Evaluando ruta: ' . $path);
-            log_message('debug', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
+            //log_message('debug', 'SessionFilter: Evaluando ruta: ' . $path);
+            //log_message('debug', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
             foreach ($allowed as $idx => $rule) {
                 if (strpos($rule['pattern'], 'agenda') !== false) {
                     log_message('debug', "SessionFilter: Regla #{$idx}: pattern={$rule['pattern']}, allowTailNum=" . ($rule['allowTailNum'] ? 'true' : 'false'));
@@ -132,13 +167,39 @@ final class SessionFilter implements FilterInterface
         }
         //exit();
 
-        // 5) Denegar si nada coincide
-        if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false) {
-            log_message('debug', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
-            log_message('debug', 'SessionFilter: Rutas permitidas que contienen "agenda":');
+        // 5) Excepciones especiales para rutas que requieren autenticación pero no están en módulo_detalle
+        // Rutas de calendario que requieren autenticación (usuario logueado con acceso a agenda)
+        $calendarioExcepciones = [
+            '/dashboard/agenda/calendario/verificar-token',
+            '/dashboard/agenda/calendario/connect',
+        ];
+        
+        foreach ($calendarioExcepciones as $excepcion) {
+            if ($this->isDirectMatch($path, $excepcion)) {
+                // Verificar que el usuario tenga acceso al módulo de agenda
+                // Si tiene acceso a agenda, permitir estas rutas de calendario
+                $tieneAccesoAgenda = false;
+                foreach ($allowed as $rule) {
+                    if (strpos($rule['pattern'], '/dashboard/agenda') === 0) {
+                        $tieneAccesoAgenda = true;
+                        break;
+                    }
+                }
+                
+                if ($tieneAccesoAgenda) {
+                    log_message('info', 'SessionFilter: Ruta de calendario permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
+        // 6) Denegar si nada coincide
+        if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false || strpos($path, 'calendar') !== false || strpos($path, 'calendario') !== false) {
+            log_message('error', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
+            //log_message('error', 'SessionFilter: Rutas permitidas que contienen "agenda" o "calendar":');
             foreach ($allowed as $rule) {
-                if (strpos($rule['pattern'], 'agenda') !== false) {
-                    log_message('debug', '  - ' . $rule['pattern']);
+                if (strpos($rule['pattern'], 'agenda') !== false || strpos($rule['pattern'], 'calendar') !== false || strpos($rule['pattern'], 'calendario') !== false) {
+                    log_message('error', '  - ' . $rule['pattern']);
                 }
             }
         }
