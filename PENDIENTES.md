@@ -39,7 +39,34 @@
 
 ## 🔄 Pendiente
 
-### 1. Módulo de Botones de Pago (Mercado Pago)
+### 1. Sistema de Paquetes para Nutricionistas
+**Prioridad: Alta**
+
+**Descripción:**
+- Implementar sistema de paquetes similar a NextLine Presencia
+- Crear paquete "NextLine Nutrición" para módulos de nutricionistas
+- Asignar módulos de nutricionistas al paquete correspondiente
+- Verificar que el sistema de permisos funcione correctamente
+
+**Tareas:**
+- [ ] Crear paquete "NextLine Nutrición" en la tabla `paquetes`
+- [ ] Asignar módulos de nutricionistas al paquete (33: Agenda, 34: Pacientes, 35: Documentos, 36: Historial, 37: Pagos, 34: Configuraciones, 38: Cancelar Horas)
+- [ ] Verificar que los módulos aparezcan en `vista_modulos_por_paquete`
+- [ ] Verificar que la función `fn_usuario_puede_ver_modulo` funcione correctamente
+- [ ] Asignar paquete a empresas de nutricionistas (si aplica)
+- [ ] Probar que el menú se genere dinámicamente según el paquete
+- [ ] Documentar el proceso
+
+**Archivos a crear/modificar:**
+- `crear_paquete_nutricion.sql` (nuevo) - Script SQL para crear el paquete y asignar módulos
+- `asignar_modulos_a_paquetes.sql` (ya existe) - Actualizar para incluir todos los módulos de nutricionistas
+
+**Referencias:**
+- Ver `ANALISIS_SISTEMA_PAQUETES.md` para entender el concepto
+- Ver rama `feature/presencia` para ver implementación similar
+- Ver `SISTEMA_PAQUETES_MODULOS.md` en rama `feature/presencia` para documentación técnica
+
+### 2. Módulo de Botones de Pago (Mercado Pago)
 **Prioridad: Alta**
 
 **Descripción:**
