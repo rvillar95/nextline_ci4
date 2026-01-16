@@ -285,6 +285,12 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
     });
 
+    $routes->group('agenda/cancelar-horas', function ($routes2) {
+        $routes2->get('', 'Dashboard\CancelarHorasController::index');
+        $routes2->post('obtener-citas', 'Dashboard\CancelarHorasController::obtenerCitas');
+        $routes2->post('procesar', 'Dashboard\CancelarHorasController::procesarCancelacion');
+    });
+
     $routes->group('pago', function ($routes2) {
         $routes2->get('lista', 'Dashboard\PagoController::lista');
         $routes2->get('registro', 'Dashboard\PagoController::registro');
@@ -293,6 +299,11 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'Dashboard\PagoController::registrar');
         $routes2->post('update', 'Dashboard\PagoController::update');
         $routes2->post('procesar', 'Dashboard\PagoController::procesar');
+    });
+
+    $routes->group('configuracion', function ($routes2) {
+        $routes2->get('', 'Dashboard\ConfiguracionController::index');
+        $routes2->post('guardar', 'Dashboard\ConfiguracionController::guardar');
     });
 });
 
@@ -324,11 +335,6 @@ $routes->get('confirmar-cita', 'Dashboard\AgendaController::confirmarDesdeEmail'
 $routes->get('cancelar-cita', 'Dashboard\AgendaController::cancelarDesdeEmail');
 // Callback público de OAuth2 para calendario (no requiere autenticación porque Google lo llama directamente)
 $routes->get('dashboard/agenda/calendario/callback', 'Dashboard\AgendaController::calendarCallback');
-
-    $routes->group('configuracion', function ($routes2) {
-        $routes2->get('', 'Dashboard\ConfiguracionController::index');
-        $routes2->post('guardar', 'Dashboard\ConfiguracionController::guardar');
-    });
 
 // Prueba de Email (solo para desarrollo local)
 $routes->get('test-email', 'TestEmail::index');

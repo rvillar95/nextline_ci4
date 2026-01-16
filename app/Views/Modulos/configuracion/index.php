@@ -1,6 +1,14 @@
 <?= $this->extend('layout/dashboard') ?>
 
 <?= $this->section('configuracion/index') ?>
+
+<!-- TinyMCE Editor -->
+<script src="https://cdn.tiny.cloud/1/k10uo8qhvhuxj1ho5z73jcbhzpwlspewyrz3lkbu5b99faon/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+
+<!-- Toastr para notificaciones -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -122,6 +130,55 @@
                             </div>
                         </div>
 
+                        <!-- Sección: Mensajes de Cancelación Masiva -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-comment-alt mr-2"></i>
+                                    Mensajes de Cancelación Masiva
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <strong>Variables disponibles:</strong> [NOMBRE_PACIENTE], [FECHA], [HORA], [NOMBRE_NUTRICIONISTA]
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="mensaje_cancelacion_pendiente">
+                                        <strong>Mensaje para citas en estado Pendiente</strong>
+                                    </label>
+                                    <textarea class="form-control tinymce-editor" id="mensaje_cancelacion_pendiente" 
+                                              name="mensaje_cancelacion_pendiente" rows="6"><?= esc($configuracion['mensaje_cancelacion_pendiente'] ?? 'Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita programada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]') ?></textarea>
+                                    <small class="form-text text-muted">
+                                        Mensaje que se enviará cuando se cancele una cita en estado "Pendiente"
+                                    </small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="mensaje_cancelacion_confirmada">
+                                        <strong>Mensaje para citas en estado Confirmada</strong>
+                                    </label>
+                                    <textarea class="form-control tinymce-editor" id="mensaje_cancelacion_confirmada" 
+                                              name="mensaje_cancelacion_confirmada" rows="6"><?= esc($configuracion['mensaje_cancelacion_confirmada'] ?? 'Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita confirmada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]') ?></textarea>
+                                    <small class="form-text text-muted">
+                                        Mensaje que se enviará cuando se cancele una cita en estado "Confirmada"
+                                    </small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="mensaje_cancelacion_en_proceso">
+                                        <strong>Mensaje para citas en estado En Proceso</strong>
+                                    </label>
+                                    <textarea class="form-control tinymce-editor" id="mensaje_cancelacion_en_proceso" 
+                                              name="mensaje_cancelacion_en_proceso" rows="6"><?= esc($configuracion['mensaje_cancelacion_en_proceso'] ?? 'Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita programada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]') ?></textarea>
+                                    <small class="form-text text-muted">
+                                        Mensaje que se enviará cuando se cancele una cita en estado "En Proceso"
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save mr-2"></i>
@@ -158,48 +215,99 @@ $(document).ready(function() {
         }
     });
 
+    // Inicializar TinyMCE para los editores de mensajes
+    if (typeof tinymce !== 'undefined') {
+        tinymce.init({
+            selector: '.tinymce-editor',
+            height: 200,
+            menubar: false,
+            plugins: ['lists', 'link', 'code'],
+            toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link | code',
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+            language: 'es',
+            branding: false,
+            promotion: false
+        });
+    }
+
     // Enviar formulario
     $('#formConfiguracion').on('submit', function(e) {
         e.preventDefault();
 
+        // Obtener contenido de TinyMCE antes de serializar
+        if (typeof tinymce !== 'undefined') {
+            tinymce.triggerSave();
+        }
+
         const formData = $(this).serialize();
+        
+        console.log('Enviando datos:', formData);
+        console.log('URL:', '<?= base_url('dashboard/configuracion/guardar') ?>');
         
         $.ajax({
             url: '<?= base_url('dashboard/configuracion/guardar') ?>',
             type: 'POST',
             data: formData,
             dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Éxito!',
-                        text: response.message || 'Configuraciones guardadas exitosamente',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    
-                    // Actualizar CSRF token
+            beforeSend: function(xhr) {
+                // Asegurar que el token CSRF se envíe en el header también
+                var csrfToken = $('input[name="<?= csrf_token() ?>"]').val();
+                if (csrfToken) {
+                    xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+                }
+            },
+            success: function(response, textStatus, xhr) {
+                console.log('Respuesta recibida:', response);
+                console.log('Status:', textStatus);
+                
+                // Actualizar token CSRF después de la respuesta
+                var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+                if (headerToken) {
+                    $('input[name="<?= csrf_token() ?>"]').val(headerToken);
+                }
+                
+                if (response && response.success) {
+                    // Actualizar CSRF token del response también
                     if (response.csrf_token) {
                         $('input[name="<?= csrf_token() ?>"]').val(response.csrf_token);
                     }
+                    
+                    // Mostrar mensaje de éxito con toastr
+                    toastr.success(response.message || 'Configuraciones guardadas exitosamente', '¡Éxito!', {
+                        timeOut: 3000,
+                        progressBar: true
+                    });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: response.error || 'Error al guardar las configuraciones'
+                    var errorMsg = (response && response.error) ? response.error : 'Error al guardar las configuraciones';
+                    toastr.error(errorMsg, 'Error', {
+                        timeOut: 5000,
+                        progressBar: true
                     });
                 }
             },
             error: function(xhr) {
+                console.error('Error al guardar:', xhr);
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseJSON);
+                
                 let errorMsg = 'Error al guardar las configuraciones';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
+                if (xhr.status === 403) {
+                    errorMsg = 'Error 403: No tiene permisos para guardar configuraciones o el token CSRF es inválido. Por favor, recarga la página e intenta de nuevo.';
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
                     errorMsg = xhr.responseJSON.error;
+                } else if (xhr.responseText) {
+                    errorMsg = 'Error: ' + xhr.responseText.substring(0, 200);
                 }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: errorMsg
+                
+                // Actualizar token CSRF incluso en caso de error
+                var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+                if (headerToken) {
+                    $('input[name="<?= csrf_token() ?>"]').val(headerToken);
+                }
+                
+                toastr.error(errorMsg, 'Error', {
+                    timeOut: 5000,
+                    progressBar: true
                 });
             }
         });

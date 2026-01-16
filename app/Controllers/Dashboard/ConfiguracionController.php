@@ -50,7 +50,10 @@ class ConfiguracionController extends BaseController
      */
     public function guardar()
     {
+        log_message('info', 'ConfiguracionController::guardar() - Inicio');
+        
         if (!session()->get('usuario')) {
+            log_message('error', 'ConfiguracionController::guardar() - No hay sesión de usuario');
             return $this->response->setJSON([
                 'success' => false,
                 'error' => 'No autorizado'
@@ -58,7 +61,11 @@ class ConfiguracionController extends BaseController
         }
 
         $usuarioId = session()->get('usuario')['id'];
+        $perfilId = session()->get('usuario')['perfil_id'] ?? null;
+        log_message('info', 'ConfiguracionController::guardar() - Usuario ID: ' . $usuarioId . ', Perfil ID: ' . $perfilId);
+        
         $data = $this->request->getPost();
+        log_message('info', 'ConfiguracionController::guardar() - Datos recibidos: ' . json_encode($data));
 
         // Validar y limpiar datos
         $configuracion = [
@@ -67,7 +74,11 @@ class ConfiguracionController extends BaseController
             'crear_evento_calendario' => isset($data['crear_evento_calendario']) ? 1 : 0,
             'agregar_paciente_como_invitado' => isset($data['agregar_paciente_como_invitado']) ? 1 : 0,
             'enviar_recordatorios_whatsapp' => isset($data['enviar_recordatorios_whatsapp']) ? 1 : 0,
-            'horas_antes_recordatorio' => isset($data['horas_antes_recordatorio']) ? (int)$data['horas_antes_recordatorio'] : 24
+            'horas_antes_recordatorio' => isset($data['horas_antes_recordatorio']) ? (int)$data['horas_antes_recordatorio'] : 24,
+            // Mensajes de cancelación masiva
+            'mensaje_cancelacion_pendiente' => isset($data['mensaje_cancelacion_pendiente']) ? $data['mensaje_cancelacion_pendiente'] : null,
+            'mensaje_cancelacion_confirmada' => isset($data['mensaje_cancelacion_confirmada']) ? $data['mensaje_cancelacion_confirmada'] : null,
+            'mensaje_cancelacion_en_proceso' => isset($data['mensaje_cancelacion_en_proceso']) ? $data['mensaje_cancelacion_en_proceso'] : null
         ];
 
         // Validar horas_antes_recordatorio

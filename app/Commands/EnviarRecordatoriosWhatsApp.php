@@ -29,17 +29,11 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
 
         $db = \Config\Database::connect();
         $whatsappService = new WhatsAppService();
+        $configuracionModel = new \App\Models\UsuarioConfiguracion();
 
-        // Obtener citas confirmadas para las próximas 24 horas
-        $fechaActual = date('d-m-Y');
-        $fechaManana = date('d-m-Y', strtotime('+1 day'));
-        
-        // Convertir a formato para comparación en BD
-        $fechaActualSQL = date('Y-m-d');
-        $fechaMananaSQL = date('Y-m-d', strtotime('+1 day'));
-
+        // Obtener citas confirmadas para las próximas horas (según configuración de cada usuario)
         $citas = $db->table('detalle_agenda da')
-            ->select('da.id, da.hora_inicio, a.fecha, p.nombre, p.apellido, p.telefono, 
+            ->select('da.id, da.hora_inicio, da.usuario_id, a.fecha, p.nombre, p.apellido, p.telefono, 
                      da.estado_cita, da.recordatorio_enviado')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
@@ -47,7 +41,6 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
             ->where('da.paciente_id IS NOT NULL')
             ->where('p.telefono IS NOT NULL')
             ->where('(da.recordatorio_enviado IS NULL OR da.recordatorio_enviado = 0)')
-            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y')", $fechaMananaSQL)
             ->get()
             ->getResult();
 
@@ -56,19 +49,54 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
             return;
         }
 
-        CLI::write('Encontradas ' . count($citas) . ' citas para recordar.', 'cyan');
+        CLI::write('Encontradas ' . count($citas) . ' citas candidatas para recordar.', 'cyan');
 
         $enviados = 0;
         $errores = 0;
+        $omitidos = 0;
 
         foreach ($citas as $cita) {
             if (empty($cita->telefono)) {
                 CLI::write("  - Saltando cita ID {$cita->id}: paciente sin teléfono", 'yellow');
+                $omitidos++;
                 continue;
             }
 
+            // Obtener configuración del nutricionista
+            $configuracion = $configuracionModel->obtenerConfiguracion($cita->usuario_id);
+            
+            // Verificar si los recordatorios están habilitados para este nutricionista
+            if (!($configuracion['enviar_recordatorios_whatsapp'] ?? 1)) {
+                CLI::write("  - Omitiendo cita ID {$cita->id}: recordatorios deshabilitados para usuario ID {$cita->usuario_id}", 'yellow');
+                $omitidos++;
+                continue;
+            }
+
+            // Obtener horas antes del recordatorio (por defecto 24)
+            $horasAntes = $configuracion['horas_antes_recordatorio'] ?? 24;
+            
+            // Calcular fecha objetivo (fecha de la cita menos horas antes)
+            $fechaCita = \DateTime::createFromFormat('d-m-Y', $cita->fecha);
+            if (!$fechaCita) {
+                CLI::write("  - Saltando cita ID {$cita->id}: fecha inválida", 'yellow');
+                $omitidos++;
+                continue;
+            }
+            
+            $fechaObjetivo = clone $fechaCita;
+            $fechaObjetivo->modify("-{$horasAntes} hours");
+            $fechaObjetivo->setTime(0, 0, 0);
+            
+            $fechaActual = new \DateTime();
+            $fechaActual->setTime(0, 0, 0);
+            
+            // Solo enviar si estamos en la fecha objetivo
+            if ($fechaActual->format('Y-m-d') !== $fechaObjetivo->format('Y-m-d')) {
+                continue; // No es el momento de enviar este recordatorio
+            }
+
             try {
-                $resultado = $whatsappService->enviarRecordatorioCita($cita->id, 24);
+                $resultado = $whatsappService->enviarRecordatorioCita($cita->id, $horasAntes);
                 
                 if (!empty($resultado) && isset($resultado[0]['success']) && $resultado[0]['success']) {
                     // Marcar como recordatorio enviado
@@ -76,7 +104,7 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
                         ->where('id', $cita->id)
                         ->update(['recordatorio_enviado' => 1, 'fecha_recordatorio' => date('Y-m-d H:i:s')]);
                     
-                    CLI::write("  ✓ Recordatorio enviado para cita ID {$cita->id} - {$cita->nombre} {$cita->apellido}", 'green');
+                    CLI::write("  ✓ Recordatorio enviado para cita ID {$cita->id} - {$cita->nombre} {$cita->apellido} ({$horasAntes}h antes)", 'green');
                     $enviados++;
                 } else {
                     CLI::write("  ✗ Error al enviar recordatorio para cita ID {$cita->id}", 'red');
@@ -91,6 +119,7 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
         CLI::write("\nResumen:", 'cyan');
         CLI::write("  - Enviados: {$enviados}", 'green');
         CLI::write("  - Errores: {$errores}", $errores > 0 ? 'red' : 'green');
+        CLI::write("  - Omitidos: {$omitidos}", $omitidos > 0 ? 'yellow' : 'green');
         CLI::write("  - Total procesadas: " . count($citas), 'cyan');
     }
 }

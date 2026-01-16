@@ -21,7 +21,10 @@ class UsuarioConfiguracion extends Model
         'crear_evento_calendario',
         'agregar_paciente_como_invitado',
         'enviar_recordatorios_whatsapp',
-        'horas_antes_recordatorio'
+        'horas_antes_recordatorio',
+        'mensaje_cancelacion_pendiente',
+        'mensaje_cancelacion_confirmada',
+        'mensaje_cancelacion_en_proceso'
     ];
 
     protected $useTimestamps = true;

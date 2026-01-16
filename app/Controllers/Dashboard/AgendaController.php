@@ -98,7 +98,7 @@ class AgendaController extends BaseController
             ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $start)
             ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $end)
             ->where('da.usuario_id', $nutricionista_id);
-            // Mostrar tanto disponibles (estado = 1) como ocupados (estado = 2)
+            // Mostrar todas las citas incluyendo canceladas (se mostrarán en rojo)
 
         $eventos = $builder->get()->getResult();
         
@@ -141,9 +141,15 @@ class AgendaController extends BaseController
             // Determinar si está disponible (sin paciente asignado)
             $estaDisponible = empty($evento->paciente_id);
             $modalidadId = (int)($evento->modalidad_id ?? 3);
-            // Si tiene paciente, usar el estado_cita de la BD (pendiente, confirmada, en_proceso, completada, etc.)
-            // Si no tiene paciente, está disponible
-            $estadoCita = $estaDisponible ? 'disponible' : ($evento->estado_cita ?? 'pendiente');
+            
+            // Determinar el estado de la cita
+            // Si tiene estado_cita explícito (incluyendo cancelada), usarlo
+            // Si no tiene paciente y no está cancelada, está disponible
+            if (!empty($evento->estado_cita)) {
+                $estadoCita = $evento->estado_cita;
+            } else {
+                $estadoCita = $estaDisponible ? 'disponible' : 'pendiente';
+            }
             
             // Paleta de colores profesional para salud (COLOR = ESTADO únicamente)
             // Diseñada para ser accesible, transmitir calma y profesionalismo
@@ -172,7 +178,10 @@ class AgendaController extends BaseController
             
             // Construir título con icono de modalidad
             $titulo = '';
-            if ($estaDisponible) {
+            if ($estadoCita === 'cancelada') {
+                // Para citas canceladas, mostrar como cancelada incluso si no tiene paciente
+                $titulo = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+            } elseif ($estaDisponible) {
                 $titulo = $iconoModalidad . ' Disponible';
             } else {
                 $titulo = $iconoModalidad . ' ' . $nombrePaciente . ($evento->motivo ? ' - ' . substr($evento->motivo, 0, 25) : '');
@@ -2713,6 +2722,11 @@ class AgendaController extends BaseController
         try {
             $calendarService = new CalendarService($usuarioId);
             
+            // Obtener configuración del usuario para saber si agregar paciente como invitado
+            $configuracionModel = new \App\Models\UsuarioConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+            $agregarPacienteComoInvitado = $configuracion['agregar_paciente_como_invitado'] ?? 1;
+            
             // Obtener información completa de la cita
             $db = \Config\Database::connect();
             $cita = $db->table('detalle_agenda da')
@@ -2737,7 +2751,7 @@ class AgendaController extends BaseController
                 'hora_inicio' => $cita->hora_inicio,
                 'hora_fin' => $cita->hora_fin,
                 'nombre_paciente' => trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? '')),
-                'email_paciente' => $cita->email_paciente ?? null,
+                'email_paciente' => ($agregarPacienteComoInvitado && !empty($cita->email_paciente)) ? $cita->email_paciente : null,
                 'nombre_nutricionista' => $cita->nombre_nutricionista ?? 'Nutricionista',
                 'email_nutricionista' => $cita->email_nutricionista ?? null, // Email del nutricionista (organizador del evento)
                 'tipo_consulta' => ucfirst(str_replace('_', ' ', $cita->tipo_consulta ?? 'control')),
@@ -2748,7 +2762,8 @@ class AgendaController extends BaseController
             $resultado = $calendarService->crearEvento($detalleAgendaId, $citaData);
             
             if ($resultado['success']) {
-                log_message('info', 'Evento creado en calendario para cita ID: ' . $detalleAgendaId);
+                log_message('info', 'Evento creado en calendario para cita ID: ' . $detalleAgendaId . 
+                    ($agregarPacienteComoInvitado && !empty($cita->email_paciente) ? ' (con paciente como invitado)' : ' (sin paciente como invitado)'));
             }
             
             return $resultado;

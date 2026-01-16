@@ -311,6 +311,9 @@
                         <button class="btn btn-light me-2" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
                             <i class="fas fa-clock me-2"></i> Crear Horarios
                         </button>
+                        <a href="<?= base_url('dashboard/agenda/cancelar-horas') ?>" class="btn btn-danger me-2" title="Cancelar horas masivamente por emergencia o enfermedad">
+                            <i class="fas fa-calendar-times me-2"></i> Cancelar Horas
+                        </a>
                     </div>
                 </div>
             </div>
