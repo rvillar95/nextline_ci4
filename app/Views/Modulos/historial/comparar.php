@@ -114,12 +114,12 @@
                         <label class="form-label">Paciente</label>
                         <select id="selectPaciente" class="form-select form-select-lg">
                             <option value="">-- Seleccione un paciente --</option>
-                            <?php foreach ($pacientes as $paciente): ?>
-                                <option value="<?= $paciente['id'] ?>">
-                                    <?= esc($paciente['nombre'] . ' ' . $paciente['apellido']) ?> 
-                                    (<?= $paciente['total_historiales'] ?> consulta<?= $paciente['total_historiales'] > 1 ? 's' : '' ?>)
-                                </option>
-                            <?php endforeach; ?>
+                <?php foreach ($pacientes as $paciente): ?>
+                    <option value="<?= $paciente['id'] ?>">
+                        <?= esc(($paciente['nombre_completo'] ?? '') ?: (($paciente['nombre'] ?? '') . ' ' . ($paciente['apellido'] ?? ''))) ?>
+                        (<?= $paciente['total_historiales'] ?> consulta<?= $paciente['total_historiales'] > 1 ? 's' : '' ?>)
+                    </option>
+                <?php endforeach; ?>
                         </select>
                     </div>
                 </div>

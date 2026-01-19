@@ -13,6 +13,10 @@
 <!-- TinyMCE Editor -->
 <script src="https://cdn.tiny.cloud/1/k10uo8qhvhuxj1ho5z73jcbhzpwlspewyrz3lkbu5b99faon/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
+<!-- Tagify para tags -->
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.min.js"></script>
+
 <style>
     .main-header {
         background: linear-gradient(135deg, #4A90E2 0%, #6BCB77 100%);
@@ -434,6 +438,15 @@
                             <div class="col-12 mb-3">
                                 <label class="form-label">Plan de Tratamiento</label>
                                 <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="3" placeholder="Plan de tratamiento propuesto..."></textarea>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Tags <small class="text-muted">(Escriba y presione Enter o coma para agregar)</small></label>
+                                <input type="text" name="tags" id="tags" class="form-control" 
+                                       placeholder="Ej: diabetes, hipertensión, seguimiento, control"
+                                       value="">
+                                <small class="form-text text-muted">
+                                    Los tags ayudan a categorizar y buscar consultas. Ejemplos: diabetes, hipertensión, seguimiento, control, etc.
+                                </small>
                             </div>
                         </div>
 
@@ -857,6 +870,37 @@ function guardarNotasConsulta() {
         recomendacionesHTML = $('#recomendaciones').val();
     }
     
+    // Obtener tags del campo Tagify
+    var tagsValue = '';
+    try {
+        // Usar la variable global tagifyInstance
+        if (typeof tagifyInstance !== 'undefined' && tagifyInstance !== null) {
+            var tagsData = tagifyInstance.value;
+            if (tagsData && Array.isArray(tagsData) && tagsData.length > 0) {
+                // Extraer solo los valores como strings simples
+                tagsValue = tagsData.map(function(item) {
+                    if (typeof item === 'string') {
+                        return item;
+                    } else if (item && typeof item === 'object') {
+                        // Si es un objeto, extraer el valor
+                        return item.value || item.tag || String(item);
+                    }
+                    return String(item);
+                }).filter(function(tag) {
+                    // Filtrar tags vacíos
+                    return tag && tag.trim() !== '';
+                }).join(',');
+            }
+        } else {
+            // Fallback: obtener valor directamente del input
+            tagsValue = $('#tags').val() || '';
+        }
+    } catch(e) {
+        console.error('Error al obtener tags de Tagify:', e);
+        // Fallback si hay algún error
+        tagsValue = $('#tags').val() || '';
+    }
+    
     var formData = {
         detalle_agenda_id: $('input[name="detalle_agenda_id"]').val(),
         notas_consulta: notasHTML,
@@ -864,6 +908,7 @@ function guardarNotasConsulta() {
         plan_alimentacion: planHTML,
         recomendaciones: recomendacionesHTML,
         proxima_cita_recomendada: $('#proxima_cita_recomendada').val(),
+        tags: tagsValue,
         [csrfName]: csrfToken
     };
     
@@ -951,6 +996,83 @@ $(document).ready(function() {
 });
 <?php endif; ?>
 
+// Variable global para la instancia de Tagify
+var tagifyInstance = null;
+
+// Inicializar Tagify para tags con autocompletado
+$(document).ready(function() {
+    var input = document.querySelector('#tags');
+    if (input) {
+        var tagsSugeridos = <?= json_encode(array_column($tags_sugeridos ?? [], 'tag_display')) ?>;
+        
+        // Preparar tags para cargar después de la inicialización
+        <?php 
+        $tagsParaTagify = [];
+        if (!empty($cita->tags)) {
+            $tagsDecodificados = json_decode($cita->tags, true);
+            if (is_array($tagsDecodificados) && !empty($tagsDecodificados)) {
+                // Asegurarse de que todos los tags sean strings simples
+                foreach ($tagsDecodificados as $tag) {
+                    if (is_string($tag)) {
+                        $tagsParaTagify[] = $tag;
+                    } elseif (is_array($tag) && isset($tag['value'])) {
+                        $tagsParaTagify[] = $tag['value'];
+                    } elseif (is_array($tag) && isset($tag['tag'])) {
+                        $tagsParaTagify[] = $tag['tag'];
+                    }
+                }
+            }
+        }
+        $tagsJson = !empty($tagsParaTagify) ? json_encode($tagsParaTagify) : '[]';
+        ?>
+        
+        tagifyInstance = new Tagify(input, {
+            whitelist: tagsSugeridos,
+            maxTags: 10,
+            dropdown: {
+                maxItems: 20,
+                classname: 'tags-look',
+                enabled: 1,
+                closeOnSelect: false
+            }
+        });
+
+        // Cargar tags desde detalle_agenda después de que Tagify esté inicializado
+        var tagsParaCargar = <?= $tagsJson ?>;
+        if (Array.isArray(tagsParaCargar) && tagsParaCargar.length > 0) {
+            try {
+                // Limpiar cualquier valor previo y agregar los tags correctamente
+                tagifyInstance.removeAllTags();
+                // Agregar tags como strings simples
+                tagifyInstance.addTags(tagsParaCargar.map(function(tag) {
+                    return typeof tag === 'string' ? tag : String(tag);
+                }));
+            } catch(e) {
+                console.error('Error al cargar tags en Tagify:', e);
+            }
+        }
+
+        // Cargar tags sugeridos dinámicamente
+        tagifyInstance.on('input', function(e) {
+            var value = e.detail.value;
+            if (value.length < 1) return;
+            
+            $.ajax({
+                url: '<?= base_url('dashboard/historial/getTagsSugeridos') ?>',
+                dataType: 'json',
+                data: { q: value },
+                success: function(data) {
+                    var whitelist = data.results.map(function(item) {
+                        return item.text;
+                    });
+                    tagifyInstance.settings.whitelist = whitelist;
+                    tagifyInstance.dropdown.show.call(tagifyInstance, value);
+                }
+            });
+        });
+    }
+});
+
 // Calcular IMC automáticamente
 function calcularIMC() {
     var peso = parseFloat($('#peso_actual').val());
@@ -988,11 +1110,33 @@ function calcularSumaPliegues() {
     if (suma > 0) {
         $('#suma_pliegues').val(suma.toFixed(2));
         
-        // Calcular grasa corporal aproximada (fórmula simplificada)
+        // Calcular grasa corporal aproximada usando fórmula de Durnin-Womersley simplificada
+        // Fórmula: %GC = (4.95 / D) - 4.5, donde D = densidad corporal
+        // Para simplificar, usamos: %GC = (suma_pliegues * factor) + constante
+        // Factor y constante varían según género y edad, pero usamos valores promedio
         var peso = parseFloat($('#peso_actual').val());
-        if (peso > 0) {
-            var grasaCalculada = (suma * 0.5) + 5; // Fórmula simplificada
-            $('#grasa_corporal_calculada').val(grasaCalculada.toFixed(2));
+        var altura = parseFloat($('#altura_actual').val());
+        
+        if (peso > 0 && altura > 0) {
+            // Fórmula mejorada basada en suma de pliegues y datos corporales
+            // Usando aproximación de Jackson-Pollock (7 pliegues)
+            var densidad = 1.112 - (0.00043499 * suma) + (0.00000055 * suma * suma) - (0.00028826 * altura);
+            var grasaCalculada = ((4.95 / densidad) - 4.5) * 100;
+            
+            // Validar que el resultado sea razonable (entre 5% y 50%)
+            if (grasaCalculada >= 5 && grasaCalculada <= 50) {
+                $('#grasa_corporal_calculada').val(grasaCalculada.toFixed(2));
+            } else {
+                // Si el resultado no es razonable, usar fórmula simplificada
+                var grasaSimplificada = (suma * 0.5) + 5;
+                $('#grasa_corporal_calculada').val(grasaSimplificada.toFixed(2));
+            }
+        } else if (suma > 0) {
+            // Si no hay peso/altura, usar fórmula simplificada basada solo en pliegues
+            var grasaSimplificada = (suma * 0.5) + 5;
+            $('#grasa_corporal_calculada').val(grasaSimplificada.toFixed(2));
+        } else {
+            $('#grasa_corporal_calculada').val('');
         }
     } else {
         $('#suma_pliegues').val('');
@@ -1004,7 +1148,15 @@ function calcularSumaPliegues() {
 $(document).ready(function() {
     $('#peso_actual, #altura_actual').on('input', calcularIMC);
     
-    $('input[name^="pliegue_"]').on('input', calcularSumaPliegues);
+    // Agregar listeners a todos los campos de pliegues por ID
+    $('#pliegue_tricipital, #pliegue_bicipital, #pliegue_subescapular, #pliegue_suprailíaco, #pliegue_abdominal, #pliegue_muslo_anterior, #pliegue_pantorrilla_medial').on('input', function() {
+        calcularSumaPliegues();
+    });
+    
+    // También recalcular cuando cambia el peso (necesario para grasa calculada)
+    $('#peso_actual').on('input', function() {
+        calcularSumaPliegues();
+    });
 });
 
 // Guardar mediciones
@@ -1014,7 +1166,44 @@ function guardarMediciones(event) {
     var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
     var csrfName = 'csrf_test_name';
     
+    // Obtener tags de Tagify correctamente (como string separado por comas)
+    var tagsValue = '';
+    try {
+        if (typeof tagifyInstance !== 'undefined' && tagifyInstance !== null) {
+            var tagsData = tagifyInstance.value;
+            if (tagsData && Array.isArray(tagsData) && tagsData.length > 0) {
+                // Extraer solo los valores como strings simples
+                tagsValue = tagsData.map(function(item) {
+                    if (typeof item === 'string') {
+                        return item;
+                    } else if (item && typeof item === 'object') {
+                        return item.value || item.tag || String(item);
+                    }
+                    return String(item);
+                }).filter(function(tag) {
+                    return tag && tag.trim() !== '';
+                }).join(',');
+            }
+        } else {
+            // Fallback: obtener valor directamente del input
+            tagsValue = $('#tags').val() || '';
+        }
+    } catch(e) {
+        console.error('Error al obtener tags de Tagify:', e);
+        tagsValue = $('#tags').val() || '';
+    }
+    
+    // Serializar el formulario y reemplazar el campo tags con el valor correcto
     var formData = $('#formMediciones').serialize();
+    
+    // Remover el campo tags si existe en el formData serializado
+    formData = formData.replace(/&?tags=[^&]*/g, '');
+    
+    // Agregar el campo tags con el valor correcto
+    if (tagsValue) {
+        formData += '&tags=' + encodeURIComponent(tagsValue);
+    }
+    
     formData += '&' + csrfName + '=' + csrfToken;
     
     $.ajax({

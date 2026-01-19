@@ -143,12 +143,17 @@ class AgendaController extends BaseController
             $modalidadId = (int)($evento->modalidad_id ?? 3);
             
             // Determinar el estado de la cita
-            // Si tiene estado_cita explícito (incluyendo cancelada), usarlo
-            // Si no tiene paciente y no está cancelada, está disponible
-            if (!empty($evento->estado_cita)) {
+            // REGLA PRINCIPAL: Si no tiene paciente asignado, SIEMPRE está disponible (verde)
+            // Si tiene paciente, usar estado_cita o 'pendiente' por defecto
+            if ($estaDisponible) {
+                // Sin paciente = Disponible (verde)
+                $estadoCita = 'disponible';
+            } elseif (!empty($evento->estado_cita) && $evento->estado_cita !== 'NULL') {
+                // Tiene paciente y tiene estado_cita explícito, usarlo
                 $estadoCita = $evento->estado_cita;
             } else {
-                $estadoCita = $estaDisponible ? 'disponible' : 'pendiente';
+                // Tiene paciente pero no tiene estado_cita, está pendiente (naranja)
+                $estadoCita = 'pendiente';
             }
             
             // Paleta de colores profesional para salud (COLOR = ESTADO únicamente)
@@ -1108,7 +1113,8 @@ class AgendaController extends BaseController
                                 'estado' => 1, // Disponible
                                 'estado_solicitud_id' => 1,
                                 'modalidad_id' => $modalidadId, // Usar la modalidad seleccionada
-                                'forma_asignacion' => 'Manual'
+                                'forma_asignacion' => 'Manual',
+                                'estado_cita' => NULL // NULL = Disponible (sin paciente asignado)
                             ]);
                             $horariosCreados++;
                         }
@@ -1926,6 +1932,23 @@ class AgendaController extends BaseController
         
         $data['historial'] = $historialExistente;
 
+        // Cargar tags sugeridos y tags existentes desde detalle_agenda
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+        $data['tags_sugeridos'] = $historialModel->getTagsMasUsados($empresaId, 20);
+        
+        // Cargar tags desde detalle_agenda (no desde historial_clinico)
+        if (!empty($cita->tags)) {
+            $tagsArray = json_decode($cita->tags, true);
+            if (is_array($tagsArray) && !empty($tagsArray)) {
+                $data['tags_string'] = implode(', ', $tagsArray);
+            } else {
+                $data['tags_string'] = '';
+            }
+        } else {
+            $data['tags_string'] = '';
+        }
+
         // Buscar la última consulta completada del mismo paciente (para mostrar como referencia)
         $consultaAnterior = $db->table('detalle_agenda da')
             ->select('da.*, a.fecha as fecha_agenda,
@@ -2119,6 +2142,7 @@ class AgendaController extends BaseController
         $planAlimentacion = $this->request->getPost('plan_alimentacion');
         $recomendaciones = $this->request->getPost('recomendaciones');
         $proximaCitaRecomendada = $this->request->getPost('proxima_cita_recomendada');
+        $tags = $this->request->getPost('tags');
 
         if (!$detalleAgendaId) {
             return $this->response->setJSON([
@@ -2144,6 +2168,39 @@ class AgendaController extends BaseController
             ])->setStatusCode(403);
         }
 
+        // Procesar tags si vienen
+        $tagsJson = null;
+        if (!empty($tags)) {
+            $historialModel = new HistorialClinico();
+            $usuario = session()->get('usuario');
+            $empresaId = $usuario['empresa_id'] ?? null;
+            
+            // Limpiar y normalizar tags antes de procesarlos
+            $tagsInput = $tags;
+            
+            // Si los tags vienen como array JSON stringificado, intentar decodificarlos
+            if (is_string($tagsInput) && !empty($tagsInput)) {
+                // Intentar decodificar si es JSON
+                $decoded = json_decode($tagsInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    // Si es un array, extraer los valores
+                    $tagsArray = [];
+                    foreach ($decoded as $item) {
+                        if (is_string($item)) {
+                            $tagsArray[] = $item;
+                        } elseif (is_array($item) && isset($item['value'])) {
+                            $tagsArray[] = $item['value'];
+                        } elseif (is_array($item) && isset($item['tag'])) {
+                            $tagsArray[] = $item['tag'];
+                        }
+                    }
+                    $tagsInput = implode(',', $tagsArray);
+                }
+            }
+            
+            $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
+        }
+        
         // Actualizar notas y datos de la consulta
         $dataUpdate = [
             'notas_consulta' => $notasConsulta ?: null,
@@ -2151,6 +2208,11 @@ class AgendaController extends BaseController
             'plan_alimentacion' => $planAlimentacion ?: null,
             'recomendaciones' => $recomendaciones ?: null,
         ];
+        
+        // Agregar tags si se procesaron
+        if ($tagsJson !== null) {
+            $dataUpdate['tags'] = $tagsJson;
+        }
 
         // Convertir fecha de próxima cita si viene en DD-MM-YYYY
         if ($proximaCitaRecomendada) {
@@ -2363,6 +2425,43 @@ class AgendaController extends BaseController
             'plan_tratamiento' => !empty($post['plan_tratamiento']) ? $post['plan_tratamiento'] : null,
             'estado' => 'A'
         ];
+
+        // Procesar tags y guardarlos en detalle_agenda
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+        
+        // Limpiar y normalizar tags antes de procesarlos
+        $tagsInput = $post['tags'] ?? '';
+        
+        // Si los tags vienen como array JSON stringificado, intentar decodificarlos
+        if (is_string($tagsInput) && !empty($tagsInput)) {
+            // Intentar decodificar si es JSON
+            $decoded = json_decode($tagsInput, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                // Si es un array, extraer los valores
+                $tagsArray = [];
+                foreach ($decoded as $item) {
+                    if (is_string($item)) {
+                        $tagsArray[] = $item;
+                    } elseif (is_array($item) && isset($item['value'])) {
+                        $tagsArray[] = $item['value'];
+                    } elseif (is_array($item) && isset($item['tag'])) {
+                        $tagsArray[] = $item['tag'];
+                    }
+                }
+                $tagsInput = implode(',', $tagsArray);
+            }
+        }
+        
+        $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
+        
+        // Guardar tags en detalle_agenda
+        $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->update(['tags' => $tagsJson]);
+        
+        // También guardar en historial_clinico para sincronización
+        $dataHistorial['tags'] = $tagsJson;
 
         // Sincronizar datos de detalle_agenda si están disponibles
         if (!empty($detalle->motivo)) {

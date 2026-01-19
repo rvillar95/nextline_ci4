@@ -2,6 +2,10 @@
 
 <?= $this->section('historial/lista') ?>
 
+<!-- Tagify para búsqueda por tags -->
+<link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.min.js"></script>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -23,6 +27,24 @@
             </div>
 
             <div class="section-card" style="border-left-color: #fa709a;">
+                <!-- Filtros de búsqueda -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Buscar por Tags</label>
+                        <input type="text" name="tags_busqueda" id="tags_busqueda" class="form-control" 
+                               placeholder="Ej: diabetes, hipertensión, seguimiento">
+                        <small class="text-muted">Escriba los tags separados por comas y presione Enter</small>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button type="button" class="btn btn-primary me-2" onclick="aplicarFiltros()">
+                            <i class="fas fa-search me-2"></i> Buscar
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                            <i class="fas fa-times me-2"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
                     <table id="tablaHistorial" class="table table-bordered table-striped nowrap" style="width:100%">
                         <thead>
@@ -33,6 +55,7 @@
                                 <th>Tipo</th>
                                 <th>Medidas</th>
                                 <th>Motivo</th>
+                                <th>Tags</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
@@ -47,13 +70,66 @@
 </div>
 
 <script>
+var table;
+var tagifyBusqueda = null;
+
 $(document).ready(function() {
-    var table = $('#tablaHistorial').DataTable({
+    // Inicializar Tagify para búsqueda por tags
+    var inputBusqueda = document.querySelector('#tags_busqueda');
+    if (inputBusqueda) {
+        var tagsSugeridos = <?= json_encode(array_column($tags_sugeridos ?? [], 'tag_display')) ?>;
+        tagifyBusqueda = new Tagify(inputBusqueda, {
+            whitelist: tagsSugeridos,
+            maxTags: 10,
+            dropdown: {
+                maxItems: 20,
+                classname: 'tags-look',
+                enabled: 1,
+                closeOnSelect: false
+            }
+        });
+
+        // Cargar tags sugeridos dinámicamente
+        tagifyBusqueda.on('input', function(e) {
+            var value = e.detail.value;
+            if (value.length < 1) return;
+            
+            $.ajax({
+                url: '<?= base_url('dashboard/historial/getTagsSugeridos') ?>',
+                dataType: 'json',
+                data: { q: value },
+                success: function(data) {
+                    var whitelist = data.results.map(function(item) {
+                        return item.text;
+                    });
+                    tagifyBusqueda.settings.whitelist = whitelist;
+                    tagifyBusqueda.dropdown.show.call(tagifyBusqueda, value);
+                }
+            });
+        });
+
+        // Buscar al presionar Enter
+        tagifyBusqueda.on('add', function() {
+            aplicarFiltros();
+        });
+    }
+
+    // Inicializar DataTable
+    table = $('#tablaHistorial').DataTable({
         "processing": true,
-        "serverSide": true,
+        "serverSide": false, // Cambiar a false para permitir filtros personalizados
         "ajax": {
             "url": "<?= base_url('dashboard/historial/getHistorial') ?>",
-            "type": "GET"
+            "type": "GET",
+            "data": function(d) {
+                // Agregar filtro de tags
+                if (tagifyBusqueda && tagifyBusqueda.value && tagifyBusqueda.value.length > 0) {
+                    var tagsArray = tagifyBusqueda.value.map(function(item) {
+                        return typeof item === 'string' ? item : (item.value || item);
+                    });
+                    d.tags = tagsArray.join(',');
+                }
+            }
         },
         "columns": [
             { "data": 0 },
@@ -63,7 +139,8 @@ $(document).ready(function() {
             { "data": 4 },
             { "data": 5 },
             { "data": 6 },
-            { "data": 7, "orderable": false }
+            { "data": 7 },
+            { "data": 8, "orderable": false }
         ],
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
@@ -73,6 +150,60 @@ $(document).ready(function() {
         "order": [[1, "desc"]]
     });
 });
+
+function aplicarFiltros() {
+    var tableInstance = $('#tablaHistorial').DataTable();
+    if (tableInstance) {
+        tableInstance.ajax.reload();
+    }
+}
+
+function limpiarFiltros() {
+    if (tagifyBusqueda) {
+        tagifyBusqueda.removeAllTags();
+    }
+    var tableInstance = $('#tablaHistorial').DataTable();
+    if (tableInstance) {
+        tableInstance.ajax.reload();
+    }
+}
+
+function verHistorial(id) {
+    window.location.href = '<?= base_url('dashboard/historial/editar/') ?>' + id;
+}
+
+function editarHistorial(id) {
+    window.location.href = '<?= base_url('dashboard/historial/editar/') ?>' + id;
+}
+
+function eliminarHistorial(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este registro del historial clínico?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '<?= base_url('dashboard/historial/eliminar') ?>',
+        type: 'POST',
+        data: {
+            id: id,
+            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+        },
+        success: function(response) {
+            if (response.success) {
+                toastr.success('Registro eliminado correctamente');
+                var tableInstance = $('#tablaHistorial').DataTable();
+                if (tableInstance) {
+                    tableInstance.ajax.reload();
+                }
+            } else {
+                toastr.error(response.message || 'Error al eliminar el registro');
+            }
+        },
+        error: function() {
+            toastr.error('Error al eliminar el registro');
+        }
+    });
+}
 </script>
 
 <?= $this->endSection() ?>
