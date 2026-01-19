@@ -483,8 +483,8 @@ class AgendaController extends BaseController
 
             if ($updated) {
                 // Verificar configuración del usuario para enviar email
-                $configuracionModel = new \App\Models\UsuarioConfiguracion();
-                $configuracion = $configuracionModel->obtenerConfiguracion($usuario_id);
+                $configuracionModel = new \App\Models\EmpresaConfiguracion();
+                $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
                 
                 // Enviar email de confirmación al paciente (solo si está habilitado en configuraciones)
                 if ($configuracion['enviar_email'] ?? 1) {
@@ -586,8 +586,8 @@ class AgendaController extends BaseController
 
         if ($updated) {
             // Obtener configuraciones del nutricionista
-            $configuracionModel = new \App\Models\UsuarioConfiguracion();
-            $configuracion = $configuracionModel->obtenerConfiguracion($usuario_id);
+            $configuracionModel = new \App\Models\EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
 
             $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
@@ -1574,8 +1574,8 @@ class AgendaController extends BaseController
             $usuarioId = $cita->usuario_id ?? null;
 
             // Obtener configuraciones del nutricionista
-            $configuracionModel = new \App\Models\UsuarioConfiguracion();
-            $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+            $configuracionModel = new \App\Models\EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
 
             $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
@@ -1780,8 +1780,9 @@ class AgendaController extends BaseController
             log_message('info', 'CANCELAR DESDE EMAIL: Cita cancelada exitosamente en BD');
 
             // Obtener configuraciones del nutricionista
-            $configuracionModel = new \App\Models\UsuarioConfiguracion();
-            $configuracion = $configuracionModel->obtenerConfiguracion($citaCompleta->usuario_id ?? null);
+            $configuracionModel = new \App\Models\EmpresaConfiguracion();
+            $usuarioId = $citaCompleta->usuario_id ?? null;
+            $configuracion = $usuarioId ? $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId) : [];
 
             // Eliminar evento del calendario si existe (solo si está habilitado)
             if ($citaCompleta && ($configuracion['crear_evento_calendario'] ?? 1)) {
@@ -2723,8 +2724,8 @@ class AgendaController extends BaseController
             $calendarService = new CalendarService($usuarioId);
             
             // Obtener configuración del usuario para saber si agregar paciente como invitado
-            $configuracionModel = new \App\Models\UsuarioConfiguracion();
-            $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+            $configuracionModel = new \App\Models\EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
             $agregarPacienteComoInvitado = $configuracion['agregar_paciente_como_invitado'] ?? 1;
             
             // Obtener información completa de la cita

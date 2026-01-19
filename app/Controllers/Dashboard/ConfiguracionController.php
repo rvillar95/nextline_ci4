@@ -3,15 +3,36 @@
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\BaseController;
-use App\Models\UsuarioConfiguracion;
+use App\Models\EmpresaConfiguracion;
+use App\Models\Empresa;
 
 class ConfiguracionController extends BaseController
 {
     protected $configuracionModel;
+    protected $empresaModel;
 
     public function __construct()
     {
-        $this->configuracionModel = new UsuarioConfiguracion();
+        $this->configuracionModel = new EmpresaConfiguracion();
+        $this->empresaModel = new Empresa();
+    }
+
+    /**
+     * Verificar si el usuario es Super Admin
+     */
+    private function esSuperAdmin()
+    {
+        $usuario = session()->get('usuario');
+        return isset($usuario['poder']) && $usuario['poder'] == 3;
+    }
+
+    /**
+     * Obtener empresa_id del usuario actual
+     */
+    private function getEmpresaIdUsuario()
+    {
+        $usuario = session()->get('usuario');
+        return $usuario['empresa_id'] ?? null;
     }
 
     /**
@@ -34,12 +55,24 @@ class ConfiguracionController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        // Cargar configuraciones del usuario
-        $usuarioId = session()->get('usuario')['id'];
-        $configuracion = $this->configuracionModel->obtenerConfiguracion($usuarioId);
+        // Obtener empresa_id
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        if (!$empresaId) {
+            return redirect()->to(base_url('dashboard/menu'))
+                ->with('error', 'No se pudo determinar la empresa del usuario');
+        }
 
+        // Cargar configuraciones de la empresa
+        $configuracion = $this->configuracionModel->obtenerConfiguracion($empresaId);
+        
+        // Cargar información de la empresa
+        $empresa = $this->empresaModel->find($empresaId);
+        
         $data['titulo'] = 'Configuraciones del Sistema';
         $data['configuracion'] = $configuracion;
+        $data['empresa'] = $empresa;
+        $data['empresa_id'] = $empresaId;
         $data['csrf_token'] = csrf_hash();
 
         return view('modulos/configuracion/index', $data);
@@ -60,9 +93,17 @@ class ConfiguracionController extends BaseController
             ])->setStatusCode(401);
         }
 
-        $usuarioId = session()->get('usuario')['id'];
-        $perfilId = session()->get('usuario')['perfil_id'] ?? null;
-        log_message('info', 'ConfiguracionController::guardar() - Usuario ID: ' . $usuarioId . ', Perfil ID: ' . $perfilId);
+        // Obtener empresa_id del usuario
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        if (!$empresaId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No se pudo determinar la empresa del usuario'
+            ])->setStatusCode(400);
+        }
+        
+        log_message('info', 'ConfiguracionController::guardar() - Empresa ID: ' . $empresaId);
         
         $data = $this->request->getPost();
         log_message('info', 'ConfiguracionController::guardar() - Datos recibidos: ' . json_encode($data));
@@ -90,7 +131,7 @@ class ConfiguracionController extends BaseController
         }
 
         try {
-            $this->configuracionModel->actualizarConfiguracion($usuarioId, $configuracion);
+            $this->configuracionModel->actualizarConfiguracion($empresaId, $configuracion);
 
             return $this->response->setJSON([
                 'success' => true,

@@ -77,6 +77,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getModuloDetalle', 'Dashboard\ModuloDetalleController::getModuloDetalle');
         $routes2->post('registrar', 'Dashboard\ModuloDetalleController::registrar');
         $routes2->post('update', 'Dashboard\ModuloDetalleController::update');
+        $routes2->post('update-campo-inline', 'Dashboard\ModuloDetalleController::updateCampoInline');
         $routes2->post('eliminar', 'Dashboard\ModuloDetalleController::eliminar');
     });
 
@@ -221,9 +222,30 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('empresa', function ($routes2) {
-        $routes2->get('lista', 'Dashboard\EmpresaController::lista'); //redirige a registro
-        $routes2->get('registro', 'Dashboard\EmpresaController::registro'); //vista
-        $routes2->post('registrar', 'Dashboard\EmpresaController::registrar'); //accion
+        $routes2->get('lista', 'Dashboard\EmpresaController::lista'); //vista lista (SA) o redirige
+        $routes2->get('getEmpresas', 'Dashboard\EmpresaController::getEmpresas'); //get Data (solo SA)
+        $routes2->get('registro', 'Dashboard\EmpresaController::registro'); //vista crear/editar
+        $routes2->get('editar/(:num)', 'Dashboard\EmpresaController::editar/$1'); //vista editar
+        $routes2->get('detalle/(:num)', 'Dashboard\EmpresaController::detalle/$1'); //vista detalle
+        $routes2->post('registrar', 'Dashboard\EmpresaController::registrar'); //accion crear
+        $routes2->post('update', 'Dashboard\EmpresaController::update'); //accion actualizar
+        $routes2->post('eliminar/(:num)', 'Dashboard\EmpresaController::eliminar/$1'); //accion eliminar
+        $routes2->post('activar/(:num)', 'Dashboard\EmpresaController::activar/$1'); //accion activar
+    });
+
+    $routes->group('paquete', function ($routes2) {
+        $routes2->get('', 'Dashboard\PaqueteController::lista'); //vista lista por defecto (solo SA)
+        $routes2->get('lista', 'Dashboard\PaqueteController::lista'); //vista lista (solo SA)
+        $routes2->get('getPaquetes', 'Dashboard\PaqueteController::getPaquetes'); //get Data (solo SA)
+        $routes2->get('registro', 'Dashboard\PaqueteController::registro'); //vista crear
+        $routes2->get('editar/(:num)', 'Dashboard\PaqueteController::editar/$1'); //vista editar
+        $routes2->get('detalle/(:num)', 'Dashboard\PaqueteController::detalle/$1'); //vista detalle
+        $routes2->get('gestionar-modulos/(:num)', 'Dashboard\PaqueteController::gestionarModulos/$1'); //vista gestionar módulos
+        $routes2->post('registrar', 'Dashboard\PaqueteController::registrar'); //accion crear
+        $routes2->post('update', 'Dashboard\PaqueteController::update'); //accion actualizar
+        $routes2->post('guardar-modulos', 'Dashboard\PaqueteController::guardarModulos'); //accion guardar módulos
+        $routes2->post('eliminar/(:num)', 'Dashboard\PaqueteController::eliminar/$1'); //accion eliminar
+        $routes2->post('activar/(:num)', 'Dashboard\PaqueteController::activar/$1'); //accion activar
     });
 
     // Rutas para ubicaciones (regiones y comunas)

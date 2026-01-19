@@ -283,6 +283,25 @@
                                 </select>
                             </div>
                         </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-building icon-label"></i>
+                                    Empresa
+                                </label>
+                                <select class="form-select" id="empresa" name="empresa">
+                                    <option value="">-- Sin empresa --</option>
+                                    <?php if (!empty($empresas)) : ?>
+                                        <?php foreach ($empresas as $emp) : ?>
+                                            <option value="<?= esc($emp->id) ?>" <?= old('empresa') == $emp->id ? 'selected' : '' ?>>
+                                                <?= esc($emp->nombre) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Botones -->

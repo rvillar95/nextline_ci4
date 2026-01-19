@@ -225,7 +225,44 @@
     </div>
 </div>
 
+<!-- Input hidden para CSRF token -->
+<input type="hidden" id="csrf_token_input" value="<?= csrf_hash() ?>">
+
 <script>
+    // Función para obtener el token CSRF
+    function obtenerTokenCSRF() {
+        // Intentar obtener del input hidden primero
+        var inputToken = $('#csrf_token_input').val();
+        if (inputToken) {
+            return inputToken;
+        }
+        // Si no está en el input, intentar del meta tag
+        var metaToken = $('meta[name="csrf-token"]').attr('content');
+        if (metaToken) {
+            return metaToken;
+        }
+        // Último recurso: usar el hash del servidor
+        return '<?= csrf_hash() ?>';
+    }
+
+    // Función para actualizar el token CSRF después de cada petición
+    function actualizarTokenCSRF(xhr) {
+        // Intentar obtener del header
+        var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+        if (headerToken) {
+            $('#csrf_token_input').val(headerToken);
+            $('meta[name="csrf-token"]').attr('content', headerToken);
+            return;
+        }
+        // O de la respuesta JSON si está disponible
+        if (xhr.responseJSON && xhr.responseJSON.csrf_token) {
+            var jsonToken = xhr.responseJSON.csrf_token;
+            $('#csrf_token_input').val(jsonToken);
+            $('meta[name="csrf-token"]').attr('content', jsonToken);
+            return;
+        }
+    }
+
     const dt = $('#tabla-perfil-detalle').DataTable({
         serverSide: true,
         processing: true,
@@ -373,16 +410,25 @@
         // Mostrar indicador de carga
         $cell.html('<span class="spinner-border spinner-border-sm" role="status"></span>');
         
+        var csrfToken = obtenerTokenCSRF();
+        var csrfTokenName = '<?= csrf_token() ?>';
+        
         // Enviar AJAX
         $.ajax({
             url: '<?= base_url('dashboard/perfil-detalle/updateOrden') ?>',
             type: 'POST',
-            data: {
-                id: id,
-                orden: newOrden,
-                <?= csrf_token() ?>: '<?= csrf_hash() ?>'
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
             },
-            success: function(response) {
+            data: {
+                [csrfTokenName]: csrfToken,
+                id: id,
+                orden: newOrden
+            },
+            success: function(response, textStatus, xhr) {
+                // Actualizar el token CSRF después de la respuesta
+                actualizarTokenCSRF(xhr);
+                
                 if (response.success) {
                     // Actualizar el valor en la celda
                     $cell.text(newOrden);
@@ -400,8 +446,17 @@
                 editingCell = null;
             },
             error: function(xhr, status, error) {
+                // Actualizar el token CSRF incluso en caso de error
+                actualizarTokenCSRF(xhr);
+                
                 console.error('Error AJAX:', error);
-                alert('Error al actualizar el orden. Por favor, intenta de nuevo.');
+                
+                // Si es un error 403, puede ser un problema de CSRF
+                if (xhr.status === 403) {
+                    alert('Error de autenticación. Por favor, recarga la página.');
+                } else {
+                    alert('Error al actualizar el orden. Por favor, intenta de nuevo.');
+                }
                 $cell.text($cell.data('orden'));
                 editingCell = null;
             }

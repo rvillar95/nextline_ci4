@@ -259,6 +259,27 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label class="form-label">
+                                    <i class="fas fa-building icon-label"></i>
+                                    Empresa
+                                </label>
+                                <select class="form-select" id="empresa" name="empresa">
+                                    <option value="">-- Sin empresa --</option>
+                                    <?php if (!empty($empresas)) : ?>
+                                        <?php foreach ($empresas as $emp) : ?>
+                                            <option value="<?= esc($emp->id) ?>" <?= (isset($usuario['empresa_id']) && $emp->id == $usuario['empresa_id']) ? 'selected' : '' ?>>
+                                                <?= esc($emp->nombre) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
                                     <i class="fas fa-toggle-on icon-label"></i>
                                     Estado
                                     <span class="required">*</span>

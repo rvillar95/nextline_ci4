@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\Usuario;
 use App\Models\ModuloDetalle;
 use App\Models\Perfil;
+use App\Models\Empresa;
 
 class UsuarioController extends BaseController
 {
@@ -23,6 +24,11 @@ class UsuarioController extends BaseController
         $data['data'] = $menuTotal;
         $perfil = new Perfil();
         $data['perfiles'] = $perfil->getActivePerfil($this->poder);
+        
+        // Cargar empresas para el selector
+        $empresa = new Empresa();
+        $data['empresas'] = $empresa->where('estado', 'A')->orderBy('nombre', 'ASC')->findAll();
+        
         echo view('Base/usuarios/registro', $data);
     }
 
@@ -86,6 +92,11 @@ class UsuarioController extends BaseController
         $perfil = new Perfil();
         // Filtrar perfiles según el poder del usuario actual
         $data['perfiles'] = $perfil->getActivePerfil($this->poder);
+        
+        // Cargar empresas para el selector
+        $empresa = new Empresa();
+        $data['empresas'] = $empresa->where('estado', 'A')->orderBy('nombre', 'ASC')->findAll();
+        
         $usuario = new Usuario();
         $data['usuario'] = $usuario->select('usuario.* , perfil.nombre as nombre_perfil')
             ->join('perfil', 'usuario.perfil_id = perfil.id')
@@ -101,7 +112,7 @@ class UsuarioController extends BaseController
 
         $usuarioModel = new Usuario();
 
-        $post = $this->request->getPost(['nombre', 'apellido', 'correo', 'clave', 'telefono', 'perfil']);
+        $post = $this->request->getPost(['nombre', 'apellido', 'correo', 'clave', 'telefono', 'perfil', 'empresa']);
         $data = [
             'nombre' => $post['nombre'],
             'apellido' => $post['apellido'],
@@ -109,6 +120,7 @@ class UsuarioController extends BaseController
             'telefono' => $post['telefono'],
             'clave' => $usuarioModel->contrasenaHash($post['clave']),
             'perfil_id' => $post['perfil'],
+            'empresa_id' => !empty($post['empresa']) ? $post['empresa'] : null,
             'estado' => 'A' // Estado inicial
         ];
 
@@ -132,6 +144,7 @@ class UsuarioController extends BaseController
         $correo = $this->request->getPost('correo');
         $telefono = $this->request->getPost('telefono');
         $perfil = $this->request->getPost('perfil');
+        $empresa = $this->request->getPost('empresa');
         $estado = $this->request->getPost('estado');
 
 
@@ -141,6 +154,7 @@ class UsuarioController extends BaseController
             'correo' => $correo,
             'telefono' => $telefono,
             'perfil_id' => $perfil,
+            'empresa_id' => !empty($empresa) ? $empresa : null,
             'estado' => $estado
         ])) {
             return redirect()->to(base_url('dashboard/usuario/editar/' . $id))->with('success', 'Usuario editado con éxito');

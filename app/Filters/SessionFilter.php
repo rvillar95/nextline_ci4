@@ -74,6 +74,11 @@ final class SessionFilter implements FilterInterface
         if (strpos($path, 'generarPDF') !== false) {
             log_message('debug', 'SessionFilter: Procesando ruta generarPDF: ' . $path);
         }
+        
+        // Log para debugging de paquetes
+        if (strpos($path, 'paquete') !== false) {
+            log_message('info', 'SessionFilter: Procesando ruta de paquetes: ' . $path);
+        }
 
         // 1) Públicos fuera del filtro
         foreach (self::PUBLIC_PATHS as $pub) {
@@ -194,8 +199,17 @@ final class SessionFilter implements FilterInterface
         }
 
         // 6) Denegar si nada coincide
-        if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false || strpos($path, 'calendar') !== false || strpos($path, 'calendario') !== false) {
+        if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false || strpos($path, 'calendar') !== false || strpos($path, 'calendario') !== false || strpos($path, 'paquete') !== false) {
             log_message('error', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
+            log_message('error', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
+            if (strpos($path, 'paquete') !== false) {
+                log_message('error', 'SessionFilter: Rutas permitidas que contienen "paquete":');
+                foreach ($allowed as $rule) {
+                    if (strpos($rule['pattern'], 'paquete') !== false) {
+                        log_message('error', '  - ' . $rule['pattern']);
+                    }
+                }
+            }
             //log_message('error', 'SessionFilter: Rutas permitidas que contienen "agenda" o "calendar":');
             foreach ($allowed as $rule) {
                 if (strpos($rule['pattern'], 'agenda') !== false || strpos($rule['pattern'], 'calendar') !== false || strpos($rule['pattern'], 'calendario') !== false) {

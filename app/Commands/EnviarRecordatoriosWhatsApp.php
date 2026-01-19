@@ -29,7 +29,7 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
 
         $db = \Config\Database::connect();
         $whatsappService = new WhatsAppService();
-        $configuracionModel = new \App\Models\UsuarioConfiguracion();
+        $configuracionModel = new \App\Models\EmpresaConfiguracion();
 
         // Obtener citas confirmadas para las próximas horas (según configuración de cada usuario)
         $citas = $db->table('detalle_agenda da')
@@ -62,8 +62,8 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
                 continue;
             }
 
-            // Obtener configuración del nutricionista
-            $configuracion = $configuracionModel->obtenerConfiguracion($cita->usuario_id);
+            // Obtener configuración de la empresa del nutricionista
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($cita->usuario_id);
             
             // Verificar si los recordatorios están habilitados para este nutricionista
             if (!($configuracion['enviar_recordatorios_whatsapp'] ?? 1)) {

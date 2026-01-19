@@ -70,6 +70,32 @@
         border-color: #667eea;
         box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
     }
+    
+    .editar-inline {
+        border: 2px solid #e1e8ed;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .editar-inline:hover {
+        border-color: #667eea;
+        background-color: #f8f9fa;
+    }
+    
+    .editar-inline:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        outline: none;
+    }
+    
+    .editar-inline:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #f8f9fa;
+    }
 </style>
 
 <div class="container-fluid">
@@ -168,6 +194,9 @@
     </div>
 </div>
 
+<!-- Input hidden para CSRF token -->
+<input type="hidden" id="csrf_token_input" value="<?= csrf_hash() ?>">
+
 <!-- Modal de Eliminación -->
 <div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -202,6 +231,40 @@
 </div>
 
 <script>
+    // Función para obtener el token CSRF
+    function obtenerTokenCSRF() {
+        // Intentar obtener del input hidden primero
+        var inputToken = $('#csrf_token_input').val();
+        if (inputToken) {
+            return inputToken;
+        }
+        // Si no está en el input, intentar del meta tag
+        var metaToken = $('meta[name="csrf-token"]').attr('content');
+        if (metaToken) {
+            return metaToken;
+        }
+        // Último recurso: usar el hash del servidor
+        return '<?= csrf_hash() ?>';
+    }
+
+    // Función para actualizar el token CSRF después de cada petición
+    function actualizarTokenCSRF(xhr) {
+        // Intentar obtener del header
+        var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+        if (headerToken) {
+            $('#csrf_token_input').val(headerToken);
+            $('meta[name="csrf-token"]').attr('content', headerToken);
+            return;
+        }
+        // O de la respuesta JSON si está disponible
+        if (xhr.responseJSON && xhr.responseJSON.csrf_token) {
+            var jsonToken = xhr.responseJSON.csrf_token;
+            $('#csrf_token_input').val(jsonToken);
+            $('meta[name="csrf-token"]').attr('content', jsonToken);
+            return;
+        }
+    }
+
     const dt = $('#tabla-modulo-detalle').DataTable({
         serverSide: true,
         processing: true,
@@ -258,6 +321,82 @@
         // Capturar el filtro actual del select
         $('#modulo_id_filter').val(document.getElementById('modulo_id').value);
         $('#modalEliminacion').modal('show');
+    });
+
+    // Edición inline para "Mostrar" y "Estado"
+    $(document).on('change', '.editar-inline', function() {
+        var $select = $(this);
+        var id = $select.data('id');
+        var campo = $select.data('campo');
+        var valor = $select.val();
+        var valorOriginal = $select.data('valor-original') || $select.find('option:selected').val();
+        var csrfToken = obtenerTokenCSRF();
+        var csrfTokenName = '<?= csrf_token() ?>';
+
+        // Deshabilitar el select mientras se procesa
+        $select.prop('disabled', true);
+
+        $.ajax({
+            url: '<?= base_url('dashboard/modulo-detalle/update-campo-inline') ?>',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            },
+            data: {
+                [csrfTokenName]: csrfToken,
+                'id': id,
+                'campo': campo,
+                'valor': valor
+            },
+            success: function(response, textStatus, xhr) {
+                // Actualizar el token CSRF después de la respuesta
+                actualizarTokenCSRF(xhr);
+                
+                if (response.success) {
+                    // Actualizar el valor original guardado
+                    $select.data('valor-original', valor);
+                    
+                    // Mostrar notificación de éxito (si toastr está disponible)
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(response.message || 'Campo actualizado correctamente');
+                    }
+                } else {
+                    // Revertir al valor original
+                    $select.val(valorOriginal);
+                    
+                    // Mostrar error
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(response.error || 'Error al actualizar el campo');
+                    } else {
+                        alert(response.error || 'Error al actualizar el campo');
+                    }
+                }
+            },
+            error: function(xhr) {
+                // Actualizar el token CSRF incluso en caso de error
+                actualizarTokenCSRF(xhr);
+                
+                // Revertir al valor original
+                $select.val(valorOriginal);
+                
+                // Si es un error 403, puede ser un problema de CSRF
+                if (xhr.status === 403) {
+                    var error = 'Error de autenticación. Por favor, recarga la página.';
+                } else {
+                    var error = xhr.responseJSON?.error || 'Error al actualizar el campo';
+                }
+                
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(error);
+                } else {
+                    alert(error);
+                }
+            },
+            complete: function() {
+                // Rehabilitar el select
+                $select.prop('disabled', false);
+            }
+        });
     });
 </script>
 

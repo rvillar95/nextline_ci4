@@ -39,8 +39,12 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= base_url('dashboard/empresa/registrar') ?>" method="post">
+                    <form action="<?= base_url($empresa ? 'dashboard/empresa/update' : 'dashboard/empresa/registrar') ?>" method="post">
                         <?= csrf_field() ?>
+                        
+                        <?php if ($empresa): ?>
+                            <input type="hidden" name="id" value="<?= $empresa->id ?>">
+                        <?php endif; ?>
                         
                         <div class="row">
                             <div class="col-md-6">
@@ -52,11 +56,41 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
+                                    <label for="nombre_comercial" class="form-label">Nombre Comercial</label>
+                                    <input type="text" class="form-control" id="nombre_comercial" name="nombre_comercial" 
+                                           value="<?= old('nombre_comercial', $empresa->nombre_comercial ?? '') ?>" placeholder="Nombre comercial o marca">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
                                     <label for="rut" class="form-label">RUT</label>
                                     <input type="text" class="form-control" id="rut" name="rut" 
                                            value="<?= old('rut', $empresa->rut ?? '') ?>" placeholder="12.345.678-9">
                                 </div>
                             </div>
+                            <?php if (isset($es_super_admin) && $es_super_admin): ?>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="paquete_id" class="form-label">Paquete <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="paquete_id" name="paquete_id" required>
+                                        <option value="">Seleccione un paquete</option>
+                                        <?php foreach ($paquetes as $paquete): ?>
+                                            <option value="<?= $paquete->id ?>" 
+                                                <?= old('paquete_id', $empresa->paquete_id ?? '') == $paquete->id ? 'selected' : '' ?>>
+                                                <?= esc($paquete->nombre) ?>
+                                                <?php if ($paquete->precio_mensual > 0): ?>
+                                                    - $<?= number_format($paquete->precio_mensual, 0, ',', '.') ?>/mes
+                                                <?php endif; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="form-text text-muted">El paquete define qué módulos tiene disponibles esta empresa</small>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="row">
@@ -86,9 +120,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="logo" class="form-label">Logo</label>
-                                    <input type="text" class="form-control" id="logo" name="logo" 
-                                           value="<?= old('logo', $empresa->logo ?? '') ?>" placeholder="Ruta del logo">
+                                    <label for="logo_path" class="form-label">Ruta del Logo</label>
+                                    <input type="text" class="form-control" id="logo_path" name="logo_path" 
+                                           value="<?= old('logo_path', $empresa->logo_path ?? '') ?>" placeholder="/ruta/al/logo.jpg">
                                 </div>
                             </div>
                         </div>
@@ -118,16 +152,14 @@
                             <textarea class="form-control" id="valores" name="valores" rows="3"><?= old('valores', $empresa->valores ?? '') ?></textarea>
                         </div>
 
-                        <div class="row">
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> <?= $empresa ? 'Actualizar' : 'Registrar' ?> Empresa
-                                    </button>
-                                <a href="<?= base_url('dashboard/menu') ?>" class="btn btn-secondary">
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> <?= $empresa ? 'Actualizar' : 'Registrar' ?> Empresa
+                                </button>
+                                <a href="<?= base_url(isset($es_super_admin) && $es_super_admin ? 'dashboard/empresa/lista' : 'dashboard/menu') ?>" class="btn btn-secondary">
                                     <i class="fas fa-times"></i> Cancelar
                                 </a>
-                                </div>
                             </div>
                         </div>
                     </form>

@@ -25,7 +25,8 @@ class Empresa extends Model
         'mision',
         'vision',
         'valores',
-        'estado'
+        'estado',
+        'paquete_id'  // Agregado para gestión de paquetes
     ];
 
     // Dates
@@ -142,5 +143,71 @@ class Empresa extends Model
             'logo_path' => $empresa->logo_path,
             'descripcion' => $empresa->descripcion ?? 'Construcciones y Remodelaciones'
         ];
+    }
+
+    /**
+     * Obtener empresa por ID del usuario
+     */
+    public function getEmpresaByUsuarioId($usuarioId)
+    {
+        $db = \Config\Database::connect();
+        $sql = "SELECT e.* 
+                FROM empresa e
+                INNER JOIN usuario u ON u.empresa_id = e.id
+                WHERE u.id = :usuario_id:
+                LIMIT 1";
+        $result = $db->query($sql, ['usuario_id' => $usuarioId])->getRow();
+        return $result;
+    }
+
+    /**
+     * Obtener todas las empresas (para Super Admin)
+     * Con información del paquete
+     */
+    public function getEmpresasCompletas($filtros = [])
+    {
+        $db = \Config\Database::connect();
+        
+        $sql = "SELECT 
+                    e.id,
+                    e.nombre,
+                    e.nombre_comercial,
+                    e.rut,
+                    e.email,
+                    e.telefono,
+                    e.estado,
+                    e.paquete_id,
+                    p.nombre AS paquete_nombre,
+                    p.slug AS paquete_slug,
+                    COUNT(DISTINCT u.id) AS cantidad_usuarios,
+                    e.fcreacion,
+                    e.fmodificacion
+                FROM empresa e
+                LEFT JOIN paquetes p ON p.id = e.paquete_id
+                LEFT JOIN usuario u ON u.empresa_id = e.id AND u.estado = 'A'
+                WHERE 1=1";
+        
+        $params = [];
+        
+        // Filtros
+        if (!empty($filtros['estado'])) {
+            $sql .= " AND e.estado = :estado:";
+            $params['estado'] = $filtros['estado'];
+        }
+        
+        if (!empty($filtros['paquete_id'])) {
+            $sql .= " AND e.paquete_id = :paquete_id:";
+            $params['paquete_id'] = $filtros['paquete_id'];
+        }
+        
+        if (!empty($filtros['busqueda'])) {
+            $sql .= " AND (e.nombre LIKE :busqueda: OR e.email LIKE :busqueda: OR e.rut LIKE :busqueda:)";
+            $params['busqueda'] = '%' . $filtros['busqueda'] . '%';
+        }
+        
+        $sql .= " GROUP BY e.id, e.nombre, e.nombre_comercial, e.rut, e.email, e.telefono, e.estado, e.paquete_id, p.nombre, p.slug, e.fcreacion, e.fmodificacion";
+        $sql .= " ORDER BY e.fcreacion DESC";
+        
+        return $db->query($sql, $params)->getResult('object');
     }
 }

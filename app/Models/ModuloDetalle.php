@@ -48,24 +48,172 @@ class ModuloDetalle extends Model
         return $query->getResult('object');
     }
 
-    public function getMenu($perfil)
+    /**
+     * Obtiene el menú de módulos para un perfil, filtrando por el paquete de la empresa del usuario
+     * 
+     * Lógica:
+     * 1. Obtiene el paquete_id de la empresa del usuario
+     * 2. Consulta módulos del paquete (paquete_modulo)
+     * 3. Filtra por permisos del perfil (perfil_modulo)
+     * 4. Solo muestra módulos que estén en AMBOS (paquete Y perfil)
+     * 
+     * @param int $perfilId ID del perfil del usuario
+     * @param int|null $empresaId ID de la empresa del usuario (opcional, se obtiene de la sesión si no se proporciona)
+     * @return array Array de módulos con sus permisos
+     */
+    public function getMenu($perfil, $empresaId = null)
     {
         $db = \Config\Database::connect();
-        // Este método es para mostrar en el menú, SÍ debe respetar el campo mostrar
-        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' and mo.mostrar = 'S' and pe.estado = 'A' order by pe.orden asc";
-        $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
+        
+        // Si no se proporciona empresa_id, intentar obtenerlo de la sesión
+        if ($empresaId === null) {
+            $usuario = session()->get('usuario');
+            $empresaId = $usuario['empresa_id'] ?? null;
+        }
+        
+        // Si es Super Admin (poder=3) o no tiene empresa, mostrar todos los módulos del perfil
+        $usuario = session()->get('usuario');
+        $poder = $usuario['poder'] ?? 0;
+        
+        if ($poder == 3 || $empresaId === null) {
+            // Super Admin o sin empresa: mostrar todos los módulos del perfil
+            $sql = "SELECT 
+                        pe.modulo_id AS id, 
+                        mo.nombre, 
+                        mo.ruta, 
+                        pe.ver, 
+                        pe.registrar, 
+                        pe.editar, 
+                        pe.eliminar 
+                    FROM perfil_modulo pe
+                    INNER JOIN perfil per ON pe.perfil_id = per.id
+                    INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                    WHERE pe.perfil_id = :perfil:
+                      AND mo.estado = 'A'
+                      AND mo.mostrar = 'S'
+                      AND pe.estado = 'A'
+                    ORDER BY pe.orden ASC";
+            return $db->query($sql, ['perfil' => $perfil])->getResult('array');
+        }
+        
+        // Usuario normal: filtrar por paquete Y perfil
+        // Primero verificar que la empresa tenga un paquete asignado
+        $empresaData = $db->table('empresa')
+            ->select('paquete_id')
+            ->where('id', $empresaId)
+            ->get()
+            ->getRowArray();
+        
+        if (!$empresaData || empty($empresaData['paquete_id'])) {
+            // Si la empresa no tiene paquete, no mostrar módulos
+            log_message('warning', "Empresa ID {$empresaId} no tiene paquete asignado");
+            return [];
+        }
+        
+        $paqueteId = $empresaData['paquete_id'];
+        
+        $sql = "SELECT 
+                    pe.modulo_id AS id, 
+                    mo.nombre, 
+                    mo.ruta, 
+                    pe.ver, 
+                    pe.registrar, 
+                    pe.editar, 
+                    pe.eliminar 
+                FROM perfil_modulo pe
+                INNER JOIN perfil per ON pe.perfil_id = per.id
+                INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                INNER JOIN paquete_modulo pm ON pm.modulo_id = pe.modulo_id 
+                    AND pm.paquete_id = :paquete_id:
+                    AND pm.incluido = 'S'
+                WHERE pe.perfil_id = :perfil:
+                  AND mo.estado = 'A'
+                  AND mo.mostrar = 'S'
+                  AND pe.estado = 'A'
+                  AND mo.sa = 'N'  -- Excluir módulos de Super Admin
+                ORDER BY pe.orden ASC";
+        
+        $modulos = $db->query($sql, [
+            'perfil' => $perfil,
+            'paquete_id' => $paqueteId
+        ])->getResult('array');
+        
+        // Log para depuración
+        log_message('debug', "getMenu - Perfil: {$perfil}, Empresa: {$empresaId}, Paquete: {$paqueteId}, Módulos encontrados: " . count($modulos));
+        
         return $modulos;
     }
 
     /**
      * Obtiene todos los módulos accesibles para un perfil (para permisos)
      * NO respeta el campo mostrar - solo estado y permisos
+     * Filtra por paquete de la empresa del usuario
+     * 
+     * @param int $perfilId ID del perfil del usuario
+     * @param int|null $empresaId ID de la empresa del usuario (opcional, se obtiene de la sesión si no se proporciona)
+     * @return array Array de módulos con sus permisos
      */
-    public function getMenuForPermissions($perfil)
+    public function getMenuForPermissions($perfil, $empresaId = null)
     {
         $db = \Config\Database::connect();
-        $sql = "select pe.modulo_id id, mo.nombre, mo.ruta, pe.ver, pe.registrar, pe.editar, pe.eliminar from perfil_modulo pe, perfil per, modulo mo where pe.perfil_id = per.id and pe.modulo_id = mo.id and pe.perfil_id = :perfil: and mo.estado = 'A' and pe.estado = 'A' order by pe.orden asc";
-        $modulos = $db->query($sql, ['perfil' => $perfil])->getResult('array');
+        
+        // Si no se proporciona empresa_id, intentar obtenerlo de la sesión
+        if ($empresaId === null) {
+            $usuario = session()->get('usuario');
+            $empresaId = $usuario['empresa_id'] ?? null;
+        }
+        
+        // Si es Super Admin (poder=3) o no tiene empresa, mostrar todos los módulos del perfil
+        $usuario = session()->get('usuario');
+        $poder = $usuario['poder'] ?? 0;
+        
+        if ($poder == 3 || $empresaId === null) {
+            // Super Admin o sin empresa: mostrar todos los módulos del perfil
+            $sql = "SELECT 
+                        pe.modulo_id AS id, 
+                        mo.nombre, 
+                        mo.ruta, 
+                        pe.ver, 
+                        pe.registrar, 
+                        pe.editar, 
+                        pe.eliminar 
+                    FROM perfil_modulo pe
+                    INNER JOIN perfil per ON pe.perfil_id = per.id
+                    INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                    WHERE pe.perfil_id = :perfil:
+                      AND mo.estado = 'A'
+                      AND pe.estado = 'A'
+                    ORDER BY pe.orden ASC";
+            return $db->query($sql, ['perfil' => $perfil])->getResult('array');
+        }
+        
+        // Usuario normal: filtrar por paquete Y perfil
+        $sql = "SELECT 
+                    pe.modulo_id AS id, 
+                    mo.nombre, 
+                    mo.ruta, 
+                    pe.ver, 
+                    pe.registrar, 
+                    pe.editar, 
+                    pe.eliminar 
+                FROM perfil_modulo pe
+                INNER JOIN perfil per ON pe.perfil_id = per.id
+                INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                INNER JOIN empresa e ON e.id = :empresa_id:
+                INNER JOIN paquete_modulo pm ON pm.modulo_id = pe.modulo_id 
+                    AND pm.paquete_id = e.paquete_id 
+                    AND pm.incluido = 'S'
+                WHERE pe.perfil_id = :perfil:
+                  AND mo.estado = 'A'
+                  AND pe.estado = 'A'
+                  AND mo.sa = 'N'  -- Excluir módulos de Super Admin
+                ORDER BY pe.orden ASC";
+        
+        $modulos = $db->query($sql, [
+            'perfil' => $perfil,
+            'empresa_id' => $empresaId
+        ])->getResult('array');
+        
         return $modulos;
     }
 
@@ -99,31 +247,83 @@ class ModuloDetalle extends Model
      * - acciones_csv (string|null)  // de modulo_detalle.accion
      * - permisos (array)            // ['ver'=>0/1, 'registrar'=>0/1, 'editar'=>0/1, 'eliminar'=>0/1]
      */
-    public function getAllowedByPerfil(int $perfilId): array
+    /**
+     * Obtiene todos los patrones de rutas accesibles para un perfil
+     * Filtra por paquete de la empresa del usuario
+     * 
+     * @param int $perfilId ID del perfil del usuario
+     * @param int|null $empresaId ID de la empresa del usuario (opcional, se obtiene de la sesión si no se proporciona)
+     * @return array Array de rutas con sus permisos
+     */
+    public function getAllowedByPerfil(int $perfilId, $empresaId = null): array
     {
-        
         $db = $this->db;
-        $sql = "
-            SELECT
-                m.ruta            AS modulo_ruta,
-                md.ruta           AS detalle_ruta,
-                md.accion         AS acciones_csv,
-                pm.ver,
-                pm.registrar,
-                pm.editar,
-                pm.eliminar
-            FROM perfil_modulo pm
-            JOIN modulo m
-              ON m.id = pm.modulo_id
-             AND m.estado = 'A'
-            LEFT JOIN modulo_detalle md
-              ON md.modulo_id = m.id
-             AND md.estado = 'A'
-            WHERE pm.perfil_id = :pid:
-              AND pm.estado = 'A'
-            ORDER BY pm.orden ASC, md.orden ASC
-        ";
-        $rows = $db->query($sql, ['pid' => $perfilId])->getResultArray();
+        
+        // Si no se proporciona empresa_id, intentar obtenerlo de la sesión
+        if ($empresaId === null) {
+            $usuario = session()->get('usuario');
+            $empresaId = $usuario['empresa_id'] ?? null;
+        }
+        
+        // Si es Super Admin (poder=3) o no tiene empresa, mostrar todos los módulos del perfil
+        $usuario = session()->get('usuario');
+        $poder = $usuario['poder'] ?? 0;
+        
+        if ($poder == 3 || $empresaId === null) {
+            // Super Admin o sin empresa: mostrar todos los módulos del perfil
+            $sql = "
+                SELECT
+                    m.ruta            AS modulo_ruta,
+                    md.ruta           AS detalle_ruta,
+                    md.accion         AS acciones_csv,
+                    pm.ver,
+                    pm.registrar,
+                    pm.editar,
+                    pm.eliminar
+                FROM perfil_modulo pm
+                JOIN modulo m
+                  ON m.id = pm.modulo_id
+                 AND m.estado = 'A'
+                LEFT JOIN modulo_detalle md
+                  ON md.modulo_id = m.id
+                 AND md.estado = 'A'
+                WHERE pm.perfil_id = :pid:
+                  AND pm.estado = 'A'
+                ORDER BY pm.orden ASC, md.orden ASC
+            ";
+            $rows = $db->query($sql, ['pid' => $perfilId])->getResultArray();
+        } else {
+            // Usuario normal: filtrar por paquete Y perfil
+            $sql = "
+                SELECT
+                    m.ruta            AS modulo_ruta,
+                    md.ruta           AS detalle_ruta,
+                    md.accion         AS acciones_csv,
+                    pm.ver,
+                    pm.registrar,
+                    pm.editar,
+                    pm.eliminar
+                FROM perfil_modulo pm
+                JOIN modulo m
+                  ON m.id = pm.modulo_id
+                 AND m.estado = 'A'
+                INNER JOIN empresa e ON e.id = :empresa_id:
+                INNER JOIN paquete_modulo pkm ON pkm.modulo_id = pm.modulo_id 
+                    AND pkm.paquete_id = e.paquete_id 
+                    AND pkm.incluido = 'S'
+                LEFT JOIN modulo_detalle md
+                  ON md.modulo_id = m.id
+                 AND md.estado = 'A'
+                WHERE pm.perfil_id = :pid:
+                  AND pm.estado = 'A'
+                  AND m.sa = 'N'  -- Excluir módulos de Super Admin
+                ORDER BY pm.orden ASC, md.orden ASC
+            ";
+            $rows = $db->query($sql, [
+                'pid' => $perfilId,
+                'empresa_id' => $empresaId
+            ])->getResultArray();
+        }
         //echo "<pre>";
         //print_r($rows);
         //echo "</pre>";

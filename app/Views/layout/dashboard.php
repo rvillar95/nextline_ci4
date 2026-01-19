@@ -378,7 +378,14 @@ exit(); */
                     <?php echo $this->renderSection("cotizacion/detalle"); ?>
                     
                     <!-- Secciones de Empresa -->
+                    <?php echo $this->renderSection("empresa/lista"); ?>
                     <?php echo $this->renderSection("empresa/registro"); ?>
+                    <?php echo $this->renderSection("empresa/detalle"); ?>
+
+                    <?php echo $this->renderSection("paquete/lista"); ?>
+                    <?php echo $this->renderSection("paquete/registro"); ?>
+                    <?php echo $this->renderSection("paquete/detalle"); ?>
+                    <?php echo $this->renderSection("paquete/gestionar_modulos"); ?>
                     
                     <!-- Secciones de Listado de Materiales -->
                     <?php echo $this->renderSection("listado_material/lista"); ?>
@@ -622,7 +629,20 @@ exit(); */
 
         // ============================================
         // VERIFICACIÓN Y RENOVACIÓN AUTOMÁTICA DE TOKEN DE CALENDARIO
+        // Solo se ejecuta si la configuración tiene activo crear_evento_calendario
         // ============================================
+        <?php
+        // Verificar si la empresa tiene activo crear_evento_calendario
+        $configuracionModel = new \App\Models\EmpresaConfiguracion();
+        $usuarioId = session()->get('usuario')['id'] ?? null;
+        $crearEventoCalendario = false;
+        
+        if ($usuarioId) {
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
+            $crearEventoCalendario = ($configuracion['crear_evento_calendario'] ?? 1) == 1;
+        }
+        ?>
+        <?php if ($crearEventoCalendario): ?>
         (function() {
             // Verificar y renovar token de calendario cada 30 minutos
             const TOKEN_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutos en milisegundos
@@ -664,6 +684,7 @@ exit(); */
             // Verificar periódicamente cada 30 minutos
             setInterval(verificarTokenCalendario, TOKEN_CHECK_INTERVAL);
         })();
+        <?php endif; ?>
         </script>
         
         <style>

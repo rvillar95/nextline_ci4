@@ -81,19 +81,29 @@ class ModuloDetalleController extends BaseController
         $rows            = $model->fetchPageMD($moduloId, $searchVal, $orderBy, $orderDir, $start, $length);
 
         $data = array_map(static function(array $r): array {
-            $badge = fn(bool $ok) => $ok
-                ? '<span class="badge badge-success mb-2 me-4">Sí</span>'
-                : '<span class="badge badge-danger mb-2 me-4">No</span>';
+            $id = (int)$r['id'];
+            $mostrarActual = ($r['mostrar'] ?? 'S') === 'S' ? 'S' : 'N';
+            $estadoActual = ($r['estado'] ?? 'A') === 'A' ? 'A' : 'I';
+            
+            // Select editable para "Mostrar"
+            $mostrarSelect = '<select class="form-select form-select-sm editar-inline" data-id="' . $id . '" data-campo="mostrar" style="min-width: 80px;">' .
+                '<option value="S" ' . ($mostrarActual === 'S' ? 'selected' : '') . '>Sí</option>' .
+                '<option value="N" ' . ($mostrarActual === 'N' ? 'selected' : '') . '>No</option>' .
+                '</select>';
+            
+            // Select editable para "Estado"
+            $estadoSelect = '<select class="form-select form-select-sm editar-inline" data-id="' . $id . '" data-campo="estado" style="min-width: 100px;">' .
+                '<option value="A" ' . ($estadoActual === 'A' ? 'selected' : '') . '>Activo</option>' .
+                '<option value="I" ' . ($estadoActual === 'I' ? 'selected' : '') . '>Inactivo</option>' .
+                '</select>';
 
             return [
                 'modulo_nombre' => esc($r['modulo_nombre']),
                 'descripcion'   => esc((string)$r['descripcion']),
                 'ruta'          => esc((string)$r['ruta']),
                 'accion'        => esc((string)$r['accion']),
-                'mostrar_html'  => $badge(($r['mostrar'] ?? 'S') === 'S'),
-                'estado_html'   => ($r['estado'] === 'A')
-                    ? '<span class="badge badge-success mb-2 me-4">Activo</span>'
-                    : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>',
+                'mostrar_html'  => $mostrarSelect,
+                'estado_html'   => $estadoSelect,
                 'orden'         => (int)$r['orden'],
                 'acciones_html' =>
                     '<a href="'.base_url('dashboard/modulo-detalle/editar/'.(int)$r['id']).'" class="bs-tooltip" title="Editar">' .
@@ -182,6 +192,69 @@ class ModuloDetalleController extends BaseController
             return $this->redirectWithPostFilters(base_url('dashboard/modulo-detalle/lista'), 'Modulo Detalle eliminado con éxito.', 'success');
         } else {
             return $this->redirectWithPostFilters(base_url('dashboard/modulo-detalle/lista'), 'No se pudo eliminar el Modulo Detalle.', 'errors');
+        }
+    }
+
+    /**
+     * Actualizar campo inline (mostrar o estado) vía AJAX
+     */
+    public function updateCampoInline()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No autorizado'
+            ])->setStatusCode(401);
+        }
+
+        $id = $this->request->getPost('id');
+        $campo = $this->request->getPost('campo'); // 'mostrar' o 'estado'
+        $valor = $this->request->getPost('valor');
+
+        if (!$id || !$campo || !$valor) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Datos incompletos'
+            ])->setStatusCode(400);
+        }
+
+        // Validar que el campo sea permitido
+        if (!in_array($campo, ['mostrar', 'estado'])) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Campo no permitido'
+            ])->setStatusCode(400);
+        }
+
+        // Validar valores
+        if ($campo === 'mostrar' && !in_array($valor, ['S', 'N'])) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Valor inválido para mostrar'
+            ])->setStatusCode(400);
+        }
+
+        if ($campo === 'estado' && !in_array($valor, ['A', 'I'])) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Valor inválido para estado'
+            ])->setStatusCode(400);
+        }
+
+        $moduloDetalle = new ModuloDetalle();
+        
+        if ($moduloDetalle->update($id, [$campo => $valor])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => ucfirst($campo) . ' actualizado correctamente',
+                'csrf_token' => csrf_hash()
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        } else {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Error al actualizar el campo',
+                'csrf_token' => csrf_hash()
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(500);
         }
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Controllers\Dashboard;
 
 use App\Controllers\BaseController;
-use App\Models\UsuarioConfiguracion;
+use App\Models\EmpresaConfiguracion;
 use App\Libraries\WhatsAppService;
 use App\Libraries\CalendarService;
 
@@ -40,8 +40,8 @@ class CancelarHorasController extends BaseController
 
         // Cargar configuraciones de mensajes
         $usuarioId = session()->get('usuario')['id'];
-        $configuracionModel = new UsuarioConfiguracion();
-        $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+        $configuracionModel = new EmpresaConfiguracion();
+        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
 
         $data['titulo'] = 'Cancelar Horas Masivamente';
         $data['configuracion'] = $configuracion;
@@ -162,8 +162,8 @@ class CancelarHorasController extends BaseController
         $mensajesPersonalizadosArray = json_decode($mensajesPersonalizados ?? '{}', true);
 
         // Cargar configuraciones de mensajes
-        $configuracionModel = new UsuarioConfiguracion();
-        $configuracion = $configuracionModel->obtenerConfiguracion($usuarioId);
+        $configuracionModel = new EmpresaConfiguracion();
+        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
 
         foreach ($citas as $cita) {
             try {

@@ -17,6 +17,9 @@
                     <h3 class="card-title">
                         <i class="fas fa-cog mr-2"></i>
                         Configuraciones del Sistema
+                        <?php if (isset($empresa) && $empresa): ?>
+                            <small class="text-muted">- <?= esc($empresa->nombre) ?></small>
+                        <?php endif; ?>
                     </h3>
                 </div>
                 <div class="card-body">

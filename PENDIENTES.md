@@ -37,36 +37,121 @@
 - ✅ Divider con altura 0
 - ✅ Citas canceladas se muestran en rojo
 
+### 4. Sistema de Paquetes para Nutricionistas
+- ✅ Paquete "NextLine Nutrición" creado (id=4)
+- ✅ Módulos asignados al paquete:
+  - 33: Agenda
+  - 34: Pacientes
+  - 35: Documentos
+  - 36: Historial Clínico
+  - 37: Pagos
+  - 38: Configuraciones
+  - 39: Cancelar Horas
+- ✅ Vista `vista_modulos_por_paquete` verificada y funcionando
+- ✅ Módulo de Gestión de Paquetes creado (id=40) - Solo Super Admin
+  - Lista de paquetes con DataTable (con filtros funcionando)
+  - Crear/Editar paquetes
+  - Gestionar módulos de cada paquete (con manejo correcto de CSRF)
+  - Ver detalle de paquetes (módulos incluidos, empresas asignadas)
+  - Activar/Desactivar paquetes
+- ✅ Control de acceso unificado (paquetes + perfiles)
+- ✅ Módulo de Gestión de Empresas mejorado para Super Admin
+  - Lista completa de empresas con DataTable
+  - Asignación de paquetes a empresas
+  - CRUD completo de empresas
+- ✅ Campo `empresa_id` agregado a usuarios
+- ✅ Configuraciones migradas de usuario a empresa (`empresa_configuraciones`)
+- ✅ Menú dinámico filtrando por paquete de la empresa del usuario
+- ✅ Edición inline de campos en módulo_detalle (Mostrar, Estado)
+- ✅ Corrección de errores CSRF en múltiples módulos:
+  - `modulo_detalle/update-campo-inline`
+  - `paquete/guardar-modulos`
+  - `perfil-detalle/updateOrden`
+
 ## 🔄 Pendiente
 
 ### 1. Sistema de Paquetes para Nutricionistas
-**Prioridad: Alta**
+**Prioridad: Alta** ✅ **COMPLETADO**
 
 **Descripción:**
 - Implementar sistema de paquetes similar a NextLine Presencia
 - Crear paquete "NextLine Nutrición" para módulos de nutricionistas
 - Asignar módulos de nutricionistas al paquete correspondiente
+- Crear módulo de gestión de paquetes para Super Admin
 - Verificar que el sistema de permisos funcione correctamente
 
 **Tareas:**
-- [ ] Crear paquete "NextLine Nutrición" en la tabla `paquetes`
-- [ ] Asignar módulos de nutricionistas al paquete (33: Agenda, 34: Pacientes, 35: Documentos, 36: Historial, 37: Pagos, 34: Configuraciones, 38: Cancelar Horas)
-- [ ] Verificar que los módulos aparezcan en `vista_modulos_por_paquete`
-- [ ] Verificar que la función `fn_usuario_puede_ver_modulo` funcione correctamente
-- [ ] Asignar paquete a empresas de nutricionistas (si aplica)
-- [ ] Probar que el menú se genere dinámicamente según el paquete
-- [ ] Documentar el proceso
+- [x] Crear paquete "NextLine Nutrición" en la tabla `paquetes` (id=4)
+- [x] Asignar módulos de nutricionistas al paquete (33: Agenda, 34: Pacientes, 35: Documentos, 36: Historial, 37: Pagos, 38: Configuraciones, 39: Cancelar Horas)
+- [x] Verificar que los módulos aparezcan en `vista_modulos_por_paquete`
+- [x] Crear módulo de gestión de paquetes (id=40) - Solo Super Admin
+  - [x] Controller `PaqueteController` con CRUD completo
+  - [x] Vista de lista con DataTable (con filtros funcionando)
+  - [x] Vista de crear/editar paquete
+  - [x] Vista de gestionar módulos del paquete (con manejo correcto de CSRF)
+  - [x] Vista de detalle del paquete
+- [x] Unificar control de acceso (paquetes + perfiles) en `ModuloDetalle`
+- [x] Mejorar módulo de gestión de empresas para Super Admin
+  - [x] Lista completa de empresas con DataTable
+  - [x] Asignación de paquetes a empresas
+  - [x] CRUD completo de empresas
+- [x] Agregar campo `empresa_id` a usuarios
+- [x] Migrar configuraciones de usuario a empresa
+- [x] Menú dinámico filtrando por paquete de la empresa
+- [x] Corrección de errores CSRF en múltiples módulos
+- [x] Edición inline de campos en módulo_detalle
 
-**Archivos a crear/modificar:**
-- `crear_paquete_nutricion.sql` (nuevo) - Script SQL para crear el paquete y asignar módulos
-- `asignar_modulos_a_paquetes.sql` (ya existe) - Actualizar para incluir todos los módulos de nutricionistas
+**Archivos creados:**
+- ✅ `crear_paquete_nutricion.sql` - Script SQL para crear el paquete y asignar módulos (EJECUTADO)
+- ✅ `asignar_paquete_a_empresas.sql` - Script para asignar el paquete a empresas de nutricionistas
+- ✅ `crear_modulo_paquetes.sql` - Script SQL para crear el módulo de gestión de paquetes
+- ✅ `insertar_modulo_detalle_paquetes.sql` - Script para insertar rutas del módulo paquetes
+- ✅ `migrar_configuracion_a_empresa.sql` - Script para migrar configuraciones de usuario a empresa
+- ✅ `app/Controllers/Dashboard/PaqueteController.php` - Controller completo
+- ✅ `app/Controllers/Dashboard/EmpresaController.php` - Controller mejorado para Super Admin
+- ✅ `app/Models/Paquete.php` - Model para paquetes
+- ✅ `app/Models/EmpresaConfiguracion.php` - Model para configuraciones por empresa
+- ✅ `app/Views/Modulos/paquete/lista.php` - Vista de lista
+- ✅ `app/Views/Modulos/paquete/registro.php` - Vista crear/editar
+- ✅ `app/Views/Modulos/paquete/gestionar_modulos.php` - Vista gestionar módulos
+- ✅ `app/Views/Modulos/paquete/detalle.php` - Vista de detalle
+- ✅ `app/Views/Modulos/empresa/lista.php` - Vista de lista de empresas
+- ✅ `app/Views/Modulos/empresa/registro.php` - Vista crear/editar empresa
+- ✅ `app/Views/Modulos/empresa/detalle.php` - Vista de detalle de empresa
+- ✅ `CONTROL_ACCESO_PAQUETES_PERFILES.md` - Documentación del sistema de acceso
 
 **Referencias:**
 - Ver `ANALISIS_SISTEMA_PAQUETES.md` para entender el concepto
 - Ver rama `feature/presencia` para ver implementación similar
 - Ver `SISTEMA_PAQUETES_MODULOS.md` en rama `feature/presencia` para documentación técnica
 
-### 2. Módulo de Botones de Pago (Mercado Pago)
+### 2. Sistema de Perfiles por Empresa
+**Prioridad: Media** ⏳ **PENDIENTE - DOCUMENTADO**
+
+**Descripción:**
+- Permitir que cada nutricionista (empresa) cree y gestione sus propios perfiles
+- Crear perfil predefinido "Paciente" con acceso limitado
+- Opción de crear usuario automáticamente al crear paciente
+- Los pacientes solo pueden ver sus propios datos
+
+**Tareas:**
+- [ ] Agregar campo `empresa_id` a tabla `perfil`
+- [ ] Crear perfil predefinido "Paciente" con permisos limitados
+- [ ] Modificar modelo `Perfil` para filtrar por `empresa_id`
+- [ ] Crear interfaz para que nutricionistas gestionen perfiles de su empresa
+- [ ] Agregar opción en creación de paciente para crear usuario automáticamente
+- [ ] Actualizar controladores para usar perfiles por empresa
+- [ ] Implementar restricciones de acceso para pacientes (solo sus datos)
+
+**Archivos creados (documentación):**
+- ✅ `PROPUESTA_PERFILES_POR_EMPRESA.md` - Propuesta completa del sistema
+- ✅ `agregar_empresa_id_a_perfil.sql` - Script SQL para agregar campo empresa_id
+- ✅ `crear_perfil_paciente_base.sql` - Script SQL para crear perfil Paciente
+
+**Referencias:**
+- Ver `PROPUESTA_PERFILES_POR_EMPRESA.md` para detalles completos de la propuesta
+
+### 3. Módulo de Botones de Pago (Mercado Pago)
 **Prioridad: Alta**
 
 **Descripción:**
@@ -96,7 +181,7 @@
 - `app/Controllers/Webhooks/MercadoPagoController.php` (nuevo)
 - Script SQL para agregar tabla `planes_pago` y campo `plan_pago_id`
 
-### 2. Tags en Fichas Clínicas
+### 4. Tags en Fichas Clínicas
 **Prioridad: Media**
 
 **Descripción:**
@@ -120,7 +205,7 @@
 - `app/Views/Modulos/historial/` (modificar)
 - Script SQL para crear tabla `historial_tags` (opcional)
 
-### 3. Mejoras Adicionales (Opcional)
+### 5. Mejoras Adicionales (Opcional)
 **Prioridad: Baja**
 
 - [ ] Mejorar UI/UX del calendario
@@ -135,6 +220,10 @@
 - El módulo de cancelación masiva está completamente funcional
 - Los mensajes de cancelación pueden personalizarse con HTML (TinyMCE)
 - El sistema de recordatorios respeta las configuraciones de cada nutricionista
+- **Sistema de Paquetes COMPLETADO**: Los paquetes funcionan correctamente, el menú se genera dinámicamente según el paquete de la empresa, y el control de acceso está unificado
+- **Configuraciones por Empresa**: Las configuraciones ahora son por empresa, no por usuario
+- **Gestión de Empresas**: Super Admin puede gestionar todas las empresas y asignarles paquetes
+- **Correcciones CSRF**: Se corrigieron errores de CSRF en múltiples módulos usando tokens dinámicos
 
 ## 🔗 Referencias
 

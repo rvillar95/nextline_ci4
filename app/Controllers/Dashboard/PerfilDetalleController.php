@@ -236,13 +236,15 @@ class PerfilDetalleController extends BaseController
         if ($perfilModulo->update($id, ['orden' => (int)$orden])) {
             return $this->response->setJSON([
                 'success' => true,
-                'message' => 'Orden actualizado correctamente'
-            ]);
+                'message' => 'Orden actualizado correctamente',
+                'csrf_token' => csrf_hash()
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
         } else {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Error al actualizar el orden'
-            ]);
+                'message' => 'Error al actualizar el orden',
+                'csrf_token' => csrf_hash()
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
         }
     }
 }

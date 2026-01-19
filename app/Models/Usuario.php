@@ -14,7 +14,7 @@ class Usuario extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'estado', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
+    protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'empresa_id', 'estado', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
 
     protected bool $allowEmptyInserts = false;
 
