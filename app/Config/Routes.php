@@ -179,6 +179,16 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('historial', function ($routes2) {
+        // Métodos de cálculo de composición corporal
+        $routes2->post('calcular-2-componentes', 'Dashboard\HistorialController::calcular2Componentes');
+        $routes2->post('calcular-4-componentes', 'Dashboard\HistorialController::calcular4Componentes');
+        $routes2->post('calcular-5-componentes', 'Dashboard\HistorialController::calcular5Componentes');
+        $routes2->post('calcular-somatotipo', 'Dashboard\HistorialController::calcularSomatotipo');
+        // También permitir GET para pruebas
+        $routes2->get('calcular-2-componentes', 'Dashboard\HistorialController::calcular2Componentes');
+        $routes2->get('calcular-4-componentes', 'Dashboard\HistorialController::calcular4Componentes');
+        $routes2->get('calcular-5-componentes', 'Dashboard\HistorialController::calcular5Componentes');
+        $routes2->get('calcular-somatotipo', 'Dashboard\HistorialController::calcularSomatotipo');
         $routes2->get('lista', 'Dashboard\HistorialController::lista');
         $routes2->get('registro', 'Dashboard\HistorialController::registro');
         $routes2->get('editar/(:num)', 'Dashboard\HistorialController::editar/$1');
@@ -187,6 +197,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getHistorial', 'Dashboard\HistorialController::getHistorial');
         $routes2->get('getHistorialPaciente/(:num)', 'Dashboard\HistorialController::getHistorialPaciente/$1');
         $routes2->get('getHistorialesPaciente', 'Dashboard\HistorialController::getHistorialesPaciente');
+        $routes2->get('getTagsSugeridos', 'Dashboard\HistorialController::getTagsSugeridos');
         $routes2->post('compararHistoriales', 'Dashboard\HistorialController::compararHistoriales');
         $routes2->post('registrar', 'Dashboard\HistorialController::registrar');
         $routes2->post('update', 'Dashboard\HistorialController::update');
@@ -246,6 +257,15 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('guardar-modulos', 'Dashboard\PaqueteController::guardarModulos'); //accion guardar módulos
         $routes2->post('eliminar/(:num)', 'Dashboard\PaqueteController::eliminar/$1'); //accion eliminar
         $routes2->post('activar/(:num)', 'Dashboard\PaqueteController::activar/$1'); //accion activar
+    });
+
+    // Add-ons (Solo Super Admin)
+    $routes->group('addon', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\AddonController::lista'); //vista lista (solo SA)
+        $routes2->get('getAddons', 'Dashboard\AddonController::getAddons'); //get Data (solo SA)
+        $routes2->post('registrar', 'Dashboard\AddonController::registrar'); //accion upsert
+        $routes2->post('cancelar/(:num)', 'Dashboard\AddonController::cancelar/$1'); //accion cancelar
+        $routes2->post('activar/(:num)', 'Dashboard\AddonController::activar/$1'); //accion activar
     });
 
     // Rutas para ubicaciones (regiones y comunas)

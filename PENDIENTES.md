@@ -78,6 +78,18 @@
   - `paquete/guardar-modulos`
   - `perfil-detalle/updateOrden`
 
+### 6. Módulo Super Admin "Add-ons" (Asignación por Empresa)
+- ✅ Módulo creado en BD con permisos (solo Super Admin)
+- ✅ Vista de gestión de add-ons con DataTable + filtros
+- ✅ Formulario para asignar/actualizar add-on por empresa:
+  - `tipo = metodo_calculo` (referencia a `metodos_calculo.id`)
+  - `tipo = modulo` (referencia a `modulo.id`) *(definir estándar final)*
+- ✅ Acciones:
+  - Activar
+  - Cancelar *(con modal)*
+- ✅ CSRF dinámico en AJAX para evitar 403
+- ✅ Integración de permisos: rutas `/calcular-*` ahora pueden habilitarse por `empresa_addon` (además de paquete)
+
 ## 🔄 Pendiente
 
 ### 1. Sistema de Paquetes para Nutricionistas
@@ -294,6 +306,9 @@
 - [x] Corregir formato de guardado de tags (evitar objetos JSON stringificados)
 - [x] Corregir errores de SQL (ambigüedad de columnas, comillas en JSON_SEARCH)
 
+**Nota reciente (enero 2026):**
+- ✅ Se reforzó el manejo de Tagify para evitar que se visualicen/guarden tags como `[{\"value\":\"...\"}]` y para convertir siempre a CSV al enviar formulario.
+
 **Archivos creados/modificados:**
 - ✅ `agregar_tags_historial_clinico.sql` - Script SQL para agregar campo tags y tabla historial_tags
 - ✅ `agregar_tags_detalle_agenda.sql` - Script SQL para agregar campo tags a detalle_agenda y migrar datos
@@ -305,6 +320,72 @@
 - ✅ `app/Views/Modulos/historial/lista.php` - Agregado campo de búsqueda por tags con Tagify
 - ✅ `app/Views/Modulos/historial/comparar.php` - Corregido acceso a nombre_completo
 - ✅ `app/Views/Modulos/agenda/consulta.php` - Agregado input de tags con Tagify, sincronización con detalle_agenda
+
+### 6. Métodos de Cálculo / Composición Corporal (2, 4, 5 componentes + Somatotipo)
+**Prioridad: Alta** ⏳ **EN PROGRESO**
+
+**Estado actual:**
+- ✅ Métodos registrados en `metodos_calculo`
+- ✅ Rutas `/calcular-*` creadas en `modulo_detalle`
+- ✅ Asignación por paquete con `paquete_modulo_detalle`
+- ✅ UI en `Historial -> Editar` para calcular + modal de resultados + gráficos base (donut + somatocarta)
+- ✅ Add-ons por empresa habilitan rutas `/calcular-*` (además del paquete)
+
+**Falta implementar / mejorar:**
+- [ ] **Selector "Ecuación"** (Siri / Faulkner / Carter) en historial/consulta
+  - Guardar selección (propuesta: `ecuacion_gc`) y usarla en el cálculo de % grasa / densidad
+- [ ] **Extracción de fórmulas exactas** desde Excel (4 y 5 componentes, somatotipo, etc.)
+- [ ] **Embellecer resultados** (estilo Excel)
+  - [ ] Plantilla/maquetación de resultados tipo “panel”
+  - [ ] Donut 4 componentes con % + kg
+  - [ ] Somatocarta “igual al Excel” (imagen/plantilla de fondo + punto encima)
+  - [ ] Exportar a PDF (opcional)
+- [ ] **Campos faltantes/ambiguos** según metodología (confirmar con nutricionista y agregar si corresponde):
+  - [ ] `pliegue_supraespinal` (SSP) vs `pliegue_suprailíaco` (¿son distintos?)
+  - [ ] `circunferencia_antebrazo_maximo`
+  - [ ] `circunferencia_muslo_maximo` (si no basta `circunferencia_muslo_medio`)
+  - [ ] `circunferencia_torax_mesoesternal` (si no basta `circunferencia_torax`)
+  - [ ] `circunferencia_muneca` (si se usa además de `diametro_muneca`)
+  - [ ] Definir si “pantorrilla” pliegue/perímetro es **medial** o **máximo**
+
+**Dudas para resolver con la Nutricionista (para cerrar diseño y fórmulas):**
+- [ ] **Ecuación (Siri/Faulkner/Carter)**:
+  - ¿Afecta solo conversión densidad→%grasa o cambia la fórmula completa / pliegues usados?
+  - ¿Se guarda por consulta/historial o como configuración global?
+- [ ] **Supraespinal (SSP) vs Suprailíaco**:
+  - ¿Son sinónimos en su uso o son campos distintos (ISAK)?
+- [ ] **Pliegue “Muslo”**: ¿muslo anterior o muslo medial?
+- [ ] **Pliegue “Pantorrilla”**: ¿medial o en máximo perímetro?
+- [ ] **Perímetros “máximos”**: antebrazo máximo / muslo máximo / pantorrilla máxima / tórax mesoesternal:
+  - ¿Se requieren explícitos o se aceptan genéricos actuales?
+- [ ] **Resultados**: ¿solo mostrar o también guardar histórico por consulta? (masa grasa, masa ósea, residual, etc.)
+
+**Notas técnicas:**
+- [ ] Limpieza de tags legacy (doble-JSON) si aparecen registros antiguos en BD.
+
+### 7. Módulo Super Admin: Facturación / Ingresos (Plan + Add-ons + Reportes)
+**Prioridad: Alta** ⏳ **PENDIENTE**
+
+**Objetivo:**
+- Permitir al Super Admin ver **cuánto debería facturar** por empresa y en total:
+  - Plan base (`empresa.paquete_id` → `paquetes.precio_mensual`)
+  - + Add-ons activos (`empresa_addon.precio_mensual`)
+- Reportes mensuales y proyecciones.
+
+**Alcance sugerido (MVP):**
+- [ ] Módulo SA “Facturación” con DataTable:
+  - Empresa, Paquete, Precio plan
+  - Add-ons activos (lista + suma)
+  - Total mensual por empresa
+  - Total mensual global (sumatoria)
+- [ ] Filtros: por paquete, estado empresa, rango de fechas, empresa
+- [ ] Exportación: CSV/Excel (opcional)
+
+**Fase 2 (integración con pagos reales):**
+- [ ] Cruce con tabla `pagos`:
+  - Pagos recibidos vs esperado (delta)
+  - Estados de pago y pendientes
+- [ ] Dashboard: métricas, MRR, churn (si hay cancelaciones de add-ons), etc.
 
 ### 6. Mejoras Adicionales (Opcional)
 **Prioridad: Baja**

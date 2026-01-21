@@ -14,10 +14,14 @@ class HistorialClinico extends Model
     protected $protectFields = true;
     protected $allowedFields = [
         'paciente_id', 'nutricionista_id', 'agenda_id', 'detalle_agenda_id', 'tipo_registro', 'fecha_consulta', 'hora_consulta',
-        'peso_actual', 'altura_actual', 'imc_actual', 'circunferencia_cintura', 'circunferencia_cadera',
+        'peso_actual', 'altura_actual', 'altura_sentado', 'imc_actual', 
+        'circunferencia_cintura', 'circunferencia_cadera', 'circunferencia_brazo_relajado', 'circunferencia_brazo_contraido',
+        'circunferencia_muslo_medio', 'circunferencia_pantorrilla', 'circunferencia_cuello', 'circunferencia_torax',
+        'diametro_biacromial', 'diametro_bi_iliocristal', 'diametro_humero', 'diametro_femur', 'diametro_muneca', 'diametro_tobillo',
         'grasa_corporal', 'masa_muscular', 
         'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular', 'pliegue_suprailíaco',
         'pliegue_abdominal', 'pliegue_muslo_anterior', 'pliegue_pantorrilla_medial',
+        'pliegue_pectoral', 'pliegue_axilar_medio', 'pliegue_muslo_medial',
         'suma_pliegues', 'grasa_corporal_calculada',
         'motivo_consulta', 'anamnesis', 'diagnostico',
         'plan_tratamiento', 'recomendaciones', 'observaciones', 'tags', 'proxima_cita', 'estado'

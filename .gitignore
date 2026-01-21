@@ -124,3 +124,13 @@ nb-configuration.xml
 
 /results/
 /phpunit*.xml
+
+#-------------------------
+# Spreadsheets / Binary docs (no versionar)
+#-------------------------
+*.xls
+*.xlsx
+*.xlsm
+
+# Dumps locales / snapshots (no versionar)
+nextline_pyme*.sql

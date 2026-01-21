@@ -294,6 +294,7 @@ class ModuloDetalle extends Model
             $rows = $db->query($sql, ['pid' => $perfilId])->getResultArray();
         } else {
             // Usuario normal: filtrar por paquete Y perfil
+            // Para rutas específicas (modulo_detalle), también verificar paquete_modulo_detalle
             $sql = "
                 SELECT
                     m.ruta            AS modulo_ruta,
@@ -314,6 +315,31 @@ class ModuloDetalle extends Model
                 LEFT JOIN modulo_detalle md
                   ON md.modulo_id = m.id
                  AND md.estado = 'A'
+                 AND (
+                     -- Si la ruta NO es un método de cálculo, incluirla siempre
+                     md.ruta NOT LIKE '/calcular-%'
+                     OR
+                     -- Si es un método de cálculo, verificar que esté en paquete_modulo_detalle
+                     EXISTS (
+                         SELECT 1 
+                         FROM paquete_modulo_detalle pmd
+                         WHERE pmd.paquete_id = e.paquete_id
+                           AND pmd.modulo_detalle_id = md.id
+                           AND pmd.incluido = 'S'
+                     )
+                     OR
+                     -- Si es un método de cálculo, permitir también por ADD-ON activo de la empresa
+                     EXISTS (
+                         SELECT 1
+                         FROM empresa_addon ea
+                         JOIN metodos_calculo mc ON mc.id = ea.referencia_id
+                         WHERE ea.empresa_id = e.id
+                           AND ea.tipo = 'metodo_calculo'
+                           AND ea.estado = 'activo'
+                           AND (ea.fecha_fin IS NULL OR ea.fecha_fin >= CURDATE())
+                           AND md.ruta = CONCAT('/calcular-', mc.slug)
+                     )
+                 )
                 WHERE pm.perfil_id = :pid:
                   AND pm.estado = 'A'
                   AND m.sa = 'N'  -- Excluir módulos de Super Admin

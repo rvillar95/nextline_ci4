@@ -2355,7 +2355,8 @@ class AgendaController extends BaseController
         $pliegues = [
             'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular',
             'pliegue_suprailíaco', 'pliegue_abdominal', 'pliegue_muslo_anterior',
-            'pliegue_pantorrilla_medial'
+            'pliegue_pantorrilla_medial', 'pliegue_pectoral', 'pliegue_axilar_medio',
+            'pliegue_muslo_medial'
         ];
         $suma = 0;
         $tiene_pliegues = false;
@@ -2406,9 +2407,22 @@ class AgendaController extends BaseController
             'hora_consulta' => $detalle->hora_inicio,
             'peso_actual' => !empty($post['peso_actual']) ? $post['peso_actual'] : null,
             'altura_actual' => !empty($post['altura_actual']) ? $post['altura_actual'] : null,
+            'altura_sentado' => !empty($post['altura_sentado']) ? $post['altura_sentado'] : null,
             'imc_actual' => $imc_actual,
             'circunferencia_cintura' => !empty($post['circunferencia_cintura']) ? $post['circunferencia_cintura'] : null,
             'circunferencia_cadera' => !empty($post['circunferencia_cadera']) ? $post['circunferencia_cadera'] : null,
+            'circunferencia_brazo_relajado' => !empty($post['circunferencia_brazo_relajado']) ? $post['circunferencia_brazo_relajado'] : null,
+            'circunferencia_brazo_contraido' => !empty($post['circunferencia_brazo_contraido']) ? $post['circunferencia_brazo_contraido'] : null,
+            'circunferencia_muslo_medio' => !empty($post['circunferencia_muslo_medio']) ? $post['circunferencia_muslo_medio'] : null,
+            'circunferencia_pantorrilla' => !empty($post['circunferencia_pantorrilla']) ? $post['circunferencia_pantorrilla'] : null,
+            'circunferencia_cuello' => !empty($post['circunferencia_cuello']) ? $post['circunferencia_cuello'] : null,
+            'circunferencia_torax' => !empty($post['circunferencia_torax']) ? $post['circunferencia_torax'] : null,
+            'diametro_biacromial' => !empty($post['diametro_biacromial']) ? $post['diametro_biacromial'] : null,
+            'diametro_bi_iliocristal' => !empty($post['diametro_bi_iliocristal']) ? $post['diametro_bi_iliocristal'] : null,
+            'diametro_humero' => !empty($post['diametro_humero']) ? $post['diametro_humero'] : null,
+            'diametro_femur' => !empty($post['diametro_femur']) ? $post['diametro_femur'] : null,
+            'diametro_muneca' => !empty($post['diametro_muneca']) ? $post['diametro_muneca'] : null,
+            'diametro_tobillo' => !empty($post['diametro_tobillo']) ? $post['diametro_tobillo'] : null,
             'grasa_corporal' => !empty($post['grasa_corporal']) ? $post['grasa_corporal'] : null,
             'masa_muscular' => !empty($post['masa_muscular']) ? $post['masa_muscular'] : null,
             'pliegue_tricipital' => !empty($post['pliegue_tricipital']) ? $post['pliegue_tricipital'] : null,
@@ -2418,6 +2432,9 @@ class AgendaController extends BaseController
             'pliegue_abdominal' => !empty($post['pliegue_abdominal']) ? $post['pliegue_abdominal'] : null,
             'pliegue_muslo_anterior' => !empty($post['pliegue_muslo_anterior']) ? $post['pliegue_muslo_anterior'] : null,
             'pliegue_pantorrilla_medial' => !empty($post['pliegue_pantorrilla_medial']) ? $post['pliegue_pantorrilla_medial'] : null,
+            'pliegue_pectoral' => !empty($post['pliegue_pectoral']) ? $post['pliegue_pectoral'] : null,
+            'pliegue_axilar_medio' => !empty($post['pliegue_axilar_medio']) ? $post['pliegue_axilar_medio'] : null,
+            'pliegue_muslo_medial' => !empty($post['pliegue_muslo_medial']) ? $post['pliegue_muslo_medial'] : null,
             'suma_pliegues' => $suma_pliegues,
             'grasa_corporal_calculada' => $grasa_corporal_calculada,
             'anamnesis' => !empty($post['anamnesis']) ? $post['anamnesis'] : null,

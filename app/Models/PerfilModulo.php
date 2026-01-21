@@ -100,9 +100,9 @@ class PerfilModulo extends Model
     }
 
     /** Builder base con joins y poder */
-    private function baseBuilder(int $maxPoder)
+    private function baseBuilder(int $maxPoder, $empresaId = null)
     {
-        return $this->db->table('perfil_modulo pm')
+        $builder = $this->db->table('perfil_modulo pm')
             ->select([
                 'pm.id',
                 'p.id AS perfil_id',
@@ -115,20 +115,26 @@ class PerfilModulo extends Model
             ->join('perfil p', 'p.id = pm.perfil_id')
             ->join('modulo m', 'm.id = pm.modulo_id')
             ->where('p.poder <=', $maxPoder);
-            // ->where('pm.estado', 'A'); // si quieres sólo activos
+        
+        // Si se proporciona empresa_id y el usuario no es Super Admin (poder != 3), filtrar por empresa
+        if ($empresaId !== null && $maxPoder < 3) {
+            $builder->where('p.empresa_id', $empresaId);
+        }
+        
+        return $builder;
     }
 
     /** Total sin filtros de búsqueda (sólo por poder) */
-    public function countAllByPower(int $maxPoder): int
+    public function countAllByPower(int $maxPoder, $empresaId = null): int
     {
-        $b = $this->baseBuilder($maxPoder);
+        $b = $this->baseBuilder($maxPoder, $empresaId);
         return (int) $b->countAllResults(false); // false = no resetea
     }
 
     /** Total con filtros de perfil y búsqueda */
-    public function countFiltered(int $maxPoder, ?int $perfilId, string $search): int
+    public function countFiltered(int $maxPoder, ?int $perfilId, string $search, $empresaId = null): int
     {
-        $b = $this->baseBuilder($maxPoder);
+        $b = $this->baseBuilder($maxPoder, $empresaId);
         if ($perfilId) $b->where('p.id', $perfilId);
         if ($search !== '') {
             $b->groupStart()
@@ -147,9 +153,10 @@ class PerfilModulo extends Model
         string $orderBy,
         string $orderDir,
         int $start,
-        int $length
+        int $length,
+        $empresaId = null
     ): array {
-        $b = $this->baseBuilder($maxPoder);
+        $b = $this->baseBuilder($maxPoder, $empresaId);
         if ($perfilId) $b->where('p.id', $perfilId);
         if ($search !== '') {
             $b->groupStart()

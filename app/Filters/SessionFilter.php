@@ -271,7 +271,13 @@ final class SessionFilter implements FilterInterface
                 continue;
             }
 
-            $pattern  = $detRoute ? ($modRoute . $detRoute) : $modRoute;
+            // Si detRoute es una ruta absoluta (empieza con /dashboard/), usarla directamente
+            // Si no, concatenarla con modRoute (ruta relativa)
+            if ($detRoute && (strpos($detRoute, '/dashboard/') === 0 || strpos($detRoute, 'dashboard/') === 0)) {
+                $pattern = $detRoute; // Ruta absoluta - usar directamente
+            } else {
+                $pattern = $detRoute ? ($modRoute . $detRoute) : $modRoute; // Ruta relativa - concatenar
+            }
 
             // Acciones efectivas
             $allowedActions = $this->effectiveActions($r['acciones_csv'] ?? null, $r['permisos'] ?? []);

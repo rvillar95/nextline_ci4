@@ -6,6 +6,9 @@ use App\Controllers\BaseController;
 use App\Models\HistorialClinico;
 use App\Models\Paciente;
 use App\Models\ModuloDetalle;
+use App\Models\MetodoCalculo;
+use App\Services\ComposicionCorporalService;
+use App\Services\AccesoService;
 use App\Traits\MaintainsFilters;
 
 class HistorialController extends BaseController
@@ -294,11 +297,34 @@ class HistorialController extends BaseController
             'hora_consulta' => $post['hora_consulta'] ?? null,
             'peso_actual' => $post['peso_actual'] ?? null,
             'altura_actual' => $post['altura_actual'] ?? null,
+            'altura_sentado' => $post['altura_sentado'] ?? null,
             'imc_actual' => $imc_actual,
             'circunferencia_cintura' => $post['circunferencia_cintura'] ?? null,
             'circunferencia_cadera' => $post['circunferencia_cadera'] ?? null,
+            'circunferencia_brazo_relajado' => $post['circunferencia_brazo_relajado'] ?? null,
+            'circunferencia_brazo_contraido' => $post['circunferencia_brazo_contraido'] ?? null,
+            'circunferencia_muslo_medio' => $post['circunferencia_muslo_medio'] ?? null,
+            'circunferencia_pantorrilla' => $post['circunferencia_pantorrilla'] ?? null,
+            'circunferencia_cuello' => $post['circunferencia_cuello'] ?? null,
+            'circunferencia_torax' => $post['circunferencia_torax'] ?? null,
+            'diametro_biacromial' => $post['diametro_biacromial'] ?? null,
+            'diametro_bi_iliocristal' => $post['diametro_bi_iliocristal'] ?? null,
+            'diametro_humero' => $post['diametro_humero'] ?? null,
+            'diametro_femur' => $post['diametro_femur'] ?? null,
+            'diametro_muneca' => $post['diametro_muneca'] ?? null,
+            'diametro_tobillo' => $post['diametro_tobillo'] ?? null,
             'grasa_corporal' => $post['grasa_corporal'] ?? null,
             'masa_muscular' => $post['masa_muscular'] ?? null,
+            'pliegue_tricipital' => $post['pliegue_tricipital'] ?? null,
+            'pliegue_bicipital' => $post['pliegue_bicipital'] ?? null,
+            'pliegue_subescapular' => $post['pliegue_subescapular'] ?? null,
+            'pliegue_suprailíaco' => $post['pliegue_suprailíaco'] ?? null,
+            'pliegue_abdominal' => $post['pliegue_abdominal'] ?? null,
+            'pliegue_muslo_anterior' => $post['pliegue_muslo_anterior'] ?? null,
+            'pliegue_pantorrilla_medial' => $post['pliegue_pantorrilla_medial'] ?? null,
+            'pliegue_pectoral' => $post['pliegue_pectoral'] ?? null,
+            'pliegue_axilar_medio' => $post['pliegue_axilar_medio'] ?? null,
+            'pliegue_muslo_medial' => $post['pliegue_muslo_medial'] ?? null,
             'motivo_consulta' => $post['motivo_consulta'] ?? null,
             'anamnesis' => $post['anamnesis'] ?? null,
             'diagnostico' => $post['diagnostico'] ?? null,
@@ -348,6 +374,40 @@ class HistorialController extends BaseController
         $empresaId = $usuario['empresa_id'] ?? null;
         $data['tags_sugeridos'] = $historial->getTagsMasUsados($empresaId, 20);
 
+        // Cargar métodos de cálculo disponibles según el plan
+        $perfilId = $usuario['perfil_id'];
+        $rutasPermitidas = $modulo->getAllowedByPerfil($perfilId, $empresaId);
+        
+        // Filtrar solo las rutas de métodos de cálculo
+        $metodosDisponibles = [];
+        $metodosModel = new MetodoCalculo();
+        $todosMetodos = $metodosModel->getMetodosActivos();
+        
+        foreach ($todosMetodos as $metodo) {
+            $rutaMetodo = '/calcular-' . $metodo->slug;
+            $tieneAcceso = false;
+            
+            foreach ($rutasPermitidas as $rutaPermitida) {
+                if ($rutaPermitida['detalle_ruta'] === $rutaMetodo && $rutaPermitida['permisos']['ver']) {
+                    $tieneAcceso = true;
+                    break;
+                }
+            }
+            
+            $metodosDisponibles[] = [
+                'id' => $metodo->id,
+                'nombre' => $metodo->nombre,
+                'slug' => $metodo->slug,
+                'componentes' => $metodo->componentes,
+                'descripcion' => $metodo->descripcion,
+                'precio_mensual' => $metodo->precio_mensual,
+                'es_addon' => $metodo->es_addon,
+                'disponible' => $tieneAcceso
+            ];
+        }
+        
+        $data['metodos_calculo'] = $metodosDisponibles;
+
         return view('Modulos/historial/editar', $data);
     }
 
@@ -395,11 +455,34 @@ class HistorialController extends BaseController
             'hora_consulta' => $post['hora_consulta'] ?? null,
             'peso_actual' => $post['peso_actual'] ?? null,
             'altura_actual' => $post['altura_actual'] ?? null,
+            'altura_sentado' => $post['altura_sentado'] ?? null,
             'imc_actual' => $imc_actual,
             'circunferencia_cintura' => $post['circunferencia_cintura'] ?? null,
             'circunferencia_cadera' => $post['circunferencia_cadera'] ?? null,
+            'circunferencia_brazo_relajado' => $post['circunferencia_brazo_relajado'] ?? null,
+            'circunferencia_brazo_contraido' => $post['circunferencia_brazo_contraido'] ?? null,
+            'circunferencia_muslo_medio' => $post['circunferencia_muslo_medio'] ?? null,
+            'circunferencia_pantorrilla' => $post['circunferencia_pantorrilla'] ?? null,
+            'circunferencia_cuello' => $post['circunferencia_cuello'] ?? null,
+            'circunferencia_torax' => $post['circunferencia_torax'] ?? null,
+            'diametro_biacromial' => $post['diametro_biacromial'] ?? null,
+            'diametro_bi_iliocristal' => $post['diametro_bi_iliocristal'] ?? null,
+            'diametro_humero' => $post['diametro_humero'] ?? null,
+            'diametro_femur' => $post['diametro_femur'] ?? null,
+            'diametro_muneca' => $post['diametro_muneca'] ?? null,
+            'diametro_tobillo' => $post['diametro_tobillo'] ?? null,
             'grasa_corporal' => $post['grasa_corporal'] ?? null,
             'masa_muscular' => $post['masa_muscular'] ?? null,
+            'pliegue_tricipital' => $post['pliegue_tricipital'] ?? null,
+            'pliegue_bicipital' => $post['pliegue_bicipital'] ?? null,
+            'pliegue_subescapular' => $post['pliegue_subescapular'] ?? null,
+            'pliegue_suprailíaco' => $post['pliegue_suprailíaco'] ?? null,
+            'pliegue_abdominal' => $post['pliegue_abdominal'] ?? null,
+            'pliegue_muslo_anterior' => $post['pliegue_muslo_anterior'] ?? null,
+            'pliegue_pantorrilla_medial' => $post['pliegue_pantorrilla_medial'] ?? null,
+            'pliegue_pectoral' => $post['pliegue_pectoral'] ?? null,
+            'pliegue_axilar_medio' => $post['pliegue_axilar_medio'] ?? null,
+            'pliegue_muslo_medial' => $post['pliegue_muslo_medial'] ?? null,
             'motivo_consulta' => $post['motivo_consulta'] ?? null,
             'anamnesis' => $post['anamnesis'] ?? null,
             'diagnostico' => $post['diagnostico'] ?? null,
@@ -532,6 +615,159 @@ class HistorialController extends BaseController
         }
 
         return $this->response->setJSON($data);
+    }
+
+    /**
+     * Calcular composición corporal - Método 2 Componentes
+     */
+    public function calcular2Componentes()
+    {
+        return $this->calcularComposicion('2-componentes');
+    }
+
+    /**
+     * Calcular composición corporal - Método 4 Componentes
+     */
+    public function calcular4Componentes()
+    {
+        return $this->calcularComposicion('4-componentes');
+    }
+
+    /**
+     * Calcular composición corporal - Método 5 Componentes
+     */
+    public function calcular5Componentes()
+    {
+        return $this->calcularComposicion('5-componentes');
+    }
+
+    /**
+     * Calcular Somatotipo
+     */
+    public function calcularSomatotipo()
+    {
+        return $this->calcularComposicion('somatotipo');
+    }
+
+    /**
+     * Método genérico para calcular composición corporal
+     */
+    private function calcularComposicion($metodoSlug)
+    {
+        $this->response->setContentType('application/json');
+        $this->response->setHeader('X-CSRF-TOKEN', csrf_hash());
+        
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'error' => 'No autorizado',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(401);
+        }
+
+        $historialId = $this->request->getPost('historial_id') ?? $this->request->getGet('historial_id');
+        
+        if (!$historialId) {
+            return $this->response->setJSON([
+                'error' => 'ID de historial requerido',
+                'message' => 'Debe proporcionar el ID del historial clínico',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
+
+        // Verificar acceso usando ModuloDetalle (igual que cualquier ruta)
+        $moduloDetalle = new ModuloDetalle();
+        $usuario = session()->get('usuario');
+        $ruta = '/calcular-' . $metodoSlug;
+        
+        $rutasPermitidas = $moduloDetalle->getAllowedByPerfil(
+            $usuario['perfil_id'],
+            $usuario['empresa_id'] ?? null
+        );
+        
+        // Verificar si la ruta específica está permitida
+        $tieneAcceso = false;
+        foreach ($rutasPermitidas as $rutaPermitida) {
+            if ($rutaPermitida['detalle_ruta'] === $ruta && $rutaPermitida['permisos']['ver']) {
+                $tieneAcceso = true;
+                break;
+            }
+        }
+
+        if (!$tieneAcceso) {
+            // Obtener información del paquete para sugerir upgrade
+            $db = \Config\Database::connect();
+            $empresa = $db->table('empresa e')
+                ->select('e.paquete_id, p.nombre as paquete_nombre')
+                ->join('paquetes p', 'p.id = e.paquete_id', 'left')
+                ->where('e.id', $usuario['empresa_id'])
+                ->get()
+                ->getRow();
+            
+            return $this->response->setJSON([
+                'error' => 'Método no disponible en tu plan actual',
+                'requiere_upgrade' => true,
+                'paquete_actual' => $empresa->paquete_nombre ?? 'Sin paquete',
+                'metodo' => $metodoSlug,
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(403);
+        }
+
+        // Obtener historial y paciente
+        $historialModel = new HistorialClinico();
+        $historial = $historialModel->find($historialId);
+        
+        if (!$historial) {
+            return $this->response->setJSON([
+                'error' => 'Historial no encontrado',
+                'message' => 'El historial clínico especificado no existe',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(404);
+        }
+
+        $pacienteModel = new Paciente();
+        $paciente = $pacienteModel->find($historial->paciente_id);
+        
+        if (!$paciente) {
+            return $this->response->setJSON([
+                'error' => 'Paciente no encontrado',
+                'message' => 'El paciente asociado al historial no existe',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(404);
+        }
+
+        // Verificar datos disponibles
+        $service = new ComposicionCorporalService();
+        $verificacion = $service->verificarDatosDisponibles($metodoSlug, $historial);
+        
+        if (!$verificacion['disponible']) {
+            return $this->response->setJSON([
+                'error' => 'Datos insuficientes',
+                'message' => 'Faltan datos requeridos para calcular este método',
+                'faltantes' => $verificacion['faltantes'],
+                'metodo' => $metodoSlug,
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
+
+        try {
+            // Calcular
+            $resultado = $service->calcular($metodoSlug, $historial, $paciente);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'resultado' => $resultado,
+                'metodo' => $metodoSlug,
+                'historial_id' => $historialId,
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'error' => 'Error al calcular',
+                'message' => $e->getMessage(),
+                'metodo' => $metodoSlug,
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(500);
+        }
     }
 
     /**

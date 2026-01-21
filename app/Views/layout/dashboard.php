@@ -226,9 +226,16 @@ exit(); */
                                             break;
                                         }
                                     }
-                                    if ($mostrar && $submenu['mostrar'] == 'S') : ?>
+                                    if ($mostrar && $submenu['mostrar'] == 'S') : 
+                                        // Si la ruta del submódulo empieza con /dashboard/ o dashboard/, usarla directamente (ruta absoluta)
+                                        // Si no, concatenarla con la ruta del módulo padre (ruta relativa)
+                                        $ruta_submenu = trim($submenu['ruta']);
+                                        $ruta_completa = (strpos($ruta_submenu, '/dashboard/') === 0 || strpos($ruta_submenu, 'dashboard/') === 0) 
+                                            ? (strpos($ruta_submenu, '/') === 0 ? $ruta_submenu : '/' . $ruta_submenu)
+                                            : $menu['menu']['ruta'] . $ruta_submenu;
+                                    ?>
                                         <li>
-                                            <a href="<?= base_url($menu['menu']['ruta'] . $submenu['ruta']) ?>"> <?= $submenu['descripcion'] ?></a>
+                                            <a href="<?= base_url($ruta_completa) ?>"> <?= $submenu['descripcion'] ?></a>
                                         </li>
                                 <?php endif;
                                 endforeach; ?>
@@ -386,6 +393,9 @@ exit(); */
                     <?php echo $this->renderSection("paquete/registro"); ?>
                     <?php echo $this->renderSection("paquete/detalle"); ?>
                     <?php echo $this->renderSection("paquete/gestionar_modulos"); ?>
+
+                    <!-- Secciones de Add-ons (Super Admin) -->
+                    <?php echo $this->renderSection("addon/lista"); ?>
                     
                     <!-- Secciones de Listado de Materiales -->
                     <?php echo $this->renderSection("listado_material/lista"); ?>

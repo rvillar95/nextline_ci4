@@ -13,6 +13,24 @@ use App\Traits\MaintainsFilters;
 class PerfilDetalleController extends BaseController
 {
     use MaintainsFilters;
+    
+    /**
+     * Verificar si el usuario es Super Admin
+     */
+    private function esSuperAdmin()
+    {
+        $usuario = session()->get('usuario');
+        return isset($usuario['poder']) && $usuario['poder'] == 3;
+    }
+
+    /**
+     * Obtener empresa_id del usuario actual
+     */
+    private function getEmpresaIdUsuario()
+    {
+        $usuario = session()->get('usuario');
+        return $usuario['empresa_id'] ?? null;
+    }
 
     public function registro()
     {
@@ -27,8 +45,15 @@ class PerfilDetalleController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
 
-        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder);
-        $data['modulos'] = $moduloModel->getActiveModulo();
+        // Obtener empresa_id del usuario
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        // Obtener perfiles de la empresa
+        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder, $empresaId);
+        
+        // Obtener módulos del paquete de la empresa
+        $data['modulos'] = $moduloModel->getActiveModulo($empresaId);
+        
         $data['data'] = $menuTotal;
         echo view('Base/perfil_detalle/registro', $data);
     }
@@ -38,9 +63,29 @@ class PerfilDetalleController extends BaseController
         if (!$this->validate('formPerfilDetalleRegister')) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+        
         $perfilModulo = new PerfilModulo();
-
+        $perfilModel = new Perfil();
+        $moduloModel = new Modulo();
+        
         $post = $this->request->getPost(['perfil', 'modulo', 'ver', 'registrar', 'editar', 'eliminar', 'orden']);
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($post['perfil']);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->back()->withInput()->with('errors', 'No tienes permisos para asignar permisos a este perfil');
+            }
+            
+            // Validar que el módulo esté en el paquete de la empresa
+            $modulos = $moduloModel->getActiveModulo($empresaId);
+            $modulosIds = array_column($modulos, 'id');
+            if (!in_array($post['modulo'], $modulosIds)) {
+                return redirect()->back()->withInput()->with('errors', 'El módulo seleccionado no está disponible en tu paquete');
+            }
+        }
+        
         $data = [
             'perfil_id' => $post['perfil'],
             'modulo_id' => $post['modulo'],
@@ -79,15 +124,16 @@ class PerfilDetalleController extends BaseController
         $orderBy = $orderable[$orderColIdx] ?? 'pm.id';
 
         $poder = $this->poder;
+        $empresaId = $this->getEmpresaIdUsuario();
 
         $model = new PerfilModulo();
 
-        // Conteos
-        $recordsTotal    = $model->countAllByPower($poder);
-        $recordsFiltered = $model->countFiltered($poder, $perfilId, $searchVal);
+        // Conteos - filtrar por empresa si no es Super Admin
+        $recordsTotal    = $model->countAllByPower($poder, $empresaId);
+        $recordsFiltered = $model->countFiltered($poder, $perfilId, $searchVal, $empresaId);
 
-        // Página
-        $rows = $model->fetchPage($poder, $perfilId, $searchVal, $orderBy, $orderDir, $start, $length);
+        // Página - filtrar por empresa si no es Super Admin
+        $rows = $model->fetchPage($poder, $perfilId, $searchVal, $orderBy, $orderDir, $start, $length, $empresaId);
 
         // Mapear a columnas HTML (evitar XSS con esc())
         $data = array_map(static function (array $r): array {
@@ -136,7 +182,13 @@ class PerfilDetalleController extends BaseController
         }
         $data['data'] = $menuTotal;
         $data['selectedPerfilId'] = $perfilId;
-        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder);
+        
+        // Obtener empresa_id del usuario
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        // Obtener perfiles de la empresa
+        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder, $empresaId);
+        
         echo view('Base/perfil_detalle/lista', $data);
     }
 
@@ -154,20 +206,60 @@ class PerfilDetalleController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        $data['perfil'] = $perfilModulo->getPerfilModulo($id);
-        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder);
-        $data['modulos'] = $moduloModel->getActiveModulo();
+        $perfilDetalle = $perfilModulo->getPerfilModulo($id);
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($perfilDetalle['perfil_id']);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->to(base_url('dashboard/perfil-detalle/lista'))
+                    ->with('errors', 'No tienes permisos para editar este perfil detalle');
+            }
+        }
+        
+        $data['perfil'] = $perfilDetalle;
+        
+        // Obtener empresa_id del usuario
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        // Obtener perfiles de la empresa
+        $data['perfiles'] = $perfilModel->getActivePerfil($this->poder, $empresaId);
+        
+        // Obtener módulos del paquete de la empresa
+        $data['modulos'] = $moduloModel->getActiveModulo($empresaId);
+        
         echo view("Base/perfil_detalle/editar", $data);
     }
 
     public function update()
     {
-
         if (!$this->validate('formPerfilDetalleRegister')) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
-        $perfilModel = new PerfilModulo();
+        
+        $perfilModulo = new PerfilModulo();
+        $perfilModel = new Perfil();
+        $moduloModel = new Modulo();
+        
         $post = $this->request->getPost(['id', 'perfil', 'modulo', 'ver', 'registrar', 'editar', 'eliminar', 'orden', 'estado']);
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($post['perfil']);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->back()->withInput()->with('errors', 'No tienes permisos para editar este perfil detalle');
+            }
+            
+            // Validar que el módulo esté en el paquete de la empresa
+            $modulos = $moduloModel->getActiveModulo($empresaId);
+            $modulosIds = array_column($modulos, 'id');
+            if (!in_array($post['modulo'], $modulosIds)) {
+                return redirect()->back()->withInput()->with('errors', 'El módulo seleccionado no está disponible en tu paquete');
+            }
+        }
+        
         $data = [
             'perfil_id' => $post['perfil'],
             'modulo_id' => $post['modulo'],
@@ -179,8 +271,7 @@ class PerfilDetalleController extends BaseController
             'orden' => $post['orden']
         ];
 
-
-        if ($perfilModel->update($post['id'], $data)) {
+        if ($perfilModulo->update($post['id'], $data)) {
             return redirect()->to(base_url('dashboard/perfil-detalle/editar/' . $post['id']))->with('success', 'Detalle Perfil editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el detalle perfil');
@@ -190,7 +281,25 @@ class PerfilDetalleController extends BaseController
     public function eliminar()
     {
         $perfilModulo = new PerfilModulo();
+        $perfilModel = new Perfil();
         $id = $this->request->getPost('id');
+        
+        // Obtener el perfil detalle para validar
+        $perfilDetalle = $perfilModulo->find($id);
+        if (!$perfilDetalle) {
+            return redirect()->to(base_url('dashboard/perfil-detalle/lista'))
+                ->with('errors', 'Perfil Detalle no encontrado.');
+        }
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($perfilDetalle['perfil_id']);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->to(base_url('dashboard/perfil-detalle/lista'))
+                    ->with('errors', 'No tienes permisos para eliminar este perfil detalle');
+            }
+        }
         
         // Intenta eliminar el perfil detalle
         if ($perfilModulo->delete($id)) {

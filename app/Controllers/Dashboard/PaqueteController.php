@@ -221,6 +221,9 @@ class PaqueteController extends BaseController
         $paquete = new Paquete();
         
         $data = [
+            // IMPORTANTE: incluir id para que la regla is_unique[paquetes.slug,id,{id}]
+            // pueda excluir este mismo registro al validar en update()
+            'id' => $id,
             'nombre' => $this->request->getPost('nombre'),
             'slug' => $this->request->getPost('slug'),
             'descripcion' => $this->request->getPost('descripcion'),
@@ -255,6 +258,7 @@ class PaqueteController extends BaseController
             return redirect()->to(base_url('dashboard/paquete/lista'))
                 ->with('error', 'ID de paquete requerido');
         }
+        $id = (int) $id;
 
         $paquete = new Paquete();
         $paqueteExistente = $paquete->find($id);
@@ -273,6 +277,13 @@ class PaqueteController extends BaseController
             'activo' => $this->request->getPost('activo') ?: 'A',
             'orden' => $this->request->getPost('orden') ?: 0
         ];
+
+        // FIX: Forzar regla de unicidad excluyendo este mismo ID
+        // (Evita falsos positivos cuando el placeholder {id} no es sustituido)
+        $paquete->setValidationRules([
+            'nombre' => 'required|min_length[3]|max_length[100]',
+            'slug'   => "required|min_length[3]|max_length[100]|is_unique[paquetes.slug,id,{$id}]",
+        ]);
 
         if ($paquete->update($id, $data)) {
             return redirect()->to(base_url('dashboard/paquete/lista'))

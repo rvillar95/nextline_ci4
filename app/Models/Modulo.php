@@ -55,18 +55,66 @@ class Modulo extends Model
         return $modulo;
     }
 
-    public function getActiveModulo()
+    public function getActiveModulo($empresaId = null)
     {
         $db = \Config\Database::connect();
-        $poder = session()->get('usuario')['poder'];
+        $usuario = session()->get('usuario');
+        $poder = $usuario['poder'] ?? 0;
         
-        if ($poder <= 2) {
-            $sql = "select * from modulo where estado = 'A' and sa = 'N' ";
-        }else{
-            $sql = "select * from modulo where estado = 'A'";
+        // Si es Super Admin (poder=3), ver todos los módulos
+        if ($poder == 3) {
+            $sql = "SELECT * FROM modulo WHERE estado = 'A' ORDER BY nombre ASC";
+            return $db->query($sql)->getResult('array');
         }
-        $perfil = $db->query($sql)->getResult('array');
-        return $perfil;   
+        
+        // Si no se proporciona empresa_id, obtenerlo de la sesión
+        if ($empresaId === null) {
+            $empresaId = $usuario['empresa_id'] ?? null;
+        }
+        
+        // Si tiene empresa, filtrar por módulos del paquete de la empresa
+        if ($empresaId !== null) {
+            // Obtener paquete_id de la empresa
+            $empresaData = $db->table('empresa')
+                ->select('paquete_id')
+                ->where('id', $empresaId)
+                ->get()
+                ->getRowArray();
+            
+            if ($empresaData && !empty($empresaData['paquete_id'])) {
+                $paqueteId = $empresaData['paquete_id'];
+                // Obtener módulos del paquete
+                $sql = "SELECT m.* 
+                        FROM modulo m
+                        INNER JOIN paquete_modulo pm ON pm.modulo_id = m.id 
+                            AND pm.paquete_id = :paquete_id:
+                            AND pm.incluido = 'S'
+                        WHERE m.estado = 'A' 
+                          AND m.sa = 'N'
+                        ORDER BY m.nombre ASC";
+                return $db->query($sql, ['paquete_id' => $paqueteId])->getResult('array');
+            }
+        }
+        
+        // Si no tiene empresa o no tiene paquete, ver módulos no-SA
+        $sql = "SELECT * FROM modulo WHERE estado = 'A' AND sa = 'N' ORDER BY nombre ASC";
+        return $db->query($sql)->getResult('array');
+    }
+    
+    /**
+     * Obtener módulos del paquete de una empresa específica
+     */
+    public function getModulosPorPaquete($paqueteId): array
+    {
+        $db = \Config\Database::connect();
+        $sql = "SELECT m.* 
+                FROM modulo m
+                INNER JOIN paquete_modulo pm ON pm.modulo_id = m.id 
+                    AND pm.paquete_id = :paquete_id:
+                    AND pm.incluido = 'S'
+                WHERE m.estado = 'A'
+                ORDER BY m.nombre ASC";
+        return $db->query($sql, ['paquete_id' => $paqueteId])->getResult('array');
     }
 
 }

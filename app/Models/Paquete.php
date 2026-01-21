@@ -13,6 +13,7 @@ class Paquete extends Model
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
+        'id',
         'nombre',
         'slug',
         'descripcion',

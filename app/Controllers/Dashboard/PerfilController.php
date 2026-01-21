@@ -8,6 +8,23 @@ use App\Models\Perfil;
 
 class PerfilController extends BaseController
 {
+    /**
+     * Verificar si el usuario es Super Admin
+     */
+    private function esSuperAdmin()
+    {
+        $usuario = session()->get('usuario');
+        return isset($usuario['poder']) && $usuario['poder'] == 3;
+    }
+
+    /**
+     * Obtener empresa_id del usuario actual
+     */
+    private function getEmpresaIdUsuario()
+    {
+        $usuario = session()->get('usuario');
+        return $usuario['empresa_id'] ?? null;
+    }
 
     public function registro()
     {
@@ -31,11 +48,23 @@ class PerfilController extends BaseController
 
         $perfilModel = new Perfil();
         $post = $this->request->getPost(['nombre', 'estado']);
+        
+        // Obtener empresa_id del usuario
+        $empresaId = $this->getEmpresaIdUsuario();
+        
+        // Si es Super Admin, puede crear perfiles globales (empresa_id = NULL)
+        // Si no es Super Admin, debe asignar empresa_id
         $data = [
             'nombre' => $post['nombre'],
             'estado' => $post['estado'],
-            'poder' => 0
+            'poder' => 0,
+            'empresa_id' => $this->esSuperAdmin() ? null : $empresaId
         ];
+        
+        // Validar que usuarios no-SA tengan empresa_id
+        if (!$this->esSuperAdmin() && $empresaId === null) {
+            return redirect()->back()->withInput()->with('errors', 'No se pudo determinar la empresa del usuario');
+        }
 
         if ($perfilModel->insert($data)) {
             return redirect()->to(base_url('dashboard/perfil/registro'))->with('success', 'Perfil registrado con éxito');
@@ -48,7 +77,10 @@ class PerfilController extends BaseController
     {
         $perfilModel = new Perfil();
         $draw = intval($this->request->getGet("draw"));
-        $books = $perfilModel->getPerfilAll();
+        
+        // Obtener perfiles filtrados por empresa
+        $empresaId = $this->getEmpresaIdUsuario();
+        $books = $perfilModel->getPerfilAll($empresaId);
 
         $data = array();
         foreach ($books as $r) {
@@ -61,8 +93,8 @@ class PerfilController extends BaseController
         }
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $perfilModel->countAll(),
-            "recordsFiltered" => 5,
+            "recordsTotal" => count($books),
+            "recordsFiltered" => count($books),
             "data" => $data
         );
 
@@ -95,23 +127,43 @@ class PerfilController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        $data['perfil'] = $perfilModel->select('perfil.*')
+        $perfil = $perfilModel->select('perfil.*')
             ->where('perfil.id', $id)->first();
-        //$data['perfil'] = $perfilModel->getPerfil($id);
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->to(base_url('dashboard/perfil/lista'))
+                    ->with('errors', 'No tienes permisos para editar este perfil');
+            }
+        }
+        
+        $data['perfil'] = $perfil;
         echo view("Base/perfil/editar", $data);
     }
 
     public function update()
     {
-
         if (!$this->validate('formPerfilEdit')) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+        
         $perfilModel = new Perfil();
         $id = $this->request->getPost('id');
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($id);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->to(base_url('dashboard/perfil/lista'))
+                    ->with('errors', 'No tienes permisos para editar este perfil');
+            }
+        }
+        
         $nombre = $this->request->getPost('nombre');
         $estado = $this->request->getPost('estado');
-
 
         if ($perfilModel->update($id, [
             'nombre' => $nombre,
@@ -127,6 +179,16 @@ class PerfilController extends BaseController
     {
         $perfilModel = new Perfil();
         $id = $this->request->getPost('id');
+        
+        // Validar que el perfil pertenezca a la empresa del usuario (si no es Super Admin)
+        if (!$this->esSuperAdmin()) {
+            $perfil = $perfilModel->find($id);
+            $empresaId = $this->getEmpresaIdUsuario();
+            if ($perfil['empresa_id'] != $empresaId) {
+                return redirect()->to(base_url('dashboard/perfil/lista'))
+                    ->with('errors', 'No tienes permisos para eliminar este perfil');
+            }
+        }
         
         // Verificar si hay usuarios asociados a este perfil
         $db = \Config\Database::connect();

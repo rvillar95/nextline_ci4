@@ -331,15 +331,20 @@
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-weight me-2"></i> Medidas Básicas</h6>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Peso (kg) *</label>
                                 <input type="number" name="peso_actual" id="peso_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 70.5">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Altura (cm) *</label>
                                 <input type="number" name="altura_actual" id="altura_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 170">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <label class="form-label">Altura Sentado (cm)</label>
+                                <input type="number" name="altura_sentado" id="altura_sentado" class="form-control" step="0.01" min="0" placeholder="Ej: 90">
+                                <small class="text-muted">Para métodos 4, 5 componentes</small>
+                            </div>
+                            <div class="col-md-3">
                                 <label class="form-label">IMC</label>
                                 <input type="number" name="imc_actual" id="imc_actual" class="form-control" step="0.01" readonly>
                                 <small class="text-muted">Se calcula automáticamente</small>
@@ -349,15 +354,40 @@
                         <!-- Circunferencias -->
                         <div class="row mb-4">
                             <div class="col-12">
-                                <h6 class="text-primary mb-3"><i class="fas fa-circle-notch me-2"></i> Circunferencias</h6>
+                                <h6 class="text-primary mb-3"><i class="fas fa-circle-notch me-2"></i> Circunferencias (cm)</h6>
+                                <p class="text-muted small">Medición con cinta métrica. Se mide en centímetros (cm).</p>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Cintura (cm)</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cintura</label>
                                 <input type="number" name="circunferencia_cintura" id="circunferencia_cintura" class="form-control" step="0.01" min="0" placeholder="Ej: 85.5">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Cadera (cm)</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cadera</label>
                                 <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control" step="0.01" min="0" placeholder="Ej: 95.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Brazo Relajado</label>
+                                <input type="number" name="circunferencia_brazo_relajado" id="circunferencia_brazo_relajado" class="form-control" step="0.01" min="0" placeholder="Ej: 28.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Brazo Contraído</label>
+                                <input type="number" name="circunferencia_brazo_contraido" id="circunferencia_brazo_contraido" class="form-control" step="0.01" min="0" placeholder="Ej: 32.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Muslo Medio</label>
+                                <input type="number" name="circunferencia_muslo_medio" id="circunferencia_muslo_medio" class="form-control" step="0.01" min="0" placeholder="Ej: 55.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pantorrilla</label>
+                                <input type="number" name="circunferencia_pantorrilla" id="circunferencia_pantorrilla" class="form-control" step="0.01" min="0" placeholder="Ej: 36.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Cuello</label>
+                                <input type="number" name="circunferencia_cuello" id="circunferencia_cuello" class="form-control" step="0.01" min="0" placeholder="Ej: 38.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Tórax</label>
+                                <input type="number" name="circunferencia_torax" id="circunferencia_torax" class="form-control" step="0.01" min="0" placeholder="Ej: 98.0">
                             </div>
                         </div>
 
@@ -395,10 +425,54 @@
                                 <label class="form-label">Pantorrilla Medial</label>
                                 <input type="number" name="pliegue_pantorrilla_medial" id="pliegue_pantorrilla_medial" class="form-control" step="0.01" min="0" placeholder="Ej: 10.8">
                             </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pectoral</label>
+                                <input type="number" name="pliegue_pectoral" id="pliegue_pectoral" class="form-control" step="0.01" min="0" placeholder="Ej: 12.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Axilar Medio</label>
+                                <input type="number" name="pliegue_axilar_medio" id="pliegue_axilar_medio" class="form-control" step="0.01" min="0" placeholder="Ej: 14.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Muslo Medial</label>
+                                <input type="number" name="pliegue_muslo_medial" id="pliegue_muslo_medial" class="form-control" step="0.01" min="0" placeholder="Ej: 18.0">
+                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">Suma de Pliegues (mm)</label>
                                 <input type="number" name="suma_pliegues" id="suma_pliegues" class="form-control" step="0.01" readonly>
                                 <small class="text-muted">Se calcula automáticamente</small>
+                            </div>
+                        </div>
+
+                        <!-- Diámetros Óseos -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary mb-3"><i class="fas fa-ruler me-2"></i> Diámetros Óseos (cm)</h6>
+                                <p class="text-muted small">Medición con antropómetro o caliper. Se mide en centímetros (cm). Necesarios para métodos 4, 5 componentes y somatotipo.</p>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Biacromial (Hombros)</label>
+                                <input type="number" name="diametro_biacromial" id="diametro_biacromial" class="form-control" step="0.01" min="0" placeholder="Ej: 38.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Bi-iliocristal (Cadera)</label>
+                                <input type="number" name="diametro_bi_iliocristal" id="diametro_bi_iliocristal" class="form-control" step="0.01" min="0" placeholder="Ej: 28.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Húmero (Codo)</label>
+                                <input type="number" name="diametro_humero" id="diametro_humero" class="form-control" step="0.01" min="0" placeholder="Ej: 6.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Fémur (Rodilla)</label>
+                                <input type="number" name="diametro_femur" id="diametro_femur" class="form-control" step="0.01" min="0" placeholder="Ej: 9.0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Muñeca</label>
+                                <input type="number" name="diametro_muneca" id="diametro_muneca" class="form-control" step="0.01" min="0" placeholder="Ej: 5.5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Tobillo</label>
+                                <input type="number" name="diametro_tobillo" id="diametro_tobillo" class="form-control" step="0.01" min="0" placeholder="Ej: 6.8">
                             </div>
                         </div>
 
@@ -973,9 +1047,22 @@ $(document).ready(function() {
         $('#historial_id').val(historial.id);
         $('#peso_actual').val(historial.peso_actual || '');
         $('#altura_actual').val(historial.altura_actual || '');
+        $('#altura_sentado').val(historial.altura_sentado || '');
         $('#imc_actual').val(historial.imc_actual || '');
         $('#circunferencia_cintura').val(historial.circunferencia_cintura || '');
         $('#circunferencia_cadera').val(historial.circunferencia_cadera || '');
+        $('#circunferencia_brazo_relajado').val(historial.circunferencia_brazo_relajado || '');
+        $('#circunferencia_brazo_contraido').val(historial.circunferencia_brazo_contraido || '');
+        $('#circunferencia_muslo_medio').val(historial.circunferencia_muslo_medio || '');
+        $('#circunferencia_pantorrilla').val(historial.circunferencia_pantorrilla || '');
+        $('#circunferencia_cuello').val(historial.circunferencia_cuello || '');
+        $('#circunferencia_torax').val(historial.circunferencia_torax || '');
+        $('#diametro_biacromial').val(historial.diametro_biacromial || '');
+        $('#diametro_bi_iliocristal').val(historial.diametro_bi_iliocristal || '');
+        $('#diametro_humero').val(historial.diametro_humero || '');
+        $('#diametro_femur').val(historial.diametro_femur || '');
+        $('#diametro_muneca').val(historial.diametro_muneca || '');
+        $('#diametro_tobillo').val(historial.diametro_tobillo || '');
         $('#grasa_corporal').val(historial.grasa_corporal || '');
         $('#masa_muscular').val(historial.masa_muscular || '');
         $('#pliegue_tricipital').val(historial.pliegue_tricipital || '');
@@ -985,6 +1072,9 @@ $(document).ready(function() {
         $('#pliegue_abdominal').val(historial.pliegue_abdominal || '');
         $('#pliegue_muslo_anterior').val(historial.pliegue_muslo_anterior || '');
         $('#pliegue_pantorrilla_medial').val(historial.pliegue_pantorrilla_medial || '');
+        $('#pliegue_pectoral').val(historial.pliegue_pectoral || '');
+        $('#pliegue_axilar_medio').val(historial.pliegue_axilar_medio || '');
+        $('#pliegue_muslo_medial').val(historial.pliegue_muslo_medial || '');
         $('#suma_pliegues').val(historial.suma_pliegues || '');
         $('#grasa_corporal_calculada').val(historial.grasa_corporal_calculada || '');
         $('#anamnesis').val(historial.anamnesis || '');
@@ -1096,7 +1186,10 @@ function calcularSumaPliegues() {
         'pliegue_suprailíaco',
         'pliegue_abdominal',
         'pliegue_muslo_anterior',
-        'pliegue_pantorrilla_medial'
+        'pliegue_pantorrilla_medial',
+        'pliegue_pectoral',
+        'pliegue_axilar_medio',
+        'pliegue_muslo_medial'
     ];
     
     var suma = 0;
@@ -1149,7 +1242,7 @@ $(document).ready(function() {
     $('#peso_actual, #altura_actual').on('input', calcularIMC);
     
     // Agregar listeners a todos los campos de pliegues por ID
-    $('#pliegue_tricipital, #pliegue_bicipital, #pliegue_subescapular, #pliegue_suprailíaco, #pliegue_abdominal, #pliegue_muslo_anterior, #pliegue_pantorrilla_medial').on('input', function() {
+    $('#pliegue_tricipital, #pliegue_bicipital, #pliegue_subescapular, #pliegue_suprailíaco, #pliegue_abdominal, #pliegue_muslo_anterior, #pliegue_pantorrilla_medial, #pliegue_pectoral, #pliegue_axilar_medio, #pliegue_muslo_medial').on('input', function() {
         calcularSumaPliegues();
     });
     
