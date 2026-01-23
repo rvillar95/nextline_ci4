@@ -7,6 +7,8 @@ use App\Models\AgendaPaciente;
 use App\Models\Paciente;
 use App\Models\HistorialClinico;
 use App\Models\ModuloDetalle;
+use App\Models\BotonPagoPlantilla;
+use App\Models\EmpresaConfiguracion;
 use App\Traits\MaintainsFilters;
 use App\Libraries\WhatsAppService;
 use App\Libraries\CalendarService;
@@ -68,6 +70,19 @@ class AgendaController extends BaseController
             ->orderBy('id', 'ASC')
             ->get()
             ->getResult();
+
+        // Cargar plantillas de botones de pago (solo si Mercado Pago está habilitado)
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+        $data['plantillas_pago'] = [];
+        
+        if ($empresaId) {
+            $empresaConfigModel = new EmpresaConfiguracion();
+            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+                $plantillaModel = new BotonPagoPlantilla();
+                $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
+            }
+        }
 
         return view('Modulos/agenda/calendario', $data);
     }
@@ -405,7 +420,7 @@ class AgendaController extends BaseController
         }
 
         $post = $this->request->getPost([
-            'detalle_agenda_id', 'paciente_id', 'tipo_consulta', 'motivo', 'observaciones'
+            'detalle_agenda_id', 'paciente_id', 'tipo_consulta', 'motivo', 'observaciones', 'boton_pago_plantilla_id'
         ]);
 
         $db = \Config\Database::connect();
@@ -437,7 +452,9 @@ class AgendaController extends BaseController
             }
 
             // Actualizar detalle_agenda con los datos del paciente
-            // Estado inicial: "pendiente" (esperando confirmación del paciente)
+            // Si se seleccionó un botón de pago, el estado es 'en_proceso'
+            // Si no hay botón de pago, el estado es 'pendiente' (esperando confirmación)
+            $botonPagoPlantillaId = $post['boton_pago_plantilla_id'] ?? null;
             $dataUpdate = [
                 'paciente_id' => $pacienteId,
                 'tipo_consulta' => $post['tipo_consulta'] ?? 'control',
@@ -446,14 +463,15 @@ class AgendaController extends BaseController
                 'estado' => 2 // Ocupado
             ];
             
-            // Intentar establecer estado_cita como 'pendiente'
-            // Si el ENUM no lo permite, usar 'agendada' como fallback
-            try {
+            // Determinar estado según si hay botón de pago
+            if (!empty($botonPagoPlantillaId)) {
+                // Si hay botón de pago, estado inicial es 'en_proceso'
+                $dataUpdate['estado_cita'] = 'en_proceso';
+                log_message('info', 'Cita agendada con botón de pago - Estado: en_proceso');
+            } else {
+                // Si no hay botón de pago, estado inicial es 'pendiente'
                 $dataUpdate['estado_cita'] = 'pendiente';
-            } catch (\Exception $e) {
-                // Si falla, usar 'agendada' como valor por defecto
-                log_message('warning', 'No se pudo establecer estado_cita como pendiente: ' . $e->getMessage());
-                $dataUpdate['estado_cita'] = 'agendada';
+                log_message('info', 'Cita agendada sin botón de pago - Estado: pendiente');
             }
 
             // Actualizar detalle_agenda
@@ -487,11 +505,25 @@ class AgendaController extends BaseController
             }
 
             if ($updated) {
-                // Verificar configuración del usuario para enviar email
+                // Si se seleccionó una plantilla de pago, crear el pago (PERO NO ENVIAR EMAIL AÚN)
+                // El email del botón de pago se enviará cuando el paciente confirme desde el correo
+                $botonPagoPlantillaId = $post['boton_pago_plantilla_id'] ?? null;
+                if (!empty($botonPagoPlantillaId)) {
+                    try {
+                        // Solo crear el pago, NO enviar email todavía
+                        $this->crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $botonPagoPlantillaId);
+                    } catch (\Exception $e) {
+                        // No fallar el agendamiento si el pago falla, solo loguear
+                        log_message('error', 'Error al crear pago: ' . $e->getMessage());
+                    }
+                }
+                
+                // Verificar configuración del usuario para enviar email de confirmación
                 $configuracionModel = new \App\Models\EmpresaConfiguracion();
                 $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
                 
-                // Enviar email de confirmación al paciente (solo si está habilitado en configuraciones)
+                // Enviar SOLO el email de confirmación al paciente (con botones de confirmar/cancelar)
+                // El email del botón de pago se enviará cuando el paciente confirme
                 if ($configuracion['enviar_email'] ?? 1) {
                     try {
                         $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
@@ -573,33 +605,47 @@ class AgendaController extends BaseController
             ])->setStatusCode(403);
         }
 
-        // Verificar que la cita esté en estado pendiente antes de confirmar
-        if ($detalle->estado_cita !== 'pendiente' && $detalle->estado_cita !== 'agendada') {
+        // Verificar que la cita esté en estado pendiente, en_proceso o agendada
+        $estadosValidos = ['pendiente', 'en_proceso', 'agendada'];
+        if (!in_array($detalle->estado_cita, $estadosValidos)) {
             return $this->response->setJSON([
                 'error' => 'Estado inválido',
-                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido')
+                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente, en_proceso o agendada. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido')
             ])->setStatusCode(400);
         }
+        
+        // Si está en 'en_proceso', cambiar a 'pendiente' (esperando pago)
+        // Si está en 'pendiente' o 'agendada', cambiar a 'confirmada'
+        $nuevoEstado = ($detalle->estado_cita === 'en_proceso') ? 'pendiente' : 'confirmada';
 
-        // Actualizar estado de "pendiente" o "agendada" a "confirmada"
+        // Actualizar estado según el estado actual
         $updated = $db->table('detalle_agenda')
             ->where('id', $id)
             ->update([
-                'estado_cita' => 'confirmada',
+                'estado_cita' => $nuevoEstado,
                 'fecha_confirmacion' => date('Y-m-d H:i:s')
             ]);
 
         if ($updated) {
+            // Verificar si hay un pago pendiente asociado a esta cita
+            $pagoModel = new \App\Models\Pago();
+            $pago = $pagoModel->where('detalle_agenda_id', $id)
+                ->where('estado_pago', 'pendiente')
+                ->first();
+            $tienePago = ($pago && !empty($pago->mp_preference_id));
+
             // Obtener configuraciones del nutricionista
             $configuracionModel = new \App\Models\EmpresaConfiguracion();
             $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
 
             $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
-            // Crear evento en el calendario del nutricionista cuando se confirma manualmente (solo si está habilitado)
-            // IMPORTANTE: Crear primero el evento para obtener el enlace de Meet si es online
-            if ($configuracion['crear_evento_calendario'] ?? 1) {
+            // Crear evento en el calendario del nutricionista cuando se confirma manualmente
+            // IMPORTANTE: Solo crear el evento si NO hay botón de pago
+            // Si hay botón de pago, el evento se creará cuando el pago se apruebe
+            if (!$tienePago && ($configuracion['crear_evento_calendario'] ?? 1)) {
                 try {
+                    log_message('info', 'Creando evento en calendario al confirmar cita manualmente (sin botón de pago)');
                     $resultadoCalendario = $this->crearEventoCalendario($id, $usuario_id);
                     if ($resultadoCalendario && isset($resultadoCalendario['meet_link'])) {
                         $meetLink = $resultadoCalendario['meet_link'];
@@ -610,7 +656,11 @@ class AgendaController extends BaseController
                     log_message('error', 'Error al crear evento en calendario desde confirmación manual: ' . $e->getMessage());
                 }
             } else {
-                log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuario_id);
+                if ($tienePago) {
+                    log_message('info', 'Evento en calendario NO creado al confirmar manualmente (hay botón de pago - se creará cuando se apruebe el pago)');
+                } elseif (!($configuracion['crear_evento_calendario'] ?? 1)) {
+                    log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuario_id);
+                }
             }
 
             // Enviar WhatsApp cuando se confirma la cita (solo si está habilitado)
@@ -1314,6 +1364,282 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Crear pago desde plantilla SIN enviar email (el email se enviará cuando el paciente confirme)
+     */
+    private function crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $plantillaId)
+    {
+        $db = \Config\Database::connect();
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+        
+        if (!$empresaId) {
+            throw new \Exception('No se pudo obtener la empresa del usuario');
+        }
+
+        // Obtener plantilla
+        $plantillaModel = new \App\Models\BotonPagoPlantilla();
+        $plantilla = $plantillaModel->getPlantilla($plantillaId, $empresaId);
+        
+        if (!$plantilla) {
+            throw new \Exception('Plantilla de pago no encontrada');
+        }
+
+        // Obtener datos del paciente
+        $pacienteModel = new \App\Models\Paciente();
+        $paciente = $pacienteModel->find($pacienteId);
+        
+        if (!$paciente || empty($paciente->email)) {
+            throw new \Exception('Paciente no encontrado o sin email');
+        }
+
+        // Obtener datos de la cita
+        // IMPORTANTE: La hora está en detalle_agenda (da.hora_inicio), no en agenda (a.hora_inicio)
+        $cita = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha, da.hora_inicio, da.hora_fin')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+
+        if (!$cita) {
+            throw new \Exception('Cita no encontrada');
+        }
+
+        // Verificar que Mercado Pago esté configurado
+        $empresaConfigModel = new \App\Models\EmpresaConfiguracion();
+        if (!$empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+            throw new \Exception('Mercado Pago no está configurado para esta empresa');
+        }
+
+        // Crear registro de pago
+        $pagoModel = new \App\Models\Pago();
+        $pagoData = [
+            'empresa_id' => $empresaId,
+            'detalle_agenda_id' => $detalleAgendaId,
+            'tipo_pago' => 'cita',
+            'monto' => $plantilla->monto,
+            'moneda' => $plantilla->moneda,
+            'estado_pago' => 'pendiente',
+            'observaciones' => 'Pago generado automáticamente al agendar cita. Plantilla: ' . $plantilla->titulo
+        ];
+
+        $pagoId = $pagoModel->insert($pagoData);
+        
+        if (!$pagoId) {
+            throw new \Exception('Error al crear el registro de pago');
+        }
+
+        // Obtener servicio de Mercado Pago
+        $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+        $webhookBaseUrl = rtrim(base_url(), '/');
+        
+        $mercadoPagoService = new \App\Services\MercadoPagoService(
+            $credenciales['access_token'],
+            $credenciales['public_key'],
+            $credenciales['mode'],
+            $webhookBaseUrl
+        );
+
+        // Crear preferencia de pago
+        $preferenciaData = [
+            'title' => $plantilla->titulo,
+            'description' => $plantilla->descripcion ?? 'Pago de consulta nutricional',
+            'unit_price' => $plantilla->monto,
+            'quantity' => 1,
+            'currency' => $plantilla->moneda,
+            'payer_email' => $paciente->email,
+            'payer_name' => $paciente->nombre ?? '',
+            'payer_surname' => $paciente->apellido ?? '',
+            'external_reference' => (string)$pagoId,
+            'statement_descriptor' => 'NextLine Nutrición'
+        ];
+
+        $preferencia = $mercadoPagoService->crearPreferencia($preferenciaData);
+
+        // Actualizar pago con preference_id
+        $pagoModel->update($pagoId, [
+            'mp_preference_id' => $preferencia['preference_id']
+        ]);
+
+        // NO enviar email aquí - se enviará cuando el paciente confirme desde el correo
+        log_message('info', 'Pago creado (sin enviar email aún). Pago ID: ' . $pagoId . ', Email: ' . $paciente->email);
+    }
+
+    /**
+     * Crear pago desde plantilla y enviar botón de pago por email al paciente
+     * (Este método se usa cuando el paciente confirma desde el correo)
+     */
+    private function crearPagoYEnviarBoton($detalleAgendaId, $pacienteId, $plantillaId)
+    {
+        $db = \Config\Database::connect();
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+        
+        if (!$empresaId) {
+            throw new \Exception('No se pudo obtener la empresa del usuario');
+        }
+
+        // Obtener plantilla
+        $plantillaModel = new \App\Models\BotonPagoPlantilla();
+        $plantilla = $plantillaModel->getPlantilla($plantillaId, $empresaId);
+        
+        if (!$plantilla) {
+            throw new \Exception('Plantilla de pago no encontrada');
+        }
+
+        // Obtener datos del paciente
+        $pacienteModel = new \App\Models\Paciente();
+        $paciente = $pacienteModel->find($pacienteId);
+        
+        if (!$paciente || empty($paciente->email)) {
+            throw new \Exception('Paciente no encontrado o sin email');
+        }
+
+        // Obtener datos de la cita
+        // IMPORTANTE: La hora está en detalle_agenda (da.hora_inicio), no en agenda (a.hora_inicio)
+        $cita = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha, da.hora_inicio, da.hora_fin')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+
+        if (!$cita) {
+            throw new \Exception('Cita no encontrada');
+        }
+
+        // Verificar si ya existe un pago para esta cita
+        $pagoModel = new \App\Models\Pago();
+        $pagoExistente = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('estado_pago', 'pendiente')
+            ->first();
+
+        if ($pagoExistente && !empty($pagoExistente->mp_preference_id)) {
+            // Ya existe un pago, usar el existente
+            $pagoId = $pagoExistente->id;
+            $preferenciaId = $pagoExistente->mp_preference_id;
+            
+            // Obtener URL del botón de pago desde la preferencia existente
+            $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+            $webhookBaseUrl = rtrim(base_url(), '/');
+            
+            $mercadoPagoService = new \App\Services\MercadoPagoService(
+                $credenciales['access_token'],
+                $credenciales['public_key'],
+                $credenciales['mode'],
+                $webhookBaseUrl
+            );
+            
+            $preferencia = $mercadoPagoService->obtenerPreferencia($preferenciaId);
+            
+            if ($preferencia) {
+                $initPoint = ($credenciales['mode'] === 'sandbox') 
+                    ? $preferencia->sandbox_init_point 
+                    : $preferencia->init_point;
+            } else {
+                throw new \Exception('No se pudo obtener la preferencia de pago existente');
+            }
+        } else {
+            // Crear nuevo pago (código existente)
+            $empresaConfigModel = new \App\Models\EmpresaConfiguracion();
+            if (!$empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+                throw new \Exception('Mercado Pago no está configurado para esta empresa');
+            }
+
+            $pagoData = [
+                'empresa_id' => $empresaId,
+                'detalle_agenda_id' => $detalleAgendaId,
+                'tipo_pago' => 'cita',
+                'monto' => $plantilla->monto,
+                'moneda' => $plantilla->moneda,
+                'estado_pago' => 'pendiente',
+                'observaciones' => 'Pago generado automáticamente al agendar cita. Plantilla: ' . $plantilla->titulo
+            ];
+
+            $pagoId = $pagoModel->insert($pagoData);
+            
+            if (!$pagoId) {
+                throw new \Exception('Error al crear el registro de pago');
+            }
+
+            $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+            $webhookBaseUrl = rtrim(base_url(), '/');
+            
+            $mercadoPagoService = new \App\Services\MercadoPagoService(
+                $credenciales['access_token'],
+                $credenciales['public_key'],
+                $credenciales['mode'],
+                $webhookBaseUrl
+            );
+
+            $preferenciaData = [
+                'title' => $plantilla->titulo,
+                'description' => $plantilla->descripcion ?? 'Pago de consulta nutricional',
+                'unit_price' => $plantilla->monto,
+                'quantity' => 1,
+                'currency' => $plantilla->moneda,
+                'payer_email' => $paciente->email,
+                'payer_name' => $paciente->nombre ?? '',
+                'payer_surname' => $paciente->apellido ?? '',
+                'external_reference' => (string)$pagoId,
+                'statement_descriptor' => 'NextLine Nutrición'
+            ];
+
+            $preferencia = $mercadoPagoService->crearPreferencia($preferenciaData);
+
+            $pagoModel->update($pagoId, [
+                'mp_preference_id' => $preferencia['preference_id']
+            ]);
+
+            $initPoint = ($credenciales['mode'] === 'sandbox') 
+                ? $preferencia['sandbox_init_point'] 
+                : $preferencia['init_point'];
+        }
+
+        // Enviar email con el botón de pago
+        $this->enviarEmailBotonPago($paciente, $cita, $plantilla, $initPoint);
+
+        log_message('info', 'Pago creado y botón enviado por email. Pago ID: ' . $pagoId . ', Email: ' . $paciente->email);
+    }
+
+    /**
+     * Enviar email con botón de pago al paciente
+     */
+    private function enviarEmailBotonPago($paciente, $cita, $plantilla, $botonUrl)
+    {
+        $fechaFormateada = $cita->fecha ?? date('d-m-Y');
+        $horaInicio = $cita->hora_inicio ? date('H:i', strtotime($cita->hora_inicio)) : '';
+        $nombrePaciente = trim(($paciente->nombre ?? '') . ' ' . ($paciente->apellido ?? ''));
+        $montoFormateado = number_format($plantilla->monto, 0, ',', '.') . ' ' . $plantilla->moneda;
+
+        // Crear el mensaje HTML
+        $mensaje = view('emails/boton_pago_cita', [
+            'nombrePaciente' => $nombrePaciente,
+            'fecha' => $fechaFormateada,
+            'horaInicio' => $horaInicio,
+            'titulo' => $plantilla->titulo,
+            'monto' => $montoFormateado,
+            'botonUrl' => $botonUrl,
+            'baseUrl' => base_url()
+        ]);
+
+        // Enviar email
+        $email = Services::email();
+        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'NextLine Nutrición'));
+        $email->setTo($paciente->email);
+        $email->setSubject('💳 Pago de Consulta - ' . $plantilla->titulo);
+        $email->setMessage($mensaje);
+
+        if ($email->send()) {
+            log_message('info', 'Email con botón de pago enviado a: ' . $paciente->email);
+            return true;
+        } else {
+            log_message('error', 'Error al enviar email con botón de pago: ' . $email->printDebugger(['headers']));
+            return false;
+        }
+    }
+
+    /**
      * Enviar notificación de cancelación de cita al nutricionista por email
      */
     private function enviarEmailCancelacionNutricionista($cita)
@@ -1560,21 +1886,145 @@ class AgendaController extends BaseController
                 ]);
             }
             
-            // Verificar que la cita esté en estado pendiente (esperando confirmación)
-            if ($cita->estado_cita !== 'pendiente') {
+            // Verificar que la cita esté en estado 'en_proceso' (con botón de pago) o 'pendiente'
+            $tienePago = false;
+            if ($cita->estado_cita === 'en_proceso') {
+                // Cita con botón de pago: cambiar a 'pendiente' (esperando que el paciente pague)
+                $db->table('detalle_agenda')
+                    ->where('id', $detalleAgendaId)
+                    ->update([
+                        'estado_cita' => 'pendiente',
+                        'fecha_confirmacion' => date('Y-m-d H:i:s')
+                    ]);
+                
+                // Buscar si hay un pago pendiente para esta cita
+                $pagoModel = new \App\Models\Pago();
+                $pago = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+                    ->where('estado_pago', 'pendiente')
+                    ->first();
+                
+                log_message('error', 'CONFIRMAR CITA: Buscando pago para detalle_agenda_id=' . $detalleAgendaId);
+                log_message('error', 'CONFIRMAR CITA: Pago encontrado: ' . ($pago ? 'SÍ (ID: ' . $pago->id . ', preference_id: ' . ($pago->mp_preference_id ?? 'NULL') . ')' : 'NO'));
+                
+                if ($pago && !empty($pago->mp_preference_id)) {
+                    $tienePago = true;
+                    log_message('error', 'CONFIRMAR CITA: Hay pago pendiente, procediendo a enviar email con botón de pago');
+                    // Hay un pago pendiente, enviar email con botón de pago
+                    try {
+                        // Obtener empresa_id directamente del pago (ya está guardado cuando se crea)
+                        $empresaId = $pago->empresa_id ?? null;
+                        
+                        if (!$empresaId) {
+                            // Si no está en el pago, obtenerlo desde el usuario de la cita (nutricionista)
+                            $usuarioModel = new \App\Models\Usuario();
+                            $usuario = $usuarioModel->find($cita->usuario_id);
+                            
+                            // El modelo Usuario retorna array, no objeto
+                            $empresaId = is_array($usuario) ? ($usuario['empresa_id'] ?? null) : ($usuario->empresa_id ?? null);
+                            
+                            if (!$empresaId) {
+                                log_message('error', 'No se pudo obtener empresa_id. Pago ID: ' . $pago->id . ', Usuario ID: ' . $cita->usuario_id);
+                                throw new \Exception('No se pudo obtener la empresa. Pago ID: ' . $pago->id);
+                            }
+                            
+                            log_message('error', 'CONFIRMAR CITA: Empresa ID obtenida desde usuario de la cita: ' . $empresaId);
+                        } else {
+                            log_message('error', 'CONFIRMAR CITA: Empresa ID obtenida desde pago: ' . $empresaId);
+                        }
+                        
+                        // Obtener datos del paciente
+                        $pacienteModel = new \App\Models\Paciente();
+                        $paciente = $pacienteModel->find($pacienteId);
+                        
+                        if (!$paciente || empty($paciente->email)) {
+                            throw new \Exception('Paciente no encontrado o sin email');
+                        }
+                        
+                        // Obtener datos completos de la cita
+                        // IMPORTANTE: La hora está en detalle_agenda (da.hora_inicio), no en agenda (a.hora_inicio)
+                        $citaCompleta = $db->table('detalle_agenda da')
+                            ->select('da.*, a.fecha, da.hora_inicio, da.hora_fin')
+                            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                            ->where('da.id', $detalleAgendaId)
+                            ->get()
+                            ->getRow();
+                        
+                        // Obtener credenciales de Mercado Pago
+                        $empresaConfigModel = new \App\Models\EmpresaConfiguracion();
+                        $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+                        
+                        if (!$credenciales || !$credenciales['habilitado']) {
+                            throw new \Exception('Mercado Pago no está configurado para esta empresa');
+                        }
+                        
+                        $webhookBaseUrl = rtrim(base_url(), '/');
+                        $mercadoPagoService = new \App\Services\MercadoPagoService(
+                            $credenciales['access_token'],
+                            $credenciales['public_key'],
+                            $credenciales['mode'],
+                            $webhookBaseUrl
+                        );
+                        
+                        log_message('error', 'CONFIRMAR CITA: Obteniendo preferencia de Mercado Pago. Preference ID: ' . $pago->mp_preference_id);
+                        $preferencia = $mercadoPagoService->obtenerPreferencia($pago->mp_preference_id);
+                        
+                        if ($preferencia) {
+                            log_message('error', 'CONFIRMAR CITA: Preferencia obtenida. Modo: ' . $credenciales['mode']);
+                            
+                            // Acceder a las propiedades de la preferencia
+                            $initPoint = null;
+                            if ($credenciales['mode'] === 'sandbox') {
+                                $initPoint = $preferencia->sandbox_init_point ?? null;
+                                log_message('error', 'CONFIRMAR CITA: sandbox_init_point: ' . ($initPoint ?? 'NULL'));
+                            } else {
+                                $initPoint = $preferencia->init_point ?? null;
+                                log_message('error', 'CONFIRMAR CITA: init_point: ' . ($initPoint ?? 'NULL'));
+                            }
+                            
+                            if (empty($initPoint)) {
+                                log_message('error', 'CONFIRMAR CITA: init_point está vacío. Preferencia ID: ' . ($preferencia->id ?? 'N/A'));
+                                throw new \Exception('No se pudo obtener la URL del botón de pago (init_point vacío)');
+                            }
+                            
+                            // Crear objeto plantilla temporal con datos del pago
+                            $plantillaTemporal = (object)[
+                                'titulo' => 'Pago de Consulta',
+                                'descripcion' => $pago->observaciones ?? 'Pago de consulta nutricional',
+                                'monto' => $pago->monto,
+                                'moneda' => $pago->moneda
+                            ];
+                            
+                            log_message('error', 'CONFIRMAR CITA: Enviando email con botón de pago a: ' . $paciente->email . ', URL: ' . substr($initPoint, 0, 50) . '...');
+                            // Enviar email con botón de pago
+                            $this->enviarEmailBotonPago($paciente, $citaCompleta, $plantillaTemporal, $initPoint);
+                            
+                            log_message('error', 'CONFIRMAR CITA: Email con botón de pago enviado exitosamente. Pago ID: ' . $pago->id);
+                        } else {
+                            log_message('error', 'CONFIRMAR CITA: No se pudo obtener la preferencia de pago');
+                            throw new \Exception('No se pudo obtener la preferencia de pago desde Mercado Pago');
+                        }
+                    } catch (\Exception $e) {
+                        log_message('error', 'CONFIRMAR CITA: Error al enviar email con botón de pago: ' . $e->getMessage());
+                        log_message('error', 'CONFIRMAR CITA: Stack trace: ' . $e->getTraceAsString());
+                        // No fallar la confirmación si el email falla, pero loguear el error completo
+                    }
+                } else {
+                    log_message('error', 'CONFIRMAR CITA: No hay pago pendiente o no tiene preference_id. Pago: ' . ($pago ? 'existe pero sin preference_id' : 'no existe'));
+                }
+            } elseif ($cita->estado_cita === 'pendiente') {
+                // Cita sin botón de pago: cambiar a 'confirmada'
+                $db->table('detalle_agenda')
+                    ->where('id', $detalleAgendaId)
+                    ->update([
+                        'estado_cita' => 'confirmada',
+                        'fecha_confirmacion' => date('Y-m-d H:i:s')
+                    ]);
+            } else {
                 return view('emails/respuesta_cita', [
                     'exito' => false,
                     'mensaje' => 'Esta cita no puede ser confirmada porque su estado actual es: ' . ($cita->estado_cita ?? 'desconocido') . '.'
                 ]);
             }
-
-            // Actualizar estado de "pendiente" a "confirmada" cuando el paciente acepta
-            $db->table('detalle_agenda')
-                ->where('id', $detalleAgendaId)
-                ->update([
-                    'estado_cita' => 'confirmada',
-                    'fecha_confirmacion' => date('Y-m-d H:i:s')
-                ]);
 
             // Obtener usuario_id del nutricionista para crear el evento en su calendario
             $usuarioId = $cita->usuario_id ?? null;
@@ -1585,10 +2035,12 @@ class AgendaController extends BaseController
 
             $meetLink = null; // Variable para almacenar el enlace de Meet si se crea
 
-            // Crear evento en el calendario del nutricionista cuando el paciente confirma (solo si está habilitado)
-            // IMPORTANTE: Crear primero el evento para obtener el enlace de Meet si es online
-            if ($usuarioId && ($configuracion['crear_evento_calendario'] ?? 1)) {
+            // Crear evento en el calendario del nutricionista cuando el paciente confirma
+            // IMPORTANTE: Solo crear el evento si NO hay botón de pago
+            // Si hay botón de pago, el evento se creará cuando el pago se apruebe
+            if (!$tienePago && $usuarioId && ($configuracion['crear_evento_calendario'] ?? 1)) {
                 try {
+                    log_message('info', 'Creando evento en calendario al confirmar cita (sin botón de pago)');
                     $resultadoCalendario = $this->crearEventoCalendario($detalleAgendaId, $usuarioId);
                     if ($resultadoCalendario && isset($resultadoCalendario['meet_link'])) {
                         $meetLink = $resultadoCalendario['meet_link'];
@@ -1599,7 +2051,9 @@ class AgendaController extends BaseController
                     log_message('error', 'Error al crear evento en calendario desde confirmación email: ' . $e->getMessage());
                 }
             } else {
-                if (!($configuracion['crear_evento_calendario'] ?? 1)) {
+                if ($tienePago) {
+                    log_message('info', 'Evento en calendario NO creado al confirmar (hay botón de pago - se creará cuando se apruebe el pago)');
+                } elseif (!($configuracion['crear_evento_calendario'] ?? 1)) {
                     log_message('info', 'Creación de evento en calendario deshabilitada en configuraciones del usuario ID: ' . $usuarioId);
                 }
             }
@@ -1623,9 +2077,14 @@ class AgendaController extends BaseController
                 log_message('info', 'CONFIRMAR DESDE EMAIL: WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
             }
 
+            // Mensaje final según si tiene pago o no
+            $mensajeFinal = $tienePago 
+                ? 'Cita confirmada. Revisa tu correo para completar el pago.'
+                : '¡Cita confirmada exitosamente! Te esperamos en la fecha y hora acordada.';
+            
             return view('emails/respuesta_cita', [
                 'exito' => true,
-                'mensaje' => '¡Cita confirmada exitosamente! Te esperamos en la fecha y hora acordada.'
+                'mensaje' => $mensajeFinal
             ]);
         } catch (\Exception $e) {
             log_message('error', 'Error al confirmar cita desde email: ' . $e->getMessage());

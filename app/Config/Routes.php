@@ -268,6 +268,12 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('activar/(:num)', 'Dashboard\AddonController::activar/$1'); //accion activar
     });
 
+    // Facturación (Solo Super Admin)
+    $routes->group('facturacion', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\FacturacionController::lista'); //vista lista (solo SA)
+        $routes2->get('getFacturacion', 'Dashboard\FacturacionController::getFacturacion'); //get Data (solo SA)
+    });
+
     // Rutas para ubicaciones (regiones y comunas)
     $routes->group('ubicacion', function ($routes2) {
         $routes2->get('regiones', 'Dashboard\UbicacionController::getRegiones');
@@ -341,6 +347,18 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'Dashboard\PagoController::registrar');
         $routes2->post('update', 'Dashboard\PagoController::update');
         $routes2->post('procesar', 'Dashboard\PagoController::procesar');
+        $routes2->get('success', 'Dashboard\BotonPagoController::success');
+        $routes2->get('failure', 'Dashboard\BotonPagoController::failure');
+        $routes2->get('pending', 'Dashboard\BotonPagoController::pending');
+    });
+
+    $routes->group('boton-pago', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\BotonPagoController::lista');
+        $routes2->get('crear', 'Dashboard\BotonPagoController::crear');
+        $routes2->get('crear/(:num)', 'Dashboard\BotonPagoController::crear/$1');
+        $routes2->get('editar/(:num)', 'Dashboard\BotonPagoController::editar/$1');
+        $routes2->get('ver/(:num)', 'Dashboard\BotonPagoController::ver/$1');
+        $routes2->post('generar', 'Dashboard\BotonPagoController::generarBoton');
     });
 
     $routes->group('configuracion', function ($routes2) {
@@ -351,6 +369,11 @@ $routes->group('dashboard', function ($routes) {
 
 $routes->post('/inicio-sesion', 'Dashboard\UsuarioController::inicio_sesion');
 $routes->get('/logout', 'Dashboard\UsuarioController::logout');
+
+// Rutas públicas de API (sin autenticación)
+$routes->group('api', function ($routes) {
+    $routes->post('mercadopago/webhook', 'Api\MercadoPagoWebhookController::webhook');
+});
 
 $routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {});
 

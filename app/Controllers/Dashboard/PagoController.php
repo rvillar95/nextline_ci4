@@ -94,10 +94,10 @@ class PagoController extends BaseController
 
             $botones = '';
             if ($r->estado_pago == 'pendiente') {
-                $botones = '<button class="btn btn-sm btn-outline-success" onclick="procesarPago(' . $r->id . ')">Procesar</button> ' .
-                          '<button class="btn btn-sm btn-outline-info" onclick="verPago(' . $r->id . ')">Ver</button>';
+                $botones = '<button type="button" class="btn btn-sm btn-outline-success" onclick="procesarPago(' . $r->id . ')">Procesar</button> ' .
+                          '<a href="' . base_url('dashboard/pago/editar/' . $r->id) . '" class="btn btn-sm btn-outline-info">Ver</a>';
             } else {
-                $botones = '<button class="btn btn-sm btn-outline-info" onclick="verPago(' . $r->id . ')">Ver</button>';
+                $botones = '<a href="' . base_url('dashboard/pago/editar/' . $r->id) . '" class="btn btn-sm btn-outline-info">Ver</a>';
             }
 
             $data[] = array(

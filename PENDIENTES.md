@@ -340,24 +340,34 @@
   - [ ] Donut 4 componentes con % + kg
   - [ ] Somatocarta “igual al Excel” (imagen/plantilla de fondo + punto encima)
   - [ ] Exportar a PDF (opcional)
-- [ ] **Campos faltantes/ambiguos** según metodología (confirmar con nutricionista y agregar si corresponde):
-  - [ ] `pliegue_supraespinal` (SSP) vs `pliegue_suprailíaco` (¿son distintos?)
-  - [ ] `circunferencia_antebrazo_maximo`
-  - [ ] `circunferencia_muslo_maximo` (si no basta `circunferencia_muslo_medio`)
-  - [ ] `circunferencia_torax_mesoesternal` (si no basta `circunferencia_torax`)
-  - [ ] `circunferencia_muneca` (si se usa además de `diametro_muneca`)
-  - [ ] Definir si “pantorrilla” pliegue/perímetro es **medial** o **máximo**
+- [x] **Campos faltantes/ambiguos** según metodología (confirmar con nutricionista y agregar si corresponde):
+  - [x] `pliegue_supraespinal` (SSP) - ✅ **CONFIRMADO**: Hay que agregarlo (distinto de suprailíaco)
+  - [x] `circunferencia_antebrazo_maximo` - ✅ **CONFIRMADO**: Necesitamos campo específico
+  - [x] `circunferencia_muslo_maximo` - ✅ **CONFIRMADO**: Necesitamos campo específico (distinto de muslo_medio)
+  - [x] `circunferencia_pantorrilla` - ✅ **CONFIRMADO**: Ya existe, es suficiente (pantorrilla y máxima son lo mismo)
+  - [x] `circunferencia_torax` - ✅ **CONFIRMADO**: Ya existe, es suficiente (tórax y mesoesternal son lo mismo)
+  - [x] `circunferencia_muneca` - ✅ **CONFIRMADO**: Necesaria para 4 componentes (parte más angosta)
+  - [x] `masa_osea` - ✅ **CONFIRMADO**: Falta agregar en historial_clinico
+  - [x] Pliegue pantorrilla - ✅ **CONFIRMADO**: Medial (por el lado según ISAK)
 
 **Dudas para resolver con la Nutricionista (para cerrar diseño y fórmulas):**
 - [ ] **Ecuación (Siri/Faulkner/Carter)**:
   - ¿Afecta solo conversión densidad→%grasa o cambia la fórmula completa / pliegues usados?
   - ¿Se guarda por consulta/historial o como configuración global?
-- [ ] **Supraespinal (SSP) vs Suprailíaco**:
-  - ¿Son sinónimos en su uso o son campos distintos (ISAK)?
-- [ ] **Pliegue “Muslo”**: ¿muslo anterior o muslo medial?
-- [ ] **Pliegue “Pantorrilla”**: ¿medial o en máximo perímetro?
-- [ ] **Perímetros “máximos”**: antebrazo máximo / muslo máximo / pantorrilla máxima / tórax mesoesternal:
-  - ¿Se requieren explícitos o se aceptan genéricos actuales?
+- [x] **Supraespinal (SSP) vs Suprailíaco**:
+  - ✅ **RESUELTO**: Son campos distintos. **Supraespinal hay que agregarlo** (además de suprailíaco).
+- [x] **Pliegue "Muslo"**:
+  - ✅ **RESUELTO**: Se toma de forma **frontal** y es el **punto medio entre la cadera y la rodilla cuando estás sentado**.
+- [x] **Pliegue "Pantorrilla"**:
+  - ✅ **RESUELTO**: Se toma **por el lado de la pantorrilla según ISAK** (medial).
+- [x] **Perímetros "máximos"**: antebrazo máximo / muslo máximo / pantorrilla máxima / tórax mesoesternal:
+  - ✅ **RESUELTO**: 
+    - `circunferencia_antebrazo_maximo` - **SÍ necesitamos campo específico**
+    - `circunferencia_muslo_maximo` - **SÍ necesitamos campo específico** (distinto de muslo_medio, ambos deben estar)
+    - `circunferencia_pantorrilla` - **Ya existe, es suficiente** (pantorrilla y pantorrilla máxima son lo mismo)
+    - `circunferencia_torax` - **Ya existe, es suficiente** (tórax y tórax mesoesternal son lo mismo)
+- [x] **Circunferencia de muñeca**:
+  - ✅ **RESUELTO**: **Sí es necesaria en el método de 4 componentes** y se toma en la **parte más angosta de la muñeca**.
 - [ ] **Resultados**: ¿solo mostrar o también guardar histórico por consulta? (masa grasa, masa ósea, residual, etc.)
 
 **Notas técnicas:**

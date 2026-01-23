@@ -182,6 +182,131 @@
                             </div>
                         </div>
 
+                        <!-- Sección: Mercado Pago (Solo si tiene acceso al módulo Botones de Pago) -->
+                        <?php if (isset($tieneAccesoBotonesPago) && $tieneAccesoBotonesPago): ?>
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-credit-card mr-2"></i>
+                                    Mercado Pago
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    <strong>Nota:</strong> Configura tus credenciales de Mercado Pago para usar el módulo de Botones de Pago. 
+                                    Puedes obtener tus credenciales desde tu <a href="https://www.mercadopago.com.mx/developers/panel" target="_blank" class="alert-link">panel de desarrolladores</a>.
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" class="form-check-input" id="mp_habilitado" 
+                                               name="mp_habilitado" <?= ($configuracion['mp_habilitado'] ?? 0) ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="mp_habilitado">
+                                            <strong>Habilitar Mercado Pago</strong>
+                                            <br>
+                                            <small class="text-muted">Activar la integración con Mercado Pago para esta empresa</small>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" id="mpConfigGroup" style="<?= ($configuracion['mp_habilitado'] ?? 0) ? '' : 'display: none;' ?>">
+                                    <label for="mp_mode">
+                                        <strong>Modo Activo</strong>
+                                    </label>
+                                    <select class="form-control" id="mp_mode" name="mp_mode" required>
+                                        <option value="sandbox" <?= ($configuracion['mp_mode'] ?? 'sandbox') === 'sandbox' ? 'selected' : '' ?>>Sandbox (Pruebas)</option>
+                                        <option value="production" <?= ($configuracion['mp_mode'] ?? 'sandbox') === 'production' ? 'selected' : '' ?>>Producción</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Selecciona qué credenciales usar. Puedes configurar ambas y cambiar entre ellas fácilmente.
+                                    </small>
+                                </div>
+
+                                <!-- Credenciales Sandbox -->
+                                <div id="mpSandboxGroup" style="<?= ($configuracion['mp_habilitado'] ?? 0) ? '' : 'display: none;' ?>">
+                                    <h5 class="mt-4 mb-3" style="color: #f0841a;">
+                                        <i class="fas fa-flask mr-2"></i>Credenciales Sandbox (Pruebas)
+                                    </h5>
+                                    
+                                    <div class="form-group">
+                                        <label for="mp_access_token_sandbox">
+                                            <strong>Access Token (Sandbox)</strong>
+                                        </label>
+                                        <input type="text" class="form-control" id="mp_access_token_sandbox" 
+                                               name="mp_access_token_sandbox" 
+                                               value="<?= esc($configuracion['mp_access_token_sandbox'] ?? $configuracion['mp_access_token'] ?? '') ?>" 
+                                               placeholder="TEST-XXXXXXXXXXXXXXX"
+                                               autocomplete="off">
+                                        <small class="form-text text-muted">
+                                            Token de acceso privado de Mercado Pago para pruebas (Sandbox). Comienza con "TEST-"
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="mp_public_key_sandbox">
+                                            <strong>Public Key (Sandbox)</strong>
+                                        </label>
+                                        <input type="text" class="form-control" id="mp_public_key_sandbox" 
+                                               name="mp_public_key_sandbox" 
+                                               value="<?= esc($configuracion['mp_public_key_sandbox'] ?? $configuracion['mp_public_key'] ?? '') ?>" 
+                                               placeholder="TEST-XXXXXXXXXXXXXXX"
+                                               autocomplete="off">
+                                        <small class="form-text text-muted">
+                                            Clave pública de Mercado Pago para pruebas (Sandbox). Comienza con "TEST-"
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Credenciales Production -->
+                                <div id="mpProductionGroup" style="<?= ($configuracion['mp_habilitado'] ?? 0) ? '' : 'display: none;' ?>">
+                                    <h5 class="mt-4 mb-3" style="color: #28a745;">
+                                        <i class="fas fa-check-circle mr-2"></i>Credenciales Producción
+                                    </h5>
+                                    
+                                    <div class="form-group">
+                                        <label for="mp_access_token_production">
+                                            <strong>Access Token (Producción)</strong>
+                                        </label>
+                                        <input type="text" class="form-control" id="mp_access_token_production" 
+                                               name="mp_access_token_production" 
+                                               value="<?= esc($configuracion['mp_access_token_production'] ?? '') ?>" 
+                                               placeholder="APP_USR-XXXXXXXXXXXXXXX"
+                                               autocomplete="off">
+                                        <small class="form-text text-muted">
+                                            Token de acceso privado de Mercado Pago para producción. Comienza con "APP_USR-"
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="mp_public_key_production">
+                                            <strong>Public Key (Producción)</strong>
+                                        </label>
+                                        <input type="text" class="form-control" id="mp_public_key_production" 
+                                               name="mp_public_key_production" 
+                                               value="<?= esc($configuracion['mp_public_key_production'] ?? '') ?>" 
+                                               placeholder="APP_USR-XXXXXXXXXXXXXXX"
+                                               autocomplete="off">
+                                        <small class="form-text text-muted">
+                                            Clave pública de Mercado Pago para producción. Comienza con "APP_USR-"
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-warning" id="mpWarningGroup" style="<?= ($configuracion['mp_habilitado'] ?? 0) ? '' : 'display: none;' ?>">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <strong>Importante:</strong> 
+                                    <ul class="mb-0 mt-2">
+                                        <li>Las credenciales son específicas por empresa y se almacenan de forma segura</li>
+                                        <li>No compartas tus credenciales con nadie</li>
+                                        <li>En modo Producción, asegúrate de configurar el webhook en tu panel de Mercado Pago</li>
+                                        <li>El webhook debe apuntar a: <code><?= base_url('api/mercadopago/webhook') ?></code></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save mr-2"></i>
@@ -215,6 +340,21 @@ $(document).ready(function() {
             $('#agregarInvitadoGroup').show();
         } else {
             $('#agregarInvitadoGroup').hide();
+        }
+    });
+
+    // Mostrar/ocultar campos de Mercado Pago
+    $('#mp_habilitado').change(function() {
+        if ($(this).is(':checked')) {
+            $('#mpConfigGroup').show();
+            $('#mpSandboxGroup').show();
+            $('#mpProductionGroup').show();
+            $('#mpWarningGroup').show();
+        } else {
+            $('#mpConfigGroup').hide();
+            $('#mpSandboxGroup').hide();
+            $('#mpProductionGroup').hide();
+            $('#mpWarningGroup').hide();
         }
     });
 

@@ -24,7 +24,15 @@ class EmpresaConfiguracion extends Model
         'horas_antes_recordatorio',
         'mensaje_cancelacion_pendiente',
         'mensaje_cancelacion_confirmada',
-        'mensaje_cancelacion_en_proceso'
+        'mensaje_cancelacion_en_proceso',
+        'mp_access_token',
+        'mp_public_key',
+        'mp_access_token_sandbox',
+        'mp_public_key_sandbox',
+        'mp_access_token_production',
+        'mp_public_key_production',
+        'mp_mode',
+        'mp_habilitado'
     ];
 
     protected $useTimestamps = true;
@@ -128,5 +136,75 @@ class EmpresaConfiguracion extends Model
     {
         $config = $this->obtenerConfiguracionPorUsuario($usuarioId);
         return isset($config[$opcion]) && $config[$opcion] == 1;
+    }
+
+    /**
+     * Obtener credenciales de Mercado Pago de una empresa
+     * Usa las credenciales según el modo configurado (sandbox o production)
+     * 
+     * @param int $empresaId
+     * @return array|null ['access_token', 'public_key', 'mode', 'habilitado']
+     */
+    public function obtenerCredencialesMercadoPago($empresaId)
+    {
+        $config = $this->obtenerConfiguracion($empresaId);
+        
+        if (!$config) {
+            return null;
+        }
+
+        // Normalizar el modo a minúsculas
+        $mode = strtolower(trim($config['mp_mode'] ?? 'sandbox'));
+        
+        // Determinar qué credenciales usar según el modo
+        $accessToken = null;
+        $publicKey = null;
+        
+        if ($mode === 'production') {
+            // Usar credenciales de producción
+            $accessToken = $config['mp_access_token_production'] ?? null;
+            $publicKey = $config['mp_public_key_production'] ?? null;
+            
+            // Fallback a campos antiguos si los nuevos no existen (compatibilidad)
+            if (empty($accessToken)) {
+                $accessToken = $config['mp_access_token'] ?? null;
+            }
+            if (empty($publicKey)) {
+                $publicKey = $config['mp_public_key'] ?? null;
+            }
+        } else {
+            // Usar credenciales de sandbox (por defecto)
+            $accessToken = $config['mp_access_token_sandbox'] ?? null;
+            $publicKey = $config['mp_public_key_sandbox'] ?? null;
+            
+            // Fallback a campos antiguos si los nuevos no existen (compatibilidad)
+            if (empty($accessToken)) {
+                $accessToken = $config['mp_access_token'] ?? null;
+            }
+            if (empty($publicKey)) {
+                $publicKey = $config['mp_public_key'] ?? null;
+            }
+        }
+        
+        // Si no hay credenciales, retornar null
+        if (empty($accessToken)) {
+            return null;
+        }
+        
+        return [
+            'access_token' => $accessToken,
+            'public_key' => $publicKey,
+            'mode' => $mode,
+            'habilitado' => isset($config['mp_habilitado']) && $config['mp_habilitado'] == 1
+        ];
+    }
+
+    /**
+     * Verificar si Mercado Pago está habilitado para una empresa
+     */
+    public function mercadoPagoHabilitado($empresaId)
+    {
+        $credenciales = $this->obtenerCredencialesMercadoPago($empresaId);
+        return $credenciales && $credenciales['habilitado'] && !empty($credenciales['access_token']);
     }
 }

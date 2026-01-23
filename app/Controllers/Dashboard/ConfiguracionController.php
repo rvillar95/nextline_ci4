@@ -5,6 +5,7 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\BaseController;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Empresa;
+use App\Services\AccesoService;
 
 class ConfiguracionController extends BaseController
 {
@@ -69,13 +70,17 @@ class ConfiguracionController extends BaseController
         // Cargar información de la empresa
         $empresa = $this->empresaModel->find($empresaId);
         
+        // Verificar si tiene acceso al módulo "Botones de Pago" para mostrar configuración de Mercado Pago
+        $accesoService = new AccesoService();
+        $data['tieneAccesoBotonesPago'] = $accesoService->tieneAccesoModuloPorRuta($empresaId, '/dashboard/boton-pago');
+        
         $data['titulo'] = 'Configuraciones del Sistema';
         $data['configuracion'] = $configuracion;
         $data['empresa'] = $empresa;
         $data['empresa_id'] = $empresaId;
         $data['csrf_token'] = csrf_hash();
 
-        return view('modulos/configuracion/index', $data);
+        return view('Modulos/configuracion/index', $data);
     }
 
     /**
@@ -108,6 +113,10 @@ class ConfiguracionController extends BaseController
         $data = $this->request->getPost();
         log_message('info', 'ConfiguracionController::guardar() - Datos recibidos: ' . json_encode($data));
 
+        // Verificar acceso a Botones de Pago antes de guardar config de Mercado Pago
+        $accesoService = new AccesoService();
+        $tieneAccesoBotonesPago = $accesoService->tieneAccesoModuloPorRuta($empresaId, '/dashboard/boton-pago');
+        
         // Validar y limpiar datos
         $configuracion = [
             'enviar_whatsapp' => isset($data['enviar_whatsapp']) ? 1 : 0,
@@ -121,6 +130,31 @@ class ConfiguracionController extends BaseController
             'mensaje_cancelacion_confirmada' => isset($data['mensaje_cancelacion_confirmada']) ? $data['mensaje_cancelacion_confirmada'] : null,
             'mensaje_cancelacion_en_proceso' => isset($data['mensaje_cancelacion_en_proceso']) ? $data['mensaje_cancelacion_en_proceso'] : null
         ];
+        
+        // Solo guardar configuración de Mercado Pago si tiene acceso al módulo
+        if ($tieneAccesoBotonesPago) {
+            // Guardar credenciales de sandbox
+            $configuracion['mp_access_token_sandbox'] = isset($data['mp_access_token_sandbox']) ? trim($data['mp_access_token_sandbox']) : null;
+            $configuracion['mp_public_key_sandbox'] = isset($data['mp_public_key_sandbox']) ? trim($data['mp_public_key_sandbox']) : null;
+            
+            // Guardar credenciales de production
+            $configuracion['mp_access_token_production'] = isset($data['mp_access_token_production']) ? trim($data['mp_access_token_production']) : null;
+            $configuracion['mp_public_key_production'] = isset($data['mp_public_key_production']) ? trim($data['mp_public_key_production']) : null;
+            
+            // Guardar modo (sandbox o production)
+            $configuracion['mp_mode'] = isset($data['mp_mode']) && in_array($data['mp_mode'], ['sandbox', 'production']) ? $data['mp_mode'] : 'sandbox';
+            $configuracion['mp_habilitado'] = isset($data['mp_habilitado']) ? 1 : 0;
+            
+            // Mantener compatibilidad: también guardar en campos antiguos según el modo seleccionado
+            $modoSeleccionado = $configuracion['mp_mode'];
+            if ($modoSeleccionado === 'production') {
+                $configuracion['mp_access_token'] = $configuracion['mp_access_token_production'];
+                $configuracion['mp_public_key'] = $configuracion['mp_public_key_production'];
+            } else {
+                $configuracion['mp_access_token'] = $configuracion['mp_access_token_sandbox'];
+                $configuracion['mp_public_key'] = $configuracion['mp_public_key_sandbox'];
+            }
+        }
 
         // Validar horas_antes_recordatorio
         if ($configuracion['horas_antes_recordatorio'] < 1 || $configuracion['horas_antes_recordatorio'] > 168) {

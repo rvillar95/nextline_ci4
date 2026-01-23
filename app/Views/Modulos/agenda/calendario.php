@@ -612,6 +612,24 @@
                         </select>
                     </div>
                     
+                    <?php if (!empty($plantillas_pago)): ?>
+                    <div class="form-group">
+                        <label>Tipo de Pago <small class="text-muted">(Opcional)</small></label>
+                        <select name="boton_pago_plantilla_id" id="boton_pago_plantilla_id" class="form-control">
+                            <option value="">-- Sin pago --</option>
+                            <?php foreach ($plantillas_pago as $plantilla) : ?>
+                                <option value="<?= esc($plantilla->id) ?>">
+                                    <?= esc($plantilla->titulo) ?> - 
+                                    <?= number_format($plantilla->monto, 0, ',', '.') ?> <?= esc($plantilla->moneda) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted">
+                            Si selecciona un tipo de pago, se enviará automáticamente el botón de pago al correo del paciente.
+                        </small>
+                    </div>
+                    <?php endif; ?>
+                    
                     <div class="form-group">
                         <label>Motivo</label>
                         <textarea name="motivo" id="motivo" class="form-control" rows="3"></textarea>

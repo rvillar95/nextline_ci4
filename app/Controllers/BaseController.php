@@ -53,6 +53,17 @@ abstract class BaseController extends Controller
         // Do Not Edit This Line
         parent::initController($request, $response, $logger);
         
+        // Asegurar que todas las respuestas HTML tengan charset UTF-8
+        // Esto corrige el problema de tildes y caracteres especiales
+        if (!$response->hasHeader('Content-Type')) {
+            $response->setHeader('Content-Type', 'text/html; charset=UTF-8');
+        } else {
+            $contentType = $response->getHeaderLine('Content-Type');
+            if (strpos($contentType, 'text/html') !== false && strpos($contentType, 'charset') === false) {
+                $response->setHeader('Content-Type', 'text/html; charset=UTF-8');
+            }
+        }
+        
         // Log temporal para debugging de cancelar-cita
         $uri = $request->getUri();
         $path = $uri->getPath();
