@@ -79,14 +79,15 @@ class CancelarHorasController extends BaseController
         
         // Obtener todas las citas en el rango (con y sin paciente)
         // Usar consulta SQL directa para manejar correctamente las fechas en formato DD-MM-YYYY
+        // IMPORTANTE: Filtrar por da.usuario_id (nutricionista dueño del horario) en lugar de a.usuario_id
         $sql = "SELECT da.id, da.fecha, da.hora_inicio, da.hora_fin, da.estado_cita, da.paciente_id, da.calendar_event_id, 
                      p.nombre as paciente_nombre, p.apellido as paciente_apellido, p.email as paciente_email, p.telefono as paciente_telefono,
-                     u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, a.usuario_id
+                     u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, da.usuario_id
                 FROM detalle_agenda da
                 LEFT JOIN agenda a ON a.id = da.agenda_id
                 LEFT JOIN pacientes p ON p.id = da.paciente_id
-                LEFT JOIN usuario u ON u.id = a.usuario_id
-                WHERE a.usuario_id = ?
+                LEFT JOIN usuario u ON u.id = da.usuario_id
+                WHERE da.usuario_id = ?
                   AND STR_TO_DATE(da.fecha, '%d-%m-%Y') >= STR_TO_DATE(?, '%d-%m-%Y')
                   AND STR_TO_DATE(da.fecha, '%d-%m-%Y') <= STR_TO_DATE(?, '%d-%m-%Y')
                   AND da.estado_cita != 'cancelada'
@@ -141,14 +142,15 @@ class CancelarHorasController extends BaseController
         // Y se almacenan en formato DD-MM-YYYY en la BD
         
         // Obtener todas las citas en el rango usando consulta SQL directa
+        // IMPORTANTE: Filtrar por da.usuario_id (nutricionista dueño del horario) en lugar de a.usuario_id
         $sql = "SELECT da.id, da.fecha, da.hora_inicio, da.hora_fin, da.estado_cita, da.paciente_id, da.calendar_event_id,
                      p.nombre as paciente_nombre, p.apellido as paciente_apellido, p.email as paciente_email, p.telefono as paciente_telefono,
-                     u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, a.usuario_id
+                     u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, da.usuario_id
                 FROM detalle_agenda da
                 LEFT JOIN agenda a ON a.id = da.agenda_id
                 LEFT JOIN pacientes p ON p.id = da.paciente_id
-                LEFT JOIN usuario u ON u.id = a.usuario_id
-                WHERE a.usuario_id = ?
+                LEFT JOIN usuario u ON u.id = da.usuario_id
+                WHERE da.usuario_id = ?
                   AND STR_TO_DATE(da.fecha, '%d-%m-%Y') >= STR_TO_DATE(?, '%d-%m-%Y')
                   AND STR_TO_DATE(da.fecha, '%d-%m-%Y') <= STR_TO_DATE(?, '%d-%m-%Y')
                   AND da.estado_cita != 'cancelada'

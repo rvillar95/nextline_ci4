@@ -1295,15 +1295,16 @@ class AgendaController extends BaseController
         $db = \Config\Database::connect();
         
         // Obtener información completa de la cita
+        // IMPORTANTE: Usar da.usuario_id (nutricionista dueño del horario) en lugar de a.usuario_id
         $cita = $db->table('detalle_agenda da')
-            ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo,
-                      a.fecha, a.usuario_id,
+            ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo, da.usuario_id,
+                      a.fecha,
                       p.nombre, p.apellido, p.email as paciente_email,
                       u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, u.correo as nutricionista_email,
                       ma.nombre as modalidad_nombre')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-            ->join('usuario u', 'u.id = a.usuario_id', 'left')
+            ->join('usuario u', 'u.id = da.usuario_id', 'left') // Cambiar a da.usuario_id para obtener el nutricionista correcto
             ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
             ->where('da.id', $detalleAgendaId)
             ->where('da.paciente_id', $pacienteId)
@@ -1878,24 +1879,66 @@ class AgendaController extends BaseController
                 ]);
             }
 
-            // Verificar que la cita no esté ya confirmada
-            if ($cita->estado_cita === 'confirmada') {
+            // Verificar estados que no permiten confirmación
+            if ($cita->estado_cita === 'confirmada' || $cita->estado_cita === 'agendada') {
                 return view('emails/respuesta_cita', [
                     'exito' => true,
-                    'mensaje' => 'La cita ya estaba confirmada previamente.'
+                    'mensaje' => $cita->estado_cita === 'agendada' 
+                        ? 'La cita ya está agendada y pagada.' 
+                        : 'La cita ya estaba confirmada previamente.'
+                ]);
+            }
+            
+            // Usar transacción para evitar race conditions en doble clic
+            $db->transStart();
+            
+            // Re-verificar el estado dentro de la transacción usando SQL directo con FOR UPDATE
+            // Esto bloquea la fila para evitar race conditions
+            $sql = "SELECT * FROM detalle_agenda 
+                    WHERE id = ? AND paciente_id = ? 
+                    FOR UPDATE";
+            $citaActualizada = $db->query($sql, [$detalleAgendaId, $pacienteId])->getRow();
+            
+            if (!$citaActualizada) {
+                $db->transRollback();
+                return view('emails/respuesta_cita', [
+                    'exito' => false,
+                    'mensaje' => 'La cita no existe o ya fue cancelada.'
+                ]);
+            }
+            
+            // Verificar nuevamente el estado después del bloqueo
+            if ($citaActualizada->estado_cita === 'confirmada' || $citaActualizada->estado_cita === 'agendada') {
+                $db->transRollback();
+                return view('emails/respuesta_cita', [
+                    'exito' => true,
+                    'mensaje' => $citaActualizada->estado_cita === 'agendada' 
+                        ? 'La cita ya está agendada y pagada.' 
+                        : 'La cita ya estaba confirmada previamente.'
                 ]);
             }
             
             // Verificar que la cita esté en estado 'en_proceso' (con botón de pago) o 'pendiente'
             $tienePago = false;
-            if ($cita->estado_cita === 'en_proceso') {
+            if ($citaActualizada->estado_cita === 'en_proceso') {
                 // Cita con botón de pago: cambiar a 'pendiente' (esperando que el paciente pague)
-                $db->table('detalle_agenda')
+                // Usar UPDATE con WHERE para asegurar atomicidad (solo actualiza si el estado es 'en_proceso')
+                $actualizado = $db->table('detalle_agenda')
                     ->where('id', $detalleAgendaId)
+                    ->where('estado_cita', 'en_proceso') // Condición adicional para atomicidad
                     ->update([
                         'estado_cita' => 'pendiente',
                         'fecha_confirmacion' => date('Y-m-d H:i:s')
                     ]);
+                
+                if (!$actualizado) {
+                    // Si no se actualizó, significa que otro proceso ya cambió el estado
+                    $db->transRollback();
+                    return view('emails/respuesta_cita', [
+                        'exito' => false,
+                        'mensaje' => 'El estado de la cita cambió. Por favor, intenta nuevamente.'
+                    ]);
+                }
                 
                 // Buscar si hay un pago pendiente para esta cita
                 $pagoModel = new \App\Models\Pago();
@@ -1917,13 +1960,13 @@ class AgendaController extends BaseController
                         if (!$empresaId) {
                             // Si no está en el pago, obtenerlo desde el usuario de la cita (nutricionista)
                             $usuarioModel = new \App\Models\Usuario();
-                            $usuario = $usuarioModel->find($cita->usuario_id);
+                            $usuario = $usuarioModel->find($citaActualizada->usuario_id);
                             
                             // El modelo Usuario retorna array, no objeto
                             $empresaId = is_array($usuario) ? ($usuario['empresa_id'] ?? null) : ($usuario->empresa_id ?? null);
                             
                             if (!$empresaId) {
-                                log_message('error', 'No se pudo obtener empresa_id. Pago ID: ' . $pago->id . ', Usuario ID: ' . $cita->usuario_id);
+                                log_message('error', 'No se pudo obtener empresa_id. Pago ID: ' . $pago->id . ', Usuario ID: ' . $citaActualizada->usuario_id);
                                 throw new \Exception('No se pudo obtener la empresa. Pago ID: ' . $pago->id);
                             }
                             
@@ -2011,23 +2054,61 @@ class AgendaController extends BaseController
                 } else {
                     log_message('error', 'CONFIRMAR CITA: No hay pago pendiente o no tiene preference_id. Pago: ' . ($pago ? 'existe pero sin preference_id' : 'no existe'));
                 }
-            } elseif ($cita->estado_cita === 'pendiente') {
-                // Cita sin botón de pago: cambiar a 'confirmada'
-                $db->table('detalle_agenda')
+            } elseif ($citaActualizada->estado_cita === 'pendiente') {
+                // Estado 'pendiente': verificar si hay pago pendiente antes de confirmar
+                $pagoModel = new \App\Models\Pago();
+                $pagoPendiente = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+                    ->where('estado_pago', 'pendiente')
+                    ->first();
+                
+                if ($pagoPendiente) {
+                    // Si hay pago pendiente, NO se debe confirmar la cita
+                    // El estado debe permanecer en 'pendiente' hasta que se complete el pago
+                    $db->transRollback();
+                    return view('emails/respuesta_cita', [
+                        'exito' => false,
+                        'mensaje' => 'Esta cita tiene un pago pendiente. Por favor, completa el pago antes de confirmar. Revisa tu correo para el enlace de pago.'
+                    ]);
+                }
+                
+                // Solo si NO hay pago pendiente, cambiar a 'confirmada'
+                // Usar UPDATE con WHERE para asegurar atomicidad
+                $actualizado = $db->table('detalle_agenda')
                     ->where('id', $detalleAgendaId)
+                    ->where('estado_cita', 'pendiente') // Condición adicional para atomicidad
                     ->update([
                         'estado_cita' => 'confirmada',
                         'fecha_confirmacion' => date('Y-m-d H:i:s')
                     ]);
+                
+                if (!$actualizado) {
+                    // Si no se actualizó, significa que otro proceso ya cambió el estado
+                    $db->transRollback();
+                    return view('emails/respuesta_cita', [
+                        'exito' => false,
+                        'mensaje' => 'El estado de la cita cambió. Por favor, intenta nuevamente.'
+                    ]);
+                }
             } else {
+                $db->transRollback();
                 return view('emails/respuesta_cita', [
                     'exito' => false,
-                    'mensaje' => 'Esta cita no puede ser confirmada porque su estado actual es: ' . ($cita->estado_cita ?? 'desconocido') . '.'
+                    'mensaje' => 'Esta cita no puede ser confirmada porque su estado actual es: ' . ($citaActualizada->estado_cita ?? 'desconocido') . '.'
+                ]);
+            }
+            
+            // Confirmar la transacción
+            $db->transComplete();
+            
+            if ($db->transStatus() === false) {
+                return view('emails/respuesta_cita', [
+                    'exito' => false,
+                    'mensaje' => 'Ocurrió un error al procesar la confirmación. Por favor, intenta nuevamente.'
                 ]);
             }
 
             // Obtener usuario_id del nutricionista para crear el evento en su calendario
-            $usuarioId = $cita->usuario_id ?? null;
+            $usuarioId = $citaActualizada->usuario_id ?? null;
 
             // Obtener configuraciones del nutricionista
             $configuracionModel = new \App\Models\EmpresaConfiguracion();
@@ -2207,14 +2288,14 @@ class AgendaController extends BaseController
             // Obtener información completa de la cita ANTES de cancelarla (incluyendo datos del paciente para WhatsApp)
             log_message('info', 'CANCELAR DESDE EMAIL: Obteniendo información completa de la cita');
             $citaCompleta = $db->table('detalle_agenda da')
-                ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo, da.calendar_event_id,
-                          a.fecha, a.usuario_id,
+                ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo, da.calendar_event_id, da.usuario_id,
+                          a.fecha,
                           p.id as paciente_id_db, p.nombre, p.apellido, p.email as paciente_email, p.telefono as paciente_telefono,
                           u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, u.correo as nutricionista_email,
                           ma.nombre as modalidad_nombre')
                 ->join('agenda a', 'a.id = da.agenda_id', 'left')
                 ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-                ->join('usuario u', 'u.id = a.usuario_id', 'left')
+                ->join('usuario u', 'u.id = da.usuario_id', 'left') // Cambiar a da.usuario_id para obtener el nutricionista correcto
                 ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
                 ->where('da.id', $detalleAgendaId)
                 ->where('da.paciente_id', $pacienteId)

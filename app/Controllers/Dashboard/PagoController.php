@@ -36,36 +36,71 @@ class PagoController extends BaseController
         $pago = new Pago();
         $draw = intval($this->request->getGet("draw"));
         
+        // Obtener empresa_id del usuario logueado por defecto
+        $usuario = session()->get('usuario');
+        $empresaIdUsuario = $usuario['empresa_id'] ?? null;
+        
+        // Permitir filtrar por otra empresa si se pasa como parámetro (solo para Super Admin)
         $empresa_id = $this->request->getGet('empresa_id');
+        if (empty($empresa_id) && $empresaIdUsuario) {
+            $empresa_id = $empresaIdUsuario;
+        }
+        
+        // Verificar si el usuario es Super Admin (poder = 3)
+        $esSuperAdmin = isset($usuario['poder']) && $usuario['poder'] == 3;
+        
+        // Log para debugging
+        log_message('debug', 'PagoController::getPagos() - Usuario empresa_id: ' . ($empresaIdUsuario ?? 'NULL') . ', Filtro empresa_id: ' . ($empresa_id ?? 'NULL') . ', Es Super Admin: ' . ($esSuperAdmin ? 'Sí' : 'No'));
+        
         $tipo_pago = $this->request->getGet('tipo_pago');
         $estado_pago = $this->request->getGet('estado_pago');
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         
-        $query = $pago;
+        // Construir query base usando Query Builder para mejor control
+        $db = \Config\Database::connect();
         
-        if (!empty($empresa_id)) {
-            $query->where('empresa_id', $empresa_id);
-        }
+        // Función auxiliar para aplicar filtros
+        $applyFilters = function($builder) use ($empresa_id, $empresaIdUsuario, $tipo_pago, $estado_pago, $fecha_desde, $fecha_hasta, $esSuperAdmin) {
+            // Filtrar por empresa (obligatorio si el usuario tiene empresa, a menos que sea Super Admin)
+            if (!empty($empresa_id)) {
+                $builder->where('empresa_id', $empresa_id);
+            } elseif ($empresaIdUsuario && !$esSuperAdmin) {
+                // Si el usuario tiene empresa pero no se pasó empresa_id, filtrar por la del usuario
+                // (solo si NO es Super Admin)
+                $builder->where('empresa_id', $empresaIdUsuario);
+            }
+            // Si es Super Admin y no se especificó empresa_id, mostrar todos los pagos
 
-        if (!empty($tipo_pago)) {
-            $query->where('tipo_pago', $tipo_pago);
-        }
+            if (!empty($tipo_pago)) {
+                $builder->where('tipo_pago', $tipo_pago);
+            }
 
-        if (!empty($estado_pago)) {
-            $query->where('estado_pago', $estado_pago);
-        }
+            if (!empty($estado_pago)) {
+                $builder->where('estado_pago', $estado_pago);
+            }
 
-        if (!empty($fecha_desde)) {
-            $query->where('fecha_pago >=', $fecha_desde);
-        }
+            if (!empty($fecha_desde)) {
+                $builder->where('fecha_pago >=', $fecha_desde);
+            }
 
-        if (!empty($fecha_hasta)) {
-            $query->where('fecha_pago <=', $fecha_hasta);
-        }
+            if (!empty($fecha_hasta)) {
+                $builder->where('fecha_pago <=', $fecha_hasta);
+            }
+        };
         
-        $rows = $query->orderBy('fecha_pago', 'DESC')
-                     ->findAll();
+        // Contar total de registros con los filtros aplicados
+        $countBuilder = $db->table('pagos');
+        $applyFilters($countBuilder);
+        $recordsTotal = $countBuilder->countAllResults(false);
+        
+        // Obtener registros ordenados (fecha_pago DESC, luego fcreacion DESC si fecha_pago es NULL)
+        $dataBuilder = $db->table('pagos');
+        $applyFilters($dataBuilder);
+        $rows = $dataBuilder->orderBy('fecha_pago', 'DESC')
+                           ->orderBy('fcreacion', 'DESC')
+                           ->get()
+                           ->getResult();
 
         $empresaModel = new Empresa();
         $data = array();
@@ -78,6 +113,7 @@ class PagoController extends BaseController
                 'mensual' => '<span class="badge bg-success">Mensual</span>',
                 'anual' => '<span class="badge bg-info">Anual</span>',
                 'extra' => '<span class="badge bg-warning">Extra</span>',
+                'cita' => '<span class="badge bg-info">Cita</span>',
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
@@ -105,7 +141,7 @@ class PagoController extends BaseController
                 $montoFormateado,
                 $tipoBadge,
                 $estadoBadge,
-                esc($r->fecha_pago ? date('d/m/Y', strtotime($r->fecha_pago)) : ''),
+                esc($r->fecha_pago ? date('d/m/Y', strtotime($r->fecha_pago)) : ($r->fcreacion ? date('d/m/Y', strtotime($r->fcreacion)) : '')),
                 esc($r->referencia ?? ''),
                 $botones
             );
@@ -113,10 +149,13 @@ class PagoController extends BaseController
 
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $pago->countAllResults(),
+            "recordsTotal" => $recordsTotal,
             "recordsFiltered" => count($data),
             "data" => $data
         );
+
+        // Log para debugging
+        log_message('debug', 'PagoController::getPagos() - Empresa ID: ' . ($empresa_id ?? 'NULL') . ', Total registros: ' . $recordsTotal . ', Datos encontrados: ' . count($data));
 
         return $this->response->setJSON($output);
     }

@@ -141,6 +141,29 @@ class AccesoService
     }
     
     /**
+     * Verificar si empresa tiene acceso a un módulo por su ruta
+     * Útil para verificar acceso desde controladores sin conocer el ID del módulo
+     */
+    public function tieneAccesoModuloPorRuta($empresaId, $rutaModulo)
+    {
+        $db = \Config\Database::connect();
+        
+        // Obtener ID del módulo por ruta
+        $modulo = $db->table('modulo')
+            ->select('id')
+            ->where('ruta', $rutaModulo)
+            ->where('estado', 'A')
+            ->get()
+            ->getRow();
+        
+        if (!$modulo) {
+            return false;
+        }
+        
+        return $this->tieneAccesoModulo($empresaId, $modulo->id);
+    }
+    
+    /**
      * Calcular precio total mensual de una empresa
      */
     public function calcularPrecioTotalMensual($empresaId)

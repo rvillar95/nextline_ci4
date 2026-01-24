@@ -397,6 +397,9 @@ exit(); */
                     <!-- Secciones de Add-ons (Super Admin) -->
                     <?php echo $this->renderSection("addon/lista"); ?>
                     
+                    <!-- Secciones de Facturación (Super Admin) -->
+                    <?php echo $this->renderSection("facturacion/lista"); ?>
+                    
                     <!-- Secciones de Listado de Materiales -->
                     <?php echo $this->renderSection("listado_material/lista"); ?>
                     <?php echo $this->renderSection("listado_material/registro"); ?>
@@ -444,6 +447,12 @@ exit(); */
                     <?php echo $this->renderSection("pago/registro"); ?>
                     <?php echo $this->renderSection("pago/editar"); ?>
                     <!-- END Section Pagos -->
+                    
+                    <!-- Secciones de Botones de Pago (Mercado Pago) -->
+                    <?php echo $this->renderSection("boton_pago/lista"); ?>
+                    <?php echo $this->renderSection("boton_pago/crear"); ?>
+                    <?php echo $this->renderSection("boton_pago/ver"); ?>
+                    <!-- END Section Botones de Pago -->
                     
                     <!-- Secciones de Configuraciones -->
                     <?php echo $this->renderSection("configuracion/index"); ?>
