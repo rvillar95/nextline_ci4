@@ -42,6 +42,12 @@ class PacienteController extends BaseController
         $busqueda = $this->request->getGet('busqueda');
         $nutricionista_id = $this->request->getGet('nutricionista_id');
         
+        // Por defecto, mostrar solo pacientes del nutricionista logueado
+        $usuario_id = session()->get('usuario')['id'];
+        if (empty($nutricionista_id)) {
+            $nutricionista_id = $usuario_id;
+        }
+        
         $query = $paciente;
         
         if (!empty($estado)) {
@@ -119,9 +125,13 @@ class PacienteController extends BaseController
             );
         }
 
+        // Contar total de registros para el nutricionista y estado A
+        $totalModel = new Paciente();
+        $recordsTotal = $totalModel->where('estado', 'A')->where('nutricionista_id', $nutricionista_id)->countAllResults();
+
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $paciente->where('estado', 'A')->countAllResults(),
+            "recordsTotal" => $recordsTotal,
             "recordsFiltered" => count($data),
             "data" => $data
         );
