@@ -124,6 +124,8 @@
             <form action="<?= base_url('dashboard/paciente/update') ?>" method="post">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= esc($paciente->id) ?>">
+                <!-- Mantener/asegurar nutricionista asociado al paciente -->
+                <input type="hidden" name="nutricionista_id" value="<?= old('nutricionista_id', $paciente->nutricionista_id ?? session()->get('usuario')['id']) ?>">
                 
                 <!-- Información Básica -->
                 <div class="section-card">
