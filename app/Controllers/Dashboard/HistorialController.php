@@ -55,10 +55,19 @@ class HistorialController extends BaseController
         // Obtener empresa_id del usuario
         $usuario = session()->get('usuario');
         $empresaId = $usuario['empresa_id'] ?? null;
+        $usuario_id = $usuario['id'] ?? null;
         
         // Si hay búsqueda por tags, usar el método buscarPorTags
         if (!empty($tags_busqueda)) {
             $rows = $historial->buscarPorTags($tags_busqueda, $empresaId);
+            // filtrar por nutricionista para que cada usuario vea solo sus historiales
+            if ($usuario_id) {
+                $rows = array_filter($rows, function($r) use ($usuario_id) {
+                    return isset($r->nutricionista_id) && $r->nutricionista_id == $usuario_id;
+                });
+                // Reindex array
+                $rows = array_values($rows);
+            }
         } else {
             $query = $historial;
             
@@ -82,6 +91,11 @@ class HistorialController extends BaseController
 
             if (!empty($fecha_hasta)) {
                 $query->where('fecha_consulta <=', $fecha_hasta);
+            }
+            
+            // Asegurar que sólo se muestren historiales del nutricionista logueado
+            if ($usuario_id) {
+                $query->where('nutricionista_id', $usuario_id);
             }
             
             $rows = $query->orderBy('fecha_consulta', 'DESC')
@@ -193,9 +207,16 @@ class HistorialController extends BaseController
             );
         }
 
+        // Calcular recordsTotal considerando nutricionista
+        $totalModel = new HistorialClinico();
+        $totalModel = $totalModel->where('estado', 'A');
+        if ($usuario_id) {
+            $totalModel = $totalModel->where('nutricionista_id', $usuario_id);
+        }
+
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $historial->where('estado', 'A')->countAllResults(),
+            "recordsTotal" => $totalModel->countAllResults(),
             "recordsFiltered" => count($data),
             "data" => $data
         );
