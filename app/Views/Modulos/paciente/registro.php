@@ -114,6 +114,8 @@
 
             <form action="<?= base_url('dashboard/paciente/registrar') ?>" method="post">
                 <?= csrf_field() ?>
+                <!-- Asociar paciente al nutricionista que lo crea -->
+                <input type="hidden" name="nutricionista_id" value="<?= session()->get('usuario')['id'] ?>">
                 
                 <!-- Información Básica -->
                 <div class="section-card">
