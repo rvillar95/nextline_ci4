@@ -21,11 +21,38 @@ class CSRFExceptWebhook extends BaseCSRF
         'api/mercadopago/webhook/*',
         'cancelar-cita',
         'confirmar-cita',
-        'inicio-sesion'
+        'inicio-sesion',
+        // Rutas AJAX de Plan Alimentario
+        'dashboard/plan-alimentario/actividades',
+        'dashboard/plan-alimentario/intercambios',
+        'dashboard/plan-alimentario/calcular-calorimetria',
+        'dashboard/plan-alimentario/crear-plan',
+        'dashboard/plan-alimentario/distribuir-comidas',
+        'dashboard/plan-alimentario/calorimetria/*',
+        'dashboard/plan-alimentario/plan/*',
+        'dashboard/plan-alimentario/comidas/*',
+        'dashboard/plan-alimentario/get-paciente-data',
+        'dashboard/plan-alimentario/vista-calorimetria',
+        'dashboard/plan-alimentario/vista-plan',
+        'dashboard/plan-alimentario/vista-distribucion',
+        // Agenda: guardar mediciones (AJAX; protegido por sesión)
+        'dashboard/agenda/guardarMediciones',
+        // Historial: cálculo de composición corporal (AJAX; protegido por sesión)
+        'dashboard/historial/calcular-2-componentes',
+        'dashboard/historial/calcular-4-componentes',
+        'dashboard/historial/calcular-5-componentes',
+        'dashboard/historial/calcular-somatotipo'
     ];
 
     public function before(RequestInterface $request, $arguments = null)
     {
+        // Las peticiones GET no requieren CSRF (son seguras por naturaleza)
+        // Solo aplicar CSRF a métodos no seguros (POST, PUT, DELETE, PATCH)
+        $method = $request->getMethod();
+        if (in_array(strtoupper($method), ['GET', 'HEAD', 'OPTIONS'], true)) {
+            return; // No aplicar CSRF a métodos seguros
+        }
+        
         $uri = $request->getUri();
         $path = $uri->getPath();
         
@@ -75,7 +102,8 @@ class CSRFExceptWebhook extends BaseCSRF
             // Método 3: Match parcial (para rutas que contengan el patrón)
             if (strpos($path, $except) !== false || strpos($path, ltrim($except, '/')) !== false) {
                 if (strpos($path, 'mercadopago/webhook') !== false || 
-                    strpos($path, 'whatsapp/webhook') !== false) {
+                    strpos($path, 'whatsapp/webhook') !== false ||
+                    strpos($path, 'plan-alimentario') !== false) {
                     error_log('CSRFExceptWebhook: Ruta PARCIAL ' . $path . ' excluida del CSRF (contiene: ' . $except . ')');
                     log_message('info', 'CSRFExceptWebhook: Ruta PARCIAL ' . $path . ' excluida del CSRF (contiene: ' . $except . ')');
                 }

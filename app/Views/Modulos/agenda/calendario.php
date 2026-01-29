@@ -1529,17 +1529,19 @@ function cargarInformacionCita(detalleAgendaId) {
             html += '<p class="mb-2"><strong>Estado del Horario:</strong> ';
             html += response.estado == 'disponible' ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-warning">Ocupado</span>';
             html += '</p>';
-            if (response.estado_cita) {
-                var estadoBadge = {
-                    'pendiente': '<span class="badge" style="background-color: #FFA726; color: white;">Pendiente</span>',
-                    'confirmada': '<span class="badge" style="background-color: #4A90E2; color: white;">Confirmada</span>',
-                    'en_proceso': '<span class="badge" style="background-color: #FFA726; color: white;">En Proceso</span>',
-                    'completada': '<span class="badge" style="background-color: #90A4AE; color: white;">Completada</span>',
-                    'cancelada': '<span class="badge bg-danger">Cancelada</span>',
-                    'no_asistio': '<span class="badge bg-secondary">No Asistió</span>'
-                }[response.estado_cita] || '<span class="badge bg-secondary">' + response.estado_cita + '</span>';
-                html += '<p class="mb-2"><strong>Estado de la Cita:</strong> ' + estadoBadge + '</p>';
-            }
+            var estadoCitaRaw = (response.estado_cita || '').toString().trim().toLowerCase();
+            if (!estadoCitaRaw && response.paciente) estadoCitaRaw = 'pendiente';
+            var estadoBadgeMap = {
+                'pendiente': '<span class="badge" style="background-color: #FFA726; color: white;">Pendiente</span>',
+                'agendada': '<span class="badge bg-primary">Agendada</span>',
+                'confirmada': '<span class="badge" style="background-color: #4A90E2; color: white;">Confirmada</span>',
+                'en_proceso': '<span class="badge" style="background-color: #FFA726; color: white;">En Proceso</span>',
+                'completada': '<span class="badge" style="background-color: #90A4AE; color: white;">Completada</span>',
+                'cancelada': '<span class="badge bg-danger">Cancelada</span>',
+                'no_asistio': '<span class="badge bg-secondary">No Asistió</span>'
+            };
+            var estadoBadge = estadoBadgeMap[estadoCitaRaw] || (response.estado_cita ? '<span class="badge bg-secondary">' + response.estado_cita + '</span>' : '<span class="badge" style="background-color: #FFA726; color: white;">Pendiente</span>');
+            html += '<p class="mb-2"><strong>Estado de la Cita:</strong> ' + estadoBadge + '</p>';
             html += '</div></div></div>';
             
             // Información del paciente (si existe)

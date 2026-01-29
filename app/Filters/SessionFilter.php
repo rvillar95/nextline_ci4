@@ -103,12 +103,33 @@ final class SessionFilter implements FilterInterface
         // 2) Requiere sesión
         $user = session('usuario');
         if ($user === null) {
+            // Si es AJAX, devolver JSON en lugar de redirect
+            if ($request->isAJAX() || $request->hasHeader('X-Requested-With')) {
+                return service('response')
+                    ->setContentType('application/json')
+                    ->setStatusCode(401)
+                    ->setJSON([
+                        'error' => 'No autorizado',
+                        'unauthorized' => true,
+                        'redirect' => route_to('login')
+                    ]);
+            }
             return redirect()->to(route_to('login'));
         }
 
         // 3) Permisos por perfil (con o sin caché)
         $perfilId = (int) ($user['perfil_id'] ?? 0);
         if ($perfilId <= 0) {
+            // Si es AJAX, devolver JSON en lugar de redirect
+            if ($request->isAJAX() || $request->hasHeader('X-Requested-With')) {
+                return service('response')
+                    ->setContentType('application/json')
+                    ->setStatusCode(403)
+                    ->setJSON([
+                        'error' => 'Perfil inválido o no asignado',
+                        'unauthorized' => true
+                    ]);
+            }
             return $this->deny('Perfil inválido o no asignado');
         }
 
@@ -199,6 +220,18 @@ final class SessionFilter implements FilterInterface
         }
 
         // 6) Denegar si nada coincide
+        // Log para debugging de plan-alimentario
+        if (strpos($path, 'plan-alimentario') !== false) {
+            log_message('error', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
+            log_message('error', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
+            log_message('error', 'SessionFilter: Rutas permitidas que contienen "plan-alimentario":');
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], 'plan-alimentario') !== false) {
+                    log_message('error', '  - ' . $rule['pattern']);
+                }
+            }
+        }
+        
         if (strpos($path, 'generarPDF') !== false || strpos($path, 'agenda/agendar') !== false || strpos($path, 'calendar') !== false || strpos($path, 'calendario') !== false || strpos($path, 'paquete') !== false) {
             log_message('error', 'SessionFilter: Ruta ' . $path . ' DENEGADA - no tiene permisos');
             log_message('error', 'SessionFilter: Total de reglas permitidas: ' . count($allowed));
@@ -360,7 +393,7 @@ final class SessionFilter implements FilterInterface
         }
         // 3) Heurística por último segmento (evita 'lista'/'registro')
         $last = basename($pattern);
-        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view', 'generarPDF'];
+        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view', 'generarPDF', 'calorimetria', 'plan', 'comidas'];
         return in_array($last, $verbsId, true);
     }
 
@@ -515,8 +548,18 @@ final class SessionFilter implements FilterInterface
     /** Denegación (mantengo tu patrón de redirect con flash) */
     private function deny(string $message)
     {
+        // Si es una petición AJAX, devolver JSON en lugar de redirect
+        $request = service('request');
+        if ($request->isAJAX() || $request->hasHeader('X-Requested-With')) {
+            return service('response')
+                ->setContentType('application/json')
+                ->setStatusCode(403)
+                ->setJSON([
+                    'error' => $message,
+                    'unauthorized' => true
+                ]);
+        }
+        
         return redirect()->back()->withInput()->with('errors', $message);
-        // Alternativa API-friendly:
-        // return service('response')->setStatusCode(403)->setBody($message);
     }
 }

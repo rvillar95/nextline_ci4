@@ -324,6 +324,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('consulta', 'Dashboard\AgendaController::consulta');
         $routes2->post('iniciarConsulta', 'Dashboard\AgendaController::iniciarConsulta');
         $routes2->post('terminarConsulta', 'Dashboard\AgendaController::terminarConsulta');
+        $routes2->get('getConsultaActiva', 'Dashboard\AgendaController::getConsultaActiva');
         $routes2->post('guardarNotasConsulta', 'Dashboard\AgendaController::guardarNotasConsulta');
         $routes2->get('estadisticas', 'Dashboard\AgendaController::estadisticas');
         $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
@@ -337,6 +338,33 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('', 'Dashboard\CancelarHorasController::index');
         $routes2->post('obtener-citas', 'Dashboard\CancelarHorasController::obtenerCitas');
         $routes2->post('procesar', 'Dashboard\CancelarHorasController::procesarCancelacion');
+    });
+
+    // Plan Alimentario y Calorimetría
+    $routes->group('plan-alimentario', function ($routes2) {
+        // Vista principal
+        $routes2->get('', 'Dashboard\PlanAlimentarioController::index');
+        $routes2->get('index', 'Dashboard\PlanAlimentarioController::index');
+        
+        // Vistas parciales (para cargar con AJAX)
+        $routes2->get('vista-calorimetria', 'Dashboard\PlanAlimentarioController::vistaCalorimetria');
+        $routes2->get('vista-plan', 'Dashboard\PlanAlimentarioController::vistaPlan');
+        $routes2->get('vista-distribucion', 'Dashboard\PlanAlimentarioController::vistaDistribucion');
+        $routes2->get('get-paciente-data', 'Dashboard\PlanAlimentarioController::getPacienteData');
+        
+        // Calorimetría
+        $routes2->post('calcular-calorimetria', 'Dashboard\PlanAlimentarioController::calcularCalorimetria');
+        $routes2->get('calorimetria/(:num)', 'Dashboard\PlanAlimentarioController::getCalorimetria/$1');
+        $routes2->get('actividades', 'Dashboard\PlanAlimentarioController::getActividades');
+        
+        // Plan Alimentario
+        $routes2->post('crear-plan', 'Dashboard\PlanAlimentarioController::crearPlan');
+        $routes2->get('plan/(:num)', 'Dashboard\PlanAlimentarioController::getPlan/$1');
+        $routes2->get('intercambios', 'Dashboard\PlanAlimentarioController::getIntercambios');
+        
+        // Distribución por Comidas
+        $routes2->post('distribuir-comidas', 'Dashboard\PlanAlimentarioController::distribuirComidas');
+        $routes2->get('comidas/(:num)', 'Dashboard\PlanAlimentarioController::getComidas/$1');
     });
 
     $routes->group('pago', function ($routes2) {

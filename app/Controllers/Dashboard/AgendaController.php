@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\AgendaPaciente;
 use App\Models\Paciente;
 use App\Models\HistorialClinico;
+use App\Models\MetodoCalculo;
 use App\Models\ModuloDetalle;
 use App\Models\BotonPagoPlantilla;
 use App\Models\EmpresaConfiguracion;
@@ -298,7 +299,7 @@ class AgendaController extends BaseController
                 'nombre' => $cita->modalidad_nombre ?? 'No definida'
             ],
             'estado' => $cita->estado == 1 ? 'disponible' : 'ocupado',
-            'estado_cita' => $cita->estado_cita ?? null,
+            'estado_cita' => isset($cita->estado_cita) && $cita->estado_cita !== '' && $cita->estado_cita !== null ? trim($cita->estado_cita) : ($cita->paciente_id ? 'pendiente' : null),
             'tipo_consulta' => $cita->tipo_consulta ?? null,
             'motivo' => $cita->motivo ?? null,
             'observaciones' => $cita->observaciones ?? null,
@@ -663,6 +664,7 @@ class AgendaController extends BaseController
                 }
             }
 
+            // No reenviar el mismo correo de confirmación: ya se envió al agendar. Solo WhatsApp si está habilitado.
             // Enviar WhatsApp cuando se confirma la cita (solo si está habilitado)
             // Incluir el enlace de Meet si está disponible (para citas online)
             log_message('info', 'CONFIRMAR CITA (Dashboard): Verificando configuración de WhatsApp');
@@ -709,15 +711,21 @@ class AgendaController extends BaseController
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
 
-        // Verificar que el detalle_agenda existe y pertenece al usuario
-        $detalle = $db->table('detalle_agenda')
-            ->where('id', $id)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id IS NOT NULL') // Debe tener paciente asignado
+        // Obtener datos completos de la cita ANTES de cancelar (para enviar email al paciente, igual que módulo Cancelar Horas)
+        $citaCompleta = $db->table('detalle_agenda da')
+            ->select('da.id, da.fecha, da.hora_inicio, da.hora_fin, da.estado_cita, da.paciente_id,
+                     p.nombre as paciente_nombre, p.apellido as paciente_apellido, p.email as paciente_email,
+                     u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->join('pacientes p', 'p.id = da.paciente_id', 'left')
+            ->join('usuario u', 'u.id = da.usuario_id', 'left')
+            ->where('da.id', $id)
+            ->where('da.usuario_id', $usuario_id)
+            ->where('da.paciente_id IS NOT NULL')
             ->get()
             ->getRow();
 
-        if (!$detalle) {
+        if (!$citaCompleta) {
             return $this->response->setJSON([
                 'error' => 'No autorizado',
                 'message' => 'No tiene permiso para modificar esta cita o la cita no existe'
@@ -739,6 +747,19 @@ class AgendaController extends BaseController
             ->update($dataUpdate);
 
         if ($updated) {
+            // Enviar email al paciente (mismo correo que módulo Cancelar Horas)
+            if (!empty($citaCompleta->paciente_email)) {
+                $configuracionModel = new EmpresaConfiguracion();
+                $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
+                if ($configuracion['enviar_email'] ?? 1) {
+                    try {
+                        $this->enviarEmailCancelacionPaciente($citaCompleta, $motivo);
+                    } catch (\Exception $e) {
+                        log_message('error', 'CANCELAR CITA (Lista): Error al enviar email al paciente: ' . $e->getMessage());
+                    }
+                }
+            }
+
             $response = $this->response->setJSON([
                 'success' => true, 
                 'message' => 'Cita cancelada y horario liberado',
@@ -749,6 +770,70 @@ class AgendaController extends BaseController
         } else {
             return $this->response->setJSON(['error' => 'Error al cancelar la cita'])->setStatusCode(500);
         }
+    }
+
+    /**
+     * Enviar email de cancelación al paciente (misma plantilla y lógica que módulo Cancelar Horas)
+     */
+    private function enviarEmailCancelacionPaciente($cita, $motivoCancelacion = null)
+    {
+        if (empty($cita->paciente_email)) {
+            return false;
+        }
+
+        $configuracionModel = new EmpresaConfiguracion();
+        $usuario_id = session()->get('usuario')['id'];
+        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
+
+        $estadoCita = $cita->estado_cita ?? 'pendiente';
+        $mapEstados = [
+            'pendiente' => 'mensaje_cancelacion_pendiente',
+            'confirmada' => 'mensaje_cancelacion_confirmada',
+            'agendada' => 'mensaje_cancelacion_pendiente',
+            'en_proceso' => 'mensaje_cancelacion_en_proceso'
+        ];
+        $campo = $mapEstados[$estadoCita] ?? 'mensaje_cancelacion_pendiente';
+        $mensaje = $configuracion[$campo] ?? '';
+
+        if (empty($mensaje)) {
+            $mensaje = "Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita programada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]";
+        }
+
+        if ($motivoCancelacion) {
+            $mensaje .= "\n\nMotivo: " . htmlspecialchars(trim($motivoCancelacion), ENT_QUOTES, 'UTF-8');
+        }
+
+        $fechaRaw = $cita->fecha ?? '';
+        if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaRaw, $m)) {
+            $fechaFormateada = $m[1] . '/' . $m[2] . '/' . $m[3];
+        } else {
+            $fechaFormateada = $fechaRaw ? date('d/m/Y', strtotime(str_replace('/', '-', $fechaRaw))) : '';
+        }
+        $horaFormateada = date('H:i', strtotime($cita->hora_inicio));
+        $nombrePaciente = trim(($cita->paciente_nombre ?? '') . ' ' . ($cita->paciente_apellido ?? ''));
+        $nombreNutricionista = trim(($cita->nutricionista_nombre ?? '') . ' ' . ($cita->nutricionista_apellido ?? ''));
+
+        $mensaje = str_replace('[NOMBRE_PACIENTE]', $nombrePaciente, $mensaje);
+        $mensaje = str_replace('[FECHA]', $fechaFormateada, $mensaje);
+        $mensaje = str_replace('[HORA]', $horaFormateada, $mensaje);
+        $mensaje = str_replace('[NOMBRE_NUTRICIONISTA]', $nombreNutricionista, $mensaje);
+
+        // Si el mensaje viene de BD/config con "\n" literal (backslash+n), convertirlo a salto real para que nl2br genere <br>
+        $mensaje = str_replace(["\\n", "\\r\\n", "\\r"], ["\n", "\n", "\n"], $mensaje);
+        $mensajeHtml = nl2br($mensaje);
+
+        $email = Services::email();
+        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'Sistema de Agenda'));
+        $email->setTo($cita->paciente_email);
+        $email->setSubject('Cancelación de Cita - ' . ($nombreNutricionista ?: 'Nutricionista'));
+        $email->setMessage(view('emails/cancelacion_cita_paciente', [
+            'paciente_nombre' => $nombrePaciente,
+            'fecha' => $fechaFormateada,
+            'hora' => $horaFormateada,
+            'mensaje' => $mensajeHtml,
+            'nutricionista_nombre' => $nombreNutricionista
+        ]));
+        return $email->send();
     }
 
     public function getAgenda()
@@ -791,7 +876,8 @@ class AgendaController extends BaseController
         foreach ($rows as $r) {
             $nombrePaciente = trim(($r->nombre ?? '') . ' ' . ($r->apellido ?? ''));
 
-            $estadoBadge = match ($r->estado_cita) {
+            $estadoBadge = match (strtolower(trim((string)($r->estado_cita ?? '')))) {
+                'pendiente' => '<span class="badge bg-warning text-dark">Pendiente</span>',
                 'agendada' => '<span class="badge bg-primary">Agendada</span>',
                 'confirmada' => '<span class="badge bg-success">Confirmada</span>',
                 'en_proceso' => '<span class="badge bg-warning">En Proceso</span>',
@@ -2439,6 +2525,7 @@ class AgendaController extends BaseController
             return redirect()->to(base_url('dashboard/agenda/calendario'))
                 ->with('error', 'Debe seleccionar una cita para iniciar la consulta');
         }
+        $detalleAgendaId = (int) $detalleAgendaId;
 
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
@@ -2464,13 +2551,40 @@ class AgendaController extends BaseController
         $data['cita'] = $cita;
         $data['fecha'] = $cita->fecha ?: $cita->fecha_agenda;
 
-        // Buscar si ya existe un registro de historial clínico para esta cita
+        // Buscar si ya existe un registro de historial clínico para esta cita (incluir soft-deleted para mostrar datos)
         $historialModel = new HistorialClinico();
-        $historialExistente = $historialModel->where('detalle_agenda_id', $detalleAgendaId)
+        $historialExistente = $historialModel->withDeleted()
+            ->where('detalle_agenda_id', $detalleAgendaId)
             ->where('paciente_id', $cita->paciente_id)
             ->first();
-        
-        $data['historial'] = $historialExistente;
+
+        // Pasar historial como array para que la vista pueda hacer json_encode sin fallos (objetos/fechas)
+        if ($historialExistente) {
+            $historialArray = is_object($historialExistente) ? (array) $historialExistente : $historialExistente;
+            foreach ($historialArray as $k => $v) {
+                if ($v instanceof \DateTimeInterface) {
+                    $historialArray[$k] = $v->format('Y-m-d H:i:s');
+                }
+            }
+            $data['historial'] = $historialArray;
+        } else {
+            $data['historial'] = [];
+        }
+
+        // Cargar exámenes bioquímicos del historial (si existe)
+        $data['examenes_bioquimicos'] = [];
+        if (!empty($historialExistente) && $historialExistente->id) {
+            $examenModel = new \App\Models\HistorialExamenBioquimico();
+            $data['examenes_bioquimicos'] = $examenModel->getPorHistorial($historialExistente->id);
+        }
+
+        // Cargar tendencia de consumo (tabla normalizada por grupo)
+        $data['tendencia_consumo'] = [];
+        $data['tendencia_grupos'] = \App\Models\HistorialTendenciaConsumo::getGrupos();
+        if (!empty($historialExistente) && $historialExistente->id) {
+            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+            $data['tendencia_consumo'] = $tendenciaModel->getPorHistorial($historialExistente->id);
+        }
 
         // Cargar tags sugeridos y tags existentes desde detalle_agenda
         $usuario = session()->get('usuario');
@@ -2509,6 +2623,34 @@ class AgendaController extends BaseController
             ->getRow();
         
         $data['consulta_anterior'] = $consultaAnterior;
+
+        // Cargar métodos de cálculo disponibles (igual que en historial/editar)
+        $perfilId = $usuario['perfil_id'];
+        $rutasPermitidas = $modulo->getAllowedByPerfil($perfilId, $empresaId);
+        $metodosDisponibles = [];
+        $metodosModel = new MetodoCalculo();
+        $todosMetodos = $metodosModel->getMetodosActivos();
+        foreach ($todosMetodos as $metodo) {
+            $rutaMetodo = '/calcular-' . $metodo->slug;
+            $tieneAcceso = false;
+            foreach ($rutasPermitidas as $rutaPermitida) {
+                if (($rutaPermitida['detalle_ruta'] ?? '') === $rutaMetodo && ($rutaPermitida['permisos']['ver'] ?? false)) {
+                    $tieneAcceso = true;
+                    break;
+                }
+            }
+            $metodosDisponibles[] = [
+                'id' => $metodo->id,
+                'nombre' => $metodo->nombre,
+                'slug' => $metodo->slug,
+                'componentes' => $metodo->componentes,
+                'descripcion' => $metodo->descripcion,
+                'precio_mensual' => $metodo->precio_mensual,
+                'es_addon' => $metodo->es_addon,
+                'disponible' => $tieneAcceso
+            ];
+        }
+        $data['metodos_calculo'] = $metodosDisponibles;
 
         return view('Modulos/agenda/consulta', $data);
     }
@@ -2584,6 +2726,50 @@ class AgendaController extends BaseController
         ]);
         $response->setHeader('X-CSRF-TOKEN', csrf_hash());
         return $response;
+    }
+
+    /**
+     * Obtener consulta activa del nutricionista (para cronómetro global)
+     */
+    public function getConsultaActiva()
+    {
+        $this->response->setContentType('application/json');
+        
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['activa' => false])->setStatusCode(401);
+        }
+
+        $usuario_id = session()->get('usuario')['id'];
+        $db = \Config\Database::connect();
+
+        // Buscar consulta activa (iniciada pero no terminada)
+        $consulta = $db->table('detalle_agenda da')
+            ->select('da.id, da.fecha_inicio_real, da.paciente_id, p.nombre, p.apellido, a.fecha as fecha_agenda')
+            ->join('pacientes p', 'p.id = da.paciente_id', 'left')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.usuario_id', $usuario_id)
+            ->where('da.fecha_inicio_real IS NOT NULL')
+            ->where('da.fecha_fin_real IS NULL')
+            ->where('da.estado_cita', 'en_proceso')
+            ->orderBy('da.fecha_inicio_real', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getRow();
+
+        if ($consulta) {
+            return $this->response->setJSON([
+                'activa' => true,
+                'detalle_agenda_id' => $consulta->id,
+                'fecha_inicio' => $consulta->fecha_inicio_real,
+                'paciente' => [
+                    'id' => $consulta->paciente_id,
+                    'nombre' => trim(($consulta->nombre ?? '') . ' ' . ($consulta->apellido ?? ''))
+                ],
+                'url_consulta' => base_url('dashboard/agenda/consulta?id=' . $consulta->id)
+            ]);
+        }
+
+        return $this->response->setJSON(['activa' => false]);
     }
 
     /**
@@ -2754,13 +2940,24 @@ class AgendaController extends BaseController
             $dataUpdate['tags'] = $tagsJson;
         }
 
-        // Convertir fecha de próxima cita si viene en DD-MM-YYYY
-        if ($proximaCitaRecomendada) {
-            if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $proximaCitaRecomendada, $matches)) {
-                $dataUpdate['proxima_cita_recomendada'] = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+        // Próxima cita recomendada: puede ser solo fecha (DD-MM-YYYY) o fecha + hora (DD-MM-YYYY HH:mm - HH:mm)
+        $proximaCitaRecomendada = $proximaCitaRecomendada !== null ? trim($proximaCitaRecomendada) : '';
+        if ($proximaCitaRecomendada !== '') {
+            $tieneHora = (strpos($proximaCitaRecomendada, ' - ') !== false);
+            $valorParaGuardar = null;
+            if (preg_match('/^(\d{2})-(\d{2})-(\d{4})(?:\s|$)/', $proximaCitaRecomendada, $matches)) {
+                $soloFechaYyyyMmDd = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+                if ($tieneHora) {
+                    $tipoColumna = $db->query("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'detalle_agenda' AND COLUMN_NAME = 'proxima_cita_recomendada'", [$db->getDatabase()])->getRow();
+                    $esVarchar = $tipoColumna && in_array(strtolower($tipoColumna->DATA_TYPE ?? ''), ['varchar', 'char', 'text'], true);
+                    $valorParaGuardar = $esVarchar ? $proximaCitaRecomendada : $soloFechaYyyyMmDd;
+                } else {
+                    $valorParaGuardar = $soloFechaYyyyMmDd;
+                }
             } else {
-                $dataUpdate['proxima_cita_recomendada'] = $proximaCitaRecomendada;
+                $valorParaGuardar = $proximaCitaRecomendada;
             }
+            $dataUpdate['proxima_cita_recomendada'] = $valorParaGuardar;
         } else {
             $dataUpdate['proxima_cita_recomendada'] = null;
         }
@@ -2957,8 +3154,14 @@ class AgendaController extends BaseController
             'circunferencia_pantorrilla' => !empty($post['circunferencia_pantorrilla']) ? $post['circunferencia_pantorrilla'] : null,
             'circunferencia_cuello' => !empty($post['circunferencia_cuello']) ? $post['circunferencia_cuello'] : null,
             'circunferencia_torax' => !empty($post['circunferencia_torax']) ? $post['circunferencia_torax'] : null,
+            'circunferencia_cabeza' => !empty($post['circunferencia_cabeza']) ? $post['circunferencia_cabeza'] : null,
+            'circunferencia_antebrazo_maximo' => !empty($post['circunferencia_antebrazo_maximo']) ? $post['circunferencia_antebrazo_maximo'] : null,
+            'circunferencia_muslo_maximo' => !empty($post['circunferencia_muslo_maximo']) ? $post['circunferencia_muslo_maximo'] : null,
+            'circunferencia_muneca' => !empty($post['circunferencia_muneca']) ? $post['circunferencia_muneca'] : null,
             'diametro_biacromial' => !empty($post['diametro_biacromial']) ? $post['diametro_biacromial'] : null,
             'diametro_bi_iliocristal' => !empty($post['diametro_bi_iliocristal']) ? $post['diametro_bi_iliocristal'] : null,
+            'diametro_torax_transverso' => !empty($post['diametro_torax_transverso']) ? $post['diametro_torax_transverso'] : null,
+            'diametro_torax_anteroposterior' => !empty($post['diametro_torax_anteroposterior']) ? $post['diametro_torax_anteroposterior'] : null,
             'diametro_humero' => !empty($post['diametro_humero']) ? $post['diametro_humero'] : null,
             'diametro_femur' => !empty($post['diametro_femur']) ? $post['diametro_femur'] : null,
             'diametro_muneca' => !empty($post['diametro_muneca']) ? $post['diametro_muneca'] : null,
@@ -2969,6 +3172,7 @@ class AgendaController extends BaseController
             'pliegue_bicipital' => !empty($post['pliegue_bicipital']) ? $post['pliegue_bicipital'] : null,
             'pliegue_subescapular' => !empty($post['pliegue_subescapular']) ? $post['pliegue_subescapular'] : null,
             'pliegue_suprailíaco' => !empty($post['pliegue_suprailíaco']) ? $post['pliegue_suprailíaco'] : null,
+            'pliegue_supraespinal' => !empty($post['pliegue_supraespinal']) ? $post['pliegue_supraespinal'] : null,
             'pliegue_abdominal' => !empty($post['pliegue_abdominal']) ? $post['pliegue_abdominal'] : null,
             'pliegue_muslo_anterior' => !empty($post['pliegue_muslo_anterior']) ? $post['pliegue_muslo_anterior'] : null,
             'pliegue_pantorrilla_medial' => !empty($post['pliegue_pantorrilla_medial']) ? $post['pliegue_pantorrilla_medial'] : null,
@@ -2978,6 +3182,10 @@ class AgendaController extends BaseController
             'suma_pliegues' => $suma_pliegues,
             'grasa_corporal_calculada' => $grasa_corporal_calculada,
             'anamnesis' => !empty($post['anamnesis']) ? $post['anamnesis'] : null,
+            'anamnesis_clinica' => !empty($post['anamnesis_clinica']) ? $post['anamnesis_clinica'] : null,
+            'anamnesis_alimentaria' => !empty($post['anamnesis_alimentaria']) ? $post['anamnesis_alimentaria'] : null,
+            'tendencia_consumo' => null, // Se guarda en tabla historial_tendencia_consumo
+            'recordatorio_24h' => !empty($post['recordatorio_24h']) ? $post['recordatorio_24h'] : null,
             'diagnostico' => !empty($post['diagnostico']) ? $post['diagnostico'] : null,
             'plan_tratamiento' => !empty($post['plan_tratamiento']) ? $post['plan_tratamiento'] : null,
             'estado' => 'A'
@@ -3053,6 +3261,49 @@ class AgendaController extends BaseController
                 $nuevoId = $historialModel->insert($dataHistorial);
                 $mensaje = 'Mediciones guardadas correctamente';
                 $historialId = $nuevoId;
+            }
+
+            // Exámenes bioquímicos: reemplazar todos los del historial
+            $examenModel = new \App\Models\HistorialExamenBioquimico();
+            $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $historialId)->delete();
+            $examenesRaw = $post['examenes_bioquimicos'] ?? '';
+            if (is_string($examenesRaw) && $examenesRaw !== '') {
+                $examenes = json_decode($examenesRaw, true);
+                if (is_array($examenes)) {
+                    foreach ($examenes as $row) {
+                        if (empty($row['nombre']) && empty($row['valor']) && empty($row['fecha_interpretacion'])) {
+                            continue;
+                        }
+                        $examenModel->insert([
+                            'historial_clinico_id' => $historialId,
+                            'nombre' => $row['nombre'] ?? null,
+                            'valor' => $row['valor'] ?? null,
+                            'fecha_interpretacion' => $row['fecha_interpretacion'] ?? null
+                        ]);
+                    }
+                }
+            }
+
+            // Tendencia de consumo: reemplazar todos los del historial (tabla normalizada)
+            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+            $db->table('historial_tendencia_consumo')->where('historial_clinico_id', $historialId)->delete();
+            $tendenciaRaw = $post['tendencia_consumo'] ?? '';
+            if (is_string($tendenciaRaw) && $tendenciaRaw !== '') {
+                $tendenciaRows = json_decode($tendenciaRaw, true);
+                if (is_array($tendenciaRows)) {
+                    foreach ($tendenciaRows as $row) {
+                        $grupo = $row['grupo'] ?? null;
+                        if (empty($grupo)) {
+                            continue;
+                        }
+                        $tendenciaModel->insert([
+                            'historial_clinico_id' => $historialId,
+                            'grupo' => $grupo,
+                            'preferencia' => $row['preferencia'] ?? null,
+                            'alergia_intolerancia' => $row['alergia_intolerancia'] ?? null
+                        ]);
+                    }
+                }
             }
 
             $response = $this->response->setJSON([

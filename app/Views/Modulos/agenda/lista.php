@@ -51,6 +51,29 @@
     </div>
 </div>
 
+<!-- Modal Cancelar Cita -->
+<div class="modal fade" id="modalCancelarCita" tabindex="-1" aria-labelledby="modalCancelarCitaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" id="modalCancelarCitaLabel"><i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.</p>
+                <label for="motivoCancelarCita" class="form-label small text-muted">Motivo de cancelación (opcional)</label>
+                <textarea class="form-control" id="motivoCancelarCita" rows="2" placeholder="Ej.: Paciente reprogramó"></textarea>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCita">
+                    <i class="fas fa-times me-1"></i> Sí, cancelar cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 // Configurar toastr
 toastr.options = {
@@ -170,6 +193,100 @@ function eliminarHorarios() {
             }
         }
     });
+}
+
+function confirmarCita(id) {
+    if (!id) return;
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name';
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/confirmarCita') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: { [csrfName]: csrfToken, id: id },
+        dataType: 'json',
+        success: function(response) {
+            if (response && response.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                $('input[name="' + csrfName + '"]').val(response.csrf_token);
+            }
+            if (response && response.error) {
+                toastr.error(response.message || response.error || 'Error al confirmar', 'Error', { timeOut: 5000 });
+                $('#tablaAgenda').DataTable().ajax.reload();
+                return;
+            }
+            toastr.success(response && response.message ? response.message : 'Cita confirmada', 'Éxito', { timeOut: 4000 });
+            $('#tablaAgenda').DataTable().ajax.reload();
+        },
+        error: function(xhr) {
+            var r = (xhr && xhr.responseJSON) || {};
+            if (r.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', r.csrf_token);
+                $('input[name="csrf_test_name"]').val(r.csrf_token);
+            }
+            toastr.error(r.message || r.error || 'Error al confirmar la cita', 'Error', { timeOut: 5000 });
+            $('#tablaAgenda').DataTable().ajax.reload();
+        }
+    });
+}
+
+var citaIdACancelar = null;
+
+function cancelarCita(id) {
+    if (!id) return;
+    citaIdACancelar = id;
+    $('#motivoCancelarCita').val('');
+    var modal = new bootstrap.Modal(document.getElementById('modalCancelarCita'));
+    modal.show();
+}
+
+$('#btnConfirmarCancelarCita').on('click', function() {
+    if (!citaIdACancelar) return;
+    var motivo = $('#motivoCancelarCita').val().trim();
+    var id = citaIdACancelar;
+    citaIdACancelar = null;
+    bootstrap.Modal.getInstance(document.getElementById('modalCancelarCita')).hide();
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfName = 'csrf_test_name';
+    var data = { [csrfName]: csrfToken, id: id };
+    if (motivo !== '') data.motivo = motivo;
+    var $btn = $('#btnConfirmarCancelarCita');
+    $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cancelando...');
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: data,
+        dataType: 'json',
+        success: function(response) {
+            $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+            if (response && response.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                $('input[name="' + csrfName + '"]').val(response.csrf_token);
+            }
+            if (response && (response.error || !response.success)) {
+                toastr.error(response.message || response.error || 'Error al cancelar', 'Error', { timeOut: 5000 });
+                return;
+            }
+            toastr.success(response && response.message ? response.message : 'Cita cancelada y horario liberado', 'Éxito', { timeOut: 4000 });
+            $('#tablaAgenda').DataTable().ajax.reload();
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+            var r = (xhr && xhr.responseJSON) || {};
+            if (r.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', r.csrf_token);
+                $('input[name="csrf_test_name"]').val(r.csrf_token);
+            }
+            toastr.error(r.message || r.error || 'Error al cancelar la cita', 'Error', { timeOut: 5000 });
+            $('#tablaAgenda').DataTable().ajax.reload();
+        }
+    });
+});
+
+function verCita(id) {
+    if (!id) return;
+    window.location.href = '<?= base_url('dashboard/agenda/consulta?id=') ?>' + id;
 }
 </script>
 

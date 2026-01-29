@@ -100,6 +100,25 @@ exit(); */
 </div>
 <!--  END NAVBAR  -->
 
+<!-- CRONÓMETRO GLOBAL DE CONSULTA ACTIVA -->
+<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4A90E2 0%, #6BCB77 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="flex-grow-1">
+            <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">
+                <i class="fas fa-user-md me-1"></i> <span id="cronometroPacienteNombre">-</span>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: bold; font-family: 'Courier New', monospace;" id="cronometroTiempo">
+                00:00:00
+            </div>
+        </div>
+        <div class="ms-3">
+            <a href="#" id="cronometroBtnIrConsulta" class="btn btn-light btn-sm" style="white-space: nowrap;">
+                <i class="fas fa-arrow-right me-1"></i> Ir a Consulta
+            </a>
+        </div>
+    </div>
+</div>
+
 <!--  BEGIN MAIN CONTAINER  -->
 <div class="main-container" id="container">
 
@@ -442,6 +461,10 @@ exit(); */
                     <?php echo $this->renderSection("historial/comparar"); ?>
                     <!-- END Section Historial Clínico -->
                     
+                    <!-- Secciones de Plan Alimentario -->
+                    <?php echo $this->renderSection("plan_alimentario/index"); ?>
+                    <!-- END Section Plan Alimentario -->
+                    
                     <!-- Secciones de Pagos -->
                     <?php echo $this->renderSection("pago/lista"); ?>
                     <?php echo $this->renderSection("pago/registro"); ?>
@@ -665,6 +688,24 @@ exit(); */
         (function() {
             // Verificar y renovar token de calendario cada 30 minutos
             const TOKEN_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutos en milisegundos
+            let calendarTokenWarningShown = false;
+            const connectUrl = '<?= base_url('dashboard/agenda/calendario/connect') ?>';
+            
+            function mostrarAvisoConectarCalendario() {
+                if (calendarTokenWarningShown) return;
+                calendarTokenWarningShown = true;
+                var id = 'calendar-token-warning';
+                var prev = document.getElementById(id);
+                if (prev) prev.remove();
+                var div = document.createElement('div');
+                div.id = id;
+                div.className = 'alert alert-warning alert-dismissible fade show rounded-0 mb-0';
+                div.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; border-radius: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15);';
+                div.innerHTML = '<strong><i class="fas fa-calendar-alt me-2"></i>Calendario:</strong> El token ha expirado o fue revocado. ' +
+                    'Debe conectarse en <a href="' + connectUrl + '" class="alert-link">Agenda &rarr; Conectar calendario</a> para sincronizar eventos. ' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>';
+                document.body.insertBefore(div, document.body.firstChild);
+            }
             
             function verificarTokenCalendario() {
                 fetch('<?= base_url('dashboard/agenda/calendario/verificar-token') ?>', {
@@ -686,8 +727,8 @@ exit(); */
                         }
                     } else {
                         console.warn('⚠️ Advertencia de token de calendario:', data.message);
-                        if (data.necesita_autorizar) {
-                            console.warn('   El usuario necesita re-autorizar el calendario');
+                        if (!data.renovado) {
+                            mostrarAvisoConectarCalendario();
                         }
                     }
                 })
@@ -704,6 +745,103 @@ exit(); */
             setInterval(verificarTokenCalendario, TOKEN_CHECK_INTERVAL);
         })();
         <?php endif; ?>
+        
+        // =====================================================
+        // CRONÓMETRO GLOBAL DE CONSULTA ACTIVA
+        // =====================================================
+        (function() {
+            var cronometroInterval = null;
+            var fechaInicioConsulta = null;
+            var detalleAgendaIdActiva = null;
+            var pollTimer = null;
+            var POLL_MS_ACTIVE = 5000;
+            var POLL_MS_INACTIVE = 30000;
+            var POLL_MS_HIDDEN = 60000;
+
+            function scheduleNextPoll(ms) {
+                try { if (pollTimer) clearTimeout(pollTimer); } catch (e) {}
+                pollTimer = setTimeout(verificarConsultaActiva, ms);
+            }
+            
+            function actualizarCronometro() {
+                if (!fechaInicioConsulta) return;
+                
+                var ahora = new Date();
+                var inicio = new Date(fechaInicioConsulta);
+                var diff = ahora - inicio;
+                
+                if (diff < 0) {
+                    fechaInicioConsulta = ahora;
+                    diff = 0;
+                }
+                
+                var horas = Math.floor(diff / (1000 * 60 * 60));
+                var minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                var segundos = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                var tiempo = String(horas).padStart(2, '0') + ':' + 
+                             String(minutos).padStart(2, '0') + ':' + 
+                             String(segundos).padStart(2, '0');
+                
+                $('#cronometroTiempo').text(tiempo);
+            }
+            
+            function verificarConsultaActiva() {
+                $.ajax({
+                    url: '<?= base_url('dashboard/agenda/getConsultaActiva') ?>',
+                    type: 'GET',
+                    dataType: 'json',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(response) {
+                        if (response.activa) {
+                            fechaInicioConsulta = response.fecha_inicio;
+                            detalleAgendaIdActiva = response.detalle_agenda_id;
+                            
+                            $('#cronometroPacienteNombre').text(response.paciente.nombre || 'Paciente');
+                            $('#cronometroBtnIrConsulta').attr('href', response.url_consulta);
+                            $('#cronometroGlobalConsulta').fadeIn(300);
+                            
+                            // Iniciar actualización del cronómetro
+                            if (!cronometroInterval) {
+                                actualizarCronometro();
+                                cronometroInterval = setInterval(actualizarCronometro, 1000);
+                            }
+                        } else {
+                            // Ocultar cronómetro si no hay consulta activa
+                            $('#cronometroGlobalConsulta').fadeOut(300);
+                            if (cronometroInterval) {
+                                clearInterval(cronometroInterval);
+                                cronometroInterval = null;
+                            }
+                            fechaInicioConsulta = null;
+                            detalleAgendaIdActiva = null;
+                        }
+
+                        // Poll adaptativo: si hay consulta activa, más frecuente; si no, menos; si la pestaña está oculta, mínimo impacto.
+                        var nextMs = document.hidden ? POLL_MS_HIDDEN : (response.activa ? POLL_MS_ACTIVE : POLL_MS_INACTIVE);
+                        scheduleNextPoll(nextMs);
+                    },
+                    error: function() {
+                        // En caso de error, ocultar el cronómetro
+                        $('#cronometroGlobalConsulta').fadeOut(300);
+                        if (cronometroInterval) {
+                            clearInterval(cronometroInterval);
+                            cronometroInterval = null;
+                        }
+                        // En error, reintentar más lento
+                        scheduleNextPoll(document.hidden ? POLL_MS_HIDDEN : POLL_MS_INACTIVE);
+                    }
+                });
+            }
+            
+            // Verificar inmediatamente al cargar
+            verificarConsultaActiva();
+
+            // Si la pestaña cambia de visibilidad, reajustar el polling
+            document.addEventListener('visibilitychange', function() {
+                scheduleNextPoll(document.hidden ? POLL_MS_HIDDEN : POLL_MS_INACTIVE);
+            });
+        })();
         </script>
         
         <style>

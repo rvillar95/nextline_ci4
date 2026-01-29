@@ -376,11 +376,30 @@ class PacienteController extends BaseController
 
         // Cargar historial clínico
         $historialModel = new \App\Models\HistorialClinico();
-        $data['historial'] = $historialModel->getHistorialPorPaciente($id, 10);
+        $data['historial'] = $historialModel->getHistorialPorPaciente($id, 20);
 
         // Cargar documentos
         $documentoModel = new \App\Models\Documento();
         $data['documentos'] = $documentoModel->getDocumentosPorPaciente($id);
+
+        // Cargar planes alimentarios
+        $planModel = new \App\Models\PlanAlimentario();
+        $data['planes'] = $planModel->where('paciente_id', $id)
+            ->orderBy('fcreacion', 'DESC')
+            ->findAll();
+
+        // Cargar detalle_agenda (citas) del paciente
+        $db = \Config\Database::connect();
+        $data['citas'] = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha as fecha_agenda, ma.nombre as modalidad_nombre')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+            ->where('da.paciente_id', $id)
+            ->orderBy('a.fecha', 'DESC')
+            ->orderBy('da.hora_inicio', 'DESC')
+            ->limit(50)
+            ->get()
+            ->getResult();
 
         return view('Modulos/paciente/detalle', $data);
     }
