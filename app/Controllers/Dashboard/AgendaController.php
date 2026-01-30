@@ -845,6 +845,9 @@ class AgendaController extends BaseController
         $db = \Config\Database::connect();
         $draw = intval($this->request->getGet("draw"));
         
+        // Asegurar que solo se muestren las citas del usuario logueado (nutricionista)
+        $usuario_id = session()->get('usuario')['id'];
+        
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         $estado_cita = $this->request->getGet('estado_cita');
@@ -854,7 +857,8 @@ class AgendaController extends BaseController
             ->select('da.id, da.paciente_id, da.tipo_consulta, da.motivo, da.estado_cita, da.fecha_confirmacion, da.fecha_cancelacion, da.motivo_cancelacion, da.observaciones, a.fecha, da.hora_inicio, da.hora_fin, p.nombre, p.apellido, p.telefono, p.email')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-            ->where('da.paciente_id IS NOT NULL'); // Solo citas agendadas
+            ->where('da.paciente_id IS NOT NULL') // Solo citas agendadas
+            ->where('da.usuario_id', $usuario_id); // Solo mostrar citas del usuario logueado
 
         if ($fecha_desde) {
             // Convertir fecha para comparación (fecha en BD está en DD-MM-YYYY)
