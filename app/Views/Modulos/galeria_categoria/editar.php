@@ -97,15 +97,6 @@
         color: #ff9800; /* Naranja para edición */
     }
 
-    .main-header {
-        background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); /* Gradiente naranja */
-        padding: 30px 40px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        color: white;
-        box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
-    }
-
     .main-header h2 {
         color: white;
         font-weight: 700;

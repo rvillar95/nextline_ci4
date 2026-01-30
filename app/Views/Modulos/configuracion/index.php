@@ -12,16 +12,21 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-cog mr-2"></i>
-                        Configuraciones del Sistema
-                        <?php if (isset($empresa) && $empresa): ?>
-                            <small class="text-muted">- <?= esc($empresa->nombre) ?></small>
-                        <?php endif; ?>
-                    </h3>
+            <div class="main-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 style="color: white;"><i class="fas fa-cog me-2"></i> Configuraciones del Sistema</h2>
+                        <p style="color: white;">
+                            <?php if (isset($empresa) && $empresa): ?>
+                                <?= esc($empresa->nombre) ?> · Notificaciones, calendario, cancelaciones y Mercado Pago
+                            <?php else: ?>
+                                Notificaciones, integración con calendario, mensajes de cancelación y Mercado Pago
+                            <?php endif; ?>
+                        </p>
+                    </div>
                 </div>
+            </div>
+            <div class="card">
                 <div class="card-body">
                     <form id="formConfiguracion">
                         <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">

@@ -110,14 +110,6 @@
         border-radius: 8px;
     }
     
-    .main-header {
-        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-        color: white;
-        padding: 25px 30px;
-        border-radius: 12px;
-        margin-bottom: 30px;
-    }
-    
     .main-header h2 {
         margin: 0;
         font-size: 1.8rem;

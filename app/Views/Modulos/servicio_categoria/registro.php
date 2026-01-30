@@ -97,15 +97,6 @@
         color: #00bcd4; /* Turquesa para categorías de servicio */
     }
 
-    .main-header {
-        background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%); /* Gradiente turquesa */
-        padding: 30px 40px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        color: white;
-        box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
-    }
-
     .main-header h2 {
         color: white;
         font-weight: 700;

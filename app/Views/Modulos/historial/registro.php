@@ -7,14 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.min.js"></script>
 
 <style>
-    .main-header {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
     .section-card {
         background: white;
         border-radius: 12px;

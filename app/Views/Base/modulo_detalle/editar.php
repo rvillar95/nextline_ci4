@@ -3,14 +3,6 @@
 <?= $this->section("modulo_detalle/detalle") ?>
 
 <style>
-    .main-header {
-        background: linear-gradient(135deg, #f0841a 0%, #e67e00 100%);
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
     .section-card {
         background: white;
         border-radius: 12px;

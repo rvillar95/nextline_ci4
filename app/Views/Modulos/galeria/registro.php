@@ -97,15 +97,6 @@
         color: #9c27b0; /* Morado para galerías */
     }
 
-    .main-header {
-        background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); /* Gradiente morado */
-        padding: 30px 40px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        color: white;
-        box-shadow: 0 8px 25px rgba(156, 39, 176, 0.3);
-    }
-
     .main-header h2 {
         color: white;
         font-weight: 700;

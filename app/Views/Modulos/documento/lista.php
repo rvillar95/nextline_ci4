@@ -5,7 +5,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="main-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div class="main-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h2 style="color: white;"><i class="fas fa-file-medical me-2"></i> Gestión de Documentos</h2>

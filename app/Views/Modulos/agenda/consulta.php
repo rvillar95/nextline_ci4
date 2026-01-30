@@ -21,15 +21,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <style>
-    .main-header {
-        background: linear-gradient(135deg, #4A90E2 0%, #6BCB77 100%);
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        color: white;
-    }
-    
     .section-card {
         background: white;
         border-radius: 12px;
@@ -84,6 +75,21 @@
     .status-completada {
         background: #6BCB77;
         color: white;
+    }
+    
+    /* Consultas anteriores: se pega debajo del header al hacer scroll */
+    .consultas-anteriores-sticky {
+        position: sticky;
+        top: 100px;
+        z-index: 1020;
+        transition: box-shadow 0.2s ease;
+    }
+    .consultas-anteriores-sticky.is-stuck {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    #consultasAnterioresHojas {
+        flex: 1;
+        min-width: 0;
     }
     
     /* Estilos para campos según método de cálculo */
@@ -200,93 +206,34 @@
             </div>
             <?php endif; ?>
 
-            <!-- Consulta Anterior (Solo Referencia) -->
-            <?php if (!empty($consulta_anterior)): ?>
-            <div class="section-card" style="border-left: 4px solid #90A4AE !important; background: linear-gradient(135deg, #ECEFF1 0%, #FFFFFF 100%);">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="text-secondary mb-0">
-                        <i class="fas fa-history me-2"></i> Consulta Anterior (Referencia)
+            <!-- Consultas anteriores: colapsable, hojas + paginación en una línea (sticky al hacer scroll) -->
+            <div id="consultasAnterioresSticky" class="section-card consultas-anteriores-sticky" style="border-left: 4px solid #90A4AE !important;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="text-secondary mb-0 d-flex align-items-center flex-wrap">
+                        <span><i class="fas fa-copy me-2"></i> Consultas anteriores</span>
+                        <span class="badge bg-secondary ms-2" id="consultasAnterioresBadge" style="display: none;">0</span>
+                        <span id="consultasAnterioresSeleccionada" class="text-muted small ms-2 fw-normal" style="display: none;" title="Consulta cargada como referencia">— <span id="consultasAnterioresSeleccionadaFecha"></span></span>
                     </h5>
-                    <span class="badge bg-secondary">
-                        <?= $consulta_anterior->fecha ?: $consulta_anterior->fecha_agenda ?> 
-                        <?= date('H:i', strtotime($consulta_anterior->hora_inicio)) ?>
-                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleConsultasAnteriores" data-bs-toggle="collapse" data-bs-target="#consultasAnterioresCollapse" aria-expanded="true" aria-controls="consultasAnterioresCollapse" title="Contraer / Expandir">
+                        <i class="fas fa-chevron-down me-1"></i> <span id="consultasAnterioresToggleLabel">Contraer</span>
+                    </button>
                 </div>
-                <p class="text-muted small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Información de la última consulta completada. Solo para referencia, no afecta esta consulta.
-                </p>
-                
-                <div class="row">
-                    <?php if (!empty($consulta_anterior->objetivos)): ?>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-success"><i class="fas fa-bullseye me-2"></i> Objetivos Establecidos</h6>
-                        <div class="alert alert-light border-start border-success border-3" style="max-height: 150px; overflow-y: auto;">
-                            <?= $consulta_anterior->objetivos ?>
+                <div class="collapse show" id="consultasAnterioresCollapse">
+                    <p class="text-muted small mt-2 mb-2">
+                        <i class="fas fa-info-circle me-1"></i> Seleccioná una consulta para cargar sus datos en el formulario actual. Solo se rellenan los campos como referencia; la consulta anterior no se modifica. La fecha y hora se muestran al pasar el mouse.
+                    </p>
+                    <div id="consultasAnterioresContainer" class="d-flex flex-wrap align-items-center gap-2">
+                        <div id="consultasAnterioresHojas" class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="text-muted small" id="consultasAnterioresMensaje">Cargando consultas anteriores...</span>
                         </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($consulta_anterior->plan_alimentacion)): ?>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-info"><i class="fas fa-utensils me-2"></i> Plan de Alimentación</h6>
-                        <div class="alert alert-light border-start border-info border-3" style="max-height: 150px; overflow-y: auto;">
-                            <?= $consulta_anterior->plan_alimentacion ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($consulta_anterior->recomendaciones)): ?>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-warning"><i class="fas fa-lightbulb me-2"></i> Recomendaciones</h6>
-                        <div class="alert alert-light border-start border-warning border-3" style="max-height: 150px; overflow-y: auto;">
-                            <?= $consulta_anterior->recomendaciones ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (!empty($consulta_anterior->notas_consulta)): ?>
-                    <div class="col-md-6 mb-3">
-                        <h6 class="text-primary"><i class="fas fa-sticky-note me-2"></i> Notas de Consulta</h6>
-                        <div class="alert alert-light border-start border-primary border-3" style="max-height: 150px; overflow-y: auto;">
-                            <?= $consulta_anterior->notas_consulta ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-                
-                <?php if ($consulta_anterior->peso_anterior || $consulta_anterior->imc_anterior): ?>
-                <div class="mt-3 pt-3 border-top">
-                    <h6 class="text-secondary"><i class="fas fa-chart-line me-2"></i> Mediciones de Referencia</h6>
-                    <div class="row">
-                        <?php if ($consulta_anterior->peso_anterior): ?>
-                        <div class="col-md-3">
-                            <small class="text-muted">Peso</small>
-                            <div class="fw-bold"><?= number_format($consulta_anterior->peso_anterior, 1) ?> kg</div>
-                        </div>
-                        <?php endif; ?>
-                        <?php if ($consulta_anterior->imc_anterior): ?>
-                        <div class="col-md-3">
-                            <small class="text-muted">IMC</small>
-                            <div class="fw-bold"><?= number_format($consulta_anterior->imc_anterior, 2) ?></div>
-                        </div>
-                        <?php endif; ?>
-                        <?php if ($consulta_anterior->cintura_anterior): ?>
-                        <div class="col-md-3">
-                            <small class="text-muted">Cintura</small>
-                            <div class="fw-bold"><?= number_format($consulta_anterior->cintura_anterior, 1) ?> cm</div>
-                        </div>
-                        <?php endif; ?>
-                        <?php if ($consulta_anterior->grasa_anterior): ?>
-                        <div class="col-md-3">
-                            <small class="text-muted">Grasa Corporal</small>
-                            <div class="fw-bold"><?= number_format($consulta_anterior->grasa_anterior, 1) ?>%</div>
-                        </div>
-                        <?php endif; ?>
+                        <nav id="consultasAnterioresPaginacion" class="d-flex align-items-center gap-2 flex-wrap ms-auto" aria-label="Paginación consultas anteriores" style="display: none;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresPrev" disabled><i class="fas fa-chevron-left me-1"></i> Anterior</button>
+                            <span class="small text-muted" id="consultasAnterioresPageInfo"></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresNext" disabled><i class="fas fa-chevron-right ms-1"></i> Siguiente</button>
+                        </nav>
                     </div>
                 </div>
-                <?php endif; ?>
             </div>
-            <?php endif; ?>
 
             <!-- Control de Consulta -->
             <div class="section-card">
@@ -344,11 +291,28 @@
                 </div>
             </div>
 
-            <!-- Sección de Mediciones Corporales (Colapsable) - PRIMERO para primera consulta -->
+            <form id="formMediciones" onsubmit="guardarMediciones(event)">
+                <?= csrf_field() ?>
+                <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
+                <input type="hidden" name="paciente_id" value="<?= $cita->paciente_id ?>">
+                <input type="hidden" name="historial_id" id="historial_id" value="<?= !empty($historial['id']) ? esc($historial['id']) : '' ?>">
+                <?php
+                $ac = [];
+                $aa = [];
+                if (!empty($historial['anamnesis_clinica'])) {
+                    $dec = is_string($historial['anamnesis_clinica']) ? json_decode($historial['anamnesis_clinica'], true) : $historial['anamnesis_clinica'];
+                    if (is_array($dec)) $ac = $dec;
+                }
+                if (!empty($historial['anamnesis_alimentaria'])) {
+                    $dec = is_string($historial['anamnesis_alimentaria']) ? json_decode($historial['anamnesis_alimentaria'], true) : $historial['anamnesis_alimentaria'];
+                    if (is_array($dec)) $aa = $dec;
+                }
+                ?>
+            <!-- 1) Mediciones Corporales: medidas básicas, pliegues, circunferencias, diámetros, composición -->
             <div class="section-card" style="border-left: 4px solid #4A90E2 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="text-primary mb-0">
-                        <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales y Registro Clínico
+                        <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales
                     </h5>
                     <button 
                         type="button" 
@@ -363,7 +327,7 @@
                     </button>
                 </div>
                 <p class="text-muted small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Registra las mediciones corporales, pliegues cutáneos y datos clínicos de esta consulta. Estos datos se guardarán en el historial clínico del paciente.
+                    <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal. Se guardan en el historial clínico del paciente.
                 </p>
                 
                 <!-- Leyenda de Métodos de Cálculo -->
@@ -404,23 +368,6 @@
                 </div>
                 
                 <div class="collapse" id="medicionesCollapse">
-                    <form id="formMediciones" onsubmit="guardarMediciones(event)">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
-                        <input type="hidden" name="paciente_id" value="<?= $cita->paciente_id ?>">
-                        <input type="hidden" name="historial_id" id="historial_id" value="<?= !empty($historial['id']) ? esc($historial['id']) : '' ?>">
-                        <?php
-                        $ac = [];
-                        $aa = [];
-                        if (!empty($historial['anamnesis_clinica'])) {
-                            $dec = is_string($historial['anamnesis_clinica']) ? json_decode($historial['anamnesis_clinica'], true) : $historial['anamnesis_clinica'];
-                            if (is_array($dec)) $ac = $dec;
-                        }
-                        if (!empty($historial['anamnesis_alimentaria'])) {
-                            $dec = is_string($historial['anamnesis_alimentaria']) ? json_decode($historial['anamnesis_alimentaria'], true) : $historial['anamnesis_alimentaria'];
-                            if (is_array($dec)) $aa = $dec;
-                        }
-                        ?>
                         <!-- Medidas Básicas -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -662,6 +609,31 @@
                         </div>
                         <?php endif; ?>
 
+                </div>
+            </div>
+            <!-- /Mediciones Corporales -->
+
+            <!-- 2) Registro Clínico: anamnesis, diagnóstico, plan, ficha de ingreso, exámenes, tendencia, recordatorio 24h -->
+            <div class="section-card" style="border-left: 4px solid #28a745 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-success mb-0">
+                        <i class="fas fa-file-medical me-2"></i> Registro Clínico
+                    </h5>
+                    <button 
+                        type="button" 
+                        class="btn btn-outline-success btn-sm" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#registroClinicoCollapse"
+                        aria-expanded="false"
+                        aria-controls="registroClinicoCollapse"
+                    >
+                        <i class="fas fa-chevron-down me-2"></i> Mostrar/Ocultar
+                    </button>
+                </div>
+                <p class="text-muted small mb-3">
+                    <i class="fas fa-info-circle me-1"></i> Anamnesis, diagnóstico nutricional, plan de tratamiento, ficha de ingreso, exámenes bioquímicos, tendencia de consumo y recordatorio 24 h. Mismo historial: se crea o actualiza según corresponda.
+                </p>
+                <div class="collapse" id="registroClinicoCollapse">
                         <!-- Información Clínica -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -885,7 +857,7 @@
                             </div>
                         </div>
 
-                        <!-- Botones -->
+                        <!-- Botones (guardan Mediciones + Registro Clínico en el mismo historial) -->
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-secondary" onclick="limpiarFormularioMediciones()">
                                 <i class="fas fa-eraser me-2"></i> Limpiar
@@ -894,9 +866,9 @@
                                 <i class="fas fa-save me-2"></i> Guardar Mediciones
                             </button>
                         </div>
-                    </form>
                 </div>
             </div>
+            </form>
 
             <!-- Formulario de Notas y Seguimiento -->
             <form id="formConsulta">
@@ -2021,6 +1993,114 @@ $(document).on('click', '.btn-quitar-examen', function() {
     if ($tbody.find('tr.fila-examen').length > 1) {
         $(this).closest('tr').remove();
     }
+});
+
+// Consultas anteriores: listar y rellenar formulario desde una consulta previa
+var consultasAnterioresPage = 1;
+var consultasAnterioresTotalPages = 0;
+
+function loadConsultasAnteriores(page) {
+    var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
+    if (!detalleId) { $('#consultasAnterioresMensaje').text('No hay cita actual.'); return; }
+    $('#consultasAnterioresMensaje').text('Cargando...');
+    $('#consultasAnterioresHojas').find('.hoja-consulta-anterior').remove();
+    $.get('<?= base_url("dashboard/agenda/getConsultasAnteriores") ?>', { detalle_agenda_id: detalleId, page: page || 1, per_page: 10 }, 'json')
+        .done(function(res) {
+            consultasAnterioresTotalPages = res.total_pages || 0;
+            consultasAnterioresPage = res.page || 1;
+            $('#consultasAnterioresMensaje').text('');
+            if (!res.consultas || res.consultas.length === 0) {
+                $('#consultasAnterioresMensaje').text('No hay consultas anteriores completadas para este paciente.');
+                $('#consultasAnterioresPaginacion').hide();
+                return;
+            }
+            $.each(res.consultas, function(i, c) {
+                var label = c.label || (c.fecha + ' ' + (c.hora || ''));
+                var title = (c.fecha_fin_real || label) + ' — Clic para cargar en esta consulta';
+                var $btn = $('<button type="button" class="btn btn-sm btn-outline-secondary hoja-consulta-anterior" data-id="' + c.id + '" title="' + title + '">' + label + '</button>');
+                $('#consultasAnterioresHojas').append($btn);
+            });
+            $('#consultasAnterioresPaginacion').css('display', 'flex');
+            $('#consultasAnterioresPageInfo').text('Página ' + consultasAnterioresPage + ' de ' + (consultasAnterioresTotalPages || 1) + ' (' + (res.total || 0) + ' consultas)');
+            var totalConsultas = res.total || 0;
+            $('#consultasAnterioresBadge').text(totalConsultas).toggle(totalConsultas > 0);
+            $('#btnConsultasAnterioresPrev').prop('disabled', consultasAnterioresPage <= 1);
+            $('#btnConsultasAnterioresNext').prop('disabled', consultasAnterioresPage >= consultasAnterioresTotalPages);
+        })
+        .fail(function() {
+            $('#consultasAnterioresMensaje').text('Error al cargar consultas anteriores.');
+        });
+}
+
+function fillFormFromConsultaAnterior(data) {
+    var h = data.historial || {};
+    var d = data.detalle || {};
+    function val(v) { return (v !== undefined && v !== null && v !== '') ? v : ''; }
+    $('#peso_actual').val(val(h.peso_actual)); $('#altura_actual').val(val(h.altura_actual)); $('#altura_sentado').val(val(h.altura_sentado)); $('#imc_actual').val(val(h.imc_actual));
+    $('#circunferencia_cintura').val(val(h.circunferencia_cintura)); $('#circunferencia_cadera').val(val(h.circunferencia_cadera)); $('#circunferencia_brazo_relajado').val(val(h.circunferencia_brazo_relajado)); $('#circunferencia_brazo_contraido').val(val(h.circunferencia_brazo_contraido)); $('#circunferencia_muslo_medio').val(val(h.circunferencia_muslo_medio)); $('#circunferencia_pantorrilla').val(val(h.circunferencia_pantorrilla)); $('#circunferencia_cuello').val(val(h.circunferencia_cuello)); $('#circunferencia_torax').val(val(h.circunferencia_torax)); $('#circunferencia_cabeza').val(val(h.circunferencia_cabeza)); $('#circunferencia_antebrazo_maximo').val(val(h.circunferencia_antebrazo_maximo)); $('#circunferencia_muslo_maximo').val(val(h.circunferencia_muslo_maximo)); $('#circunferencia_muneca').val(val(h.circunferencia_muneca));
+    $('#pliegue_tricipital').val(val(h.pliegue_tricipital)); $('#pliegue_bicipital').val(val(h.pliegue_bicipital)); $('#pliegue_subescapular').val(val(h.pliegue_subescapular)); $('#pliegue_suprailíaco').val(val(h.pliegue_suprailíaco)); $('#pliegue_supraespinal').val(val(h.pliegue_supraespinal)); $('#pliegue_abdominal').val(val(h.pliegue_abdominal)); $('#pliegue_muslo_anterior').val(val(h.pliegue_muslo_anterior)); $('#pliegue_pantorrilla_medial').val(val(h.pliegue_pantorrilla_medial)); $('#pliegue_pectoral').val(val(h.pliegue_pectoral)); $('#pliegue_axilar_medio').val(val(h.pliegue_axilar_medio)); $('#pliegue_muslo_medial').val(val(h.pliegue_muslo_medial));
+    $('#suma_pliegues').val(val(h.suma_pliegues)); $('#grasa_corporal_calculada').val(val(h.grasa_corporal_calculada));
+    $('#diametro_biacromial').val(val(h.diametro_biacromial)); $('#diametro_bi_iliocristal').val(val(h.diametro_bi_iliocristal)); $('#diametro_torax_transverso').val(val(h.diametro_torax_transverso)); $('#diametro_torax_anteroposterior').val(val(h.diametro_torax_anteroposterior)); $('#diametro_humero').val(val(h.diametro_humero)); $('#diametro_femur').val(val(h.diametro_femur)); $('#diametro_muneca').val(val(h.diametro_muneca)); $('#diametro_tobillo').val(val(h.diametro_tobillo));
+    $('#grasa_corporal').val(val(h.grasa_corporal)); $('#masa_muscular').val(val(h.masa_muscular)); $('#masa_osea').val(val(h.masa_osea));
+    $('#anamnesis').val(val(h.anamnesis)); $('#recordatorio_24h').val(val(h.recordatorio_24h)); $('#diagnostico').val(val(h.diagnostico)); $('#plan_tratamiento').val(val(h.plan_tratamiento));
+    var ac = {}; try { ac = (typeof h.anamnesis_clinica === 'string' && h.anamnesis_clinica) ? JSON.parse(h.anamnesis_clinica) : (h.anamnesis_clinica || {}); } catch(e) {}
+    ['tabaco','alcohol','drogas','enfermedad_base','signos_sintomas','transito_bristol','medicamentos','suplementos','ingesta_hidrica','actividad_fisica','sueno','otros'].forEach(function(k) { var id = 'ac_' + k; if ($('#' + id).length) $('#' + id).val(val(ac[k])); });
+    $('#anamnesis_clinica').val(typeof h.anamnesis_clinica === 'string' ? h.anamnesis_clinica : JSON.stringify(ac));
+    var aa = {}; try { aa = (typeof h.anamnesis_alimentaria === 'string' && h.anamnesis_alimentaria) ? JSON.parse(h.anamnesis_alimentaria) : (h.anamnesis_alimentaria || {}); } catch(e) {}
+    ['relacion_familiar','quien_cocina','apetito','relacion_comida','dieta_restrictiva','historia_peso','ansiedad_comida','otros'].forEach(function(k) { var id = 'aa_' + k; if ($('#' + id).length) $('#' + id).val(val(aa[k])); });
+    $('#anamnesis_alimentaria').val(typeof h.anamnesis_alimentaria === 'string' ? h.anamnesis_alimentaria : JSON.stringify(aa));
+    $('#notas_consulta').val(val(d.notas_consulta)); $('#objetivos').val(val(d.objetivos)); $('#plan_alimentacion').val(val(d.plan_alimentacion)); $('#recomendaciones').val(val(d.recomendaciones)); $('#proxima_cita_recomendada').val(val(d.proxima_cita_recomendada)); $('#tags').val(val(d.tags_string));
+    if (typeof tagifyConsulta !== 'undefined' && tagifyConsulta && d.tags_string) { try { tagifyConsulta.loadOriginalValues(d.tags_string.split(/[\s,]+/).filter(Boolean)); } catch(e) { $('#tags').val(d.tags_string); } }
+    var examenes = data.examenes_bioquimicos || [];
+    var $tbody = $('#tbodyExamenesBioquimicos'); $tbody.find('tr.fila-examen').remove();
+    if (examenes.length === 0) { examenes = [{ nombre: '', valor: '', fecha_interpretacion: '' }]; }
+    $.each(examenes, function(i, ex) {
+        var nom = (ex.nombre !== undefined && ex.nombre !== null) ? ex.nombre : ''; var v = (ex.valor !== undefined && ex.valor !== null) ? ex.valor : ''; var f = (ex.fecha_interpretacion !== undefined && ex.fecha_interpretacion !== null) ? ex.fecha_interpretacion : '';
+        $tbody.append('<tr class="fila-examen"><td><input type="text" class="form-control form-control-sm" name="examen_nombre[]" placeholder="Ej: Glicemia" value="' + (nom.replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_valor[]" placeholder="Ej: 95" value="' + (String(v).replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_fecha[]" placeholder="Ej: 15-01-2026" value="' + (String(f).replace(/"/g, '&quot;')) + '"></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-examen" title="Quitar"><i class="fas fa-times"></i></button></td></tr>');
+    });
+    var filasExamenes = []; $tbody.find('tr.fila-examen').each(function() { var $tr = $(this); filasExamenes.push({ nombre: $tr.find('input[name="examen_nombre[]"]').val() || '', valor: $tr.find('input[name="examen_valor[]"]').val() || '', fecha_interpretacion: $tr.find('input[name="examen_fecha[]"]').val() || '' }); });
+    $('#examenes_bioquimicos_hidden').val(JSON.stringify(filasExamenes));
+    var tendencia = data.tendencia_consumo || [];
+    $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var grupo = $(this).data('grupo'); var row = tendencia.find(function(t) { return (t.grupo || '').toString() === (grupo || '').toString(); }); $(this).find('.tc-preferencia').val(row ? (row.preferencia || '') : ''); $(this).find('.tc-alergia').val(row ? (row.alergia_intolerancia || '') : ''); });
+    var tendenciaRows = []; $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var g = $(this).data('grupo'); tendenciaRows.push({ grupo: g, preferencia: $(this).find('.tc-preferencia').val() || '', alergia_intolerancia: $(this).find('.tc-alergia').val() || '' }); });
+    $('#tendencia_consumo').val(JSON.stringify(tendenciaRows));
+    toastr.success('Datos de la consulta anterior cargados en el formulario. Revisá y guardá cuando quieras.');
+}
+
+$(document).on('click', '.hoja-consulta-anterior', function() {
+    var idAnterior = $(this).data('id'); var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
+    if (!idAnterior || !detalleId) return;
+    var labelSeleccionada = $(this).text().trim();
+    $(this).addClass('active').siblings('.hoja-consulta-anterior').removeClass('active');
+    $('#consultasAnterioresSeleccionadaFecha').text(labelSeleccionada);
+    $('#consultasAnterioresSeleccionada').show();
+    $.get('<?= base_url("dashboard/agenda/getDatosConsultaAnterior") ?>', { detalle_agenda_id: detalleId, id_anterior: idAnterior }, 'json')
+        .done(function(res) { fillFormFromConsultaAnterior(res); })
+        .fail(function(xhr) { toastr.error(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error al cargar la consulta anterior.'); });
+});
+$(document).on('click', '#btnConsultasAnterioresPrev', function() { if (consultasAnterioresPage > 1) loadConsultasAnteriores(consultasAnterioresPage - 1); });
+$(document).on('click', '#btnConsultasAnterioresNext', function() { if (consultasAnterioresPage < consultasAnterioresTotalPages) loadConsultasAnteriores(consultasAnterioresPage + 1); });
+$(function() {
+    loadConsultasAnteriores(1);
+    // Sombra cuando "Consultas anteriores" queda fija al hacer scroll
+    var $sticky = $('#consultasAnterioresSticky');
+    if ($sticky.length) {
+        var stickyTop = 100;
+        function checkStuck() {
+            var rect = $sticky[0].getBoundingClientRect();
+            $sticky.toggleClass('is-stuck', rect.top <= stickyTop + 2);
+        }
+        $(window).on('scroll.consultasSticky resize.consultasSticky', checkStuck);
+        checkStuck();
+    }
+    // Etiqueta e ícono del botón Contraer/Expandir
+    $('#consultasAnterioresCollapse').on('show.bs.collapse', function() {
+        $('#consultasAnterioresToggleLabel').text('Contraer');
+        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    }).on('hide.bs.collapse', function() {
+        $('#consultasAnterioresToggleLabel').text('Expandir');
+        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    });
 });
 
 // Limpiar formulario de mediciones
