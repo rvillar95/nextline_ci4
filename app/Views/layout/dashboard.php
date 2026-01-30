@@ -40,7 +40,7 @@ exit(); */
             <li class="nav-item theme-logo">
             </li>
             <li class="nav-item theme-text">
-                <a href="index.html" class="nav-link"> <span style="color: #6aff99;">N</span>ext<span style="color: #6aff99;">L</span>ine</a>
+                <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #6aff99);">N</span>ext<span style="color: var(--user-primary, #6aff99);">L</span>ine</a>
             </li>
         </ul>
         <ul class="navbar-item flex-row ms-lg-auto ms-0 action-area">
@@ -66,7 +66,10 @@ exit(); */
                 <a href="javascript:void(0);" class="nav-link dropdown-toggle user" id="userProfileDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <div class="avatar-container">
                         <div class="avatar avatar-sm avatar-indicators avatar-online">
-                            <img alt="avatar" src="<?= base_url("lib/src/assets/img/profile-30.png") ?>" class="rounded-circle">
+                            <?php
+                            $fotoPerfil = !empty($usuario['foto']) ? base_url($usuario['foto']) : base_url('lib/src/assets/img/profile-30.png');
+                            ?>
+                            <img alt="avatar" src="<?= esc($fotoPerfil) ?>" class="rounded-circle" style="object-fit: cover; width: 30px; height: 30px;">
                         </div>
                     </div>
                 </a>
@@ -82,6 +85,11 @@ exit(); */
                                 <p><?= $usuario['perfil_nombre'] ?></p>
                             </div>
                         </div>
+                    </div>
+                    <div class="dropdown-item">
+                        <a href="<?= base_url('dashboard/mi-perfil') ?>">
+                            <i class="fas fa-user-circle me-2"></i> <span>Mi perfil</span>
+                        </a>
                     </div>
                     <div class="dropdown-item">
                         <a href="<?= base_url('logout') ?>">
@@ -138,7 +146,7 @@ exit(); */
                         </a>
                     </div>
                     <div class="nav-item theme-text">
-                        <a href="./index.html" class="nav-link"> CORK A</a>
+                        <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #6aff99);">N</span>ext<span style="color: var(--user-primary, #6aff99);">L</span>ine</a>
                     </div>
                 </div>
                 <div class="nav-item sidebar-toggle">
@@ -220,7 +228,15 @@ exit(); */
             <ul class="list-unstyled menu-categories" id="accordionExample">
                 <?php
                 $contador = 1;
-                foreach ($data as $menu) : ?>
+                // Soporte para $data['data'] (módulos) o $data como lista de ítems (dashboard/menu)
+                if (isset($data['data']) && is_array($data['data'])) {
+                    $menuItems = $data['data'];
+                } elseif (isset($data[0]['menu']) && isset($data[0]['submenu'])) {
+                    $menuItems = $data;
+                } else {
+                    $menuItems = [];
+                }
+                foreach ($menuItems as $menu) : ?>
                     <?php //if ($modulo['mostrar'] == 'S') { 
                     if (count($menu['submenu']) > 0) { ?>
                         <li class="menu active">
@@ -479,6 +495,7 @@ exit(); */
                     
                     <!-- Secciones de Configuraciones -->
                     <?php echo $this->renderSection("configuracion/index"); ?>
+                    <?php echo $this->renderSection("mi_perfil/index"); ?>
                     <!-- END Section Configuraciones -->
                 </div>
 

@@ -711,9 +711,9 @@ class AgendaController extends BaseController
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
 
-        // Obtener datos completos de la cita ANTES de cancelar (para enviar email al paciente, igual que módulo Cancelar Horas)
+        // Obtener datos completos de la cita ANTES de cancelar (para email al paciente y eliminar evento Google Calendar)
         $citaCompleta = $db->table('detalle_agenda da')
-            ->select('da.id, da.fecha, da.hora_inicio, da.hora_fin, da.estado_cita, da.paciente_id,
+            ->select('da.id, da.fecha, da.hora_inicio, da.hora_fin, da.estado_cita, da.paciente_id, da.usuario_id,
                      p.nombre as paciente_nombre, p.apellido as paciente_apellido, p.email as paciente_email,
                      u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
@@ -747,16 +747,24 @@ class AgendaController extends BaseController
             ->update($dataUpdate);
 
         if ($updated) {
+            $configuracionModel = new EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
+
             // Enviar email al paciente (mismo correo que módulo Cancelar Horas)
-            if (!empty($citaCompleta->paciente_email)) {
-                $configuracionModel = new EmpresaConfiguracion();
-                $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
-                if ($configuracion['enviar_email'] ?? 1) {
-                    try {
-                        $this->enviarEmailCancelacionPaciente($citaCompleta, $motivo);
-                    } catch (\Exception $e) {
-                        log_message('error', 'CANCELAR CITA (Lista): Error al enviar email al paciente: ' . $e->getMessage());
-                    }
+            if (!empty($citaCompleta->paciente_email) && ($configuracion['enviar_email'] ?? 1)) {
+                try {
+                    $this->enviarEmailCancelacionPaciente($citaCompleta, $motivo);
+                } catch (\Exception $e) {
+                    log_message('error', 'CANCELAR CITA (Lista): Error al enviar email al paciente: ' . $e->getMessage());
+                }
+            }
+
+            // Eliminar evento en Google Calendar si existe (igual que al cancelar desde email)
+            if (($configuracion['crear_evento_calendario'] ?? 1)) {
+                try {
+                    $this->eliminarEventoCalendario($id, $citaCompleta->usuario_id ?? $usuario_id);
+                } catch (\Exception $e) {
+                    log_message('error', 'CANCELAR CITA (Lista): Error al eliminar evento del calendario: ' . $e->getMessage());
                 }
             }
 
@@ -2657,6 +2665,161 @@ class AgendaController extends BaseController
         $data['metodos_calculo'] = $metodosDisponibles;
 
         return view('Modulos/agenda/consulta', $data);
+    }
+
+    /**
+     * Listar consultas anteriores del mismo paciente (paginado) para "hojas" en vista consulta
+     */
+    public function getConsultasAnteriores()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+        $detalleAgendaId = (int) ($this->request->getGet('detalle_agenda_id') ?? 0);
+        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
+        $perPage = min(20, max(5, (int) ($this->request->getGet('per_page') ?? 10)));
+        if (!$detalleAgendaId) {
+            return $this->response->setJSON(['error' => 'detalle_agenda_id requerido'])->setStatusCode(400);
+        }
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+        $citaActual = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->where('usuario_id', $usuario_id)
+            ->where('paciente_id IS NOT NULL')
+            ->get()->getRow();
+        if (!$citaActual) {
+            return $this->response->setJSON(['error' => 'Cita no encontrada'])->setStatusCode(404);
+        }
+        $paciente_id = (int) $citaActual->paciente_id;
+        $builder = $db->table('detalle_agenda da')
+            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.paciente_id', $paciente_id)
+            ->where('da.usuario_id', $usuario_id)
+            ->where('da.estado_cita', 'completada')
+            ->where('da.id !=', $detalleAgendaId)
+            ->where('da.fecha_fin_real IS NOT NULL')
+            ->orderBy('da.fecha_fin_real', 'DESC');
+        $total = $builder->countAllResults(false);
+        $offset = ($page - 1) * $perPage;
+        $rows = $db->table('detalle_agenda da')
+            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.paciente_id', $paciente_id)
+            ->where('da.usuario_id', $usuario_id)
+            ->where('da.estado_cita', 'completada')
+            ->where('da.id !=', $detalleAgendaId)
+            ->where('da.fecha_fin_real IS NOT NULL')
+            ->orderBy('da.fecha_fin_real', 'DESC')
+            ->limit($perPage, $offset)
+            ->get()
+            ->getResult();
+        $consultas = [];
+        foreach ($rows as $r) {
+            $fecha = $r->fecha_agenda ?? '';
+            $hora = $r->hora_inicio ? date('H:i', strtotime($r->hora_inicio)) : '';
+            $consultas[] = [
+                'id' => (int) $r->id,
+                'fecha' => $fecha,
+                'hora' => $hora,
+                'fecha_fin_real' => $r->fecha_fin_real ? date('d-m-Y H:i', strtotime($r->fecha_fin_real)) : '',
+                'label' => $fecha . ($hora ? ' ' . $hora : ''),
+            ];
+        }
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 0;
+        return $this->response->setJSON([
+            'consultas' => $consultas,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => $totalPages,
+        ]);
+    }
+
+    /**
+     * Obtener datos completos de una consulta anterior para rellenar el formulario actual (solo lectura, no modifica la consulta anterior)
+     */
+    public function getDatosConsultaAnterior()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+        $detalleAgendaIdActual = (int) ($this->request->getGet('detalle_agenda_id') ?? $this->request->getPost('detalle_agenda_id') ?? 0);
+        $idAnterior = (int) ($this->request->getGet('id_anterior') ?? $this->request->getPost('id_anterior') ?? 0);
+        if (!$detalleAgendaIdActual || !$idAnterior) {
+            return $this->response->setJSON(['error' => 'detalle_agenda_id e id_anterior requeridos'])->setStatusCode(400);
+        }
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+        $actual = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaIdActual)
+            ->where('usuario_id', $usuario_id)
+            ->where('paciente_id IS NOT NULL')
+            ->get()->getRow();
+        if (!$actual) {
+            return $this->response->setJSON(['error' => 'Cita actual no encontrada'])->setStatusCode(404);
+        }
+        $anterior = $db->table('detalle_agenda')
+            ->where('id', $idAnterior)
+            ->where('usuario_id', $usuario_id)
+            ->where('paciente_id', $actual->paciente_id)
+            ->where('estado_cita', 'completada')
+            ->where('fecha_fin_real IS NOT NULL')
+            ->get()->getRow();
+        if (!$anterior) {
+            return $this->response->setJSON(['error' => 'Consulta anterior no encontrada o no pertenece al mismo paciente'])->setStatusCode(404);
+        }
+        $historialModel = new HistorialClinico();
+        $historialExistente = $historialModel->withDeleted()
+            ->where('detalle_agenda_id', $idAnterior)
+            ->where('paciente_id', $actual->paciente_id)
+            ->first();
+        $historial = [];
+        if ($historialExistente) {
+            $h = is_object($historialExistente) ? (array) $historialExistente : $historialExistente;
+            foreach ($h as $k => $v) {
+                if ($v instanceof \DateTimeInterface) {
+                    $historial[$k] = $v->format('Y-m-d H:i:s');
+                } else {
+                    $historial[$k] = $v;
+                }
+            }
+        }
+        $detalle = [
+            'objetivos' => $anterior->objetivos ?? null,
+            'plan_alimentacion' => $anterior->plan_alimentacion ?? null,
+            'recomendaciones' => $anterior->recomendaciones ?? null,
+            'notas_consulta' => $anterior->notas_consulta ?? null,
+            'proxima_cita_recomendada' => $anterior->proxima_cita_recomendada ?? null,
+        ];
+        $tags_string = '';
+        if (!empty($anterior->tags)) {
+            $arr = json_decode($anterior->tags, true);
+            if (is_array($arr)) {
+                $tags_string = implode(', ', $arr);
+            } else {
+                $tags_string = $anterior->tags;
+            }
+        }
+        $detalle['tags_string'] = $tags_string;
+        $examenes_bioquimicos = [];
+        $tendencia_consumo = [];
+        if (!empty($historial['id'])) {
+            $examenModel = new \App\Models\HistorialExamenBioquimico();
+            $examenes_bioquimicos = $examenModel->getPorHistorial($historial['id']);
+            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+            $tcIndexed = $tendenciaModel->getPorHistorial($historial['id']);
+            $tendencia_consumo = is_array($tcIndexed) ? array_values($tcIndexed) : [];
+        }
+        return $this->response->setJSON([
+            'historial' => $historial,
+            'detalle' => $detalle,
+            'examenes_bioquimicos' => $examenes_bioquimicos,
+            'tendencia_consumo' => $tendencia_consumo,
+        ]);
     }
 
     /**

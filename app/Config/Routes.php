@@ -330,6 +330,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
         $routes2->get('getEstadisticas', 'Dashboard\AgendaController::getEstadisticas');
         $routes2->post('guardarMediciones', 'Dashboard\AgendaController::guardarMediciones');
+        $routes2->get('getConsultasAnteriores', 'Dashboard\AgendaController::getConsultasAnteriores');
+        $routes2->get('getDatosConsultaAnterior', 'Dashboard\AgendaController::getDatosConsultaAnterior');
         $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
     });
@@ -392,6 +394,12 @@ $routes->group('dashboard', function ($routes) {
     $routes->group('configuracion', function ($routes2) {
         $routes2->get('', 'Dashboard\ConfiguracionController::index');
         $routes2->post('guardar', 'Dashboard\ConfiguracionController::guardar');
+    });
+
+    $routes->group('mi-perfil', function ($routes2) {
+        $routes2->get('ver', 'Dashboard\MiPerfilController::index');
+        $routes2->post('guardar', 'Dashboard\MiPerfilController::guardar');
+        $routes2->post('subir-foto', 'Dashboard\MiPerfilController::subirFoto');
     });
 });
 
