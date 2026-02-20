@@ -14,7 +14,8 @@ class CancelarHorasController extends BaseController
 
     public function __construct()
     {
-        $this->whatsappService = new WhatsAppService();
+        $empresaId = session()->get('usuario')['empresa_id'] ?? null;
+        $this->whatsappService = new WhatsAppService($empresaId);
         $this->calendarService = new CalendarService();
     }
 

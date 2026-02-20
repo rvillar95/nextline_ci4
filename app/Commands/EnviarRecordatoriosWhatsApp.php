@@ -19,16 +19,9 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
 
     public function run(array $params)
     {
-        // Verificar si WhatsApp está configurado
-        if (empty(env('WHATSAPP_PROVIDER'))) {
-            CLI::write('WhatsApp no está configurado. Omitiendo envío de recordatorios.', 'yellow');
-            return;
-        }
-
         CLI::write('Iniciando envío de recordatorios por WhatsApp...', 'green');
 
         $db = \Config\Database::connect();
-        $whatsappService = new WhatsAppService();
         $configuracionModel = new \App\Models\EmpresaConfiguracion();
 
         // Obtener citas confirmadas para las próximas horas (según configuración de cada usuario)
@@ -96,6 +89,9 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
             }
 
             try {
+                $empresaRow = $db->table('usuario')->select('empresa_id')->where('id', $cita->usuario_id)->get()->getRow();
+                $empresaId = $empresaRow ? ($empresaRow->empresa_id ?? null) : null;
+                $whatsappService = new WhatsAppService($empresaId);
                 $resultado = $whatsappService->enviarRecordatorioCita($cita->id, $horasAntes);
                 
                 if (!empty($resultado) && isset($resultado[0]['success']) && $resultado[0]['success']) {

@@ -4,6 +4,7 @@ namespace App\Libraries;
 
 use App\Models\WhatsAppMensaje;
 use App\Models\Paciente;
+use App\Models\EmpresaConfiguracion;
 use Config\Services;
 use Twilio\Rest\Client as TwilioClient;
 use Twilio\Http\CurlClient;
@@ -11,6 +12,7 @@ use Twilio\Http\CurlClient;
 /**
  * Servicio para manejar integración con WhatsApp
  * Soporta Twilio y WhatsApp Business API
+ * Si se pasa $empresaId, usa credenciales guardadas en Configuración; si no, usa .env
  */
 class WhatsAppService
 {
@@ -19,20 +21,22 @@ class WhatsAppService
     protected $whatsappModel;
     protected $httpClient;
 
-    public function __construct()
+    /**
+     * @param int|null $empresaId Si se proporciona y la empresa tiene WhatsApp Business configurado en BD, se usan esas credenciales
+     */
+    public function __construct($empresaId = null)
     {
         $this->whatsappModel = new WhatsAppMensaje();
         $this->httpClient = Services::curlrequest();
         
-        // Cargar configuración desde .env
-        $this->provider = env('WHATSAPP_PROVIDER', 'twilio'); // 'twilio' o 'whatsapp_business'
-        
+        // Config por defecto desde .env
+        $this->provider = env('WHATSAPP_PROVIDER', 'twilio');
         $this->config = [
             'twilio' => [
                 'account_sid' => env('TWILIO_ACCOUNT_SID'),
                 'auth_token' => env('TWILIO_AUTH_TOKEN'),
-                'from_number' => env('TWILIO_WHATSAPP_FROM'), // formato: whatsapp:+1234567890
-                'content_sid_confirmacion' => env('TWILIO_CONTENT_SID_CONFIRMACION'), // SID de plantilla para confirmaciones (opcional)
+                'from_number' => env('TWILIO_WHATSAPP_FROM'),
+                'content_sid_confirmacion' => env('TWILIO_CONTENT_SID_CONFIRMACION'),
                 'api_url' => 'https://api.twilio.com/2010-04-01/Accounts/' . env('TWILIO_ACCOUNT_SID') . '/Messages.json'
             ],
             'whatsapp_business' => [
@@ -43,6 +47,28 @@ class WhatsAppService
                 'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'nextline_verify_token')
             ]
         ];
+        
+        // Si la empresa tiene WhatsApp Business en BD, usar esas credenciales
+        if ($empresaId !== null) {
+            $configModel = new EmpresaConfiguracion();
+            $credenciales = $configModel->obtenerCredencialesWhatsApp($empresaId);
+            if ($credenciales && $credenciales['provider'] === 'whatsapp_business' && !empty($credenciales['whatsapp_business'])) {
+                $this->provider = 'whatsapp_business';
+                $this->config['whatsapp_business'] = $credenciales['whatsapp_business'];
+            } else {
+                $config = $configModel->obtenerConfiguracion($empresaId);
+                $providerEmpresa = isset($config['whatsapp_provider']) ? trim($config['whatsapp_provider']) : '';
+                if ($providerEmpresa === 'whatsapp_business') {
+                    log_message('warning', 'WhatsAppService: Empresa ' . $empresaId . ' tiene proveedor WhatsApp Business pero faltan Access Token o Phone number ID en Configuración; usando .env (' . $this->provider . ')');
+                }
+            }
+        }
+    }
+
+    /** Proveedor realmente usado: twilio o whatsapp_business */
+    public function getProvider()
+    {
+        return $this->provider;
     }
 
     /**
@@ -230,7 +256,7 @@ class WhatsAppService
         // Formatear número para WhatsApp Business API (56912345678)
         $numeroFormateado = $this->formatearNumeroWhatsAppBusiness($numeroDestino);
         
-        $response = $this->httpClient->request('POST', $config['api_url'], [
+        $requestOptions = [
             'headers' => [
                 'Authorization' => 'Bearer ' . $config['access_token'],
                 'Content-Type' => 'application/json'
@@ -243,14 +269,97 @@ class WhatsAppService
                     'body' => $mensaje
                 ]
             ]
-        ]);
-        
-        $body = json_decode($response->getBody(), true);
-        
+        ];
+        // En desarrollo, si no hay curl.cainfo (p. ej. WAMP/Windows), cURL falla con "unable to get local issuer certificate"
+        if (ENVIRONMENT === 'development') {
+            $requestOptions['verify'] = false;
+        }
+        // No lanzar en 4xx para poder leer el cuerpo de error de Meta (ej. ventana 24h, número inválido)
+        $requestOptions['http_errors'] = false;
+        $response = $this->httpClient->request('POST', $config['api_url'], $requestOptions);
+        $rawBody = $response->getBody();
+        $body = json_decode($rawBody, true);
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode >= 400 || !empty($body['error'])) {
+            $errorMsg = $body['error']['message'] ?? $body['error']['error_user_msg'] ?? $rawBody;
+            $errorCode = $body['error']['code'] ?? $statusCode;
+            log_message('error', 'WhatsApp Business API error: code=' . $errorCode . ', message=' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
+            throw new \Exception('WhatsApp Business API: ' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
+        }
+
+        $messageId = $body['messages'][0]['id'] ?? null;
+        log_message('error', 'WhatsApp Business API: HTTP ' . $statusCode . ', to=' . $numeroFormateado . ', message_id=' . ($messageId ?? 'n/a'));
+
         return [
-            'message_id' => $body['messages'][0]['id'] ?? null,
+            'message_id' => $messageId,
             'status' => 'sent'
         ];
+    }
+
+    /**
+     * Enviar mensaje usando una plantilla de WhatsApp Business API (ej. hello_world para testear)
+     * Las plantillas se entregan aunque el usuario no haya escrito en 24h.
+     *
+     * @param string $numeroDestino
+     * @param string $templateName Nombre de la plantilla (ej. hello_world)
+     * @param string $languageCode Código de idioma (ej. en_US, es)
+     * @param array $bodyParams Parámetros del cuerpo en orden (vacío para hello_world)
+     * @return array ['message_id' => ..., 'status' => 'sent']
+     */
+    protected function enviarPorWhatsAppBusinessPlantilla($numeroDestino, $templateName, $languageCode = 'en_US', array $bodyParams = [])
+    {
+        $config = $this->config['whatsapp_business'];
+        if (empty($config['access_token']) || empty($config['phone_number_id'])) {
+            throw new \Exception('Configuración de WhatsApp Business API incompleta');
+        }
+        $numeroFormateado = $this->formatearNumeroWhatsAppBusiness($numeroDestino);
+
+        $template = [
+            'name' => $templateName,
+            'language' => ['code' => $languageCode]
+        ];
+        if (!empty($bodyParams)) {
+            $template['components'] = [
+                [
+                    'type' => 'body',
+                    'parameters' => array_map(function ($text) {
+                        return ['type' => 'text', 'text' => $text];
+                    }, $bodyParams)
+                ]
+            ];
+        }
+
+        $requestOptions = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $config['access_token'],
+                'Content-Type' => 'application/json'
+            ],
+            'json' => [
+                'messaging_product' => 'whatsapp',
+                'to' => $numeroFormateado,
+                'type' => 'template',
+                'template' => $template
+            ]
+        ];
+        if (ENVIRONMENT === 'development') {
+            $requestOptions['verify'] = false;
+        }
+        $requestOptions['http_errors'] = false;
+        $response = $this->httpClient->request('POST', $config['api_url'], $requestOptions);
+        $rawBody = $response->getBody();
+        $body = json_decode($rawBody, true);
+        $statusCode = $response->getStatusCode();
+
+        if ($statusCode >= 400 || !empty($body['error'])) {
+            $errorMsg = $body['error']['message'] ?? $body['error']['error_user_msg'] ?? $rawBody;
+            $errorCode = $body['error']['code'] ?? $statusCode;
+            log_message('error', 'WhatsApp Business API (plantilla) error: code=' . $errorCode . ', message=' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
+            throw new \Exception('WhatsApp Business API: ' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
+        }
+        $messageId = $body['messages'][0]['id'] ?? null;
+        log_message('error', 'WhatsApp Business API (plantilla ' . $templateName . '): HTTP ' . $statusCode . ', to=' . $numeroFormateado . ', message_id=' . ($messageId ?? 'n/a'));
+        return ['message_id' => $messageId, 'status' => 'sent'];
     }
 
     /**
@@ -325,6 +434,35 @@ class WhatsAppService
         $mensaje .= "\n¡Te esperamos!";
         
         log_message('error', 'WHATSAPP SERVICE: Mensaje preparado. Longitud=' . strlen($mensaje) . ' caracteres');
+
+        // Opción de usar plantilla para testear (ej. hello_world): se entrega aunque el paciente no haya escrito en 24h
+        $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', '');
+        if ($this->provider === 'whatsapp_business' && $plantillaConfirmacion === 'hello_world') {
+            log_message('error', 'WHATSAPP SERVICE: Usando plantilla hello_world para confirmación (test)');
+            try {
+                $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla($cita->telefono, 'hello_world', 'en_US', []);
+                $this->whatsappModel->registrarEnvio([
+                    'paciente_id' => $pacienteId ?? $cita->paciente_id,
+                    'nutricionista_id' => $cita->usuario_id ?? null,
+                    'agenda_id' => $cita->agenda_id ?? null,
+                    'tipo_mensaje' => 'confirmacion_cita',
+                    'numero_destino' => $cita->telefono,
+                    'numero_origen' => $this->getNumeroOrigen(),
+                    'mensaje' => 'Confirmación (plantilla hello_world)',
+                    'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
+                    'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
+                    'metadata' => json_encode($resultadoPlantilla)
+                ]);
+                log_message('error', 'WHATSAPP SERVICE: Resultado plantilla hello_world: success=1');
+                log_message('error', 'WHATSAPP SERVICE - enviarConfirmacionCita: FIN');
+                return ['success' => true, 'message_id' => $resultadoPlantilla['message_id'] ?? null];
+            } catch (\Exception $e) {
+                log_message('error', 'WHATSAPP SERVICE: Error enviando plantilla hello_world: ' . $e->getMessage());
+                log_message('error', 'WHATSAPP SERVICE - enviarConfirmacionCita: FIN');
+                return ['success' => false, 'error' => $e->getMessage()];
+            }
+        }
+
         log_message('error', 'WHATSAPP SERVICE: Llamando a enviarMensaje()');
         log_message('error', 'WHATSAPP SERVICE: Parámetros: telefono=' . $cita->telefono . ', pacienteId=' . ($pacienteId ?? $cita->paciente_id ?? 'N/A') . ', agendaId=' . ($cita->agenda_id ?? 'N/A') . ', usuarioId=' . ($cita->usuario_id ?? 'N/A'));
         

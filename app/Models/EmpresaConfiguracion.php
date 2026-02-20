@@ -32,7 +32,12 @@ class EmpresaConfiguracion extends Model
         'mp_access_token_production',
         'mp_public_key_production',
         'mp_mode',
-        'mp_habilitado'
+        'mp_habilitado',
+        'whatsapp_provider',
+        'whatsapp_access_token',
+        'whatsapp_phone_number_id',
+        'whatsapp_business_account_id',
+        'whatsapp_verify_token'
     ];
 
     protected $useTimestamps = true;
@@ -206,5 +211,34 @@ class EmpresaConfiguracion extends Model
     {
         $credenciales = $this->obtenerCredencialesMercadoPago($empresaId);
         return $credenciales && $credenciales['habilitado'] && !empty($credenciales['access_token']);
+    }
+
+    /**
+     * Obtener credenciales de WhatsApp para una empresa
+     * Si la empresa tiene whatsapp_provider y credenciales en BD, se usan; si no, el servicio usará .env
+     *
+     * @param int $empresaId
+     * @return array|null ['provider' => 'twilio'|'whatsapp_business', 'whatsapp_business' => [...], 'twilio' => [...]]
+     */
+    public function obtenerCredencialesWhatsApp($empresaId)
+    {
+        $config = $this->obtenerConfiguracion($empresaId);
+        if (!$config) {
+            return null;
+        }
+        $provider = !empty($config['whatsapp_provider']) ? $config['whatsapp_provider'] : null;
+        if ($provider === 'whatsapp_business' && !empty($config['whatsapp_access_token']) && !empty($config['whatsapp_phone_number_id'])) {
+            return [
+                'provider' => 'whatsapp_business',
+                'whatsapp_business' => [
+                    'access_token' => $config['whatsapp_access_token'],
+                    'phone_number_id' => $config['whatsapp_phone_number_id'],
+                    'business_account_id' => $config['whatsapp_business_account_id'] ?? null,
+                    'verify_token' => $config['whatsapp_verify_token'] ?? 'nextline_verify_token',
+                    'api_url' => 'https://graph.facebook.com/v18.0/' . $config['whatsapp_phone_number_id'] . '/messages'
+                ]
+            ];
+        }
+        return null;
     }
 }

@@ -113,6 +113,9 @@ class ConfiguracionController extends BaseController
         $data = $this->request->getPost();
         log_message('info', 'ConfiguracionController::guardar() - Datos recibidos: ' . json_encode($data));
 
+        // Config actual (para no sobrescribir Access Token si el usuario no lo reescribió en el formulario)
+        $configActual = $this->configuracionModel->obtenerConfiguracion($empresaId);
+
         // Verificar acceso a Botones de Pago antes de guardar config de Mercado Pago
         $accesoService = new AccesoService();
         $tieneAccesoBotonesPago = $accesoService->tieneAccesoModuloPorRuta($empresaId, '/dashboard/boton-pago');
@@ -130,6 +133,23 @@ class ConfiguracionController extends BaseController
             'mensaje_cancelacion_confirmada' => isset($data['mensaje_cancelacion_confirmada']) ? $data['mensaje_cancelacion_confirmada'] : null,
             'mensaje_cancelacion_en_proceso' => isset($data['mensaje_cancelacion_en_proceso']) ? $data['mensaje_cancelacion_en_proceso'] : null
         ];
+        
+        // WhatsApp: configuración de sistema (sin UI en Configuración). No sobrescribir si no vienen en el POST.
+        if (array_key_exists('whatsapp_provider', $data)) {
+            $configuracion['whatsapp_provider'] = isset($data['whatsapp_provider']) && in_array($data['whatsapp_provider'], ['twilio', 'whatsapp_business'], true) ? $data['whatsapp_provider'] : null;
+            $tokenIngresado = isset($data['whatsapp_access_token']) ? trim($data['whatsapp_access_token']) : '';
+            $configuracion['whatsapp_access_token'] = $tokenIngresado !== '' ? $tokenIngresado : ($configActual['whatsapp_access_token'] ?? null);
+            $phoneIdIngresado = isset($data['whatsapp_phone_number_id']) ? trim($data['whatsapp_phone_number_id']) : '';
+            $configuracion['whatsapp_phone_number_id'] = $phoneIdIngresado !== '' ? $phoneIdIngresado : ($configActual['whatsapp_phone_number_id'] ?? null);
+            $configuracion['whatsapp_business_account_id'] = isset($data['whatsapp_business_account_id']) ? trim($data['whatsapp_business_account_id']) : null;
+            $configuracion['whatsapp_verify_token'] = isset($data['whatsapp_verify_token']) ? trim($data['whatsapp_verify_token']) : null;
+        } else {
+            $configuracion['whatsapp_provider'] = $configActual['whatsapp_provider'] ?? null;
+            $configuracion['whatsapp_access_token'] = $configActual['whatsapp_access_token'] ?? null;
+            $configuracion['whatsapp_phone_number_id'] = $configActual['whatsapp_phone_number_id'] ?? null;
+            $configuracion['whatsapp_business_account_id'] = $configActual['whatsapp_business_account_id'] ?? null;
+            $configuracion['whatsapp_verify_token'] = $configActual['whatsapp_verify_token'] ?? null;
+        }
         
         // Solo guardar configuración de Mercado Pago si tiene acceso al módulo
         if ($tieneAccesoBotonesPago) {
@@ -155,6 +175,8 @@ class ConfiguracionController extends BaseController
                 $configuracion['mp_public_key'] = $configuracion['mp_public_key_sandbox'];
             }
         }
+
+        // WhatsApp (bloque duplicado eliminado; ya asignado arriba con protección del token)
 
         // Validar horas_antes_recordatorio
         if ($configuracion['horas_antes_recordatorio'] < 1 || $configuracion['horas_antes_recordatorio'] > 168) {

@@ -37,6 +37,9 @@ class CSRFExceptWebhook extends BaseCSRF
         'dashboard/plan-alimentario/vista-distribucion',
         // Agenda: guardar mediciones (AJAX; protegido por sesión)
         'dashboard/agenda/guardarMediciones',
+        // Mi perfil: subir foto y guardar preferencias (AJAX; protegido por sesión)
+        'dashboard/mi-perfil/subir-foto',
+        'dashboard/mi-perfil/guardar',
         // Historial: cálculo de composición corporal (AJAX; protegido por sesión)
         'dashboard/historial/calcular-2-componentes',
         'dashboard/historial/calcular-4-componentes',

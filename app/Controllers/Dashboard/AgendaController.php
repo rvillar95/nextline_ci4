@@ -1861,18 +1861,27 @@ class AgendaController extends BaseController
         log_message('error', 'detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . $pacienteId . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
         log_message('error', '========================================');
         
-        // Verificar si WhatsApp está configurado
+        $db = \Config\Database::connect();
+        $row = $db->table('detalle_agenda da')
+            ->select('u.empresa_id')
+            ->join('usuario u', 'u.id = da.usuario_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+        $empresaId = $row ? ($row->empresa_id ?? null) : null;
+
+        // Omitir solo si no hay proveedor en .env y no hay empresa (no se puede usar BD)
         $whatsappProvider = env('WHATSAPP_PROVIDER');
-        log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp Provider configurado: ' . ($whatsappProvider ? $whatsappProvider : 'NO'));
-        
-        if (empty($whatsappProvider)) {
-            log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp no configurado, omitiendo envío');
+        if (empty($whatsappProvider) && $empresaId === null) {
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp no configurado (sin .env ni empresa), omitiendo envío');
             return false;
         }
+        log_message('error', 'WHATSAPP CONFIRMACIÓN: empresa_id=' . ($empresaId ?? 'null') . ', env provider=' . ($whatsappProvider ?: 'vacío'));
 
         try {
-            log_message('error', 'WHATSAPP CONFIRMACIÓN: Instanciando WhatsAppService');
-            $whatsappService = new WhatsAppService();
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: Instanciando WhatsAppService (empresa_id=' . ($empresaId ?? 'null') . ')');
+            $whatsappService = new WhatsAppService($empresaId);
+            log_message('error', 'WHATSAPP CONFIRMACIÓN: proveedor usado=' . $whatsappService->getProvider());
             
             log_message('error', 'WHATSAPP CONFIRMACIÓN: Llamando a enviarConfirmacionCita()');
             $resultado = $whatsappService->enviarConfirmacionCita($detalleAgendaId, $pacienteId, $meetLink);
@@ -2389,11 +2398,11 @@ class AgendaController extends BaseController
                 ->select('da.id, da.hora_inicio, da.hora_fin, da.modalidad_id, da.tipo_consulta, da.motivo, da.calendar_event_id, da.usuario_id,
                           a.fecha,
                           p.id as paciente_id_db, p.nombre, p.apellido, p.email as paciente_email, p.telefono as paciente_telefono,
-                          u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, u.correo as nutricionista_email,
+                          u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido, u.correo as nutricionista_email, u.empresa_id,
                           ma.nombre as modalidad_nombre')
                 ->join('agenda a', 'a.id = da.agenda_id', 'left')
                 ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-                ->join('usuario u', 'u.id = da.usuario_id', 'left') // Cambiar a da.usuario_id para obtener el nutricionista correcto
+                ->join('usuario u', 'u.id = da.usuario_id', 'left')
                 ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
                 ->where('da.id', $detalleAgendaId)
                 ->where('da.paciente_id', $pacienteId)
@@ -2451,7 +2460,8 @@ class AgendaController extends BaseController
                     if (empty($citaCompleta->paciente_telefono)) {
                         log_message('warning', 'CANCELAR DESDE EMAIL: No se puede enviar WhatsApp - paciente sin teléfono');
                     } else {
-                        $whatsappService = new WhatsAppService();
+                        $empresaId = $citaCompleta->empresa_id ?? null;
+                        $whatsappService = new WhatsAppService($empresaId);
                         $resultado = $whatsappService->enviarCancelacionCita($detalleAgendaId, $pacienteId);
                         if ($resultado['success']) {
                             log_message('info', 'CANCELAR DESDE EMAIL: WhatsApp de cancelación enviado al paciente exitosamente');
