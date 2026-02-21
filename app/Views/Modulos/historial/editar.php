@@ -2,12 +2,17 @@
 
 <?= $this->section('historial/editar') ?>
 
+<!-- Toastr para mensajes al guardar -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <!-- Tagify para tags (necesario en esta vista) -->
 <link href="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.css" rel="stylesheet" type="text/css" />
 <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.17.9/dist/tagify.min.js"></script>
 
 <!-- Chart.js (para gráficos de composición corporal y somatocarta) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- TinyMCE editor (motivo, plan, recomendaciones enriquecidos) -->
+<script src="https://cdn.tiny.cloud/1/k10uo8qhvhuxj1ho5z73jcbhzpwlspewyrz3lkbu5b99faon/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
 <style>
     .section-card {
@@ -17,6 +22,71 @@
         margin-bottom: 25px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         border-left: 4px solid #fa709a;
+    }
+    /* Bloque Información de la Consulta: header y campos más claros */
+    .section-card.info-consulta-card {
+        overflow: hidden;
+    }
+    .section-card.info-consulta-card .info-consulta-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: -25px -25px 20px -25px;
+        padding: 16px 25px;
+        background: linear-gradient(135deg, rgba(250, 112, 154, 0.08) 0%, rgba(254, 225, 64, 0.06) 100%);
+        border-bottom: 1px solid rgba(250, 112, 154, 0.2);
+    }
+    .section-card.info-consulta-card .info-consulta-header .step-badge {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(250, 112, 154, 0.35);
+    }
+    .section-card.info-consulta-card .info-consulta-header .info-consulta-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .section-card.info-consulta-card .info-consulta-header .info-consulta-title i {
+        color: #fa709a;
+        opacity: 0.9;
+    }
+    .section-card.info-consulta-card .form-group {
+        margin-bottom: 1.1rem;
+    }
+    .section-card.info-consulta-card .form-group label {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+    }
+    .section-card.info-consulta-card .form-control {
+        border-radius: 8px;
+        border-color: #dee2e6;
+    }
+    .section-card.info-consulta-card .form-control:focus {
+        border-color: #fa709a;
+        box-shadow: 0 0 0 0.2rem rgba(250, 112, 154, 0.2);
+    }
+    .section-card.info-consulta-card .input-group-text {
+        border-radius: 0 8px 8px 0;
+        border-color: #dee2e6;
+        background: #f8f9fa;
+    }
+    .section-card.info-consulta-card .input-group .form-control {
+        border-radius: 8px 0 0 8px;
     }
     
     .btn-submit {
@@ -96,20 +166,30 @@
                 </div>
             <?php endif; ?>
 
-            <form action="<?= base_url('dashboard/historial/update') ?>" method="post" id="formHistorialEditar" onsubmit="return prepararFichaIngresoHistorial(this)">
+            <form id="formHistorialEditar" method="post">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= $historial->id ?>">
-                
-                <div class="section-card">
-                    <div class="section-title">
-                        <span class="step-number" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">1</span>
-                        <span><i class="fas fa-calendar icon-label"></i> Información de la Consulta</span>
+                <?php
+                // Normalizar fechas a yyyy-MM-dd para input type="date" (si vienen en dd-mm-yyyy u otro formato)
+                $fechaParaInputDate = function ($fecha) {
+                    if (empty($fecha)) return '';
+                    $fecha = trim((string) $fecha);
+                    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $fecha, $m)) return $m[1] . '-' . $m[2] . '-' . $m[3];
+                    if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $fecha, $m)) return sprintf('%04d-%02d-%02d', (int)$m[3], (int)$m[2], (int)$m[1]);
+                    $ts = strtotime($fecha);
+                    return $ts ? date('Y-m-d', $ts) : '';
+                };
+                ?>
+                <div class="section-card info-consulta-card">
+                    <div class="info-consulta-header">
+                        <span class="step-badge">1</span>
+                        <h3 class="info-consulta-title"><i class="fas fa-calendar-alt"></i> Información de la Consulta</h3>
                     </div>
                     
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Paciente <span class="text-danger">*</span></label>
+                                <label class="form-label">Paciente <span class="text-danger">*</span></label>
                                 <select name="paciente_id" class="form-control" required>
                                     <option value="">-- Seleccione un paciente --</option>
                                     <?php foreach ($pacientes as $paciente) : ?>
@@ -122,7 +202,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Tipo <span class="text-danger">*</span></label>
+                                <label class="form-label">Tipo <span class="text-danger">*</span></label>
                                 <select name="tipo_registro" class="form-control" required>
                                     <option value="consulta" <?= ($historial->tipo_registro == 'consulta') ? 'selected' : '' ?>>Consulta</option>
                                     <option value="seguimiento" <?= ($historial->tipo_registro == 'seguimiento') ? 'selected' : '' ?>>Seguimiento</option>
@@ -133,38 +213,107 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Fecha <span class="text-danger">*</span></label>
-                                <input type="date" name="fecha_consulta" class="form-control" required 
-                                       value="<?= old('fecha_consulta', $historial->fecha_consulta) ?>">
+                                <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input type="date" name="fecha_consulta" class="form-control" required 
+                                           value="<?= esc($fechaParaInputDate(old('fecha_consulta', $historial->fecha_consulta ?? ''))) ?>">
+                                    <span class="input-group-text"><i class="fas fa-calendar-day text-muted"></i></span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Hora</label>
-                                <input type="time" name="hora_consulta" class="form-control" 
-                                       value="<?= old('hora_consulta', $historial->hora_consulta) ?>">
+                                <label class="form-label">Hora</label>
+                                <div class="input-group">
+                                    <input type="time" name="hora_consulta" class="form-control" 
+                                           value="<?= old('hora_consulta', isset($historial->hora_consulta) && $historial->hora_consulta ? (strpos($historial->hora_consulta, ':') !== false ? substr($historial->hora_consulta, 0, 5) : $historial->hora_consulta) : '') ?>">
+                                    <span class="input-group-text"><i class="fas fa-clock text-muted"></i></span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Próxima Cita</label>
-                                <input type="date" name="proxima_cita" class="form-control" 
-                                       value="<?= old('proxima_cita', $historial->proxima_cita) ?>">
+                                <label class="form-label">Próxima Cita</label>
+                                <div class="input-group">
+                                    <input type="date" name="proxima_cita" class="form-control" 
+                                           value="<?= esc($fechaParaInputDate(old('proxima_cita', $historial->proxima_cita ?? ''))) ?>">
+                                    <span class="input-group-text"><i class="fas fa-calendar-check text-muted"></i></span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="section-card">
-                    <div class="section-title">
-                        <span class="step-number" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">2</span>
-                        <span><i class="fas fa-weight icon-label"></i> Medidas Corporales</span>
+                <!-- 2) Información Clínica: Motivo, Plan, Recomendaciones (mismo orden que agenda/consulta) -->
+                <div class="section-card" style="border-left: 4px solid #28a745 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="text-success mb-0">
+                            <i class="fas fa-file-medical me-2"></i> Información Clínica
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
+                                <i class="fas fa-check me-1"></i> Guardado
+                            </span>
+                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="collapse" data-bs-target="#informacionClinicaCollapse" aria-expanded="false" aria-controls="informacionClinicaCollapse">
+                                <i class="fas fa-chevron-down me-2"></i> <span id="informacionClinicaToggleLabel">Expandir</span>
+                            </button>
+                        </div>
                     </div>
-                    
-                    <!-- Leyenda de Métodos de Cálculo (igual que en Agenda/Consulta) -->
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones.
+                    </p>
+                    <div class="collapse" id="informacionClinicaCollapse">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
+                                <p class="text-muted small mb-1">Indique el motivo de la consulta o el objetivo principal acordado con el paciente.</p>
+                                <textarea name="motivo_consulta" id="motivo_consulta" class="form-control" rows="3"><?= old('motivo_consulta', $historial->motivo_consulta) ?></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
+                                <p class="text-muted small mb-1">Describe el plan de tratamiento y alimentación acordado.</p>
+                                <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="4"><?= old('plan_tratamiento', $historial->plan_tratamiento) ?></textarea>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
+                                <p class="text-muted small mb-1">Recomendaciones y observaciones para el paciente.</p>
+                                <textarea name="recomendaciones" id="recomendaciones" class="form-control" rows="4"><?= old('recomendaciones', trim(($historial->recomendaciones ?? '') . (isset($historial->observaciones) && $historial->observaciones !== '' ? "\n\n" . $historial->observaciones : ''))) ?></textarea>
+                                <input type="hidden" name="observaciones" value="">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-success" onclick="guardarInformacionClinicaHistorial()"><i class="fas fa-save me-2"></i> Guardar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3) Mediciones Corporales (mismo orden que agenda/consulta, con Expandir/Ocultar) -->
+                <div class="section-card" style="border-left: 4px solid #4A90E2 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="text-primary mb-0">
+                            <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
+                                <i class="fas fa-check me-1"></i> Guardado
+                            </span>
+                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#medicionesCollapse" aria-expanded="false" aria-controls="medicionesCollapse">
+                                <i class="fas fa-chevron-down me-2"></i> <span id="medicionesToggleLabel">Expandir</span>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal.
+                    </p>
+                    <div class="collapse" id="medicionesCollapse">
+                    <!-- Leyenda de Métodos de Cálculo (dentro del collapse, igual que en Agenda/Consulta) -->
                     <div class="alert alert-light border mb-4" style="background-color: #f8f9fa;">
                         <div class="d-flex align-items-center mb-2">
                             <strong class="me-2"><i class="fas fa-info-circle me-1"></i> Leyenda de Métodos de Cálculo:</strong>
@@ -490,275 +639,91 @@
                             </div>
                         </div>
                     </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-primary" onclick="guardarMedicionesHistorial()"><i class="fas fa-save me-2"></i> Guardar Mediciones</button>
+                    </div>
+                    </div>
                 </div>
 
-                <div class="section-card">
-                    <div class="section-title">
-                        <span class="step-number" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">3</span>
-                        <span><i class="fas fa-file-medical icon-label"></i> Información Clínica</span>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Motivo de Consulta</label>
-                                <textarea name="motivo_consulta" class="form-control" rows="3"><?= old('motivo_consulta', $historial->motivo_consulta) ?></textarea>
-                            </div>
+                <!-- 4) Registro Clínico: anamnesis, exámenes, tendencia, recordatorio 24h (mismo orden que agenda/consulta) -->
+                <div class="section-card" style="border-left: 4px solid #28a745 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="text-success mb-0">
+                            <i class="fas fa-file-medical me-2"></i> Registro Clínico
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
+                                <i class="fas fa-check me-1"></i> Guardado
+                            </span>
+                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="collapse" data-bs-target="#registroClinicoCollapse" aria-expanded="false" aria-controls="registroClinicoCollapse">
+                                <i class="fas fa-chevron-down me-2"></i> <span id="registroClinicoToggleLabel">Expandir</span>
+                            </button>
                         </div>
                     </div>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h.
+                    </p>
+                    <div class="collapse" id="registroClinicoCollapse">
+                        <?= $this->include('Modulos/historial/partial_registro_clinico_editar') ?>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-success" onclick="guardarMedicionesHistorial()"><i class="fas fa-save me-2"></i> Guardar Registro Clínico</button>
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Anamnesis</label>
-                                <textarea name="anamnesis" class="form-control" rows="4"><?= old('anamnesis', $historial->anamnesis) ?></textarea>
-                            </div>
+                <!-- 5) Calorimetría y Plan Alimentario (mismo orden que agenda/consulta, con Expandir/Ocultar) -->
+                <div class="section-card" style="border-left: 4px solid #9C27B0 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <h5 class="mb-0" style="color: #9C27B0;">
+                            <i class="fas fa-calculator me-2"></i> Calorimetría y Plan Alimentario
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
+                                <i class="fas fa-check me-1"></i> Guardado
+                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-purple" data-bs-toggle="collapse" data-bs-target="#calorimetriaPlanCollapse" aria-expanded="false" aria-controls="calorimetriaPlanCollapse" style="border-color: #9C27B0; color: #9C27B0;">
+                                <i class="fas fa-chevron-down me-2"></i> <span id="calorimetriaPlanToggleLabel">Expandir</span>
+                            </button>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Diagnóstico</label>
-                                <textarea name="diagnostico" class="form-control" rows="3"><?= old('diagnostico', $historial->diagnostico) ?></textarea>
-                            </div>
+                    <p class="text-muted small mb-3">
+                        <i class="fas fa-info-circle me-1"></i> Calcula el gasto calórico y crea un plan alimentario estructurado con porciones e intercambios.
+                    </p>
+                    <div class="collapse" id="calorimetriaPlanCollapse">
+                    <ul class="nav nav-tabs mb-3" id="planAlimentarioTabsEditar" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="calorimetria-tab-editar" data-bs-toggle="tab" data-bs-target="#calorimetria-editar" type="button" role="tab" aria-controls="calorimetria-editar" aria-selected="true"><i class="fas fa-fire me-2"></i> Calorimetría</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="plan-tab-editar" data-bs-toggle="tab" data-bs-target="#plan-editar" type="button" role="tab" aria-controls="plan-editar" aria-selected="false"><i class="fas fa-clipboard-list me-2"></i> Plan Alimentario</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="distribucion-tab-editar" data-bs-toggle="tab" data-bs-target="#distribucion-editar" type="button" role="tab" aria-controls="distribucion-editar" aria-selected="false"><i class="fas fa-utensils me-2"></i> Distribución por Comidas</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="planAlimentarioTabContentEditar">
+                        <div class="tab-pane fade show active" id="calorimetria-editar" role="tabpanel">
+                            <?php $embebidoEnForm = true; echo $this->include('Modulos/plan_alimentario/calorimetria'); ?>
+                        </div>
+                        <div class="tab-pane fade" id="plan-editar" role="tabpanel">
+                            <?php $embebidoEnForm = true; echo $this->include('Modulos/plan_alimentario/plan'); ?>
+                        </div>
+                        <div class="tab-pane fade" id="distribucion-editar" role="tabpanel">
+                            <?= $this->include('Modulos/plan_alimentario/distribucion_comidas') ?>
                         </div>
                     </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Plan de Tratamiento</label>
-                                <textarea name="plan_tratamiento" class="form-control" rows="4"><?= old('plan_tratamiento', $historial->plan_tratamiento) ?></textarea>
-                            </div>
-                        </div>
                     </div>
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Recomendaciones</label>
-                                <textarea name="recomendaciones" class="form-control" rows="3"><?= old('recomendaciones', $historial->recomendaciones) ?></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Observaciones</label>
-                                <textarea name="observaciones" class="form-control" rows="2"><?= old('observaciones', $historial->observaciones) ?></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Tags <small class="text-muted">(Escriba y presione Enter o coma para agregar)</small></label>
-                                <input type="text" name="tags" id="tags" class="form-control" 
-                                       placeholder="Ej: diabetes, hipertensión, seguimiento, control"
-                                       value="">
-                                <small class="form-text text-muted">
-                                    Los tags ayudan a categorizar y buscar consultas. Ejemplos: diabetes, hipertensión, seguimiento, control, etc.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Ficha de Ingreso: Anamnesis clínica (estructurada) -->
-                    <div class="row mb-4 mt-4">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-notes-medical me-2"></i> Anamnesis Clínica</h6>
-                            <p class="text-muted small mb-3">Completar cada ítem según corresponda.</p>
-                            <input type="hidden" name="anamnesis_clinica" id="anamnesis_clinica" value="">
-                        </div>
-                        <?php
-                        $ac = [];
-                        if (!empty($historial->anamnesis_clinica)) {
-                            $ac = json_decode($historial->anamnesis_clinica, true) ?: [];
-                        }
-                        $ac = is_array($ac) ? $ac : [];
-                        ?>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Tabaco</label>
-                            <textarea class="form-control form-control-sm" id="ac_tabaco" rows="2" placeholder="Ej: No fumador / 5 cig/día"><?= esc($ac['tabaco'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Alcohol</label>
-                            <textarea class="form-control form-control-sm" id="ac_alcohol" rows="2" placeholder="Ej: Ocasional / No"><?= esc($ac['alcohol'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Drogas</label>
-                            <textarea class="form-control form-control-sm" id="ac_drogas" rows="2" placeholder="Ej: No / Especificar"><?= esc($ac['drogas'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-12 mb-2">
-                            <label class="form-label small mb-0">Enfermedad de base / RCV</label>
-                            <textarea class="form-control form-control-sm" id="ac_enfermedad_base" rows="2" placeholder="Ej: HTA, DM2, dislipidemia, ninguno"><?= esc($ac['enfermedad_base'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-12 mb-2">
-                            <label class="form-label small mb-0">Signos y síntomas</label>
-                            <textarea class="form-control form-control-sm" id="ac_signos_sintomas" rows="2" placeholder="Ej: Cefaleas ocasionales, sin otros"><?= esc($ac['signos_sintomas'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Tránsito intestinal / Bristol / diuresis</label>
-                            <textarea class="form-control form-control-sm" id="ac_transito_bristol" rows="2" placeholder="Ej: Regular, Bristol 3-4"><?= esc($ac['transito_bristol'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Medicamentos</label>
-                            <textarea class="form-control form-control-sm" id="ac_medicamentos" rows="2" placeholder="Ej: Metformina 850 mg c/12 h"><?= esc($ac['medicamentos'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Suplementos</label>
-                            <textarea class="form-control form-control-sm" id="ac_suplementos" rows="2" placeholder="Ej: Vit D, omega 3 / Ninguno"><?= esc($ac['suplementos'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Ingesta hídrica</label>
-                            <textarea class="form-control form-control-sm" id="ac_ingesta_hidrica" rows="2" placeholder="Ej: 6-8 vasos/día"><?= esc($ac['ingesta_hidrica'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Actividad física</label>
-                            <textarea class="form-control form-control-sm" id="ac_actividad_fisica" rows="2" placeholder="Ej: 3 veces/semana, caminata"><?= esc($ac['actividad_fisica'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Sueño</label>
-                            <textarea class="form-control form-control-sm" id="ac_sueno" rows="2" placeholder="Ej: 6-7 h, insomnio ocasional"><?= esc($ac['sueno'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-12 mb-2">
-                            <label class="form-label small mb-0">Otros / notas</label>
-                            <textarea class="form-control form-control-sm" id="ac_otros" rows="3" placeholder="Cualquier dato adicional"><?= esc($ac['otros'] ?? '') ?></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Anamnesis alimentaria (estructurada) -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-utensils me-2"></i> Anamnesis Alimentaria</h6>
-                            <p class="text-muted small mb-3">Relación familiar, quién cocina, apetito, relación con la comida, historia de peso y dietas.</p>
-                            <input type="hidden" name="anamnesis_alimentaria" id="anamnesis_alimentaria" value="">
-                        </div>
-                        <?php
-                        $aa = [];
-                        if (!empty($historial->anamnesis_alimentaria)) {
-                            $aa = json_decode($historial->anamnesis_alimentaria, true) ?: [];
-                        }
-                        $aa = is_array($aa) ? $aa : [];
-                        ?>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Relación familiar / apoyo / recursos</label>
-                            <textarea class="form-control form-control-sm" id="aa_relacion_familiar" rows="2" placeholder="Ej: Vive con pareja, apoyo en compras"><?= esc($aa['relacion_familiar'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Quién cocina</label>
-                            <textarea class="form-control form-control-sm" id="aa_quien_cocina" rows="2" placeholder="Ej: La paciente / Pareja / Delivery"><?= esc($aa['quien_cocina'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Apetito</label>
-                            <textarea class="form-control form-control-sm" id="aa_apetito" rows="2" placeholder="Ej: Bueno / Variable / Bajo"><?= esc($aa['apetito'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-12 mb-2">
-                            <label class="form-label small mb-0">Relación con la comida</label>
-                            <textarea class="form-control form-control-sm" id="aa_relacion_comida" rows="2" placeholder="Ej: Come por ansiedad..."><?= esc($aa['relacion_comida'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Historia de dietas restrictivas</label>
-                            <textarea class="form-control form-control-sm" id="aa_dieta_restrictiva" rows="2" placeholder="Ej: Múltiples intentos, dieta keto 2024"><?= esc($aa['dieta_restrictiva'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Historia de peso</label>
-                            <textarea class="form-control form-control-sm" id="aa_historia_peso" rows="2" placeholder="Ej: Estable 5 años, sube en invierno"><?= esc($aa['historia_peso'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-md-6 col-lg-4 mb-2">
-                            <label class="form-label small mb-0">Ansiedad con/sin comida</label>
-                            <textarea class="form-control form-control-sm" id="aa_ansiedad_comida" rows="2" placeholder="Ej: Ansiedad en las tardes, picoteo nocturno"><?= esc($aa['ansiedad_comida'] ?? '') ?></textarea>
-                        </div>
-                        <div class="col-12 mb-2">
-                            <label class="form-label small mb-0">Otros / notas</label>
-                            <textarea class="form-control form-control-sm" id="aa_otros" rows="3" placeholder="Cualquier dato adicional"><?= esc($aa['otros'] ?? '') ?></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Exámenes bioquímicos -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-vial me-2"></i> Exámenes Bioquímicos</h6>
-                            <p class="text-muted small">Nombre del examen, valor y fecha o interpretación.</p>
-                            <input type="hidden" name="examenes_bioquimicos" id="examenes_bioquimicos_hidden" value="">
-                            <div class="table-responsive mb-2">
-                                <table class="table table-sm table-bordered" id="tablaExamenesBioquimicos">
-                                    <thead class="table-light">
-                                        <tr><th>Nombre</th><th>Valor</th><th>Fecha / Interpretación</th><th width="50"></th></tr>
-                                    </thead>
-                                    <tbody id="tbodyExamenesBioquimicos">
-                                        <?php foreach ($examenes_bioquimicos ?? [] as $ex): ?>
-                                        <tr class="fila-examen">
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_nombre[]" placeholder="Ej: Glicemia" value="<?= esc($ex->nombre ?? '') ?>"></td>
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_valor[]" placeholder="Ej: 95" value="<?= esc($ex->valor ?? '') ?>"></td>
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_fecha[]" placeholder="Ej: 15-01-2026 / Normal" value="<?= esc($ex->fecha_interpretacion ?? '') ?>"></td>
-                                            <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-examen" title="Quitar"><i class="fas fa-times"></i></button></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                        <tr class="fila-examen">
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_nombre[]" placeholder="Ej: Glicemia"></td>
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_valor[]" placeholder="Ej: 95"></td>
-                                            <td><input type="text" class="form-control form-control-sm" name="examen_fecha[]" placeholder="Ej: 15-01-2026 / Normal"></td>
-                                            <td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-examen" title="Quitar"><i class="fas fa-times"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAgregarExamen"><i class="fas fa-plus me-1"></i> Agregar examen</button>
-                        </div>
-                    </div>
-
-                    <!-- Tendencia de consumo -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-apple-alt me-2"></i> Tendencia de Consumo / Preferencia alimentaria y Alergias</h6>
-                            <p class="text-muted small mb-3">Completar preferencia y/o alergia/intolerancia por grupo.</p>
-                            <input type="hidden" name="tendencia_consumo" id="tendencia_consumo" value="">
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered" id="tablaTendenciaConsumo">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th class="align-middle">Tendencia de consumo</th>
-                                            <th colspan="1" class="text-center bg-success bg-opacity-25">Preferencia alimentaria</th>
-                                            <th colspan="1" class="text-center bg-danger bg-opacity-25">Alergias / Intolerancias</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyTendenciaConsumo">
-                                        <?php
-                                        $tendencia_grupos = $tendencia_grupos ?? \App\Models\HistorialTendenciaConsumo::getGrupos();
-                                        foreach ($tendencia_grupos as $slug => $etiqueta):
-                                            $tc = $tendencia_consumo[$slug] ?? null;
-                                            $pref = $tc ? ($tc->preferencia ?? '') : '';
-                                            $alerg = $tc ? ($tc->alergia_intolerancia ?? '') : '';
-                                        ?>
-                                        <tr data-grupo="<?= esc($slug) ?>">
-                                            <td class="align-middle fw-medium"><?= esc($etiqueta) ?></td>
-                                            <td class="p-1 bg-success bg-opacity-10">
-                                                <textarea class="form-control form-control-sm tc-preferencia" rows="2" placeholder="Ej: Alto / Bajo / 0" data-grupo="<?= esc($slug) ?>"><?= esc($pref) ?></textarea>
-                                            </td>
-                                            <td class="p-1 bg-danger bg-opacity-10">
-                                                <textarea class="form-control form-control-sm tc-alergia" rows="2" placeholder="Ej: Sí / No / 0" data-grupo="<?= esc($slug) ?>"><?= esc($alerg) ?></textarea>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recordatorio 24 h -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <h6 class="text-info mb-3"><i class="fas fa-clock me-2"></i> Recordatorio 24 h</h6>
-                            <p class="text-muted small">Desayuno, colación, almuerzo, once, cena: horarios y contenido.</p>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <textarea name="recordatorio_24h" id="recordatorio_24h" class="form-control" rows="5" placeholder="Ej: Desayuno 08:00: café con leche, pan integral..."><?= old('recordatorio_24h', $historial->recordatorio_24h ?? '') ?></textarea>
-                        </div>
+                <!-- 6) Tags (mismo orden que agenda/consulta) -->
+                <div class="section-card" style="border-left: 4px solid #6c757d !important;">
+                    <h6 class="mb-2" style="color: #6c757d;"><i class="fas fa-tags me-2"></i> Tags</h6>
+                    <p class="text-muted small mb-2">Etiquetas para categorizar y buscar esta consulta. Escriba y presione Enter o coma.</p>
+                    <input type="text" name="tags" id="tags" class="form-control" 
+                           placeholder="Ej: diabetes, hipertensión, seguimiento, control"
+                           value="<?= esc($tags_string ?? '') ?>">
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" id="btnGuardarTags" class="btn btn-primary" onclick="guardarInformacionClinicaHistorial()"><i class="fas fa-save me-2"></i> Guardar</button>
                     </div>
                 </div>
 
@@ -766,7 +731,7 @@
                 <?php if (!empty($metodos_calculo ?? [])): ?>
                 <div class="section-card">
                     <div class="section-title">
-                        <span class="step-number" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">4</span>
+                        <span class="step-number" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">5</span>
                         <span><i class="fas fa-calculator icon-label"></i> Métodos de Cálculo de Composición Corporal</span>
                     </div>
                     
@@ -809,7 +774,7 @@
                 <?php endif; ?>
 
                 <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-submit">
+                    <button type="button" class="btn btn-submit" id="btnActualizarConsulta">
                         <i class="fas fa-save me-2"></i> Actualizar Consulta
                     </button>
                     <a href="<?= base_url('dashboard/historial/lista') ?>" class="btn btn-secondary">
@@ -822,8 +787,14 @@
 </div>
 
 <script>
+// Toastr (igual que agenda/consulta)
+if (typeof toastr !== 'undefined') {
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 3000 };
+}
 // Antes de enviar el formulario: armar JSON de ficha de ingreso y poner en los hidden
 function prepararFichaIngresoHistorial(form) {
+    if (typeof window.jQuery === 'undefined') return;
+    var $ = window.jQuery;
     var acObj = {
         tabaco: ($('#ac_tabaco').val() || '').trim(),
         alcohol: ($('#ac_alcohol').val() || '').trim(),
@@ -838,7 +809,8 @@ function prepararFichaIngresoHistorial(form) {
         sueno: ($('#ac_sueno').val() || '').trim(),
         otros: ($('#ac_otros').val() || '').trim()
     };
-    $('#anamnesis_clinica').val(JSON.stringify(acObj));
+    var anamnesisClinica = document.getElementById('anamnesis_clinica');
+    if (anamnesisClinica) anamnesisClinica.value = JSON.stringify(acObj);
     var aaObj = {
         relacion_familiar: ($('#aa_relacion_familiar').val() || '').trim(),
         quien_cocina: ($('#aa_quien_cocina').val() || '').trim(),
@@ -849,7 +821,8 @@ function prepararFichaIngresoHistorial(form) {
         ansiedad_comida: ($('#aa_ansiedad_comida').val() || '').trim(),
         otros: ($('#aa_otros').val() || '').trim()
     };
-    $('#anamnesis_alimentaria').val(JSON.stringify(aaObj));
+    var anamnesisAlim = document.getElementById('anamnesis_alimentaria');
+    if (anamnesisAlim) anamnesisAlim.value = JSON.stringify(aaObj);
     var tendenciaRows = [];
     $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() {
         var grupo = $(this).data('grupo');
@@ -857,7 +830,8 @@ function prepararFichaIngresoHistorial(form) {
         var alergia = $(this).find('.tc-alergia').val() || '';
         tendenciaRows.push({ grupo: grupo, preferencia: preferencia, alergia_intolerancia: alergia });
     });
-    $('#tendencia_consumo').val(JSON.stringify(tendenciaRows));
+    var tendenciaInput = document.getElementById('tendencia_consumo');
+    if (tendenciaInput) tendenciaInput.value = JSON.stringify(tendenciaRows);
     var filasExamenes = [];
     $('#tbodyExamenesBioquimicos tr.fila-examen').each(function() {
         var $tr = $(this);
@@ -867,9 +841,202 @@ function prepararFichaIngresoHistorial(form) {
             fecha_interpretacion: ($tr.find('input[name="examen_fecha[]"]').val() || '').trim()
         });
     });
-    $('#examenes_bioquimicos_hidden').val(JSON.stringify(filasExamenes));
-    return true;
+    var examenesHidden = document.getElementById('examenes_bioquimicos_hidden');
+    if (examenesHidden) examenesHidden.value = JSON.stringify(filasExamenes);
 }
+
+// Evitar envío clásico del formulario (todo se guarda por AJAX)
+(function() {
+    var form = document.getElementById('formHistorialEditar');
+    if (!form) return;
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        try { prepararFichaIngresoHistorial(form); } catch (err) { console.error('prepararFichaIngresoHistorial:', err); }
+        guardarInformacionClinicaHistorial();
+        setTimeout(function() { guardarMedicionesHistorial(); }, 400);
+    });
+})();
+
+function obtenerTokenCSRF() {
+    var name = 'csrf_cookie_name';
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+        var c = cookies[i].trim();
+        if (c.indexOf(name + '=') === 0) return c.substring(name.length + 1);
+    }
+    return '';
+}
+function actualizarTokenCSRF(xhr) {
+    if (!xhr) return;
+    var t = (xhr.getResponseHeader && xhr.getResponseHeader('X-CSRF-TOKEN')) || (xhr.responseJSON && xhr.responseJSON.csrf_token);
+    if (t) {
+        if (window.jQuery) {
+            window.jQuery('meta[name="csrf-token"]').attr('content', t);
+            window.jQuery('input[name="csrf_test_name"]').val(t);
+        }
+    }
+}
+
+// Guardar información clínica (card 1 + motivo, plan, recomendaciones, tags, próxima cita) por AJAX
+function guardarInformacionClinicaHistorial() {
+    if (typeof window.jQuery === 'undefined') return;
+    var $ = window.jQuery;
+    var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var tagsValue = '';
+    try {
+        if (typeof window.__tagifyHistorial !== 'undefined' && window.__tagifyHistorial && window.__tagifyHistorial.value) {
+            var v = window.__tagifyHistorial.value;
+            if (Array.isArray(v)) tagsValue = v.map(function(x) { return (x && (x.value || x.tag || x)) ? (x.value || x.tag || x) : ''; }).filter(Boolean).join(',');
+            else tagsValue = (v && typeof v === 'string') ? v : '';
+        } else tagsValue = $('#tags').val() || '';
+    } catch (e) { tagsValue = $('#tags').val() || ''; }
+    // Soporte TinyMCE si está cargado; si no, leer del textarea por id o name
+    var motivo = '', plan = '', recomendaciones = '';
+    if (typeof tinymce !== 'undefined') {
+        if (tinymce.get('motivo_consulta')) motivo = tinymce.get('motivo_consulta').getContent();
+        else motivo = $('#motivo_consulta').val() || $('textarea[name="motivo_consulta"]').val() || '';
+        if (tinymce.get('plan_tratamiento')) plan = tinymce.get('plan_tratamiento').getContent();
+        else plan = $('#plan_tratamiento').val() || $('textarea[name="plan_tratamiento"]').val() || '';
+        if (tinymce.get('recomendaciones')) recomendaciones = tinymce.get('recomendaciones').getContent();
+        else recomendaciones = $('#recomendaciones').val() || $('textarea[name="recomendaciones"]').val() || '';
+    } else {
+        motivo = $('#motivo_consulta').val() || $('textarea[name="motivo_consulta"]').val() || '';
+        plan = $('#plan_tratamiento').val() || $('textarea[name="plan_tratamiento"]').val() || '';
+        recomendaciones = $('#recomendaciones').val() || $('textarea[name="recomendaciones"]').val() || '';
+    }
+    var proximaCita = $('#formHistorialEditar input[name="proxima_cita"]').val() || '';
+    var formData = {
+        id: $('input[name="id"]').val(),
+        paciente_id: $('select[name="paciente_id"]').val(),
+        tipo_registro: $('select[name="tipo_registro"]').val(),
+        fecha_consulta: $('input[name="fecha_consulta"]').val(),
+        hora_consulta: $('input[name="hora_consulta"]').val(),
+        motivo_consulta: motivo,
+        plan_tratamiento: plan,
+        recomendaciones: recomendaciones,
+        proxima_cita: proximaCita,
+        tags: tagsValue,
+        csrf_test_name: csrfToken
+    };
+    $.ajax({
+        url: '<?= base_url('dashboard/historial/guardarInformacionClinica') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: formData,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (response && response.success) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(response.message || 'Información guardada correctamente', 'Éxito', { timeOut: 3500, positionClass: 'toast-top-right' });
+                } else {
+                    alert(response.message || 'Información guardada correctamente');
+                }
+            } else {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(response && (response.error || response.message) || 'Error al guardar', 'Error');
+                } else {
+                    alert(response && (response.error || response.message) || 'Error al guardar');
+                }
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) ? (xhr.responseJSON.message || xhr.responseJSON.error) : 'Error al guardar la información';
+            if (typeof toastr !== 'undefined') {
+                toastr.error(msg, 'Error', { timeOut: 4000 });
+            } else {
+                alert(msg);
+            }
+        }
+    });
+}
+
+// Guardar mediciones y registro clínico por AJAX
+function guardarMedicionesHistorial() {
+    if (typeof window.jQuery === 'undefined') return;
+    var $ = window.jQuery;
+    var form = document.getElementById('formHistorialEditar');
+    if (form) try { prepararFichaIngresoHistorial(form); } catch (e) { console.error(e); }
+    var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var tagsValue = '';
+    try {
+        if (typeof window.__tagifyHistorial !== 'undefined' && window.__tagifyHistorial && window.__tagifyHistorial.value) {
+            var v = window.__tagifyHistorial.value;
+            if (Array.isArray(v)) tagsValue = v.map(function(x) { return (x && (x.value || x.tag || x)) ? (x.value || x.tag || x) : ''; }).filter(Boolean).join(',');
+            else tagsValue = (v && typeof v === 'string') ? v : '';
+        } else tagsValue = $('#tags').val() || '';
+    } catch (e) { tagsValue = $('#tags').val() || ''; }
+    var formData = $('#formHistorialEditar').serialize();
+    formData = formData.replace(/&?tags=[^&]*/g, '');
+    if (tagsValue) formData += '&tags=' + encodeURIComponent(tagsValue);
+    formData = formData.replace(/&?csrf_test_name=[^&]*/g, '');
+    formData += (formData ? '&' : '') + 'csrf_test_name=' + encodeURIComponent(csrfToken);
+    var examenesVal = $('#examenes_bioquimicos_hidden').val() || '';
+    if (examenesVal) formData += '&examenes_bioquimicos=' + encodeURIComponent(examenesVal);
+    $.ajax({
+        url: '<?= base_url('dashboard/historial/guardarMediciones') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: formData,
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (response && response.success) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(response.message || 'Mediciones guardadas correctamente', 'Éxito', { timeOut: 3500, positionClass: 'toast-top-right' });
+                } else {
+                    alert(response.message || 'Mediciones guardadas correctamente');
+                }
+            } else {
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(response && (response.error || response.message) || 'Error al guardar', 'Error');
+                } else {
+                    alert(response && (response.error || response.message) || 'Error al guardar');
+                }
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) ? (xhr.responseJSON.message || xhr.responseJSON.error) : 'Error al guardar las mediciones';
+            if (typeof toastr !== 'undefined') {
+                toastr.error(msg, 'Error', { timeOut: 4000 });
+            } else {
+                alert(msg);
+            }
+        }
+    });
+}
+
+// Obtener tags en formato CSV desde Tagify o desde el input (para enviar al backend)
+function getTagsCsvParaEnvio() {
+    var tagify = window.__tagifyHistorial;
+    var input = document.querySelector('input[name="tags"]');
+    if (!input) return '';
+    var val = tagify && tagify.value !== undefined ? tagify.value : input.value;
+    if (Array.isArray(val)) {
+        return val.map(function(x) { return (x && (x.value || x.name || x)) ? (x.value || x.name || x) : ''; }).filter(Boolean).join(',');
+    }
+    if (typeof val === 'string' && val.trim()) {
+        if (val.trim().charAt(0) === '[') {
+            try {
+                var arr = JSON.parse(val);
+                if (Array.isArray(arr)) return arr.map(function(x) { return (x && (x.value || x.name || typeof x === 'string' ? x : '')); }).filter(Boolean).join(',');
+            } catch (e) {}
+        }
+        return val.trim();
+    }
+    return '';
+}
+
+// Botón "Actualizar Consulta": guardar info clínica y luego mediciones
+(function() {
+    if (typeof window.jQuery === 'undefined') return;
+    window.jQuery('#btnActualizarConsulta').on('click', function() {
+        guardarInformacionClinicaHistorial();
+        setTimeout(function() { guardarMedicionesHistorial(); }, 500);
+    });
+})();
 
 // Proteger ejecución si jQuery aún no está disponible (evita que se rompa todo el script)
 if (typeof window.jQuery === 'undefined') {
@@ -1081,16 +1248,55 @@ $(document).ready(function() {
         });
     });
 
-    // Antes de enviar el formulario, convertir a CSV para que el backend NO reciba JSON de Tagify
-    var $form = $('form[action$="dashboard/historial/update"]');
+    // Antes de enviar el formulario, sincronizar Tagify a CSV en el campo (usar misma lógica que getTagsCsvParaEnvio)
+    var $form = $('#formHistorialEditar');
     if ($form.length) {
         $form.on('submit', function() {
-            try {
-                var csv = (window.__tagifyHistorial.value || []).map(function(x){ return x.value; }).join(',');
-                input.value = csv;
-            } catch (e) {}
+            if (typeof getTagsCsvParaEnvio === 'function' && input) {
+                input.value = getTagsCsvParaEnvio();
+            } else {
+                try {
+                    var csv = (window.__tagifyHistorial.value || []).map(function(x){ return (x && x.value) ? x.value : ''; }).filter(Boolean).join(',');
+                    input.value = csv;
+                } catch (e) {}
+            }
         });
     }
+});
+
+// Inicializar TinyMCE para motivo_consulta, plan_tratamiento y recomendaciones (editores enriquecidos HTML)
+// La sección Información Clínica va abierta por defecto (collapse show) para que los editores se vean al cargar
+$(document).ready(function() {
+    var tinymceHistorialInited = false;
+    function initTinyMCEHistorial() {
+        if (typeof tinymce === 'undefined') return;
+        if (tinymce.get('motivo_consulta')) return; // ya inicializados
+        if (!$('#motivo_consulta').length) return;
+        var config = {
+            height: 220,
+            menubar: false,
+            plugins: 'lists link table code wordcount',
+            toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link table | code',
+            content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
+            language: 'es',
+            branding: false,
+            promotion: false
+        };
+        tinymce.init(Object.assign({}, config, { selector: '#motivo_consulta' })).then(function() {});
+        tinymce.init(Object.assign({}, config, { selector: '#plan_tratamiento', height: 260 })).then(function() {});
+        tinymce.init(Object.assign({}, config, { selector: '#recomendaciones' })).then(function() {});
+        tinymceHistorialInited = true;
+    }
+    // Init al cargar (la sección está abierta por defecto)
+    setTimeout(function() {
+        initTinyMCEHistorial();
+    }, 400);
+    // Si el usuario cerró y vuelve a abrir la sección, init por si TinyMCE cargó tarde
+    $(document).on('shown.bs.collapse', '#informacionClinicaCollapse', function() {
+        if (!tinymceHistorialInited && typeof tinymce !== 'undefined') {
+            setTimeout(initTinyMCEHistorial, 100);
+        }
+    });
 });
 
 // Manejar clicks en botones de cálculo (delegado, por si el DOM cambia)
@@ -1857,6 +2063,21 @@ function mostrarErrorUpgrade(response) {
 function imprimirResultados() {
     window.print();
 }
+// Expandir/Contraer (mismo comportamiento que agenda/consulta)
+    function bindExpandirContraer(collapseId, labelId) {
+        $('#' + collapseId).on('show.bs.collapse', function() {
+            $('#' + labelId).text('Contraer');
+            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        }).on('hide.bs.collapse', function() {
+            $('#' + labelId).text('Expandir');
+            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        });
+    }
+    bindExpandirContraer('informacionClinicaCollapse', 'informacionClinicaToggleLabel');
+    bindExpandirContraer('medicionesCollapse', 'medicionesToggleLabel');
+    bindExpandirContraer('registroClinicoCollapse', 'registroClinicoToggleLabel');
+    bindExpandirContraer('calorimetriaPlanCollapse', 'calorimetriaPlanToggleLabel');
+
 }); // $(function(){ ... })
 } // if jQuery
 </script>

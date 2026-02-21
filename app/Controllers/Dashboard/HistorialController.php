@@ -33,6 +33,9 @@ class HistorialController extends BaseController
         $empresaId = $usuario['empresa_id'] ?? null;
         $data['tags_sugeridos'] = $historialModel->getTagsMasUsados($empresaId, 20);
 
+        // Si se llegó desde la vista de consulta, permitir volver a ella
+        $data['retorno_consulta_id'] = $this->request->getGet('retorno') === 'consulta' ? (int) $this->request->getGet('id') : 0;
+
         return view('Modulos/historial/lista', $data);
     }
 
@@ -525,6 +528,16 @@ class HistorialController extends BaseController
             $data['tendencia_consumo'] = $tendenciaModel->getPorHistorial($data['historial']->id);
         }
 
+        // Objeto tipo "cita" para Calorimetría y Plan Alimentario (mismas vistas que en agenda/consulta)
+        $paciente = $data['historial']->paciente ?? null;
+        $data['cita'] = (object)[
+            'id' => $data['historial']->detalle_agenda_id ?? 0,
+            'nombre' => $paciente->nombre ?? '',
+            'apellido' => $paciente->apellido ?? '',
+            'genero' => $paciente->genero ?? null,
+            'fecha_nacimiento' => $paciente->fecha_nacimiento ?? null,
+        ];
+
         return view('Modulos/historial/editar', $data);
     }
 
@@ -608,8 +621,6 @@ class HistorialController extends BaseController
             'pliegue_axilar_medio' => $post['pliegue_axilar_medio'] ?? null,
             'pliegue_muslo_medial' => $post['pliegue_muslo_medial'] ?? null,
             'motivo_consulta' => $post['motivo_consulta'] ?? null,
-            'anamnesis' => $post['anamnesis'] ?? null,
-            'diagnostico' => $post['diagnostico'] ?? null,
             'plan_tratamiento' => $post['plan_tratamiento'] ?? null,
             'recomendaciones' => $post['recomendaciones'] ?? null,
             'observaciones' => $post['observaciones'] ?? null,
@@ -619,6 +630,11 @@ class HistorialController extends BaseController
             'anamnesis_alimentaria' => !empty($post['anamnesis_alimentaria']) ? $post['anamnesis_alimentaria'] : null,
             'recordatorio_24h' => !empty($post['recordatorio_24h']) ? $post['recordatorio_24h'] : null
         ];
+        $existente = $historial->find($id);
+        if ($existente) {
+            if (!array_key_exists('anamnesis', $post)) $data['anamnesis'] = $existente->anamnesis;
+            if (!array_key_exists('diagnostico', $post)) $data['diagnostico'] = $existente->diagnostico;
+        }
 
         if ($historial->update($id, $data)) {
             $db = \Config\Database::connect();
@@ -662,6 +678,206 @@ class HistorialController extends BaseController
             return redirect()->to(base_url('dashboard/historial/editar/' . $id))->with('success', 'Consulta actualizada con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', $historial->errors());
+        }
+    }
+
+    /**
+     * Guardar información clínica vía AJAX (editar por historial id). Mismo comportamiento que agenda/guardarInformacionClinica.
+     */
+    public function guardarInformacionClinica()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+        $id = (int) $this->request->getPost('id');
+        if (!$id) {
+            return $this->response->setJSON(['error' => 'ID de historial requerido'])->setStatusCode(400);
+        }
+        $historialModel = new HistorialClinico();
+        $existente = $historialModel->find($id);
+        if (!$existente || ($existente->nutricionista_id ?? 0) != (session()->get('usuario')['id'] ?? 0)) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'No tiene permiso para modificar este historial'])->setStatusCode(403);
+        }
+        $motivoConsulta = $this->request->getPost('motivo_consulta');
+        $planTratamiento = $this->request->getPost('plan_tratamiento');
+        $recomendaciones = $this->request->getPost('recomendaciones');
+        $tags = $this->request->getPost('tags');
+        $proximaCita = $this->request->getPost('proxima_cita');
+        $pacienteId = $this->request->getPost('paciente_id');
+        $tipoRegistro = $this->request->getPost('tipo_registro');
+        $fechaConsulta = $this->request->getPost('fecha_consulta');
+        $horaConsulta = $this->request->getPost('hora_consulta');
+
+        $empresaId = session()->get('usuario')['empresa_id'] ?? null;
+        $tagsInput = is_string($tags) ? trim($tags) : '';
+        if ($tagsInput !== '') {
+            $decoded = json_decode($tagsInput, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $tagsArray = [];
+                foreach ($decoded as $item) {
+                    if (is_string($item)) $tagsArray[] = $item;
+                    elseif (is_array($item) && isset($item['value'])) $tagsArray[] = $item['value'];
+                    elseif (is_array($item) && isset($item['tag'])) $tagsArray[] = $item['tag'];
+                }
+                $tagsInput = implode(',', $tagsArray);
+            }
+            $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
+        } else {
+            $tagsJson = $existente->tags ?? json_encode([]);
+        }
+
+        $data = [
+            'motivo_consulta' => $motivoConsulta ?: null,
+            'plan_tratamiento' => $planTratamiento ?: null,
+            'recomendaciones' => $recomendaciones ?: null,
+            'tags' => $tagsJson,
+            'proxima_cita' => $proximaCita !== null && $proximaCita !== '' ? $proximaCita : null,
+        ];
+        if ($pacienteId !== null && $pacienteId !== '') $data['paciente_id'] = (int) $pacienteId;
+        if ($tipoRegistro !== null && $tipoRegistro !== '') $data['tipo_registro'] = $tipoRegistro;
+        if ($fechaConsulta !== null && $fechaConsulta !== '') $data['fecha_consulta'] = $fechaConsulta;
+        if ($horaConsulta !== null && $horaConsulta !== '') $data['hora_consulta'] = $horaConsulta;
+
+        $historialModel->update($id, $data);
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Información clínica guardada correctamente',
+            'csrf_token' => csrf_hash()
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * Guardar mediciones y registro clínico vía AJAX (editar por historial id). Mismo comportamiento que agenda/guardarMediciones.
+     */
+    public function guardarMediciones()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+        $post = $this->request->getPost();
+        $id = (int) ($post['id'] ?? 0);
+        if (!$id) {
+            return $this->response->setJSON(['error' => 'ID de historial requerido'])->setStatusCode(400);
+        }
+        $historialModel = new HistorialClinico();
+        $existente = $historialModel->find($id);
+        if (!$existente || ($existente->nutricionista_id ?? 0) != (session()->get('usuario')['id'] ?? 0)) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'No tiene permiso para modificar este historial'])->setStatusCode(403);
+        }
+        $pacienteId = (int) ($existente->paciente_id ?? 0);
+        if (!$pacienteId) {
+            return $this->response->setJSON(['error' => 'Paciente no asociado al historial'])->setStatusCode(400);
+        }
+
+        $imc_actual = null;
+        if (!empty($post['peso_actual']) && !empty($post['altura_actual'])) {
+            $imc_actual = $historialModel->calcularIMC($post['peso_actual'], $post['altura_actual']);
+        }
+        $pliegues = ['pliegue_tricipital','pliegue_bicipital','pliegue_subescapular','pliegue_suprailíaco','pliegue_abdominal','pliegue_muslo_anterior','pliegue_pantorrilla_medial','pliegue_pectoral','pliegue_axilar_medio','pliegue_muslo_medial'];
+        $suma = 0; $tiene_pliegues = false;
+        foreach ($pliegues as $p) {
+            if (!empty($post[$p])) { $suma += floatval($post[$p]); $tiene_pliegues = true; }
+        }
+        $suma_pliegues = $tiene_pliegues ? round($suma, 2) : null;
+        $grasa_corporal_calculada = null;
+        if ($suma_pliegues && !empty($post['peso_actual']) && !empty($post['altura_actual'])) {
+            $grasa_corporal_calculada = round(($suma_pliegues * 0.5) + 5, 2);
+        }
+        $empresaId = session()->get('usuario')['empresa_id'] ?? null;
+        $tagsInput = $post['tags'] ?? '';
+        if (is_string($tagsInput) && $tagsInput !== '') {
+            $decoded = json_decode($tagsInput, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $tagsArray = [];
+                foreach ($decoded as $item) {
+                    if (is_string($item)) $tagsArray[] = $item;
+                    elseif (is_array($item) && isset($item['value'])) $tagsArray[] = $item['value'];
+                    elseif (is_array($item) && isset($item['tag'])) $tagsArray[] = $item['tag'];
+                }
+                $tagsInput = implode(',', $tagsArray);
+            }
+        }
+        $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
+
+        $data = [
+            'peso_actual' => $post['peso_actual'] ?? null,
+            'altura_actual' => $post['altura_actual'] ?? null,
+            'altura_sentado' => $post['altura_sentado'] ?? null,
+            'imc_actual' => $imc_actual,
+            'circunferencia_cintura' => $post['circunferencia_cintura'] ?? null,
+            'circunferencia_cadera' => $post['circunferencia_cadera'] ?? null,
+            'circunferencia_brazo_relajado' => $post['circunferencia_brazo_relajado'] ?? null,
+            'circunferencia_brazo_contraido' => $post['circunferencia_brazo_contraido'] ?? null,
+            'circunferencia_muslo_medio' => $post['circunferencia_muslo_medio'] ?? null,
+            'circunferencia_pantorrilla' => $post['circunferencia_pantorrilla'] ?? null,
+            'circunferencia_cuello' => $post['circunferencia_cuello'] ?? null,
+            'circunferencia_torax' => $post['circunferencia_torax'] ?? null,
+            'circunferencia_cabeza' => $post['circunferencia_cabeza'] ?? null,
+            'circunferencia_antebrazo_maximo' => $post['circunferencia_antebrazo_maximo'] ?? null,
+            'circunferencia_muslo_maximo' => $post['circunferencia_muslo_maximo'] ?? null,
+            'circunferencia_muneca' => $post['circunferencia_muneca'] ?? null,
+            'diametro_biacromial' => $post['diametro_biacromial'] ?? null,
+            'diametro_bi_iliocristal' => $post['diametro_bi_iliocristal'] ?? null,
+            'diametro_torax_transverso' => $post['diametro_torax_transverso'] ?? null,
+            'diametro_torax_anteroposterior' => $post['diametro_torax_anteroposterior'] ?? null,
+            'diametro_humero' => $post['diametro_humero'] ?? null,
+            'diametro_femur' => $post['diametro_femur'] ?? null,
+            'diametro_muneca' => $post['diametro_muneca'] ?? null,
+            'diametro_tobillo' => $post['diametro_tobillo'] ?? null,
+            'grasa_corporal' => $post['grasa_corporal'] ?? null,
+            'masa_muscular' => $post['masa_muscular'] ?? null,
+            'suma_pliegues' => $suma_pliegues,
+            'grasa_corporal_calculada' => $grasa_corporal_calculada,
+            'pliegue_tricipital' => $post['pliegue_tricipital'] ?? null,
+            'pliegue_bicipital' => $post['pliegue_bicipital'] ?? null,
+            'pliegue_subescapular' => $post['pliegue_subescapular'] ?? null,
+            'pliegue_suprailíaco' => $post['pliegue_suprailíaco'] ?? null,
+            'pliegue_supraespinal' => $post['pliegue_supraespinal'] ?? null,
+            'pliegue_abdominal' => $post['pliegue_abdominal'] ?? null,
+            'pliegue_muslo_anterior' => $post['pliegue_muslo_anterior'] ?? null,
+            'pliegue_pantorrilla_medial' => $post['pliegue_pantorrilla_medial'] ?? null,
+            'pliegue_pectoral' => $post['pliegue_pectoral'] ?? null,
+            'pliegue_axilar_medio' => $post['pliegue_axilar_medio'] ?? null,
+            'pliegue_muslo_medial' => $post['pliegue_muslo_medial'] ?? null,
+            'anamnesis_clinica' => !empty($post['anamnesis_clinica']) ? $post['anamnesis_clinica'] : null,
+            'anamnesis_alimentaria' => !empty($post['anamnesis_alimentaria']) ? $post['anamnesis_alimentaria'] : null,
+            'recordatorio_24h' => !empty($post['recordatorio_24h']) ? $post['recordatorio_24h'] : null,
+            'tags' => $tagsJson,
+        ];
+        try {
+            $historialModel->update($id, $data);
+            $db = \Config\Database::connect();
+            $examenModel = new \App\Models\HistorialExamenBioquimico();
+            $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $id)->delete();
+            $examenesRaw = $post['examenes_bioquimicos'] ?? $post['examenes_bioquimicos_hidden'] ?? '';
+            if (is_string($examenesRaw) && $examenesRaw !== '') {
+                $examenes = json_decode($examenesRaw, true);
+                if (is_array($examenes)) {
+                    foreach ($examenes as $row) {
+                        if (empty($row['nombre']) && empty($row['valor']) && empty($row['fecha_interpretacion'])) continue;
+                        $examenModel->insert(['historial_clinico_id' => $id, 'nombre' => $row['nombre'] ?? null, 'valor' => $row['valor'] ?? null, 'fecha_interpretacion' => $row['fecha_interpretacion'] ?? null]);
+                    }
+                }
+            }
+            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+            $db->table('historial_tendencia_consumo')->where('historial_clinico_id', $id)->delete();
+            $tendenciaRaw = $post['tendencia_consumo'] ?? '';
+            if (is_string($tendenciaRaw) && $tendenciaRaw !== '') {
+                $tendenciaRows = json_decode($tendenciaRaw, true);
+                if (is_array($tendenciaRows)) {
+                    foreach ($tendenciaRows as $row) {
+                        $grupo = $row['grupo'] ?? null;
+                        if (empty($grupo)) continue;
+                        $tendenciaModel->insert(['historial_clinico_id' => $id, 'grupo' => $grupo, 'preferencia' => $row['preferencia'] ?? null, 'alergia_intolerancia' => $row['alergia_intolerancia'] ?? null]);
+                    }
+                }
+            }
+            return $this->response->setJSON(['success' => true, 'message' => 'Mediciones y registro clínico guardados correctamente', 'csrf_token' => csrf_hash()])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        } catch (\Exception $e) {
+            log_message('error', 'HistorialController::guardarMediciones ' . $e->getMessage());
+            return $this->response->setJSON(['error' => 'Error al guardar', 'message' => $e->getMessage()])->setStatusCode(500);
         }
     }
 
@@ -735,6 +951,9 @@ class HistorialController extends BaseController
         ", [$usuario_id])->getResultArray();
         
         $data['pacientes'] = $pacientes;
+
+        // Si se llegó desde la vista de consulta, permitir volver a ella
+        $data['retorno_consulta_id'] = $this->request->getGet('retorno') === 'consulta' ? (int) $this->request->getGet('id') : 0;
 
         return view('Modulos/historial/comparar', $data);
     }

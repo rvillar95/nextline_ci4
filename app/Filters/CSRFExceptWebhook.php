@@ -35,8 +35,13 @@ class CSRFExceptWebhook extends BaseCSRF
         'dashboard/plan-alimentario/vista-calorimetria',
         'dashboard/plan-alimentario/vista-plan',
         'dashboard/plan-alimentario/vista-distribucion',
-        // Agenda: guardar mediciones (AJAX; protegido por sesión)
+        // Agenda: guardar mediciones, información clínica y notas (AJAX; protegido por sesión)
         'dashboard/agenda/guardarMediciones',
+        'dashboard/agenda/guardarInformacionClinica',
+        'dashboard/agenda/actualizarNotasNutricionista',
+        // Historial editar: guardar por AJAX (igual que agenda/consulta; protegido por sesión)
+        'dashboard/historial/guardarInformacionClinica',
+        'dashboard/historial/guardarMediciones',
         // Mi perfil: subir foto y guardar preferencias (AJAX; protegido por sesión)
         'dashboard/mi-perfil/subir-foto',
         'dashboard/mi-perfil/guardar',
@@ -112,6 +117,11 @@ class CSRFExceptWebhook extends BaseCSRF
                 }
                 return; // No aplicar CSRF a esta ruta
             }
+        }
+
+        // Método 4: Rutas que terminan en actualizarNotasNutricionista (por si el path lleva prefijo de carpeta)
+        if (preg_match('#actualizarNotasNutricionista/?$#', $path)) {
+            return;
         }
 
         // Si es un webhook y no se excluyó, loguear para debugging

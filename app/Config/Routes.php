@@ -201,6 +201,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('compararHistoriales', 'Dashboard\HistorialController::compararHistoriales');
         $routes2->post('registrar', 'Dashboard\HistorialController::registrar');
         $routes2->post('update', 'Dashboard\HistorialController::update');
+        $routes2->post('guardarInformacionClinica', 'Dashboard\HistorialController::guardarInformacionClinica');
+        $routes2->post('guardarMediciones', 'Dashboard\HistorialController::guardarMediciones');
         $routes2->post('eliminar', 'Dashboard\HistorialController::eliminar');
         $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar'); //accion
     });
@@ -326,6 +328,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('terminarConsulta', 'Dashboard\AgendaController::terminarConsulta');
         $routes2->get('getConsultaActiva', 'Dashboard\AgendaController::getConsultaActiva');
         $routes2->post('guardarNotasConsulta', 'Dashboard\AgendaController::guardarNotasConsulta');
+        $routes2->post('guardarInformacionClinica', 'Dashboard\AgendaController::guardarInformacionClinica');
         $routes2->get('estadisticas', 'Dashboard\AgendaController::estadisticas');
         $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
         $routes2->get('getEstadisticas', 'Dashboard\AgendaController::getEstadisticas');
