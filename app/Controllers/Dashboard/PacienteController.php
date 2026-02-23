@@ -398,13 +398,15 @@ class PacienteController extends BaseController
             ->orderBy('fcreacion', 'DESC')
             ->findAll();
 
-        // Cargar detalle_agenda (citas) del paciente
+        // Cargar detalle_agenda (citas) del paciente solo del usuario logueado (para que "Ver consulta" funcione)
         $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
         $data['citas'] = $db->table('detalle_agenda da')
             ->select('da.*, a.fecha as fecha_agenda, ma.nombre as modalidad_nombre')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
             ->where('da.paciente_id', $id)
+            ->where('da.usuario_id', $usuario_id)
             ->orderBy('a.fecha', 'DESC')
             ->orderBy('da.hora_inicio', 'DESC')
             ->limit(50)

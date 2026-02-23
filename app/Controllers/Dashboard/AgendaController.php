@@ -103,6 +103,10 @@ class AgendaController extends BaseController
             $nutricionista_id = session()->get('usuario')['id'];
         }
 
+        // Normalizar start/end a YYYY-MM-DD por si vienen con hora o timezone (ej. 2026-02-16T00:00:00)
+        $startDate = $start ? date('Y-m-d', strtotime($start)) : date('Y-m-d');
+        $endDate = $end ? date('Y-m-d', strtotime($end)) : date('Y-m-d', strtotime('+1 month'));
+
         $db = \Config\Database::connect();
         
         // Obtener eventos desde detalle_agenda (los datos del paciente están directamente en detalle_agenda)
@@ -110,9 +114,9 @@ class AgendaController extends BaseController
             ->select('da.id, a.fecha, da.hora_inicio, da.hora_fin, da.modalidad_id, da.paciente_id, da.estado_cita, da.tipo_consulta, da.motivo, da.observaciones, da.fecha_confirmacion, da.fecha_cancelacion, da.motivo_cancelacion, p.nombre, p.apellido, p.telefono, p.email, p.rut_dni')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-            // Convertir fechas para comparación (start y end vienen en YYYY-MM-DD, fecha está en DD-MM-YYYY)
-            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $start)
-            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $end)
+            // Convertir fechas para comparación (fecha en agenda está en DD-MM-YYYY)
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $startDate)
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $endDate)
             ->where('da.usuario_id', $nutricionista_id);
             // Mostrar todas las citas incluyendo canceladas (se mostrarán en rojo)
 
@@ -122,8 +126,8 @@ class AgendaController extends BaseController
         $horaMinima = $db->table('agenda a')
             ->select('MIN(a.hora_inicio) as hora_minima')
             ->join('detalle_agenda da', 'da.agenda_id = a.id', 'inner')
-            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $start)
-            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $end)
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $startDate)
+            ->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $endDate)
             ->where('da.usuario_id', $nutricionista_id)
             ->get()
             ->getRow();
@@ -732,6 +736,14 @@ class AgendaController extends BaseController
             ])->setStatusCode(403);
         }
 
+        // No permitir cancelar citas ya completadas (se perdería el historial al liberar paciente_id)
+        if (strtolower(trim((string)($citaCompleta->estado_cita ?? ''))) === 'completada') {
+            return $this->response->setJSON([
+                'error' => 'No permitido',
+                'message' => 'No se puede cancelar una cita completada. El historial de la consulta debe conservarse.'
+            ])->setStatusCode(400);
+        }
+
         // Actualizar estado de la cita en detalle_agenda
         // Al cancelar, liberamos el horario (paciente_id = NULL, estado = 1)
         $dataUpdate = [
@@ -766,6 +778,21 @@ class AgendaController extends BaseController
                 } catch (\Exception $e) {
                     log_message('error', 'CANCELAR CITA (Lista): Error al eliminar evento del calendario: ' . $e->getMessage());
                 }
+            }
+
+            // Enviar WhatsApp de cancelación (mismo flujo que confirmar-cita: config enviar_whatsapp + enviarWhatsAppCancelacion = WhatsAppService(empresaId)->enviarCancelacionCita)
+            log_message('info', 'CANCELAR CITA (Lista): Verificando configuración de WhatsApp');
+            log_message('info', 'CANCELAR CITA (Lista): enviar_whatsapp=' . ($configuracion['enviar_whatsapp'] ?? 'N/A') . ', usuario_id=' . $usuario_id);
+            if ($configuracion['enviar_whatsapp'] ?? 1) {
+                log_message('info', 'CANCELAR CITA (Lista): WhatsApp habilitado, enviando cancelación. id=' . $id . ', paciente_id=' . ($citaCompleta->paciente_id ?? 'N/A'));
+                try {
+                    $this->enviarWhatsAppCancelacion($id, $citaCompleta->paciente_id);
+                } catch (\Exception $e) {
+                    log_message('error', 'CANCELAR CITA (Lista): Excepción al enviar WhatsApp: ' . $e->getMessage());
+                    log_message('error', 'CANCELAR CITA (Lista): Stack trace: ' . $e->getTraceAsString());
+                }
+            } else {
+                log_message('info', 'CANCELAR CITA (Lista): WhatsApp deshabilitado en configuraciones. usuario_id=' . $usuario_id);
             }
 
             $response = $this->response->setJSON([
@@ -860,27 +887,32 @@ class AgendaController extends BaseController
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         $estado_cita = $this->request->getGet('estado_cita');
         
-        // Obtener citas desde detalle_agenda (donde paciente_id no es NULL)
+        // Obtener citas desde detalle_agenda; fecha/hora de referencia: da.fecha, da.hora_inicio, da.hora_fin
+        // fecha_orden para ordenar (fecha en BD es DD-MM-YYYY)
         $builder = $db->table('detalle_agenda da')
-            ->select('da.id, da.paciente_id, da.tipo_consulta, da.motivo, da.estado_cita, da.fecha_confirmacion, da.fecha_cancelacion, da.motivo_cancelacion, da.observaciones, a.fecha, da.hora_inicio, da.hora_fin, p.nombre, p.apellido, p.telefono, p.email')
+            ->select('da.id, da.paciente_id, da.tipo_consulta, da.motivo, da.estado_cita, da.fecha_confirmacion, da.fecha_cancelacion, da.motivo_cancelacion, da.observaciones, da.fecha, da.hora_inicio, da.hora_fin, p.nombre, p.apellido, p.telefono, p.email, STR_TO_DATE(da.fecha, \'%d-%m-%Y\') as fecha_orden')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
             ->where('da.paciente_id IS NOT NULL') // Solo citas agendadas
             ->where('da.usuario_id', $usuario_id); // Solo mostrar citas del usuario logueado
 
         if ($fecha_desde) {
-            // Convertir fecha para comparación (fecha en BD está en DD-MM-YYYY)
-            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $fecha_desde);
+            $builder->where("STR_TO_DATE(da.fecha, '%d-%m-%Y') >= ", $fecha_desde);
         }
         if ($fecha_hasta) {
-            // Convertir fecha para comparación (fecha en BD está en DD-MM-YYYY)
-            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $fecha_hasta);
+            $builder->where("STR_TO_DATE(da.fecha, '%d-%m-%Y') <= ", $fecha_hasta);
         }
         if ($estado_cita) {
             $builder->where('da.estado_cita', $estado_cita);
         }
 
-        $rows = $builder->orderBy('a.fecha', 'DESC')
+        // Por defecto: solo citas cuya fecha+hora de inicio (detalle_agenda) sea >= ahora
+        if (!$fecha_desde && !$fecha_hasta) {
+            $builder->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false);
+        }
+
+        // Ordenar por fecha y hora ascendente (usamos alias fecha_orden para evitar raw en ORDER BY)
+        $rows = $builder->orderBy('fecha_orden', 'ASC')
                        ->orderBy('da.hora_inicio', 'ASC')
                        ->get()->getResult();
 
@@ -899,10 +931,16 @@ class AgendaController extends BaseController
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
-            // Usar detalle_agenda_id en lugar de agenda_paciente.id
-            $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
-                      '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ' .
-                      '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
+            // Usar detalle_agenda_id en lugar de agenda_paciente.id. No mostrar Confirmar/Cancelar en completada (no se pueden cancelar).
+            $estadoCitaLower = strtolower(trim((string)($r->estado_cita ?? '')));
+            $esCompletada = ($estadoCitaLower === 'completada');
+            $esCancelada = ($estadoCitaLower === 'cancelada');
+            $botones = '';
+            if (!$esCompletada && !$esCancelada) {
+                $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
+                          '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
+            }
+            $botones .= '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
 
             $data[] = array(
                 esc($nombrePaciente),
@@ -1906,6 +1944,61 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Enviar WhatsApp de cancelación al paciente (Lista de Citas).
+     * Mismo flujo que confirmación: empresa_id, WhatsAppService(empresaId), whatsapp_business/twilio.
+     * @param int $detalleAgendaId
+     * @param int|null $pacienteId
+     * @param string|null $motivo Motivo de cancelación (opcional, el del modal)
+     */
+    private function enviarWhatsAppCancelacion($detalleAgendaId, $pacienteId, $motivo = null)
+    {
+        log_message('error', '========================================');
+        log_message('error', 'ENVIAR WHATSAPP CANCELACIÓN - INICIO');
+        log_message('error', 'detalleAgendaId=' . $detalleAgendaId . ', pacienteId=' . ($pacienteId ?? 'N/A'));
+        log_message('error', '========================================');
+
+        $db = \Config\Database::connect();
+        $row = $db->table('detalle_agenda da')
+            ->select('u.empresa_id')
+            ->join('usuario u', 'u.id = da.usuario_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+        $empresaId = $row ? ($row->empresa_id ?? null) : null;
+
+        $whatsappProvider = env('WHATSAPP_PROVIDER');
+        if (empty($whatsappProvider) && $empresaId === null) {
+            log_message('error', 'WHATSAPP CANCELACIÓN: WhatsApp no configurado, omitiendo envío');
+            return false;
+        }
+        log_message('error', 'WHATSAPP CANCELACIÓN: empresa_id=' . ($empresaId ?? 'null') . ', env provider=' . ($whatsappProvider ?: 'vacío'));
+
+        try {
+            log_message('error', 'WHATSAPP CANCELACIÓN: Instanciando WhatsAppService (empresa_id=' . ($empresaId ?? 'null') . ')');
+            $whatsappService = new WhatsAppService($empresaId);
+            log_message('error', 'WHATSAPP CANCELACIÓN: proveedor usado=' . $whatsappService->getProvider());
+
+            log_message('error', 'WHATSAPP CANCELACIÓN: Llamando a enviarCancelacionCita()');
+            $resultado = $whatsappService->enviarCancelacionCita($detalleAgendaId, $pacienteId, $motivo);
+
+            log_message('error', 'WHATSAPP CANCELACIÓN: Resultado recibido. success=' . ($resultado['success'] ? 'SÍ' : 'NO'));
+            if ($resultado['success']) {
+                log_message('error', 'WHATSAPP CANCELACIÓN: WhatsApp de cancelación enviado para cita ID: ' . $detalleAgendaId);
+                log_message('error', '========================================');
+                return true;
+            }
+            log_message('error', 'WHATSAPP CANCELACIÓN: Error: ' . ($resultado['error'] ?? 'Error desconocido'));
+            log_message('error', '========================================');
+            return false;
+        } catch (\Exception $e) {
+            log_message('error', 'WHATSAPP CANCELACIÓN: Excepción: ' . $e->getMessage());
+            log_message('error', 'WHATSAPP CANCELACIÓN: Stack trace: ' . $e->getTraceAsString());
+            log_message('error', '========================================');
+            return false;
+        }
+    }
+
+    /**
      * Confirmar cita desde el email (público, sin autenticación)
      */
     public function confirmarDesdeEmail()
@@ -2392,6 +2485,15 @@ class AgendaController extends BaseController
                 ]);
             }
 
+            // No permitir cancelar citas completadas (se perdería el historial)
+            if (strtolower(trim((string)($cita->estado_cita ?? ''))) === 'completada') {
+                log_message('info', 'CANCELAR DESDE EMAIL: Intento de cancelar cita completada rechazado');
+                return view('emails/respuesta_cita', [
+                    'exito' => false,
+                    'mensaje' => 'No se puede cancelar una cita ya completada. El historial de la consulta debe conservarse.'
+                ]);
+            }
+
             // Obtener información completa de la cita ANTES de cancelarla (incluyendo datos del paciente para WhatsApp)
             log_message('info', 'CANCELAR DESDE EMAIL: Obteniendo información completa de la cita');
             $citaCompleta = $db->table('detalle_agenda da')
@@ -2567,7 +2669,7 @@ class AgendaController extends BaseController
 
         if (!$cita || !$cita->paciente_id) {
             return redirect()->to(base_url('dashboard/agenda/calendario'))
-                ->with('error', 'Cita no encontrada o no tiene paciente asignado');
+                ->with('error', 'No se encontró la consulta. Compruebe que el ID corresponda a una cita suya con paciente asignado.');
         }
 
         $data['cita'] = $cita;
@@ -2799,6 +2901,7 @@ class AgendaController extends BaseController
             }
         }
         $detalle = [
+            'motivo' => $anterior->motivo ?? null,
             'objetivos' => $anterior->objetivos ?? null,
             'plan_alimentacion' => $anterior->plan_alimentacion ?? null,
             'recomendaciones' => $anterior->recomendaciones ?? null,
@@ -3153,6 +3256,109 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Guardar información clínica en historial_clinico (motivo, plan tratamiento, recomendaciones).
+     * Crea o actualiza el historial asociado al detalle_agenda_id.
+     */
+    public function guardarInformacionClinica()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+        $detalleAgendaId = (int) $this->request->getPost('detalle_agenda_id');
+        $motivoConsulta = $this->request->getPost('motivo_consulta');
+        $planTratamiento = $this->request->getPost('plan_tratamiento');
+        $recomendaciones = $this->request->getPost('recomendaciones');
+        $proximaCitaRecomendada = $this->request->getPost('proxima_cita_recomendada');
+        $tags = $this->request->getPost('tags');
+        if (!$detalleAgendaId) {
+            return $this->response->setJSON(['error' => 'Error de validación', 'message' => 'ID de detalle agenda es requerido'])->setStatusCode(400);
+        }
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+        $detalle = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->where('usuario_id', $usuario_id)
+            ->get()
+            ->getRow();
+        if (!$detalle || !$detalle->paciente_id) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'No tiene permiso para modificar esta consulta'])->setStatusCode(403);
+        }
+        $historialModel = new HistorialClinico();
+        $historialExistente = $historialModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('paciente_id', $detalle->paciente_id)
+            ->first();
+        $tagsJson = null;
+        if (!empty($tags)) {
+            $empresaId = session()->get('usuario')['empresa_id'] ?? null;
+            $tagsInput = is_string($tags) ? $tags : '';
+            if ($tagsInput !== '') {
+                $decoded = json_decode($tagsInput, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $tagsArray = [];
+                    foreach ($decoded as $item) {
+                        if (is_string($item)) $tagsArray[] = $item;
+                        elseif (is_array($item) && isset($item['value'])) $tagsArray[] = $item['value'];
+                        elseif (is_array($item) && isset($item['tag'])) $tagsArray[] = $item['tag'];
+                    }
+                    $tagsInput = implode(',', $tagsArray);
+                }
+                $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
+            }
+        }
+        $dataHistorial = [
+            'motivo_consulta' => $motivoConsulta ?: null,
+            'plan_tratamiento' => $planTratamiento ?: null,
+            'recomendaciones' => $recomendaciones ?: null,
+            'tags' => $tagsJson,
+        ];
+        if ($historialExistente) {
+            $historialModel->update($historialExistente->id, $dataHistorial);
+        } else {
+            $agendaRow = $db->table('agenda')->where('id', $detalle->agenda_id)->get()->getRow();
+            $fechaConsulta = $agendaRow && !empty($agendaRow->fecha) ? $agendaRow->fecha : date('Y-m-d');
+            if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaConsulta, $m)) {
+                $fechaConsulta = $m[3] . '-' . $m[2] . '-' . $m[1];
+            }
+            $dataHistorial['paciente_id'] = $detalle->paciente_id;
+            $dataHistorial['nutricionista_id'] = $usuario_id;
+            $dataHistorial['detalle_agenda_id'] = $detalleAgendaId;
+            $dataHistorial['agenda_id'] = $detalle->agenda_id;
+            $dataHistorial['tipo_registro'] = 'consulta';
+            $dataHistorial['fecha_consulta'] = $fechaConsulta;
+            $dataHistorial['hora_consulta'] = $detalle->hora_inicio ?? null;
+            $dataHistorial['estado'] = 'A';
+            $historialModel->insert($dataHistorial);
+        }
+        $dataDetalle = [];
+        if ($tagsJson !== null) {
+            $dataDetalle['tags'] = $tagsJson;
+        }
+        $proximaCitaRecomendada = $proximaCitaRecomendada !== null ? trim($proximaCitaRecomendada) : '';
+        if ($proximaCitaRecomendada !== '') {
+            $tieneHora = (strpos($proximaCitaRecomendada, ' - ') !== false);
+            if (preg_match('/^(\d{2})-(\d{2})-(\d{4})(?:\s|$)/', $proximaCitaRecomendada, $matches)) {
+                $soloFecha = $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+                $tipoCol = $db->query("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'detalle_agenda' AND COLUMN_NAME = 'proxima_cita_recomendada'", [$db->getDatabase()])->getRow();
+                $esVarchar = $tipoCol && in_array(strtolower($tipoCol->DATA_TYPE ?? ''), ['varchar', 'char', 'text'], true);
+                $dataDetalle['proxima_cita_recomendada'] = $tieneHora && $esVarchar ? $proximaCitaRecomendada : $soloFecha;
+            } else {
+                $dataDetalle['proxima_cita_recomendada'] = $proximaCitaRecomendada;
+            }
+        } else {
+            $dataDetalle['proxima_cita_recomendada'] = null;
+        }
+        if (!empty($dataDetalle)) {
+            $db->table('detalle_agenda')->where('id', $detalleAgendaId)->update($dataDetalle);
+        }
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Información clínica guardada correctamente',
+            'csrf_token' => csrf_hash()
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
      * Obtener consultas próximas (para notificaciones)
      */
     public function getConsultasProximas()
@@ -3257,6 +3463,12 @@ class AgendaController extends BaseController
             ->getRow();
 
         $historialModel = new HistorialClinico();
+        $historialExistente = null;
+        if ($historialId) {
+            $historialExistente = $historialModel->find($historialId);
+        } else {
+            $historialExistente = $historialModel->where('detalle_agenda_id', $detalleAgendaId)->where('paciente_id', $pacienteId)->first();
+        }
 
         // Calcular IMC si hay peso y altura
         $imc_actual = null;
@@ -3358,13 +3570,15 @@ class AgendaController extends BaseController
             'pliegue_muslo_medial' => !empty($post['pliegue_muslo_medial']) ? $post['pliegue_muslo_medial'] : null,
             'suma_pliegues' => $suma_pliegues,
             'grasa_corporal_calculada' => $grasa_corporal_calculada,
-            'anamnesis' => !empty($post['anamnesis']) ? $post['anamnesis'] : null,
+            'anamnesis' => !empty($post['anamnesis']) ? $post['anamnesis'] : ($historialExistente ? $historialExistente->anamnesis : null),
             'anamnesis_clinica' => !empty($post['anamnesis_clinica']) ? $post['anamnesis_clinica'] : null,
             'anamnesis_alimentaria' => !empty($post['anamnesis_alimentaria']) ? $post['anamnesis_alimentaria'] : null,
             'tendencia_consumo' => null, // Se guarda en tabla historial_tendencia_consumo
             'recordatorio_24h' => !empty($post['recordatorio_24h']) ? $post['recordatorio_24h'] : null,
-            'diagnostico' => !empty($post['diagnostico']) ? $post['diagnostico'] : null,
-            'plan_tratamiento' => !empty($post['plan_tratamiento']) ? $post['plan_tratamiento'] : null,
+            'diagnostico' => !empty($post['diagnostico']) ? $post['diagnostico'] : ($historialExistente ? $historialExistente->diagnostico : null),
+            'plan_tratamiento' => !empty($post['plan_tratamiento']) ? $post['plan_tratamiento'] : ($historialExistente ? $historialExistente->plan_tratamiento : null),
+            'motivo_consulta' => !empty($post['motivo_consulta']) ? $post['motivo_consulta'] : ($historialExistente ? $historialExistente->motivo_consulta : $detalle->motivo),
+            'recomendaciones' => !empty($post['recomendaciones']) ? $post['recomendaciones'] : ($historialExistente ? $historialExistente->recomendaciones : null),
             'estado' => 'A'
         ];
 
@@ -3404,29 +3618,6 @@ class AgendaController extends BaseController
         
         // También guardar en historial_clinico para sincronización
         $dataHistorial['tags'] = $tagsJson;
-
-        // Sincronizar datos de detalle_agenda si están disponibles
-        if (!empty($detalle->motivo)) {
-            $dataHistorial['motivo_consulta'] = $detalle->motivo;
-        }
-        if (!empty($detalle->notas_consulta)) {
-            $dataHistorial['anamnesis'] = $dataHistorial['anamnesis'] ? 
-                $dataHistorial['anamnesis'] . "\n\n" . $detalle->notas_consulta : 
-                $detalle->notas_consulta;
-        }
-        if (!empty($detalle->objetivos)) {
-            $dataHistorial['diagnostico'] = $dataHistorial['diagnostico'] ? 
-                $dataHistorial['diagnostico'] . "\n\nObjetivos: " . $detalle->objetivos : 
-                "Objetivos: " . $detalle->objetivos;
-        }
-        if (!empty($detalle->plan_alimentacion)) {
-            $dataHistorial['plan_tratamiento'] = $dataHistorial['plan_tratamiento'] ? 
-                $dataHistorial['plan_tratamiento'] . "\n\nPlan Alimentación: " . $detalle->plan_alimentacion : 
-                "Plan Alimentación: " . $detalle->plan_alimentacion;
-        }
-        if (!empty($detalle->recomendaciones)) {
-            $dataHistorial['recomendaciones'] = $detalle->recomendaciones;
-        }
 
         try {
             if ($historialId) {

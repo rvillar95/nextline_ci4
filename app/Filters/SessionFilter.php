@@ -194,10 +194,14 @@ final class SessionFilter implements FilterInterface
         //exit();
 
         // 5) Excepciones especiales para rutas que requieren autenticación pero no están en módulo_detalle
-        // Rutas de calendario que requieren autenticación (usuario logueado con acceso a agenda)
+        // Rutas de calendario/agenda que requieren autenticación (usuario logueado con acceso a agenda)
         $calendarioExcepciones = [
             '/dashboard/agenda/calendario/verificar-token',
             '/dashboard/agenda/calendario/connect',
+            '/dashboard/agenda/actualizarNotasNutricionista',
+            '/dashboard/agenda/guardarInformacionClinica',
+            '/dashboard/agenda/guardarMediciones',
+            '/dashboard/agenda/consulta',
         ];
         
         foreach ($calendarioExcepciones as $excepcion) {
