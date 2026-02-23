@@ -8,21 +8,21 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
             padding-left: 0;
         }
         #planAlimentarioSection .bloque-gramos-content { max-width: 100%; }
         #planAlimentarioSection .bloque-gramos-content .row.g-2 { align-items: flex-end; }
         #planAlimentarioSection .bloque-gramos-content .form-label.small { font-size: 0.8rem; white-space: nowrap; }
-        #planAlimentarioSection .macros-cards { margin-top: 0.5rem; }
+        #planAlimentarioSection .macros-cards { margin-top: 0.35rem; margin-bottom: 0; }
         #planAlimentarioSection .macros-cards .card { height: 100%; }
         #planAlimentarioSection .macros-cards .card-body { display: flex; flex-direction: column; justify-content: center; min-height: 80px; }
         #planAlimentarioSection .distribucion-label-row { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
         #planAlimentarioSection .text-muted.mt-1 { margin-top: 0.5rem !important; }
         #planAlimentarioSection .align-badges-gramos { align-items: baseline; }
     </style>
-    <!-- Formulario de Plan Alimentario -->
-    <form id="formPlanAlimentario">
+    <!-- Formulario de Plan Alimentario (o div si está embebido en form padre, ej. historial/editar) -->
+    <?php if (!empty($embebidoEnForm)): ?><div id="formPlanAlimentario"><?php else: ?><form id="formPlanAlimentario"><?php endif; ?>
         <!-- Requerimiento Energético (arriba, ancho completo) -->
         <div class="row mb-3">
             <div class="col-12 col-md-5 col-lg-4">
@@ -46,15 +46,18 @@
                 </div>
                 <!-- Bloque: ingresar por porcentaje -->
                 <div id="bloque_porcentaje">
-                    <div class="row g-2 align-items-end" style="max-width: 400px;">
+                    <div class="row g-2" style="max-width: 400px;">
                         <div class="col-4">
-                            <input type="number" step="0.1" class="form-control" id="plan_prot_porcentaje" name="prot_porcentaje" placeholder="Proteínas %" value="20" required>
+                            <label class="form-label small mb-1">Proteínas (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="plan_prot_porcentaje" name="prot_porcentaje" placeholder="%" value="20" required>
                         </div>
                         <div class="col-4">
-                            <input type="number" step="0.1" class="form-control" id="plan_grasa_porcentaje" name="grasa_porcentaje" placeholder="Grasas %" value="30" required>
+                            <label class="form-label small mb-1">Grasas (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="plan_grasa_porcentaje" name="grasa_porcentaje" placeholder="%" value="30" required>
                         </div>
                         <div class="col-4">
-                            <input type="number" step="0.1" class="form-control" id="plan_cho_porcentaje" name="cho_porcentaje" placeholder="CHO %" value="50" required>
+                            <label class="form-label small mb-1">CHO (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="plan_cho_porcentaje" name="cho_porcentaje" placeholder="%" value="50" required>
                         </div>
                     </div>
                     <small class="text-muted d-block mt-1">Debe sumar 100%</small>
@@ -87,8 +90,8 @@
             </div>
         </div>
 
-        <!-- Macros Objetivo (calculados o ingresados por gramos) - alineado con columnas de gramos -->
-        <div class="row mb-3 g-2 macros-cards" id="macrosObjetivo" style="display: none;">
+        <!-- Macros Objetivo (altiro abajo de la distribución: Proteínas, Grasas, CHO en gramos) -->
+        <div class="row g-2 macros-cards mt-1 mb-3" id="macrosObjetivo" style="display: none;">
             <div class="col-12 col-sm-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body text-center d-flex flex-column justify-content-center">
@@ -152,8 +155,7 @@
             <div class="col-md-12">
                 <h6 class="text-success mb-1"><i class="fas fa-chart-pie me-2"></i> Adecuación del Plan</h6>
                 <p class="text-muted small mb-2" style="font-size: 0.8rem;">
-                    Se dejó igual que la planilla Excel “Cálculo según porciones”: <strong>TOTAL = Requerimiento + Aporte del plan</strong>, luego <strong>% Adecuación = TOTAL ÷ Requerimiento × 100</strong>.<br>
-                    Al inicio el sistema usaba <strong>% = Aporte del plan ÷ Objetivo × 100</strong> (cuánto cubre el plan respecto a la meta), criterio habitual de adecuación dietaria. Se unificó con la planilla para coincidir con vuestro trabajo en Excel.
+                    <strong>% Adecuación = Aporte del plan ÷ Objetivo × 100</strong> (cuánto cubre el plan respecto a la meta), criterio habitual de adecuación dietaria.
                 </p>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
@@ -198,25 +200,6 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnVerCalculoAnterior" onclick="toggleCalculoAnteriorAdecuacion()">
-                        <i class="fas fa-history me-1"></i> Ver cómo lo teníamos antes
-                    </button>
-                </div>
-                <div id="adecuacionCalculoAnterior" class="mt-2 p-2 bg-light border rounded" style="display: none;">
-                    <small class="text-muted d-block mb-1"><strong>Cálculo anterior</strong> (% = Aporte del plan ÷ Objetivo × 100):</small>
-                    <table class="table table-sm table-bordered mb-0" style="max-width: 400px;">
-                        <thead class="table-light">
-                            <tr><th>Nutriente</th><th>% Adecuación (antes)</th><th>Estado</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Calorías</td><td id="adec_ant_kcal">-</td><td id="estado_ant_kcal">-</td></tr>
-                            <tr><td>CHO</td><td id="adec_ant_cho">-</td><td id="estado_ant_cho">-</td></tr>
-                            <tr><td>Grasas</td><td id="adec_ant_grasa">-</td><td id="estado_ant_grasa">-</td></tr>
-                            <tr><td>Proteínas</td><td id="adec_ant_prot">-</td><td id="estado_ant_prot">-</td></tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
 
@@ -235,7 +218,7 @@
                 <i class="fas fa-save me-2"></i> Guardar Plan
             </button>
         </div>
-    </form>
+    <?php if (!empty($embebidoEnForm)): ?></div><?php else: ?></form><?php endif; ?>
 </div>
 
 <script>
@@ -469,16 +452,12 @@ function calcularAdecuacionPlan(total_kcal, total_cho, total_grasa, total_prot) 
     const obj_grasa = parseFloat($('#plan_grasa_gramos').text()) || 0;
     const obj_prot = parseFloat($('#plan_prot_gramos').text()) || 0;
     
-    // Igual que planilla: TOTAL = Requerimiento + Aporte, % Adecuación = TOTAL / Requerimiento × 100
+    // % Adecuación = Aporte del plan ÷ Objetivo × 100 (cuánto cubre el plan respecto a la meta)
     if (requerimiento_kcal > 0) {
-        const total_sum_kcal = requerimiento_kcal + total_kcal;
-        const total_sum_cho = obj_cho + total_cho;
-        const total_sum_grasa = obj_grasa + total_grasa;
-        const total_sum_prot = obj_prot + total_prot;
-        const adec_kcal = Math.round((total_sum_kcal / requerimiento_kcal) * 100);
-        const adec_cho = (obj_cho > 0) ? Math.round((total_sum_cho / obj_cho) * 100) : 0;
-        const adec_grasa = (obj_grasa > 0) ? Math.round((total_sum_grasa / obj_grasa) * 100) : 0;
-        const adec_prot = (obj_prot > 0) ? Math.round((total_sum_prot / obj_prot) * 100) : 0;
+        const adec_kcal = Math.round((total_kcal / requerimiento_kcal) * 100);
+        const adec_cho = (obj_cho > 0) ? Math.round((total_cho / obj_cho) * 100) : 0;
+        const adec_grasa = (obj_grasa > 0) ? Math.round((total_grasa / obj_grasa) * 100) : 0;
+        const adec_prot = (obj_prot > 0) ? Math.round((total_prot / obj_prot) * 100) : 0;
         
         $('#obj_kcal').text(Math.round(requerimiento_kcal));
         $('#plan_kcal').text(Math.round(total_kcal));
@@ -501,9 +480,6 @@ function calcularAdecuacionPlan(total_kcal, total_cho, total_grasa, total_prot) 
         actualizarEstadoAdecuacion('prot', adec_prot);
         
         $('#adecuacionPlan').show();
-        if ($('#adecuacionCalculoAnterior').is(':visible')) {
-            refreshCalculoAnteriorBloque();
-        }
     }
 }
 
@@ -531,42 +507,6 @@ function badgeAdecuacion(porcentaje) {
     if (porcentaje >= 80 && porcentaje < 90) return '<span class="badge bg-warning">Bajo</span>';
     if (porcentaje > 110 && porcentaje <= 120) return '<span class="badge bg-warning">Alto</span>';
     return '<span class="badge bg-danger">Fuera de rango</span>';
-}
-
-function refreshCalculoAnteriorBloque() {
-    const plan_kcal = parseNum($('#plan_kcal').text());
-    const plan_cho = parseNum($('#plan_cho').text());
-    const plan_grasa = parseNum($('#plan_grasa').text());
-    const plan_prot = parseNum($('#plan_prot').text());
-    const obj_kcal = parseNum($('#obj_kcal').text());
-    const obj_cho = parseNum($('#obj_cho').text());
-    const obj_grasa = parseNum($('#obj_grasa').text());
-    const obj_prot = parseNum($('#obj_prot').text());
-    const adec_kcal = obj_kcal > 0 ? Math.round((plan_kcal / obj_kcal) * 100) : 0;
-    const adec_cho = obj_cho > 0 ? Math.round((plan_cho / obj_cho) * 100) : 0;
-    const adec_grasa = obj_grasa > 0 ? Math.round((plan_grasa / obj_grasa) * 100) : 0;
-    const adec_prot = obj_prot > 0 ? Math.round((plan_prot / obj_prot) * 100) : 0;
-    $('#adec_ant_kcal').text(adec_kcal + '%');
-    $('#adec_ant_cho').text(adec_cho + '%');
-    $('#adec_ant_grasa').text(adec_grasa + '%');
-    $('#adec_ant_prot').text(adec_prot + '%');
-    $('#estado_ant_kcal').html(badgeAdecuacion(adec_kcal));
-    $('#estado_ant_cho').html(badgeAdecuacion(adec_cho));
-    $('#estado_ant_grasa').html(badgeAdecuacion(adec_grasa));
-    $('#estado_ant_prot').html(badgeAdecuacion(adec_prot));
-}
-
-function toggleCalculoAnteriorAdecuacion() {
-    const $bloque = $('#adecuacionCalculoAnterior');
-    const $btn = $('#btnVerCalculoAnterior');
-    if ($bloque.is(':visible')) {
-        $bloque.hide();
-        $btn.html('<i class="fas fa-history me-1"></i> Ver cómo lo teníamos antes');
-        return;
-    }
-    refreshCalculoAnteriorBloque();
-    $bloque.show();
-    $btn.html('<i class="fas fa-eye-slash me-1"></i> Ocultar cálculo anterior');
 }
 
 function validarDistribucion() {
@@ -645,16 +585,19 @@ function guardarPlanAlimentario() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('guardado');
                 toastr.success('Plan alimentario guardado correctamente');
                 planGuardado = response.plan;
                 
                 // Habilitar tab de distribución
                 $('#distribucion-tab').removeClass('disabled');
             } else {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
                 toastr.error(response.error || 'Error al guardar plan');
             }
         },
         error: function(xhr, status, error) {
+            if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             console.error('Error:', error);
             toastr.error('Error al guardar plan alimentario');
         }

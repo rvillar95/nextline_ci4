@@ -400,57 +400,28 @@
                         <span><i class="fas fa-file-medical icon-label"></i> Información Clínica</span>
                     </div>
                     
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Motivo de Consulta</label>
-                                <textarea name="motivo_consulta" class="form-control" rows="3"></textarea>
-                            </div>
+                            <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
+                            <p class="text-muted small mb-1">Indique el motivo de la consulta o el objetivo principal acordado con el paciente.</p>
+                            <textarea name="motivo_consulta" class="form-control" rows="3"></textarea>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Anamnesis</label>
-                                <textarea name="anamnesis" class="form-control" rows="4"></textarea>
-                            </div>
+                            <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
+                            <p class="text-muted small mb-1">Describe el plan de tratamiento y alimentación acordado.</p>
+                            <textarea name="plan_tratamiento" class="form-control" rows="4"></textarea>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <div class="row mb-3">
                         <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Diagnóstico</label>
-                                <textarea name="diagnostico" class="form-control" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Plan de Tratamiento</label>
-                                <textarea name="plan_tratamiento" class="form-control" rows="4"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Recomendaciones</label>
-                                <textarea name="recomendaciones" class="form-control" rows="3"></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Observaciones</label>
-                                <textarea name="observaciones" class="form-control" rows="2"></textarea>
-                            </div>
+                            <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
+                            <p class="text-muted small mb-1">Recomendaciones y observaciones para el paciente.</p>
+                            <textarea name="recomendaciones" class="form-control" rows="4"></textarea>
+                            <input type="hidden" name="observaciones" value="">
                         </div>
                     </div>
 

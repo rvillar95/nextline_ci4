@@ -563,15 +563,18 @@ function guardarDistribucion() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('guardado');
                 toastr.success('Distribución por comidas guardada correctamente');
                 planGuardado = response.plan;
                 actualizarContadorPorciones();
                 actualizarListaComidas();
             } else {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
                 toastr.error(response.error || 'Error al guardar distribución');
             }
         },
         error: function(xhr, status, error) {
+            if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             console.error('Error:', error);
             toastr.error('Error al guardar distribución');
         }

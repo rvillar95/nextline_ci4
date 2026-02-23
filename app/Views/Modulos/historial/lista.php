@@ -15,8 +15,13 @@
                         <h2 style="color: white;"><i class="fas fa-history me-2"></i> Historial Clínico</h2>
                         <p style="color: white;">Registro de consultas y evolución de pacientes</p>
                     </div>
-                    <div>
-                        <a href="<?= base_url('dashboard/historial/comparar') ?>" class="btn btn-light me-2">
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php if (!empty($retorno_consulta_id)): ?>
+                        <a href="<?= base_url('dashboard/agenda/consulta?id=' . (int)$retorno_consulta_id) ?>" class="btn btn-light me-2">
+                            <i class="fas fa-arrow-left me-2"></i> Volver a la consulta
+                        </a>
+                        <?php endif; ?>
+                        <a href="<?= base_url('dashboard/historial/comparar' . (!empty($retorno_consulta_id) ? '?retorno=consulta&id=' . (int)$retorno_consulta_id : '')) ?>" class="btn btn-light me-2">
                             <i class="fas fa-chart-line me-2"></i> Comparar Historiales
                         </a>
                         <a href="<?= base_url('dashboard/historial/registro') ?>" class="btn btn-light">

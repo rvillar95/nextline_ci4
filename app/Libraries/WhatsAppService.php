@@ -290,6 +290,8 @@ class WhatsAppService
 
         $messageId = $body['messages'][0]['id'] ?? null;
         log_message('error', 'WhatsApp Business API: HTTP ' . $statusCode . ', to=' . $numeroFormateado . ', message_id=' . ($messageId ?? 'n/a'));
+        // Registrar respuesta completa para depuración (200 no garantiza entrega: ventana 24h, número sin WhatsApp, etc.)
+        log_message('error', 'WhatsApp Business API response body: ' . (is_string($rawBody) ? $rawBody : json_encode($body)));
 
         return [
             'message_id' => $messageId,
@@ -553,13 +555,16 @@ class WhatsAppService
         // Obtener usuario_id correctamente (desde agenda_usuario_id o usuario_id)
         $usuarioId = $cita->agenda_usuario_id ?? $cita->usuario_id ?? null;
         
-        // Mensaje de cancelación
+        // Mensaje de cancelación (incluir motivo si se ingresó, como en el correo)
         $mensaje = "Hola {$nombrePaciente}\n\n";
         $mensaje .= "Te informamos que tu cita con {$nutricionista} ha sido cancelada:\n\n";
         if ($fecha) {
             $mensaje .= "📅 Fecha: {$fecha}\n";
         }
         $mensaje .= "🕐 Hora: {$horaInicio}\n";
+        if (!empty(trim((string) $motivo))) {
+            $mensaje .= "\nMotivo: " . trim($motivo) . "\n";
+        }
         $mensaje .= "\nSi necesitas reagendar, por favor contacta con tu nutricionista.\n\n";
         $mensaje .= "¡Gracias por tu comprensión!";
         

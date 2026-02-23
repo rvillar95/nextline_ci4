@@ -7,8 +7,8 @@
         <strong>Nota:</strong> Los datos de peso, talla y edad se obtendrán del paciente. Si no están disponibles, puedes ingresarlos manualmente.
     </div>
 
-    <!-- Formulario de Calorimetría -->
-    <form id="formCalorimetria">
+    <!-- Formulario de Calorimetría (o div si está embebido en form padre, ej. historial/editar) -->
+    <?php if (!empty($embebidoEnForm)): ?><div id="formCalorimetria"><?php else: ?><form id="formCalorimetria"><?php endif; ?>
         <div class="row mb-3">
             <div class="col-md-3">
                 <label class="form-label">Peso (kg) <span class="text-danger">*</span></label>
@@ -141,16 +141,16 @@
             </div>
         </div>
 
-        <!-- Botones -->
+        <!-- Botones: mismo patrón que otros bloques (Limpiar + Guardar). Guardar aquí calcula TMB/actividades y guarda por separado. -->
         <div class="d-flex justify-content-end gap-2">
             <button type="button" class="btn btn-outline-secondary" onclick="limpiarCalorimetria()">
                 <i class="fas fa-redo me-2"></i> Limpiar
             </button>
-            <button type="button" class="btn btn-primary" onclick="calcularYGuardarCalorimetria()">
-                <i class="fas fa-calculator me-2"></i> Calcular y Guardar
+            <button type="button" class="btn btn-primary" onclick="calcularYGuardarCalorimetria()" title="Calcula TMB y gasto por actividades y guarda la calorimetría">
+                <i class="fas fa-save me-2"></i> Guardar
             </button>
         </div>
-    </form>
+    <?php if (!empty($embebidoEnForm)): ?></div><?php else: ?></form><?php endif; ?>
 </div>
 
 <script>
@@ -405,6 +405,7 @@ function calcularYGuardarCalorimetria() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('guardado');
                 toastr.success('Calorimetría calculada y guardada correctamente');
                 calorimetriaGuardada = response.calorimetria;
                 
@@ -416,10 +417,12 @@ function calcularYGuardarCalorimetria() {
                     }
                 }
             } else {
+                if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
                 toastr.error(response.error || 'Error al guardar calorimetría');
             }
         },
         error: function(xhr, status, error) {
+            if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             console.error('Error:', error);
             toastr.error('Error al calcular calorimetría');
         }

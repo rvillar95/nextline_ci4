@@ -91,9 +91,15 @@
                         <h2><i class="fas fa-chart-line me-2"></i> Comparación de Historiales Clínicos</h2>
                         <p class="mb-0">Seleccione un paciente y compare múltiples consultas para ver la evolución</p>
                     </div>
+                    <?php if (!empty($retorno_consulta_id)): ?>
+                    <a href="<?= base_url('dashboard/agenda/consulta?id=' . (int)$retorno_consulta_id) ?>" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i> Volver a la consulta
+                    </a>
+                    <?php else: ?>
                     <a href="<?= base_url('dashboard/historial/lista') ?>" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i> Volver
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
 
