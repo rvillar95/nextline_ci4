@@ -323,6 +323,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('eliminarHorarios', 'Dashboard\AgendaController::eliminarHorarios');
         $routes2->post('actualizarModalidad', 'Dashboard\AgendaController::actualizarModalidad');
         $routes2->post('actualizarNotasNutricionista', 'Dashboard\AgendaController::actualizarNotasNutricionista');
+        $routes2->post('aprobarReserva', 'Dashboard\AgendaController::aprobarReserva');
         $routes2->get('consulta', 'Dashboard\AgendaController::consulta');
         $routes2->post('iniciarConsulta', 'Dashboard\AgendaController::iniciarConsulta');
         $routes2->post('terminarConsulta', 'Dashboard\AgendaController::terminarConsulta');
@@ -433,6 +434,12 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+// Reserva pública (paciente reserva hora sin login)
+$routes->get('reservar', 'Web\ReservarController::index');
+$routes->get('reservar/disponibilidad', 'Web\ReservarController::disponibilidad');
+$routes->get('reservar/paciente-por-rut', 'Web\ReservarController::pacientePorRut');
+$routes->post('reservar/reservar', 'Web\ReservarController::reservar');
 
 // Rutas públicas para confirmar/cancelar citas desde email
 $routes->get('confirmar-cita', 'Dashboard\AgendaController::confirmarDesdeEmail');

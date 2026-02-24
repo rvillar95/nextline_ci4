@@ -181,9 +181,10 @@ class AgendaController extends BaseController
             // Optimizada para uso prolongado por nutricionistas (ergonomía visual)
             $color = match ($estadoCita) {
                 'disponible' => '#7BCB87',      // Verde suave (saturación reducida 8% para fatiga visual)
+                'reservada' => '#7986CB',        // Indigo - paciente reservó, pendiente aprobación nutricionista
                 'confirmada' => '#4A90E2',      // Azul confiable - estado seguro
                 'agendada' => '#4A90E2',        // Azul (mismo que confirmada)
-                'pendiente' => '#FFB74D',        // Naranjo claro - esperando confirmación
+                'pendiente' => '#FFB74D',        // Naranjo claro - esperando confirmación/pago
                 'en_proceso' => '#FF9800',       // Naranjo intenso - consulta en curso
                 'completada' => '#90A4AE',      // Gris azulado - estado finalizado
                 'cancelada' => '#E57373',        // Rojo suave - estado negativo (no agresivo)
@@ -206,6 +207,8 @@ class AgendaController extends BaseController
             if ($estadoCita === 'cancelada') {
                 // Para citas canceladas, mostrar como cancelada incluso si no tiene paciente
                 $titulo = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+            } elseif ($estadoCita === 'reservada') {
+                $titulo = $iconoModalidad . ' Reservada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
             } elseif ($estaDisponible) {
                 $titulo = $iconoModalidad . ' Disponible';
             } else {
@@ -786,7 +789,7 @@ class AgendaController extends BaseController
             if ($configuracion['enviar_whatsapp'] ?? 1) {
                 log_message('info', 'CANCELAR CITA (Lista): WhatsApp habilitado, enviando cancelación. id=' . $id . ', paciente_id=' . ($citaCompleta->paciente_id ?? 'N/A'));
                 try {
-                    $this->enviarWhatsAppCancelacion($id, $citaCompleta->paciente_id);
+                    $this->enviarWhatsAppCancelacion($id, $citaCompleta->paciente_id, $motivo);
                 } catch (\Exception $e) {
                     log_message('error', 'CANCELAR CITA (Lista): Excepción al enviar WhatsApp: ' . $e->getMessage());
                     log_message('error', 'CANCELAR CITA (Lista): Stack trace: ' . $e->getTraceAsString());
@@ -808,6 +811,101 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Aprobar una cita en estado 'reservada' (reservada por paciente desde link público).
+     * El nutricionista asigna tipo de consulta, modalidad y opcionalmente plantilla de pago;
+     * la cita pasa a 'pendiente' y se envía el correo de confirmación al paciente.
+     */
+    public function aprobarReserva()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $detalleAgendaId = (int) $this->request->getPost('detalle_agenda_id');
+        $tipoConsulta = $this->request->getPost('tipo_consulta') ?: 'control';
+        $modalidadId = (int) ($this->request->getPost('modalidad_id') ?? 3);
+        $botonPagoPlantillaId = $this->request->getPost('boton_pago_plantilla_id') ?: null;
+
+        if (!$detalleAgendaId) {
+            return $this->response->setJSON(['error' => 'ID de cita requerido'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $usuario_id = session()->get('usuario')['id'];
+
+        $detalle = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->where('usuario_id', $usuario_id)
+            ->where('paciente_id IS NOT NULL')
+            ->get()
+            ->getRow();
+
+        if (!$detalle) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'Cita no encontrada o sin permiso'])->setStatusCode(403);
+        }
+
+        $estadoActual = strtolower(trim((string)($detalle->estado_cita ?? '')));
+        if ($estadoActual !== 'reservada') {
+            return $this->response->setJSON([
+                'error' => 'Estado incorrecto',
+                'message' => 'Solo se pueden aprobar citas en estado Reservada. Estado actual: ' . ($detalle->estado_cita ?? 'N/A')
+            ])->setStatusCode(400);
+        }
+
+        $dataUpdate = [
+            'tipo_consulta' => $tipoConsulta,
+            'modalidad_id' => $modalidadId,
+            'estado_cita' => 'pendiente',
+        ];
+
+        $updated = $db->table('detalle_agenda')
+            ->where('id', $detalleAgendaId)
+            ->update($dataUpdate);
+
+        if (!$updated) {
+            return $this->response->setJSON(['error' => 'Error al actualizar la cita'])->setStatusCode(500);
+        }
+
+        $pacienteId = (int) $detalle->paciente_id;
+
+        if (!empty($botonPagoPlantillaId)) {
+            try {
+                $this->crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $botonPagoPlantillaId);
+            } catch (\Exception $e) {
+                log_message('error', 'Aprobar reserva: Error al crear pago: ' . $e->getMessage());
+            }
+        }
+
+        $configuracionModel = new EmpresaConfiguracion();
+        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
+        if ($configuracion['enviar_email'] ?? 1) {
+            try {
+                $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
+            } catch (\Exception $e) {
+                log_message('error', 'Aprobar reserva: Error al enviar email de confirmación: ' . $e->getMessage());
+            }
+        }
+        // Enviar WhatsApp de confirmación al aprobar la reserva (mismo criterio que al confirmar cita desde dashboard)
+        if ($configuracion['enviar_whatsapp'] ?? 1) {
+            try {
+                $meetLink = null;
+                $this->enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId, $meetLink);
+            } catch (\Exception $e) {
+                log_message('error', 'Aprobar reserva: Error al enviar WhatsApp de confirmación: ' . $e->getMessage());
+            }
+        }
+
+        $response = $this->response->setJSON([
+            'success' => true,
+            'message' => 'Reserva aprobada. La cita quedó en Pendiente y se envió el correo de confirmación al paciente.',
+            'csrf_token' => csrf_hash()
+        ]);
+        $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+        return $response;
+    }
+
+    /**
      * Enviar email de cancelación al paciente (misma plantilla y lógica que módulo Cancelar Horas)
      */
     private function enviarEmailCancelacionPaciente($cita, $motivoCancelacion = null)
@@ -822,6 +920,7 @@ class AgendaController extends BaseController
 
         $estadoCita = $cita->estado_cita ?? 'pendiente';
         $mapEstados = [
+            'reservada' => 'mensaje_cancelacion_pendiente',
             'pendiente' => 'mensaje_cancelacion_pendiente',
             'confirmada' => 'mensaje_cancelacion_confirmada',
             'agendada' => 'mensaje_cancelacion_pendiente',
@@ -921,6 +1020,7 @@ class AgendaController extends BaseController
             $nombrePaciente = trim(($r->nombre ?? '') . ' ' . ($r->apellido ?? ''));
 
             $estadoBadge = match (strtolower(trim((string)($r->estado_cita ?? '')))) {
+                'reservada' => '<span class="badge bg-secondary">Reservada</span>',
                 'pendiente' => '<span class="badge bg-warning text-dark">Pendiente</span>',
                 'agendada' => '<span class="badge bg-primary">Agendada</span>',
                 'confirmada' => '<span class="badge bg-success">Confirmada</span>',
@@ -931,14 +1031,18 @@ class AgendaController extends BaseController
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
-            // Usar detalle_agenda_id en lugar de agenda_paciente.id. No mostrar Confirmar/Cancelar en completada (no se pueden cancelar).
+            // No mostrar Confirmar/Cancelar en completada (no se pueden cancelar) ni en reservada (se aprueba con otro flujo).
             $estadoCitaLower = strtolower(trim((string)($r->estado_cita ?? '')));
             $esCompletada = ($estadoCitaLower === 'completada');
             $esCancelada = ($estadoCitaLower === 'cancelada');
+            $esReservada = ($estadoCitaLower === 'reservada');
             $botones = '';
-            if (!$esCompletada && !$esCancelada) {
+            if (!$esCompletada && !$esCancelada && !$esReservada) {
                 $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
                           '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
+            }
+            if ($esReservada) {
+                $botones .= '<a href="' . base_url('dashboard/agenda/consulta?id=' . $r->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-check-circle me-1"></i> Aprobar</a> ';
             }
             $botones .= '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
 
@@ -2775,6 +2879,17 @@ class AgendaController extends BaseController
             ];
         }
         $data['metodos_calculo'] = $metodosDisponibles;
+
+        // Para citas reservadas: cargar modalidades y plantillas de pago (formulario Aprobar reserva)
+        $data['modalidades'] = $db->table('modalidad_agenda')->orderBy('id', 'ASC')->get()->getResult();
+        $data['plantillas_pago'] = [];
+        if ($empresaId) {
+            $empresaConfigModel = new EmpresaConfiguracion();
+            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+                $plantillaModel = new BotonPagoPlantilla();
+                $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
+            }
+        }
 
         return view('Modulos/agenda/consulta', $data);
     }

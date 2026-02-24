@@ -2,77 +2,112 @@
 
 <?= $this->section('content') ?>
 
-<?php
-// Función helper para mostrar estrellas
-function mostrarEstrellas($calificacion) {
-    $html = '<div class="estrellas-calificacion">';
-    for ($i = 1; $i <= 5; $i++) {
-        if ($i <= $calificacion) {
-            $html .= '<i class="fa fa-star text-warning" style="font-size: 15px"></i>';
-        } else {
-            $html .= '<i class="fa fa-star-o text-muted" style="font-size: 15px"></i>';
-        }
-    }
-    $html .= '</div>';
-    return $html;
-}
-?>
-
-<!-- Hero Section Moderno -->
-<section class="hero-section-modern" style="background: linear-gradient(to bottom, #1d2844 0%, #4a5f7a 100%) !important; padding: 120px 0 100px; margin-top: 0; position: relative; overflow: hidden;">
-    <div class="hero-pattern-modern"></div>
+<!-- Hero NutriSync -->
+<section class="nutrisync-hero" style="background: linear-gradient(135deg, var(--nutrisync-primary) 0%, var(--nutrisync-muted) 100%); padding: 100px 0 80px; position: relative; overflow: hidden;">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
-                <div class="hero-content-modern text-white">
-                    <div class="hero-badge">
-                        <i class="fas fa-award"></i>
-                        <span>MANSANCHEZ</span>
-                    </div>
-                    <h1 class="hero-title-modern mb-4">Construimos tus Sueños</h1>
-                    <p class="hero-subtitle-modern lead mb-4">
-                        Más de 15 años de experiencia en construcción residencial y comercial. 
-                        Proyectos de calidad, cumplimiento de plazos y garantía total.
-                    </p>
-                    <div class="hero-stats-modern mb-4">
-                        <div class="stat-item-modern">
-                            <div class="stat-number-modern">15+</div>
-                            <div class="stat-label-modern">Años de Experiencia</div>
+            <div class="col-lg-7">
+                <div class="hero-badge-ns mb-3">
+                    <i class="fas fa-leaf"></i>
+                    <span>Plataforma para nutricionistas</span>
+                </div>
+                <h1 class="hero-title-ns text-white mb-4" style="font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2;">
+                    Gestiona tu consulta en un solo lugar
+                </h1>
+                <p class="hero-subtitle-ns text-white mb-4" style="font-size: 1.15rem; opacity: 0.95; max-width: 520px;">
+                    Agenda de citas, historiales clínicos, planes alimentarios, pagos y recordatorios por WhatsApp. Todo integrado para que te enfoques en tus pacientes.
+                </p>
+                <div class="hero-actions-ns d-flex flex-wrap gap-3">
+                    <a href="<?= base_url('reservar') ?>" class="btn-hero-primary">
+                        <i class="fas fa-calendar-check me-2"></i> Reservar hora
+                    </a>
+                    <a href="<?= base_url('login') ?>" class="btn-hero-secondary">
+                        <i class="fas fa-sign-in-alt me-2"></i> Iniciar sesión
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 text-center d-none d-lg-block">
+                <div class="hero-visual-ns">
+                    <i class="fas fa-clipboard-list" style="font-size: 10rem; color: rgba(255,255,255,0.25);"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Funcionalidades del sistema -->
+<section id="funcionalidades" class="py-5" style="background: var(--nutrisync-bg); padding: 80px 0 !important;">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="d-inline-block mb-2" style="color: var(--nutrisync-primary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">El sistema</span>
+            <h2 class="mb-3" style="color: #2d3748; font-weight: 800; font-size: clamp(1.75rem, 4vw, 2.5rem);">Todo lo que necesitas en una sola plataforma</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Funcionalidades pensadas para consultas nutricionales: desde la primera cita hasta el seguimiento y los pagos.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fas fa-calendar-alt"></i>
                         </div>
-                        <div class="stat-item-modern">
-                            <div class="stat-number-modern">200+</div>
-                            <div class="stat-label-modern">Proyectos Completados</div>
-                        </div>
-                        <div class="stat-item-modern">
-                            <div class="stat-number-modern">100%</div>
-                            <div class="stat-label-modern">Satisfacción Garantizada</div>
-                        </div>
-                    </div>
-                    <div class="hero-actions-modern">
-                        <a href="<?= base_url('contacto') ?>" class="btn-hero-modern btn-primary-modern">
-                            <i class="fas fa-calculator"></i> Solicitar Cotización
-                        </a>
-                        <a href="<?= base_url('proyectos') ?>" class="btn-hero-modern btn-secondary-modern">
-                            <i class="fas fa-eye"></i> Ver Proyectos
-                        </a>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Agenda de citas</h3>
+                        <p class="text-muted mb-0 small">Gestiona horarios, disponibilidad y citas presenciales u online. Sincronización con Google y Microsoft Calendar.</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="hero-image-modern text-center">
-                    <div class="hero-icon-container">
-                        <i class="fas fa-home" style="font-size: 8rem; color: rgba(240, 132, 26, 0.3);"></i>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Pacientes</h3>
+                        <p class="text-muted mb-0 small">Ficha del paciente, datos de contacto, historial de consultas y documentos en un solo lugar.</p>
                     </div>
-                    <div class="floating-elements">
-                        <div class="floating-icon floating-icon-1">
-                            <i class="fas fa-hammer"></i>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fas fa-file-medical"></i>
                         </div>
-                        <div class="floating-icon floating-icon-2">
-                            <i class="fas fa-tools"></i>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Historial clínico</h3>
+                        <p class="text-muted mb-0 small">Registro de consultas, mediciones, notas clínicas y evolución. Comparativa entre fechas.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fas fa-utensils"></i>
                         </div>
-                        <div class="floating-icon floating-icon-3">
-                            <i class="fas fa-building"></i>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Plan alimentario</h3>
+                        <p class="text-muted mb-0 small">Planes por porciones, intercambios y calorimetría. Generación de documentos para el paciente.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fas fa-credit-card"></i>
                         </div>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Pagos</h3>
+                        <p class="text-muted mb-0 small">Integración con Mercado Pago. Cobra consultas y planes desde la plataforma con link de pago.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-feature-ns h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="feature-icon-ns mb-3">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">WhatsApp y recordatorios</h3>
+                        <p class="text-muted mb-0 small">Confirmación y cancelación de citas por WhatsApp. Recordatorios automáticos configurable.</p>
                     </div>
                 </div>
             </div>
@@ -80,1893 +115,143 @@ function mostrarEstrellas($calificacion) {
     </div>
 </section>
 
-<!-- Call to Action -->
-<section class="cta-section-modern" style="background: linear-gradient(135deg, #f0841a 0%, #ff6b35 100%); padding: 80px 0;">
+<!-- CTA -->
+<section class="py-5" style="background: linear-gradient(135deg, var(--nutrisync-primary) 0%, var(--nutrisync-muted) 100%); padding: 70px 0 !important;">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-8">
-                <div class="cta-content-modern text-white">
-                    <h3 class="cta-title-modern mb-3">
-                        <i class="fas fa-phone-alt me-3"></i>
-                        ¡Contáctanos Ahora!
-                    </h3>
-                    <p class="cta-subtitle-modern mb-0">
-                        MANSANCHEZ te ofrece una Consulta Gratuita para tu Proyecto
-                    </p>
-                </div>
+            <div class="col-lg-8 text-white">
+                <h2 class="mb-2 fw-bold" style="font-size: clamp(1.5rem, 3.5vw, 2rem);">¿Listo para simplificar tu consulta?</h2>
+                <p class="mb-0 opacity-90">Reserva una hora como paciente o contacta para conocer planes para tu consultorio.</p>
             </div>
-            <div class="col-lg-4 text-lg-end text-center">
-                <a href="<?= base_url('contacto') ?>" class="btn-cta-modern">
-                    <i class="fas fa-comments"></i> Solicitar Consulta
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <a href="<?= base_url('reservar') ?>" class="btn-cta-ns me-2 mb-2">
+                    <i class="fas fa-calendar-check me-2"></i> Reservar
+                </a>
+                <a href="<?= base_url('contacto') ?>" class="btn-cta-outline-ns mb-2">
+                    <i class="fas fa-envelope me-2"></i> Contacto
                 </a>
             </div>
         </div>
     </div>
 </section>
 
-<!-- About Section -->
-<section class="about-section-modern" style="background: linear-gradient(to bottom, #1d2844 0%, #2c3e50 100%); padding: 100px 0;">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <div class="about-content-modern text-white">
-                    <div class="about-badge">
-                        <i class="fas fa-handshake"></i>
-                        <span>Bienvenidos</span>
-                    </div>
-                    <h2 class="about-title-modern mb-4">
-                        <span class="text-white">Experiencia.</span><br />
-                        <span class="text-warning">Calidad.</span><br />
-                        <span class="text-white">Resultados.</span>
-                    </h2>
-                    <div class="about-divider"></div>
-                    <p class="about-description-modern lead">
-                        Con más de 15 años de experiencia en el rubro de la construcción, 
-                        hemos desarrollado proyectos residenciales y comerciales de alta calidad. 
-                        Nuestro compromiso es entregar obras que superen las expectativas de nuestros clientes, 
-                        cumpliendo con los más altos estándares de calidad y seguridad.
-                    </p>
-                    <div class="about-features-modern">
-                        <div class="feature-item-modern">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Materiales de Primera Calidad</span>
-                        </div>
-                        <div class="feature-item-modern">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Cumplimiento de Plazos</span>
-                        </div>
-                        <div class="feature-item-modern">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Garantía Total</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="about-image-modern text-center">
-                    <div class="about-icon-container">
-                        <i class="fas fa-building" style="font-size: 6rem; color: rgba(240, 132, 26, 0.3);"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Services Section -->
-<section class="services-section-modern" style="background: #f8f9fa; padding: 100px 0;">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 text-center mb-5">
-                <div class="section-header-modern">
-                    <h2 class="section-title-modern">Nuestros Servicios</h2>
-                    <div class="section-divider-modern"></div>
-                    <p class="section-subtitle-modern">
-                        Soluciones profesionales de construcción para hacer realidad tus proyectos más ambiciosos
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row services-grid-modern">
-            <?php if (!empty($servicios_destacados)): ?>
-                <?php foreach (array_slice($servicios_destacados, 0, 3) as $index => $servicio): ?>
-                    <div class="col-lg-4 col-md-6 service-item-modern">
-                        <div class="service-card-modern">
-                            <div class="service-image-modern">
-                                <img src="<?= base_url($servicio->foto) ?>" alt="<?= esc($servicio->nombre) ?>" class="img-fluid" loading="lazy">
-                                <div class="service-overlay-modern">
-                                    <div class="service-icon-modern">
-                                        <i class="fas fa-cog"></i>
-                                    </div>
-                                    <div class="service-actions-overlay">
-                                        <a href="<?= base_url('servicios') ?>" class="btn-overlay-modern">
-                                            <i class="fas fa-eye"></i> Ver Detalles
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="service-content-modern">
-                                <h3 class="service-title-modern"><?= esc($servicio->nombre) ?></h3>
-                                <p class="service-description-modern"><?= esc($servicio->descripcionCorta) ?></p>
-                                <div class="service-actions-modern">
-                                    <a href="<?= base_url('servicios') ?>" class="btn-service-modern">
-                                        <i class="fas fa-info-circle"></i> Ver más
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <!-- Servicios por defecto -->
-                <div class="col-lg-4 col-md-6 service-item-modern">
-                    <div class="service-card-modern">
-                        <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Residencial" class="img-fluid" width="400" height="300" loading="lazy">
-                            <div class="service-overlay-modern">
-                                <div class="service-icon-modern">
-                                    <i class="fas fa-home"></i>
-                                </div>
-                                <div class="service-actions-overlay">
-                                    <a href="<?= base_url('servicios') ?>" class="btn-overlay-modern">
-                                        <i class="fas fa-eye"></i> Ver Detalles
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="service-content-modern">
-                            <h3 class="service-title-modern">Construcción Residencial</h3>
-                            <p class="service-description-modern">Casas familiares, condominios y proyectos habitacionales con los más altos estándares de calidad.</p>
-                            <div class="service-actions-modern">
-                                <a href="<?= base_url('servicios') ?>" class="btn-service-modern">
-                                    <i class="fas fa-info-circle"></i> Ver más
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 service-item-modern">
-                    <div class="service-card-modern">
-                        <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Comercial" class="img-fluid" width="400" height="300" loading="lazy">
-                            <div class="service-overlay-modern">
-                                <div class="service-icon-modern">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div class="service-actions-overlay">
-                                    <a href="<?= base_url('servicios') ?>" class="btn-overlay-modern">
-                                        <i class="fas fa-eye"></i> Ver Detalles
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="service-content-modern">
-                            <h3 class="service-title-modern">Construcción Comercial</h3>
-                            <p class="service-description-modern">Edificios de oficinas, locales comerciales y proyectos industriales con tecnología moderna.</p>
-                            <div class="service-actions-modern">
-                                <a href="<?= base_url('servicios') ?>" class="btn-service-modern">
-                                    <i class="fas fa-info-circle"></i> Ver más
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6 service-item-modern">
-                    <div class="service-card-modern">
-                        <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/services/remodelation.jpg') ?>" alt="Remodelaciones" class="img-fluid" width="400" height="300" loading="lazy">
-                            <div class="service-overlay-modern">
-                                <div class="service-icon-modern">
-                                    <i class="fas fa-tools"></i>
-                                </div>
-                                <div class="service-actions-overlay">
-                                    <a href="<?= base_url('servicios') ?>" class="btn-overlay-modern">
-                                        <i class="fas fa-eye"></i> Ver Detalles
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="service-content-modern">
-                            <h3 class="service-title-modern">Remodelaciones</h3>
-                            <p class="service-description-modern">Transformamos espacios existentes con diseños modernos y funcionales que se adaptan a tus necesidades.</p>
-                            <div class="service-actions-modern">
-                                <a href="<?= base_url('servicios') ?>" class="btn-service-modern">
-                                    <i class="fas fa-info-circle"></i> Ver más
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-        
-        <div class="text-center mt-5">
-            <a href="<?= base_url('servicios') ?>" class="btn-all-services-modern">
-                <i class="fas fa-th-large"></i> Ver Todos los Servicios
-            </a>
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="stats-section-modern" style="background: linear-gradient(135deg, #1d2844 0%, #2c3e50 100%); padding: 100px 0; position: relative; overflow: hidden;">
-    <div class="stats-pattern-modern"></div>
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-4">
-                <div class="stats-content-modern text-white">
-                    <div class="stats-badge">
-                        <i class="fas fa-trophy"></i>
-                        <span>Nuestros Logros</span>
-                    </div>
-                    <h2 class="stats-title-modern mb-4">
-                        <span class="text-white">¿Qué hemos</span><br />
-                        <span class="text-warning">logrado?</span>
-                    </h2>
-                    <div class="stats-divider"></div>
-                    <p class="stats-description-modern">
-                        Más de una década construyendo sueños y transformando espacios con excelencia y dedicación.
-                    </p>
-                </div>
-            </div>
-            <div class="col-lg-8">
-                <div class="row stats-grid-modern">
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-project-diagram"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="150" data-speed="3000">0</span>+
-                            </div>
-                            <div class="stat-label-modern">Proyectos Completados</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="15" data-speed="3000">0</span>
-                            </div>
-                            <div class="stat-label-modern">Años de Experiencia</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-smile"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="98" data-speed="3000">0</span>%
-                            </div>
-                            <div class="stat-label-modern">Clientes Satisfechos</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="50" data-speed="3000">0</span>+
-                            </div>
-                            <div class="stat-label-modern">Empleados Especializados</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-headset"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="24" data-speed="3000">0</span>/7
-                            </div>
-                            <div class="stat-label-modern">Soporte Disponible</div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 stat-item-modern">
-                        <div class="stat-card-modern">
-                            <div class="stat-icon-modern">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <div class="stat-number-modern">
-                                <span class="timer" data-to="100" data-speed="3000">0</span>%
-                            </div>
-                            <div class="stat-label-modern">Garantía Total</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Projects Gallery -->
-<section id="section-practice-areas">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="text-center">
-                    <h2>Nuestros Proyectos</h2>
-                    <div class="small-border"></div>
-                </div>
-            </div>
-            <div class="col-md-6 offset-md-3 text-center">
-                <p>
-                    Cada proyecto es único y representa nuestro compromiso con la excelencia. 
-                    Desde casas familiares hasta edificios comerciales, cada obra refleja nuestra pasión por la construcción.
-                </p>
-            </div>
-            <div class="spacer-single"></div>
-            
-            <?php if (!empty($proyectos_destacados)): ?>
-                <div class="row projects-grid">
-                    <?php foreach (array_slice($proyectos_destacados, 0, 3) as $proyecto): ?>
-                        <div class="col-lg-4 col-md-6 project-item">
-                            <div class="project-card">
-                                <div class="project-image">
-                                    <?php if (!empty($proyecto->imagen_portada)): ?>
-                                        <img src="<?= base_url($proyecto->imagen_portada->ruta) ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
-                                    <?php else: ?>
-                                        <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
-                                    <?php endif; ?>
-                                    <div class="project-overlay">
-                                        <div class="project-badge">
-                                            <?= ucfirst($proyecto->tipo_proyecto) ?>
-                                        </div>
-                                        <div class="project-actions">
-                                            <a href="<?= base_url('proyectos/' . $proyecto->slug) ?>" class="btn-project">
-                                                <i class="fas fa-eye"></i> Ver Detalles
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="project-content">
-                                    <h4 class="project-title"><?= esc($proyecto->nombre) ?></h4>
-                                    <p class="project-description"><?= esc($proyecto->descripcion_corta) ?></p>
-                                    
-                                    <div class="project-meta">
-                                        <div class="meta-item">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                            <span><?= esc($proyecto->ubicacion) ?></span>
-                                        </div>
-                                        <?php if (!empty($proyecto->area_construida)): ?>
-                                        <div class="meta-item">
-                                            <i class="fas fa-ruler-combined"></i>
-                                            <span><?= number_format($proyecto->area_construida, 0, ',', '.') ?> m²</span>
-                                        </div>
-                                        <?php endif; ?>
-                                        <?php if (!empty($proyecto->fecha_finalizacion)): ?>
-                                        <div class="meta-item">
-                                            <i class="fas fa-calendar-check"></i>
-                                            <span><?= date('Y', strtotime($proyecto->fecha_finalizacion)) ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <?php if ($proyecto->destacado): ?>
-                                    <div class="project-featured">
-                                        <i class="fas fa-star"></i> Proyecto Destacado
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-                
-                <div class="text-center mt-5">
-                    <a href="<?= base_url('proyectos') ?>" class="btn-custom btn-large">
-                        <i class="fas fa-th-large"></i> Ver Más Proyectos
-                    </a>
-                </div>
-            <?php else: ?>
-                <div class="col-md-12 text-center">
-                    <div class="no-projects">
-                        <i class="fas fa-hammer fa-3x text-muted mb-3"></i>
-                        <h4>Próximamente</h4>
-                        <p>Estamos preparando nuestros proyectos destacados para mostrarte.</p>
-                        <a href="<?= base_url('proyectos') ?>" class="btn-custom">Ver Todos los Proyectos</a>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-</section>
-
-<!-- Testimonials -->
-<section class="testimonials-section-modern" style="background: linear-gradient(135deg, #f0841a 0%, #ff6b35 100%); padding: 100px 0; position: relative; overflow: hidden;">
-    <div class="testimonials-pattern-modern"></div>
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 text-center mb-5">
-                <div class="testimonials-header-modern text-white">
-                    <h2 class="testimonials-title-modern">Lo que Dicen Nuestros Clientes</h2>
-                    <div class="testimonials-divider-modern"></div>
-                    <p class="testimonials-subtitle-modern">
-                        La satisfacción de nuestros clientes es nuestra mayor recompensa
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="owl-carousel owl-theme" id="testimonial-carousel-modern">
-                    <?php if (!empty($testimonios_destacados)): ?>
-                        <?php foreach ($testimonios_destacados as $testimonio): ?>
-                            <div class="item">
-                                <div class="testimonial-card-modern">
-                                    <div class="testimonial-content-modern">
-                                        <div class="testimonial-quote-modern">
-                                            <i class="fas fa-quote-left"></i>
-                                        </div>
-                                        <p class="testimonial-text-modern"><?= esc($testimonio->testimonio) ?></p>
-                                        <div class="testimonial-rating-modern">
-                                            <?= mostrarEstrellas($testimonio->calificacion) ?>
-                                        </div>
-                                    </div>
-                                    <div class="testimonial-author-modern">
-                                        <div class="author-info-modern">
-                                            <h4 class="author-name-modern"><?= esc($testimonio->nombre) ?></h4>
-                                            <p class="author-details-modern">
-                                                <?= !empty($testimonio->cargo) ? esc($testimonio->cargo) : '' ?>
-                                                <?= !empty($testimonio->empresa) ? ' - ' . esc($testimonio->empresa) : '' ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <!-- Testimonios por defecto -->
-                        <div class="item">
-                            <div class="testimonial-card-modern">
-                                <div class="testimonial-content-modern">
-                                    <div class="testimonial-quote-modern">
-                                        <i class="fas fa-quote-left"></i>
-                                    </div>
-                                    <p class="testimonial-text-modern">
-                                        La construcción de nuestra casa superó todas nuestras expectativas. 
-                                        Calidad excepcional y cumplimiento perfecto de plazos.
-                                    </p>
-                                    <div class="testimonial-rating-modern">
-                                        <?= mostrarEstrellas(5) ?>
-                                    </div>
-                                </div>
-                                <div class="testimonial-author-modern">
-                                    <div class="author-info-modern">
-                                        <h4 class="author-name-modern">María González</h4>
-                                        <p class="author-details-modern">Propietaria</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="testimonial-card-modern">
-                                <div class="testimonial-content-modern">
-                                    <div class="testimonial-quote-modern">
-                                        <i class="fas fa-quote-left"></i>
-                                    </div>
-                                    <p class="testimonial-text-modern">
-                                        Remodelaron completamente nuestro local comercial. 
-                                        El resultado es espectacular y el proceso fue muy profesional.
-                                    </p>
-                                    <div class="testimonial-rating-modern">
-                                        <?= mostrarEstrellas(5) ?>
-                                    </div>
-                                </div>
-                                <div class="testimonial-author-modern">
-                                    <div class="author-info-modern">
-                                        <h4 class="author-name-modern">Carlos Rodríguez</h4>
-                                        <p class="author-details-modern">Empresario</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="item">
-                            <div class="testimonial-card-modern">
-                                <div class="testimonial-content-modern">
-                                    <div class="testimonial-quote-modern">
-                                        <i class="fas fa-quote-left"></i>
-                                    </div>
-                                    <p class="testimonial-text-modern">
-                                        Construyeron nuestro edificio de oficinas con la más alta calidad. 
-                                        Definitivamente los recomiendo para cualquier proyecto.
-                                    </p>
-                                    <div class="testimonial-rating-modern">
-                                        <?= mostrarEstrellas(5) ?>
-                                    </div>
-                                </div>
-                                <div class="testimonial-author-modern">
-                                    <div class="author-info-modern">
-                                        <h4 class="author-name-modern">Ana Martínez</h4>
-                                        <p class="author-details-modern">Arquitecta</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <style>
-/* ===== ESTILOS MODERNOS PARA HOME ===== */
-
-/* Hero Section Moderno */
-.hero-section-modern {
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(to bottom, #1d2844 0%, #4a5f7a 100%) !important;
-}
-
-.hero-pattern-modern {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-    opacity: 0.3;
-}
-
-.hero-badge {
+/* NutriSync landing */
+.nutrisync-hero { position: relative; }
+.hero-badge-ns {
     display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(240, 132, 26, 0.2);
-    color: #f0841a;
-    padding: 12px 25px;
-    border-radius: 30px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin-bottom: 30px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(240, 132, 26, 0.3);
-}
-
-.hero-title-modern {
-    font-size: 3.5rem;
-    font-weight: 900;
-    line-height: 1.2;
-    margin-bottom: 25px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.hero-subtitle-modern {
-    font-size: 1.3rem;
-    font-weight: 400;
-    line-height: 1.6;
-    opacity: 0.95;
-    margin-bottom: 40px;
-}
-
-.hero-stats-modern {
-    display: flex;
-    gap: 40px;
-    margin-bottom: 40px;
-}
-
-.stat-item-modern {
-    text-align: center;
-}
-
-.stat-number-modern {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: #f0841a;
-    line-height: 1;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 10px rgba(240, 132, 26, 0.3);
-}
-
-.stat-label-modern {
-    font-size: 0.9rem;
-    font-weight: 600;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.hero-actions-modern {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-}
-
-.btn-hero-modern {
-    padding: 18px 35px;
-    border-radius: 35px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-primary-modern {
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white !important;
-    box-shadow: 0 8px 25px rgba(240, 132, 26, 0.3);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    font-weight: 700;
-}
-
-.btn-primary-modern:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4);
-    color: white !important;
-    text-decoration: none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.btn-secondary-modern {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(10px);
-}
-
-.btn-secondary-modern:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
-    transform: translateY(-3px);
-    color: white;
-    text-decoration: none;
-}
-
-.hero-image-modern {
-    position: relative;
-}
-
-.hero-icon-container {
-    position: relative;
-    z-index: 2;
-}
-
-.floating-elements {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-}
-
-.floating-icon {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: rgba(240, 132, 26, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #f0841a;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(240, 132, 26, 0.3);
-    animation: float 6s ease-in-out infinite;
-}
-
-.floating-icon-1 {
-    top: 20%;
-    left: 10%;
-    animation-delay: 0s;
-}
-
-.floating-icon-2 {
-    top: 60%;
-    right: 15%;
-    animation-delay: 2s;
-}
-
-.floating-icon-3 {
-    bottom: 20%;
-    left: 20%;
-    animation-delay: 4s;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-}
-
-/* Call to Action Moderno */
-.cta-section-modern {
-    position: relative;
-    overflow: hidden;
-}
-
-.cta-content-modern {
-    position: relative;
-    z-index: 2;
-}
-
-.cta-title-modern {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 15px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.cta-subtitle-modern {
-    font-size: 1.2rem;
-    font-weight: 400;
-    opacity: 0.95;
-}
-
-.btn-cta-modern {
-    background: rgba(255, 255, 255, 0.95);
-    color: #f0841a;
-    padding: 18px 35px;
-    border-radius: 35px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.btn-cta-modern:hover {
-    background: white;
-    color: #f0841a;
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
-    text-decoration: none;
-}
-
-/* About Section Moderno */
-.about-section-modern {
-    position: relative;
-    overflow: hidden;
-}
-
-.about-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(240, 132, 26, 0.2);
-    color: #f0841a;
-    padding: 12px 25px;
-    border-radius: 30px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin-bottom: 30px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(240, 132, 26, 0.3);
-}
-
-.about-title-modern {
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 1.2;
-    margin-bottom: 25px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.about-divider {
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    border-radius: 2px;
-    margin-bottom: 30px;
-}
-
-.about-description-modern {
-    font-size: 1.2rem;
-    font-weight: 400;
-    line-height: 1.7;
-    opacity: 0.95;
-    margin-bottom: 40px;
-}
-
-.about-features-modern {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.feature-item-modern {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-
-.feature-item-modern i {
-    color: #f0841a;
-    font-size: 1.3rem;
-}
-
-/* Services Section Moderno */
-.services-section-modern {
-    position: relative;
-}
-
-.section-header-modern {
-    margin-bottom: 60px;
-}
-
-.section-title-modern {
-    font-size: 3rem;
-    font-weight: 900;
-    color: #1d2844;
-    margin-bottom: 20px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.section-divider-modern {
-    width: 100px;
-    height: 4px;
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    border-radius: 2px;
-    margin: 0 auto 25px;
-}
-
-.section-subtitle-modern {
-    font-size: 1.2rem;
-    color: #666;
-    font-weight: 400;
-    line-height: 1.6;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.services-grid-modern {
-    margin: 0 -20px;
-}
-
-.service-item-modern {
-    padding: 0 20px;
-    margin-bottom: 40px;
-}
-
-.service-card-modern {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    transition: all 0.4s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.service-card-modern:hover {
-    transform: translateY(-15px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-    border-color: rgba(240, 132, 26, 0.2);
-}
-
-.service-image-modern {
-    position: relative;
-    overflow: hidden;
-    height: 250px;
-}
-
-.service-image-modern img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.service-card-modern:hover .service-image-modern img {
-    transform: scale(1.08);
-}
-
-.service-overlay-modern {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(29, 40, 68, 0.85), rgba(240, 132, 26, 0.85));
-    opacity: 0;
-    transition: all 0.4s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 25px;
-}
-
-.service-card-modern:hover .service-overlay-modern {
-    opacity: 1;
-}
-
-.service-icon-modern {
-    background: rgba(255, 255, 255, 0.95);
-    color: #1d2844;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    align-self: flex-start;
-}
-
-.service-actions-overlay {
-    align-self: flex-end;
-}
-
-.btn-overlay-modern {
-    background: rgba(255, 255, 255, 0.95);
-    color: #1d2844;
-    padding: 15px 25px;
-    border-radius: 30px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(15px);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.btn-overlay-modern:hover {
-    background: white;
-    color: #f0841a;
-    text-decoration: none;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.service-content-modern {
-    padding: 30px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.service-title-modern {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #1d2844;
-    margin-bottom: 15px;
-    line-height: 1.3;
-}
-
-.service-description-modern {
-    color: #666;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 25px;
-    flex-grow: 1;
-}
-
-.service-actions-modern {
-    margin-top: auto;
-}
-
-.btn-service-modern {
-    background: linear-gradient(135deg, #1d2844, #2c3e50);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 30px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(29, 40, 68, 0.3);
-}
-
-.btn-service-modern:hover {
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white !important;
-    text-decoration: none;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(240, 132, 26, 0.4);
-}
-
-.btn-all-services-modern {
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white !important;
-    padding: 18px 45px;
-    border-radius: 35px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 8px 25px rgba(240, 132, 26, 0.3);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.btn-all-services-modern:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4);
-    color: white !important;
-    text-decoration: none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-/* Stats Section Moderno */
-.stats-section-modern {
-    position: relative;
-    overflow: hidden;
-}
-
-.stats-pattern-modern {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="stats-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23stats-grain)"/></svg>');
-    opacity: 0.3;
-}
-
-.stats-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(240, 132, 26, 0.2);
-    color: #f0841a;
-    padding: 12px 25px;
-    border-radius: 30px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    margin-bottom: 30px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(240, 132, 26, 0.3);
-}
-
-.stats-title-modern {
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 1.2;
-    margin-bottom: 25px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.stats-divider {
-    width: 80px;
-    height: 4px;
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    border-radius: 2px;
-    margin-bottom: 30px;
-}
-
-.stats-description-modern {
-    font-size: 1.2rem;
-    font-weight: 400;
-    line-height: 1.7;
-    opacity: 0.95;
-}
-
-.stats-grid-modern {
-    margin: 0 -15px;
-}
-
-.stat-item-modern {
-    padding: 0 15px;
-    margin-bottom: 30px;
-}
-
-.stat-card-modern {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    padding: 30px 20px;
-    text-align: center;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    height: 100%;
-}
-
-.stat-card-modern:hover {
-    transform: translateY(-10px);
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(240, 132, 26, 0.3);
-}
-
-.stat-icon-modern {
-    width: 60px;
-    height: 60px;
-    background: rgba(240, 132, 26, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    color: #f0841a;
-    margin: 0 auto 20px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(240, 132, 26, 0.3);
-}
-
-.stat-number-modern {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: white;
-    line-height: 1;
-    margin-bottom: 10px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.stat-label-modern {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: white;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Testimonials Section Moderno */
-.testimonials-section-modern {
-    position: relative;
-    overflow: hidden;
-}
-
-.testimonials-pattern-modern {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="testimonials-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23testimonials-grain)"/></svg>');
-    opacity: 0.3;
-}
-
-.testimonials-title-modern {
-    font-size: 3rem;
-    font-weight: 900;
-    margin-bottom: 20px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.testimonials-divider-modern {
-    width: 100px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 2px;
-    margin: 0 auto 25px;
-}
-
-.testimonials-subtitle-modern {
-    font-size: 1.2rem;
-    font-weight: 400;
-    opacity: 0.95;
-    line-height: 1.6;
-}
-
-.testimonial-card-modern {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 25px;
-    padding: 40px;
-    margin: 20px;
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
-}
-
-.testimonial-card-modern:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
-}
-
-.testimonial-quote-modern {
-    font-size: 3rem;
-    color: #f0841a;
-    margin-bottom: 20px;
-    opacity: 0.7;
-}
-
-.testimonial-text-modern {
-    font-size: 1.2rem;
-    line-height: 1.7;
-    color: #333;
-    margin-bottom: 25px;
-    font-style: italic;
-}
-
-.testimonial-rating-modern {
-    margin-bottom: 25px;
-}
-
-.testimonial-author-modern {
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    padding-top: 25px;
-}
-
-.author-name-modern {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #1d2844;
-    margin-bottom: 5px;
-}
-
-.author-details-modern {
-    color: #666;
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Fallback para testimonios sin carrusel */
-.testimonials-grid-fallback {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-top: 40px;
-}
-
-.testimonials-grid-fallback .item {
-    width: 100%;
-}
-
-/* ===== ESTILOS MODERNOS PARA NAVEGACIÓN DEL CARRUSEL DE TESTIMONIOS ===== */
-
-/* Flechas de navegación */
-#testimonial-carousel-modern .owl-nav {
-    margin-top: 50px;
-    text-align: center;
-}
-
-#testimonial-carousel-modern .owl-nav button {
-    width: 60px;
-    height: 60px;
-    background: white !important;
-    color: #1d2844 !important;
-    border-radius: 50% !important;
-    font-size: 24px !important;
-    margin: 0 10px !important;
-    transition: all 0.3s ease !important;
-    border: 3px solid white !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
-    position: relative;
-    overflow: hidden;
-}
-
-#testimonial-carousel-modern .owl-nav button:hover {
-    background: #1d2844 !important;
-    color: white !important;
-    transform: translateY(-5px) scale(1.1);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3) !important;
-    border-color: #1d2844 !important;
-}
-
-#testimonial-carousel-modern .owl-nav button span {
-    line-height: 60px;
-    display: block;
-    font-weight: bold;
-}
-
-/* Puntos indicadores - Ocultos */
-#testimonial-carousel-modern.owl-theme .owl-dots {
-    display: none !important;
-}
-
-#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot {
-    display: inline-block;
-    margin: 0 8px;
-}
-
-#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
-    width: 14px !important;
-    height: 14px !important;
-    background: rgba(255, 255, 255, 0.6) !important;
-    border: 2px solid white !important;
-    display: block !important;
-    border-radius: 50% !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
-    margin: 0 !important;
-}
-
-#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot:hover span {
-    background: white !important;
-    transform: scale(1.3) !important;
-    border-color: white !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
-}
-
-#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
-    width: 40px !important;
-    height: 14px !important;
-    background: white !important;
-    border-radius: 10px !important;
-    border-color: white !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-    .hero-title-modern {
-        font-size: 3rem;
-    }
-    
-    .about-title-modern {
-        font-size: 2.5rem;
-    }
-    
-    .section-title-modern {
-        font-size: 2.5rem;
-    }
-    
-    .stats-title-modern {
-        font-size: 2.5rem;
-    }
-    
-    .testimonials-title-modern {
-        font-size: 2.5rem;
-    }
-}
-
-@media (max-width: 992px) {
-    .hero-stats-modern {
-        gap: 30px;
-    }
-    
-    .hero-actions-modern {
-        justify-content: center;
-    }
-    
-    .about-features-modern {
-        margin-top: 30px;
-    }
-    
-    .stats-grid-modern {
-        margin-top: 40px;
-    }
-}
-
-@media (max-width: 768px) {
-    .hero-section-modern {
-        padding: 80px 0 60px;
-    }
-    
-    .hero-title-modern {
-        font-size: 2.5rem;
-    }
-    
-    .hero-stats-modern {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
-    }
-    
-    .hero-actions-modern {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .btn-hero-modern {
-        width: 100%;
-        max-width: 300px;
-        justify-content: center;
-    }
-    
-    .about-section-modern,
-    .services-section-modern,
-    .stats-section-modern,
-    .testimonials-section-modern {
-        padding: 80px 0;
-    }
-    
-    .about-title-modern,
-    .section-title-modern,
-    .stats-title-modern,
-    .testimonials-title-modern {
-        font-size: 2rem;
-    }
-    
-    .services-grid-modern {
-        margin: 0 -15px;
-    }
-    
-    .service-item-modern {
-        padding: 0 15px;
-        margin-bottom: 30px;
-    }
-    
-    .service-image-modern {
-        height: 220px;
-    }
-    
-    .service-content-modern {
-        padding: 25px;
-    }
-    
-    .stats-grid-modern {
-        margin: 0 -10px;
-    }
-    
-    .stat-item-modern {
-        padding: 0 10px;
-        margin-bottom: 25px;
-    }
-    
-    .stat-card-modern {
-        padding: 25px 15px;
-    }
-    
-    .stat-number-modern {
-        font-size: 2rem;
-    }
-    
-    .testimonial-card-modern {
-        margin: 15px;
-        padding: 30px;
-    }
-    
-    .testimonial-text-modern {
-        font-size: 1.1rem;
-    }
-    
-    /* Flechas y puntos del carrusel en tablets */
-    #testimonial-carousel-modern .owl-nav button {
-        width: 55px;
-        height: 55px;
-        font-size: 22px !important;
-        border-width: 3px !important;
-    }
-    
-    #testimonial-carousel-modern .owl-nav button span {
-        line-height: 55px;
-    }
-    
-    #testimonial-carousel-modern .owl-nav {
-        margin-top: 35px;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
-        width: 13px !important;
-        height: 13px !important;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
-        width: 35px !important;
-        height: 13px !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .hero-section-modern {
-        padding: 60px 0 40px;
-    }
-    
-    .hero-title-modern {
-        font-size: 2rem;
-    }
-    
-    .hero-subtitle-modern {
-        font-size: 1.1rem;
-    }
-    
-    .stat-number-modern {
-        font-size: 2rem;
-    }
-    
-    .about-title-modern,
-    .section-title-modern,
-    .stats-title-modern,
-    .testimonials-title-modern {
-        font-size: 1.8rem;
-    }
-    
-    .services-grid-modern {
-        margin: 0 -10px;
-    }
-    
-    .service-item-modern {
-        padding: 0 10px;
-        margin-bottom: 25px;
-    }
-    
-    .service-image-modern {
-        height: 200px;
-    }
-    
-    .service-content-modern {
-        padding: 20px;
-    }
-    
-    .service-title-modern {
-        font-size: 1.1rem;
-    }
-    
-    .stats-grid-modern {
-        margin: 0 -5px;
-    }
-    
-    .stat-item-modern {
-        padding: 0 5px;
-        margin-bottom: 20px;
-    }
-    
-    .stat-card-modern {
-        padding: 20px 10px;
-    }
-    
-    .stat-number-modern {
-        font-size: 1.8rem;
-    }
-    
-    .testimonial-card-modern {
-        margin: 10px;
-        padding: 25px;
-    }
-    
-    .testimonial-text-modern {
-        font-size: 1rem;
-    }
-    
-    /* Flechas y puntos del carrusel en móviles pequeños */
-    #testimonial-carousel-modern .owl-nav button {
-        width: 48px;
-        height: 48px;
-        font-size: 18px !important;
-        margin: 0 4px !important;
-        border-width: 2.5px !important;
-    }
-    
-    #testimonial-carousel-modern .owl-nav button span {
-        line-height: 48px;
-    }
-    
-    #testimonial-carousel-modern .owl-nav {
-        margin-top: 25px;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots {
-        margin-top: 15px !important;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot {
-        margin: 0 5px !important;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
-        width: 11px !important;
-        height: 11px !important;
-    }
-    
-    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
-        width: 28px !important;
-        height: 11px !important;
-    }
-}
-.projects-grid {
-    margin: 0 -20px;
-}
-
-.project-item {
-    padding: 0 20px;
-    margin-bottom: 40px;
-}
-
-.project-card {
-    background: #ffffff;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-    transition: all 0.4s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.project-card:hover {
-    transform: translateY(-15px);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-    border-color: rgba(240, 132, 26, 0.2);
-}
-
-.project-image {
-    position: relative;
-    overflow: hidden;
-    height: 280px;
-}
-
-.project-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.project-card:hover .project-image img {
-    transform: scale(1.08);
-}
-
-.project-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(29, 40, 68, 0.85), rgba(240, 132, 26, 0.85));
-    opacity: 0;
-    transition: all 0.4s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 25px;
-}
-
-.project-card:hover .project-overlay {
-    opacity: 1;
-}
-
-.project-badge {
-    background: rgba(255, 255, 255, 0.95);
-    color: #1d2844;
-    padding: 10px 20px;
-    border-radius: 25px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    align-self: flex-start;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.project-actions {
-    align-self: flex-end;
-}
-
-.btn-project {
-    background: rgba(255, 255, 255, 0.95);
-    color: #1d2844;
-    padding: 15px 25px;
-    border-radius: 30px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(15px);
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.btn-project:hover {
-    background: #ffffff;
-    color: #f0841a;
-    text-decoration: none;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.project-content {
-    padding: 30px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.project-title {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #1d2844;
-    margin-bottom: 15px;
-    line-height: 1.3;
-}
-
-.project-description {
-    color: #666;
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 25px;
-    flex-grow: 1;
-}
-
-.project-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.meta-item {
-    display: flex;
     align-items: center;
     gap: 8px;
-    color: #666;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.meta-item i {
-    color: #f0841a;
-    font-size: 1rem;
-}
-
-.project-featured {
-    background: linear-gradient(135deg, #f0841a, #ff6b35);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 25px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 50px;
     font-size: 0.85rem;
+    font-weight: 600;
+}
+.hero-badge-ns i { font-size: 1rem; }
+/* Enlaces con aspecto de botón, sin .btn para evitar ripple */
+a.btn-hero-primary,
+a.btn-hero-secondary {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+a.btn-hero-primary {
+    background: #fafeff;
+    color: var(--nutrisync-primary);
+    padding: 14px 28px;
+    border-radius: 50px;
     font-weight: 700;
-    text-align: center;
-    margin-top: auto;
+    border: none;
+    transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+a.btn-hero-primary:hover {
+    background: var(--nutrisync-muted);
+    color: var(--nutrisync-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    text-decoration: none;
+}
+a.btn-hero-secondary {
+    background: transparent;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 50px;
+    font-weight: 700;
+    border: 2px solid rgba(255,255,255,0.8);
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+a.btn-hero-secondary:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-color: #fff;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+.card-feature-ns {
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+.card-feature-ns:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(77, 203, 165, 0.15) !important;
+    border: 1px solid var(--nutrisync-muted);
+}
+.feature-icon-ns {
+    width: 52px;
+    height: 52px;
+    background: var(--nutrisync-muted);
+    color: var(--nutrisync-primary);
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);
+    font-size: 1.4rem;
 }
-
-.project-featured i {
-    font-size: 1rem;
+a.btn-cta-ns,
+a.btn-cta-outline-ns {
+    cursor: pointer;
 }
-
-.btn-large {
-    padding: 18px 45px;
-    font-size: 1.2rem;
-    border-radius: 35px;
+.btn-cta-ns {
+    background: #fafeff;
+    color: var(--nutrisync-primary);
+    padding: 14px 24px;
+    border-radius: 50px;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-top: 20px;
-    box-shadow: 0 8px 25px rgba(240, 132, 26, 0.3);
+    border: none;
     transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
-
-.btn-large:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(240, 132, 26, 0.4);
+.btn-cta-ns:hover {
+    background: var(--nutrisync-muted);
+    color: var(--nutrisync-primary);
+    transform: translateY(-2px);
+    text-decoration: none;
 }
-
-.no-projects {
-    padding: 80px 20px;
-    color: #666;
-    text-align: center;
-}
-
-.no-projects i {
-    color: #ddd;
-    margin-bottom: 20px;
-}
-
-.no-projects h4 {
-    color: #1d2844;
+.btn-cta-outline-ns {
+    background: transparent;
+    color: #fafeff;
+    padding: 14px 24px;
+    border-radius: 50px;
     font-weight: 700;
-    margin-bottom: 15px;
+    border: 2px solid rgba(255,255,255,0.8);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
 }
-
-/* Responsive */
-@media (max-width: 768px) {
-    .projects-grid {
-        margin: 0 -15px;
-    }
-    
-    .project-item {
-        padding: 0 15px;
-        margin-bottom: 30px;
-    }
-    
-    .project-image {
-        height: 220px;
-    }
-    
-    .project-content {
-        padding: 25px;
-    }
-    
-    .project-title {
-        font-size: 1.2rem;
-    }
-    
-    .project-meta {
-        gap: 15px;
-    }
-    
-    .meta-item {
-        font-size: 0.85rem;
-    }
-    
-    .btn-large {
-        padding: 15px 35px;
-        font-size: 1.1rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .projects-grid {
-        margin: 0 -10px;
-    }
-    
-    .project-item {
-        padding: 0 10px;
-        margin-bottom: 25px;
-    }
-    
-    .project-image {
-        height: 200px;
-    }
-    
-    .project-content {
-        padding: 20px;
-    }
-    
-    .project-title {
-        font-size: 1.1rem;
-    }
+.btn-cta-outline-ns:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border-color: #fff;
+    transform: translateY(-2px);
+    text-decoration: none;
 }
 </style>
-
-<script>
-// Debug: Verificar testimonios
-console.log('Testimonios recibidos:', <?= json_encode($testimonios_destacados ?? []) ?>);
-
-// Inicializar carrusel de testimonios
-window.addEventListener('load', function() {
-    console.log('Página cargada, inicializando carrusel...');
-    
-    // Verificar si jQuery y Owl Carousel están disponibles
-    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.owlCarousel !== 'undefined') {
-        console.log('jQuery y Owl Carousel disponibles, inicializando carrusel...');
-        jQuery('#testimonial-carousel-modern').owlCarousel({
-            loop: true,
-            margin: 30,
-            nav: true,
-            dots: true,
-            autoplay: true,
-            autoplayTimeout: 5000,
-            autoplayHoverPause: true,
-            responsive: {
-                0: {
-                    items: 1
-                },
-                768: {
-                    items: 2
-                },
-                1200: {
-                    items: 3
-                }
-            },
-            navText: [
-                '<i class="fas fa-chevron-left"></i>',
-                '<i class="fas fa-chevron-right"></i>'
-            ]
-        });
-        console.log('Carrusel inicializado correctamente');
-    } else {
-        // Si jQuery u Owl Carousel no están disponibles, mostrar testimonios en grid simple
-        console.log('jQuery u Owl Carousel no están disponibles, mostrando testimonios en grid');
-        var carousel = document.getElementById('testimonial-carousel-modern');
-        if (carousel) {
-            carousel.classList.add('testimonials-grid-fallback');
-        }
-    }
-});
-</script>
 
 <?= $this->endSection() ?>

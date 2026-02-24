@@ -13,30 +13,30 @@ $empresaContacto = [
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title><?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?></title>
-    <link rel="icon" href="<?= base_url('lib/images/logo_transparente_grande.ico') ?>" type="image/x-icon" />
+    <title><?= $title ?? 'NutriSync - Gestión nutricional' ?></title>
+    <link rel="icon" href="<?= base_url('lib/logo/icono-transparente.png') ?>" type="image/png" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta content="<?= $description ?? 'MANSANCHEZ - Constructor profesional con años de experiencia en construcción residencial y comercial' ?>" name="description" />
-    <meta content="<?= $keywords ?? 'mansanchez, constructor, construcción, obras, proyectos, remodelación, chile' ?>" name="keywords" />
-    <meta content="MANSANCHEZ" name="author" />
+    <meta content="<?= $description ?? 'NutriSync - Plataforma de gestión para nutricionistas: agenda, pacientes, historiales y más' ?>" name="description" />
+    <meta content="<?= $keywords ?? 'nutrisync, nutrición, nutricionista, agenda, consultas, pacientes, chile' ?>" name="keywords" />
+    <meta content="NutriSync" name="author" />
     
         <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="<?= current_url() ?>" />
-    <meta property="og:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
-    <meta property="og:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial en Chile' ?>" />
-    <meta property="og:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    <meta property="og:title" content="<?= $title ?? 'NutriSync - Gestión nutricional' ?>" />
+    <meta property="og:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
+    <meta property="og:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="MANSANCHEZ Constructor" />
+    <meta property="og:site_name" content="NutriSync" />
     <meta property="og:locale" content="es_CL" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="<?= current_url() ?>" />
-    <meta name="twitter:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
-    <meta name="twitter:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial' ?>" />
-    <meta name="twitter:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    <meta name="twitter:title" content="<?= $title ?? 'NutriSync - Gestión nutricional' ?>" />
+    <meta name="twitter:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
+    <meta name="twitter:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -49,7 +49,8 @@ $empresaContacto = [
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/style.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/navigation.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/mansanchez-colors.css') ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('lib/css/nutrisync-colors.css') ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('lib/css/buttons-ripple-fix.css') ?>" rel="stylesheet" type="text/css" />
     
     <!-- Non-critical CSS - Deferred loading -->
     <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
@@ -125,11 +126,11 @@ $empresaContacto = [
         
         /* ===== HEADER Y NAVBAR MODERNO ===== */
         
-        /* Topbar Moderno */
+        /* Topbar Moderno - NutriSync */
         .topbar-modern {
-            background:  #1d2844;
+            background: var(--nutrisync-primary);
             padding: 3px 0;
-            border-bottom: 1px solid rgba(240, 132, 26, 0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
             position: relative;
             z-index: 9998;
         }
@@ -155,13 +156,13 @@ $empresaContacto = [
             display: flex;
             align-items: center;
             gap: 4px;
-            color: #f3d7b0;
+            color: rgba(255,255,255,0.95);
             font-size: 0.8rem;
             font-weight: 500;
         }
         
         .contact-item-modern i {
-            color: #f0841a;
+            color: #fafeff;
             font-size: 0.7rem;
         }
         
@@ -182,25 +183,25 @@ $empresaContacto = [
             justify-content: center;
             width: 30px;
             height: 30px;
-            background: rgba(240, 132, 26, 0.1);
-            color: #f3d7b0;
+            background: rgba(255,255,255,0.2);
+            color: #fafeff;
             border-radius: 50%;
             text-decoration: none;
             transition: all 0.3s ease;
-            border: 1px solid rgba(240, 132, 26, 0.3);
+            border: 1px solid rgba(255,255,255,0.4);
             font-size: 0.7rem;
         }
         
         .social-link-modern:hover {
-            background: white;
-            color: white;
+            background: #fafeff;
+            color: var(--nutrisync-primary);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(240, 132, 26, 0.3);
+            box-shadow: 0 4px 12px rgba(77, 203, 165, 0.4);
         }
         
         .btn-topbar-modern {
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
-            color: white;
+            background: #fafeff;
+            color: var(--nutrisync-primary);
             padding: 4px 12px;
             border-radius: 20px;
             text-decoration: none;
@@ -210,26 +211,27 @@ $empresaContacto = [
             align-items: center;
             gap: 4px;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(240, 132, 26, 0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .btn-topbar-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(240, 132, 26, 0.4);
-            color: white !important;
+            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
+            color: var(--nutrisync-primary) !important;
+            background: var(--nutrisync-muted) !important;
             text-decoration: none;
         }
         
-        /* Header Moderno */
+        /* Header Moderno - NutriSync */
         .header-modern {
-            background: #1d2844 !important;
+            background: #fff !important;
             backdrop-filter: blur(10px);
             padding: 5px 0;
             position: sticky;
             top: 0;
             z-index: 9999;
-            box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
-            border-bottom: 1px solid rgba(240, 132, 26, 0.2);
+            box-shadow: 0 4px 20px rgba(77, 203, 165, 0.15);
+            border-bottom: 1px solid var(--nutrisync-muted);
             transition: box-shadow 0.3s ease;
         }
         
@@ -284,7 +286,7 @@ $empresaContacto = [
             flex-direction: column;
             align-items: center;
             padding: 8px 15px;
-            color: #f3d7b0;
+            color: #2d3748;
             text-decoration: none;
             border-radius: 12px;
             transition: all 0.3s ease;
@@ -305,15 +307,15 @@ $empresaContacto = [
         }
         
         .nav-link-modern:hover {
-            background: rgba(240, 132, 26, 0.1);
-            color: #f0841a;
+            background: var(--nutrisync-muted);
+            color: var(--nutrisync-primary);
             transform: translateY(-2px);
         }
         
         .nav-link-modern.active {
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
+            background: var(--nutrisync-primary);
             color: white !important;
-            box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);
+            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.35);
         }
         
         .nav-link-modern.active i {
@@ -332,15 +334,15 @@ $empresaContacto = [
             align-items: center;
             gap: 10px;
             padding: 6px 12px;
-            background: rgba(240, 132, 26, 0.1);
+            background: var(--nutrisync-muted);
             border-radius: 25px;
-            border: 1px solid rgba(240, 132, 26, 0.3);
+            border: 1px solid rgba(77, 203, 165, 0.3);
         }
         
         .phone-icon-modern {
             width: 35px;
             height: 35px;
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
+            background: var(--nutrisync-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -355,25 +357,25 @@ $empresaContacto = [
         
         .phone-label-modern {
             font-size: 0.75rem;
-            color: #f3d7b0;
+            color: #2d3748;
             font-weight: 500;
         }
         
         .phone-number-modern {
             font-size: 0.9rem;
-            color: white;
+            color: var(--nutrisync-primary);
             font-weight: 700;
         }
         
-        /* Mobile Menu Button */
+        /* Mobile Menu Button - NutriSync */
         .mobile-menu-btn-modern {
             display: none;
             flex-direction: column;
             justify-content: space-around;
             width: 35px;
             height: 35px;
-            background: rgba(240, 132, 26, 0.1);
-            border: 2px solid #f0841a;
+            background: var(--nutrisync-muted);
+            border: 2px solid var(--nutrisync-primary);
             border-radius: 8px;
             cursor: pointer;
             padding: 6px;
@@ -381,14 +383,14 @@ $empresaContacto = [
         }
         
         .mobile-menu-btn-modern:hover {
-            background: rgba(240, 132, 26, 0.2);
+            background: var(--nutrisync-primary);
             transform: scale(1.05);
         }
         
         .mobile-menu-btn-modern span {
             width: 100%;
             height: 3px;
-            background: #f0841a;
+            background: var(--nutrisync-primary);
             border-radius: 2px;
             transition: all 0.3s ease;
         }
@@ -464,11 +466,11 @@ $empresaContacto = [
                 top: 120px !important;
                 left: 0 !important;
                 right: 0 !important;
-                background: #1d2844 !important;
+                background: #fff !important;
                 backdrop-filter: blur(10px);
                 padding: 20px !important;
-                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
-                border-top: 2px solid #f0841a !important;
+                box-shadow: 0 8px 30px rgba(77, 203, 165, 0.2) !important;
+                border-top: 2px solid var(--nutrisync-primary) !important;
                 z-index: 2147483647 !important;
                 max-height: calc(100vh - 120px) !important;
                 min-height: 450px !important;
@@ -501,9 +503,9 @@ $empresaContacto = [
             .nav-link-modern {
                 padding: 16px 20px;
                 border-radius: 10px;
-                background: rgba(240, 132, 26, 0.15);
-                border: 1px solid rgba(240, 132, 26, 0.3);
-                color: #f3d7b0 !important;
+                background: var(--nutrisync-muted);
+                border: 1px solid rgba(77, 203, 165, 0.3);
+                color: #2d3748 !important;
                 font-size: 0.95rem;
                 transition: all 0.3s ease;
                 display: flex;
@@ -514,25 +516,29 @@ $empresaContacto = [
             
             .nav-link-modern i {
                 font-size: 1.2rem;
-                color: #f0841a;
+                color: var(--nutrisync-primary);
                 margin-bottom: 0;
             }
             
             .nav-link-modern span {
-                color: #f3d7b0 !important;
+                color: #2d3748 !important;
                 font-weight: 600;
             }
             
             .nav-link-modern:hover {
-                background: rgba(240, 132, 26, 0.25);
+                background: var(--nutrisync-primary);
                 transform: translateX(5px);
-                border-color: #f0841a;
+                border-color: var(--nutrisync-primary);
+                color: white !important;
             }
             
+            .nav-link-modern:hover i,
+            .nav-link-modern:hover span { color: white !important; }
+            
             .nav-link-modern.active {
-                background: linear-gradient(135deg, #f0841a, #ff6b35);
+                background: var(--nutrisync-primary);
                 color: white !important;
-                box-shadow: 0 4px 15px rgba(240, 132, 26, 0.4);
+                box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
                 border-color: transparent;
             }
             
@@ -564,179 +570,65 @@ $empresaContacto = [
             }
         }
         
-        /* Mejorar visibilidad de botones en hero section */
+        /* Botones NutriSync */
         .btn-custom {
-            background-color: #f0841a !important;
+            background-color: var(--nutrisync-primary) !important;
             color: #ffffff !important;
-            border: 2px solid #f0841a !important;
+            border: 2px solid var(--nutrisync-primary) !important;
             font-weight: 600 !important;
             text-transform: uppercase !important;
             letter-spacing: 1px !important;
-            box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3) !important;
+            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.35) !important;
             transition: all 0.3s ease !important;
         }
         
         .btn-custom:hover {
-            background-color: #ffffff !important;
-            color: #f0841a !important;
-            border-color: #ffffff !important;
-            box-shadow: 0 6px 20px rgba(240, 132, 26, 0.4) !important;
+            background-color: #3ab892 !important;
+            color: #ffffff !important;
+            border-color: #3ab892 !important;
+            box-shadow: 0 6px 20px rgba(77, 203, 165, 0.45) !important;
             transform: translateY(-2px) !important;
         }
         
-        /* Botón en banner naranja - mejor contraste */
         .btn-custom.btn-black.light {
             background-color: #ffffff !important;
-            color: #f0841a !important;
+            color: var(--nutrisync-primary) !important;
             border: 2px solid #ffffff !important;
             font-weight: 600 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 1px !important;
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
             transition: all 0.3s ease !important;
         }
         
         .btn-custom.btn-black.light:hover {
-            background-color: #1d2844 !important;
-            color: #ffffff !important;
-            border-color: #1d2844 !important;
-            box-shadow: 0 6px 20px rgba(29, 40, 68, 0.4) !important;
+            background-color: var(--nutrisync-muted) !important;
+            color: var(--nutrisync-primary) !important;
+            border-color: var(--nutrisync-muted) !important;
             transform: translateY(-2px) !important;
         }
         
-        /* Asegurar visibilidad del texto en secciones oscuras */
-        .text-light {
-            color: #ffffff !important;
-        }
+        .text-light { color: #ffffff !important; }
+        .text-light h1, .text-light h2, .text-light h3, .text-light h4, .text-light h5, .text-light h6 { color: #ffffff !important; }
+        .text-light p { color: rgba(255,255,255,0.9) !important; }
+        .container { position: relative !important; z-index: 10 !important; }
+        .p-title { color: var(--nutrisync-primary) !important; font-weight: 600 !important; }
+        h2 { color: #2d3748 !important; }
+        .small-border { background-color: var(--nutrisync-primary) !important; }
+        .estrellas-calificacion { margin: 10px 0; text-align: center; }
+        .estrellas-calificacion i { font-size: 5px; margin: 0 2px; color: var(--nutrisync-primary) !important; }
+        .estrellas-calificacion .fa-star-o { color: #ccc !important; }
+        .de_testi h3 { margin-bottom: 10px !important; }
+        .de_testi .estrellas-calificacion { margin: 10px 0 15px 0 !important; }
+        #section-highlight { background: linear-gradient(135deg, var(--nutrisync-primary), var(--nutrisync-muted)) !important; }
+        #section-highlight .p-title, #section-highlight h2 { color: #fff !important; }
+        #section-highlight p { color: rgba(255,255,255,0.9) !important; }
+        .de_count { background: rgba(77, 203, 165, 0.2) !important; border-radius: 10px !important; padding: 20px !important; margin-bottom: 20px !important; }
+        .de_count h3 { color: var(--nutrisync-primary) !important; font-size: 2.5rem !important; font-weight: bold !important; }
+        .de_count p { color: #2d3748 !important; font-size: 1rem !important; }
         
-        .text-light h1,
-        .text-light h2,
-        .text-light h3,
-        .text-light h4,
-        .text-light h5,
-        .text-light h6 {
-            color: #ffffff !important;
-        }
-        
-        .text-light p {
-            color: #f3d7b0 !important;
-        }
-        
-        /* Mejorar contraste en secciones con fondo oscuro */
-        section[data-bgcolor="#111111"] {
-            background-color: #111111 !important;
-        }
-        
-        section[data-bgcolor="#111111"] .p-title {
-            color: #f0841a !important;
-        }
-        
-        section[data-bgcolor="#111111"] h2 {
-            color: #ffffff !important;
-        }
-        
-        section[data-bgcolor="#111111"] p {
-            color: #f3d7b0 !important;
-        }
-        
-        /* Asegurar que todos los elementos sean visibles */
-        .container {
-            position: relative !important;
-            z-index: 10 !important;
-        }
-        
-        /* Mejorar visibilidad de elementos de estadísticas */
-        .de_count {
-            color: #ffffff !important;
-        }
-        
-        .de_count h3 {
-            color: #ffffff !important;
-        }
-        
-        .de_count p {
-            color: #f3d7b0 !important;
-        }
-        
-        /* Asegurar visibilidad de títulos de sección */
-        .p-title {
-            color: #f0841a !important;
-            font-weight: 600 !important;
-        }
-        
-        h2 {
-            color: #1d2844 !important;
-        }
-        
-        .small-border {
-            background-color: #f0841a !important;
-        }
-        
-        /* Estilos para estrellas de calificación */
-        .estrellas-calificacion {
-            margin: 10px 0;
-            text-align: center;
-        }
-        
-        .estrellas-calificacion i {
-            font-size: 5px;
-            margin: 0 2px;
-            color: #f0841a !important;
-        }
-        
-        .estrellas-calificacion .fa-star-o {
-            color: #cccccc !important;
-        }
-        
-        /* Mejorar espaciado en testimonios */
-        .de_testi h3 {
-            margin-bottom: 10px !important;
-        }
-        
-        .de_testi .estrellas-calificacion {
-            margin: 10px 0 15px 0 !important;
-        }
-        
-        /* Corregir contraste en sección "Nuestros Logros" */
-        #section-highlight {
-            background-color: #1d2844 !important;
-        }
-        
-        #section-highlight .p-title {
-            color: #f0841a !important;
-        }
-        
-        #section-highlight h2 {
-            color: #ffffff !important;
-        }
-        
-        #section-highlight p {
-            color: #f3d7b0 !important;
-        }
-        
-        /* Asegurar que las estadísticas tengan fondo oscuro */
-        .de_count {
-            background-color: rgba(29, 40, 68, 0.9) !important;
-            border-radius: 10px !important;
-            padding: 20px !important;
-            margin-bottom: 20px !important;
-        }
-        
-        .de_count h3 {
-            color: #ffffff !important;
-            font-size: 2.5rem !important;
-            font-weight: bold !important;
-        }
-        
-        .de_count p {
-            color: #f3d7b0 !important;
-            font-size: 1rem !important;
-        }
-        
-        /* ===== FOOTER MODERNO CSS ===== */
+        /* ===== FOOTER MODERNO - NutriSync ===== */
         
         .footer-modern {
-            background: linear-gradient(to bottom, #1d2844 0%, #0f1419 100%);
+            background: linear-gradient(to bottom, var(--nutrisync-primary) 0%, #3ab892 100%);
             color: white;
             padding: 80px 0 0;
             position: relative;
@@ -749,8 +641,8 @@ $empresaContacto = [
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain-footer" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(240,132,26,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(240,132,26,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(240,132,26,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(240,132,26,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(240,132,26,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain-footer)"/></svg>');
-            opacity: 0.3;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain-footer" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(250,254,255,0.15)"/><circle cx="75" cy="75" r="1" fill="rgba(250,254,255,0.15)"/><circle cx="50" cy="10" r="0.5" fill="rgba(250,254,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain-footer)"/></svg>');
+            opacity: 0.5;
         }
         
         .footer-widget-modern {
@@ -770,15 +662,15 @@ $empresaContacto = [
         }
         
         .company-name-modern {
-            color: #f0841a;
+            color: #fafeff;
             font-size: 1.8rem;
             font-weight: 700;
             margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .company-description-modern {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.9);
             line-height: 1.6;
             margin-bottom: 30px;
             font-size: 0.95rem;
@@ -800,7 +692,7 @@ $empresaContacto = [
         .contact-icon-modern {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
+            background: rgba(255,255,255,0.25);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -810,14 +702,10 @@ $empresaContacto = [
             flex-shrink: 0;
         }
         
-        .contact-details-modern {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
+        .contact-details-modern { display: flex; flex-direction: column; gap: 2px; }
         
         .contact-label-modern {
-            color: #f0841a;
+            color: rgba(255,255,255,0.85);
             font-size: 0.8rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -832,12 +720,10 @@ $empresaContacto = [
             transition: color 0.3s ease;
         }
         
-        .contact-value-modern:hover {
-            color: #f0841a;
-        }
+        .contact-value-modern:hover { color: #fafeff; opacity: 0.95; }
         
         .footer-title-modern {
-            color: #f0841a;
+            color: #fafeff;
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 25px;
@@ -871,12 +757,12 @@ $empresaContacto = [
         }
         
         .footer-links-modern a:hover {
-            color: #f0841a;
+            color: #fafeff;
             transform: translateX(5px);
         }
         
         .footer-links-modern a i {
-            color: #f0841a;
+            color: rgba(255,255,255,0.9);
             font-size: 0.8rem;
             width: 12px;
         }
@@ -914,8 +800,8 @@ $empresaContacto = [
         }
         
         .newsletter-btn-modern {
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
-            color: white;
+            background: #fafeff;
+            color: var(--nutrisync-primary);
             border: none;
             padding: 15px 20px;
             cursor: pointer;
@@ -926,12 +812,13 @@ $empresaContacto = [
         }
         
         .newsletter-btn-modern:hover {
-            background: linear-gradient(135deg, #e0761a, #e55a2b);
+            background: var(--nutrisync-muted);
+            color: var(--nutrisync-primary);
             transform: scale(1.05);
         }
         
         .newsletter-privacy-modern {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, 0.8);
             font-size: 0.8rem;
             margin: 0;
             display: flex;
@@ -939,9 +826,7 @@ $empresaContacto = [
             gap: 5px;
         }
         
-        .newsletter-privacy-modern i {
-            color: #f0841a;
-        }
+        .newsletter-privacy-modern i { color: #fafeff; }
         
         /* ===== CONTACTO FOOTER CSS ===== */
         
@@ -964,22 +849,22 @@ $empresaContacto = [
             align-items: center;
             gap: 15px;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
-            border: 1px solid rgba(240, 132, 26, 0.2);
+            border: 1px solid rgba(255,255,255,0.2);
             transition: all 0.3s ease;
         }
         
         .contact-method-modern:hover {
-            background: rgba(240, 132, 26, 0.1);
+            background: rgba(255,255,255,0.12);
             transform: translateX(5px);
-            border-color: rgba(240, 132, 26, 0.4);
+            border-color: rgba(255,255,255,0.4);
         }
         
         .contact-method-icon-modern {
             width: 45px;
             height: 45px;
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
+            background: rgba(255,255,255,0.25);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -987,15 +872,12 @@ $empresaContacto = [
             color: white;
             font-size: 1.1rem;
             flex-shrink: 0;
-            box-shadow: 0 3px 10px rgba(240, 132, 26, 0.3);
         }
         
-        .contact-method-content-modern {
-            flex: 1;
-        }
+        .contact-method-content-modern { flex: 1; }
         
         .contact-method-content-modern h5 {
-            color: #f0841a;
+            color: #fafeff;
             font-size: 0.9rem;
             font-weight: 600;
             margin: 0 0 5px 0;
@@ -1003,55 +885,46 @@ $empresaContacto = [
             letter-spacing: 0.5px;
         }
         
-        .contact-method-content-modern p {
+        .contact-method-content-modern p, .contact-method-content-modern a {
             color: white;
             font-size: 0.85rem;
             margin: 0;
             line-height: 1.4;
-        }
-        
-        .contact-method-content-modern a {
-            color: white;
-            font-size: 0.85rem;
             text-decoration: none;
             transition: color 0.3s ease;
         }
         
-        .contact-method-content-modern a:hover {
-            color: #f0841a;
-        }
+        .contact-method-content-modern a:hover { color: #fafeff; opacity: 0.9; }
         
-        .contact-actions-modern {
-            margin-top: 20px;
-        }
+        .contact-actions-modern { margin-top: 20px; }
         
         .btn-contact-footer-modern {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             padding: 12px 25px;
-            background: linear-gradient(135deg, #f0841a, #ff6b35);
-            color: white;
+            background: #fafeff;
+            color: var(--nutrisync-primary);
             text-decoration: none;
             border-radius: 25px;
             font-size: 0.9rem;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         .btn-contact-footer-modern:hover {
-            background: linear-gradient(135deg, #e0761a, #e55a2b);
+            background: var(--nutrisync-muted);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(240, 132, 26, 0.4);
-            color: white !important;
+            box-shadow: 0 6px 20px rgba(77, 203, 165, 0.35);
+            color: var(--nutrisync-primary) !important;
             text-decoration: none;
         }
         
         .subfooter-modern {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.15);
             padding: 25px 0;
-            border-top: 1px solid rgba(240, 132, 26, 0.2);
+            border-top: 1px solid rgba(255,255,255,0.2);
             margin-top: 40px;
         }
         
@@ -1070,22 +943,22 @@ $empresaContacto = [
         .social-icon-modern {
             width: 40px;
             height: 40px;
-            background: rgba(240, 132, 26, 0.2);
-            border: 1px solid rgba(240, 132, 26, 0.3);
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #f0841a;
+            color: #fafeff;
             text-decoration: none;
             transition: all 0.3s ease;
         }
         
         .social-icon-modern:hover {
-            background: #f0841a;
-            color: white;
+            background: #fafeff;
+            color: var(--nutrisync-primary);
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(240, 132, 26, 0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
         
         /* Responsive Design */
@@ -1187,16 +1060,12 @@ $empresaContacto = [
                     </div>
                     <div class="topbar-right-modern">
                         <div class="social-links-modern">
-                            <a href="https://web.facebook.com/man.msanchez" target="_blank" class="social-link-modern" title="Facebook">
-                                <i class="fab fa-facebook-f"></i>
-                            </a>
-                            <a href="https://www.instagram.com/mansanchez45/" target="_blank" class="social-link-modern" title="Instagram">
-                                <i class="fab fa-instagram"></i>
-                            </a>
+                            <a href="https://www.facebook.com" target="_blank" rel="noopener" class="social-link-modern" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="https://www.instagram.com" target="_blank" rel="noopener" class="social-link-modern" title="Instagram"><i class="fab fa-instagram"></i></a>
                         </div>
                         <div class="topbar-actions-modern">
-                            <a href="<?= base_url('contacto') ?>" class="btn-topbar-modern text-white">
-                                <i class="fas fa-calculator"></i> Cotizar
+                            <a href="<?= base_url('reservar') ?>" class="btn-topbar-modern">
+                                <i class="fas fa-calendar-check"></i> Reservar hora
                             </a>
                         </div>
                     </div>
@@ -1211,11 +1080,11 @@ $empresaContacto = [
                     <!-- Logo -->
                     <div class="logo-modern">
                         <a href="<?= base_url() ?>" class="logo-link-modern">
-                            <img src="<?= base_url('lib/images/logo-min.jpg') ?>" alt="MANSANCHEZ Constructor" class="logo-img-modern" width="150" height="60" loading="eager">
+                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriSync" class="logo-img-modern" style="max-height: 75px; width: auto;" loading="eager">
                         </a>
                     </div>
                     
-                    <!-- Navigation -->
+                    <!-- Navigation --> 
                     <nav class="nav-modern">
                         <ul class="nav-menu-modern">
                             <li class="nav-item-modern">
@@ -1295,34 +1164,33 @@ $empresaContacto = [
                         <div class="footer-widget-modern">
                             <div class="footer-logo-modern">
                                 <a href="<?= base_url() ?>">
-                                    <img alt="MANSANCHEZ Constructor" src="<?= base_url('lib/images/logo-min.jpg') ?>" width="120" height="48" loading="lazy" />
+                                    <img alt="NutriSync" src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" style="max-height: 44px; width: auto;" loading="lazy" />
                                 </a>
-                                <h3 class="company-name-modern">MANSANCHEZ</h3>
+                                <h3 class="company-name-modern">NutriSync</h3>
                             </div>
                             <p class="company-description-modern">
-                                Constructor líder en Chile, especializado en construcción residencial, comercial y remodelaciones. 
-                                Más de 15 años construyendo sueños y transformando espacios.
+                                Plataforma de gestión para nutricionistas: agenda de citas, historiales clínicos, planes alimentarios y más.
                             </p>
                         </div>
                     </div>
                     
-                    <!-- Servicios -->
+                    <!-- Funcionalidades -->
                     <div class="col-lg-2 col-md-6 mb-4">
                         <div class="footer-widget-modern">
                             <h4 class="footer-title-modern">
-                                <i class="fas fa-cogs"></i> Servicios
+                                <i class="fas fa-th-large"></i> Sistema
                             </h4>
                             <ul class="footer-links-modern">
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-check"></i> Construcción Residencial</a></li>
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-check"></i> Construcción Comercial</a></li>
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-check"></i> Remodelaciones</a></li>
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-check"></i> Ampliaciones</a></li>
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-check"></i> Consultoría</a></li>
+                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-calendar-alt"></i> Agenda</a></li>
+                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-user-friends"></i> Pacientes</a></li>
+                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-file-medical"></i> Historial clínico</a></li>
+                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-utensils"></i> Plan alimentario</a></li>
+                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-credit-card"></i> Pagos</a></li>
                             </ul>
                         </div>
                     </div>
                     
-                    <!-- Enlaces Rápidos -->
+                    <!-- Enlaces -->
                     <div class="col-lg-2 col-md-6 mb-4">
                         <div class="footer-widget-modern">
                             <h4 class="footer-title-modern">
@@ -1330,10 +1198,9 @@ $empresaContacto = [
                             </h4>
                             <ul class="footer-links-modern">
                                 <li><a href="<?= base_url() ?>"><i class="fas fa-home"></i> Inicio</a></li>
-                                <li><a href="<?= base_url('nosotros') ?>"><i class="fas fa-users"></i> Nosotros</a></li>
-                                <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-cogs"></i> Servicios</a></li>
-                                <li><a href="<?= base_url('proyectos') ?>"><i class="fas fa-building"></i> Proyectos</a></li>
+                                <li><a href="<?= base_url('reservar') ?>"><i class="fas fa-calendar-check"></i> Reservar hora</a></li>
                                 <li><a href="<?= base_url('contacto') ?>"><i class="fas fa-envelope"></i> Contacto</a></li>
+                                <li><a href="<?= base_url('login') ?>"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>
                                 <li><a href="<?= base_url('politica-privacidad') ?>"><i class="fas fa-shield-alt"></i> Privacidad</a></li>
                                 <li><a href="<?= base_url('terminos-condiciones') ?>"><i class="fas fa-file-contract"></i> Términos</a></li>
                             </ul>
@@ -1400,7 +1267,7 @@ $empresaContacto = [
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-md-6">
                             <p class="copyright-modern">
-                                &copy; <?= date('Y') ?> <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.9); text-decoration: none;"><span style="color: #6aff99;">N</span>ext<span style="color: #6aff99;">L</span>ine</a> - <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.7); text-decoration: none;">Nextline.cl</a> | 
+                                &copy; <?= date('Y') ?> <strong>NutriSync</strong> | 
                                 <a href="<?= base_url('politica-privacidad') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacidad</a> | 
                                 <a href="<?= base_url('terminos-condiciones') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Términos</a>
                             </p>

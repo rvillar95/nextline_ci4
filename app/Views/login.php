@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
-    <title>Login - MANSANCHEZ Constructor</title>
-    <link rel="icon" type="image/x-icon" href="<?= base_url('lib/images/logo_transparente_grande.ico') ?>" />
+    <title>Iniciar sesión - NutriSync</title>
+    <link rel="icon" type="image/png" href="<?= base_url('lib/logo/icono-transparente.png') ?>" />
     <link href="<?= base_url("lib/") ?>/layouts/vertical-light-menu/css/light/loader.css" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/") ?>layouts/vertical-light-menu/css/dark/loader.css" rel="stylesheet" type="text/css" />
     <script src="<?= base_url("lib/") ?>layouts/vertical-light-menu/loader.js"></script>
@@ -45,17 +45,13 @@
                 <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-8 col-12 d-flex flex-column align-self-center mx-auto">
                     <div class="card mt-3 mb-3">
                         <div class="card-body">
-<?php
-
-echo "<pre>";
-//print_r($this->session);
-echo "</pre>";
-
-?>
+                            <div class="text-center mb-4">
+                                <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriSync" style="max-height: 64px; width: auto;">
+                            </div>
                             <div class="row">
                                 <div class="col-md-12 mb-3">
 
-                                    <h2>Inicio de sesión</h2>
+                                    <h2>Iniciar sesión</h2>
                                     <p>Ingresa tu correo y la clave</p>
 
                                 </div>

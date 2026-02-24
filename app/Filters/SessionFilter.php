@@ -31,6 +31,11 @@ final class SessionFilter implements FilterInterface
         '/dashboard/ubicacion/comuna-info/(:any)',
         '/dashboard/ubicacion/validar',
         '/dashboard/ubicacion/estadisticas',
+        // Reserva pública (paciente reserva hora sin login)
+        '/reservar',
+        '/reservar/disponibilidad',
+        '/reservar/paciente-por-rut',
+        '/reservar/reservar',
         // Rutas públicas para confirmar/cancelar citas desde email
         '/confirmar-cita',
         '/cancelar-cita',
@@ -218,6 +223,21 @@ final class SessionFilter implements FilterInterface
                 
                 if ($tieneAccesoAgenda) {
                     log_message('info', 'SessionFilter: Ruta de calendario permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
+        // Rutas AJAX/acciones del módulo Empresa (getEmpresas, eliminar, activar) permitidas si tiene acceso a empresa
+        $empresaExcepcionPrefijo = '/dashboard/empresa/eliminar/';
+        $empresaExcepcionPrefijo2 = '/dashboard/empresa/activar/';
+        $esEmpresaExcepcion = $this->isDirectMatch($path, '/dashboard/empresa/getEmpresas')
+            || (strpos($path, $empresaExcepcionPrefijo) === 0 && preg_match('#^/dashboard/empresa/eliminar/[0-9]+/?$#', $this->sanitizePath($path)))
+            || (strpos($path, $empresaExcepcionPrefijo2) === 0 && preg_match('#^/dashboard/empresa/activar/[0-9]+/?$#', $this->sanitizePath($path)));
+        if ($esEmpresaExcepcion) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/empresa') === 0) {
+                    log_message('info', 'SessionFilter: Ruta empresa permitida por excepción: ' . $path);
                     return;
                 }
             }

@@ -190,6 +190,52 @@
                 </div>
             </div>
 
+            <?php 
+            $estadoCitaConsulta = strtolower(trim((string)($cita->estado_cita ?? ''))); 
+            if ($estadoCitaConsulta === 'reservada'): 
+            ?>
+            <!-- Aprobar reserva (cita reservada por paciente desde link público) -->
+            <div class="section-card" style="border-left: 4px solid #7986CB !important; background: linear-gradient(135deg, rgba(121,134,203,0.08) 0%, #fff 100%);">
+                <h5 class="text-primary mb-3"><i class="fas fa-user-clock me-2"></i> Reservada por el paciente</h5>
+                <p class="text-muted mb-4">Esta cita fue reservada desde el link público. Asigne tipo de consulta, modalidad y opcionalmente tipo de pago; luego apruebe para que la cita pase a <strong>Pendiente</strong> y se envíe el correo de confirmación al paciente.</p>
+                <form id="formAprobarReserva" class="row g-3">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="detalle_agenda_id" value="<?= (int)$cita->id ?>">
+                    <div class="col-md-4">
+                        <label for="aprobar_tipo_consulta" class="form-label">Tipo de consulta</label>
+                        <select name="tipo_consulta" id="aprobar_tipo_consulta" class="form-select" required>
+                            <option value="control" <?= ($cita->tipo_consulta ?? '') === 'control' ? 'selected' : '' ?>>Control</option>
+                            <option value="primera_vez" <?= ($cita->tipo_consulta ?? '') === 'primera_vez' ? 'selected' : '' ?>>Primera vez</option>
+                            <option value="seguimiento" <?= ($cita->tipo_consulta ?? '') === 'seguimiento' ? 'selected' : '' ?>>Seguimiento</option>
+                            <option value="emergencia" <?= ($cita->tipo_consulta ?? '') === 'emergencia' ? 'selected' : '' ?>>Emergencia</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="aprobar_modalidad_id" class="form-label">Modalidad</label>
+                        <select name="modalidad_id" id="aprobar_modalidad_id" class="form-select" required>
+                            <?php foreach ($modalidades ?? [] as $m): ?>
+                            <option value="<?= (int)$m->id ?>" <?= (int)($cita->modalidad_id ?? 3) === (int)$m->id ? 'selected' : '' ?>><?= esc($m->nombre ?? '') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="aprobar_boton_pago_plantilla_id" class="form-label">Tipo de pago (opcional)</label>
+                        <select name="boton_pago_plantilla_id" id="aprobar_boton_pago_plantilla_id" class="form-select">
+                            <option value="">-- Sin pago --</option>
+                            <?php foreach ($plantillas_pago ?? [] as $pp): ?>
+                            <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> - <?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary" id="btnAprobarReserva">
+                            <i class="fas fa-check-circle me-2"></i> Aprobar reserva y enviar confirmación al paciente
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
+
             <!-- Notas y Recordatorios del Nutricionista (Destacado) -->
             <?php if (!empty($cita->notas_nutricionista)): ?>
             <div class="section-card" style="border-left: 4px solid #FFA726 !important; background: linear-gradient(135deg, #FFF8E1 0%, #FFFFFF 100%);">
@@ -276,7 +322,12 @@
 
                     <!-- Botones de Control -->
                     <div class="d-flex justify-content-center gap-3 flex-wrap">
-                        <?php if ($estadoConsulta === 'pendiente'): ?>
+                        <?php if ($estadoCitaConsulta === 'reservada'): ?>
+                            <div class="alert alert-secondary mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Reservada por el paciente.</strong> Use el formulario "Aprobar reserva" más arriba para asignar tipo de consulta y tipo de pago; luego podrá iniciar la consulta cuando el paciente confirme.
+                            </div>
+                        <?php elseif ($estadoConsulta === 'pendiente'): ?>
                             <button class="btn btn-success btn-action-large" onclick="iniciarConsulta(<?= $cita->id ?>)">
                                 <i class="fas fa-play-circle me-2"></i> Iniciar Consulta
                             </button>
@@ -1575,6 +1626,56 @@ function guardarTodoYFinalizar() {
         }
     }, 500);
 }
+
+// ============================================
+// APROBAR RESERVA (cita reservada por paciente)
+// ============================================
+$(document).ready(function() {
+    $('#formAprobarReserva').on('submit', function(e) {
+        e.preventDefault();
+        var $form = $(this);
+        var $btn = $('#btnAprobarReserva');
+        var csrfToken = $form.find('input[name="csrf_test_name"]').val() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+        var csrfName = 'csrf_test_name';
+        var data = {
+            detalle_agenda_id: $form.find('input[name="detalle_agenda_id"]').val(),
+            tipo_consulta: $('#aprobar_tipo_consulta').val(),
+            modalidad_id: $('#aprobar_modalidad_id').val(),
+            boton_pago_plantilla_id: $('#aprobar_boton_pago_plantilla_id').val() || '',
+            [csrfName]: csrfToken
+        };
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Aprobando...');
+        $.ajax({
+            url: '<?= base_url('dashboard/agenda/aprobarReserva') ?>',
+            type: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+            data: data,
+            dataType: 'json',
+            success: function(response, textStatus, xhr) {
+                if (response && response.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                    $form.find('input[name="csrf_test_name"]').val(response.csrf_token);
+                }
+                if (response && response.success) {
+                    toastr.success(response.message || 'Reserva aprobada', 'Éxito', { timeOut: 4000 });
+                    setTimeout(function() { window.location.reload(); }, 1500);
+                } else {
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Aprobar reserva y enviar confirmación al paciente');
+                    toastr.error(response.message || response.error || 'Error al aprobar', 'Error');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check-circle me-2"></i> Aprobar reserva y enviar confirmación al paciente');
+                var r = (xhr && xhr.responseJSON) || {};
+                if (r.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', r.csrf_token);
+                    $form.find('input[name="csrf_test_name"]').val(r.csrf_token);
+                }
+                toastr.error((r.message || r.error || 'Error al aprobar la reserva'), 'Error');
+            }
+        });
+    });
+});
 
 // ============================================
 // FUNCIONES PARA MEDICIONES CORPORALES

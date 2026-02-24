@@ -336,6 +336,12 @@
                                                 </div>
                                             </div>
                                             <div class="col-6 col-md-4">
+                                                <div class="d-flex align-items-center p-2 rounded" style="background: rgba(121, 134, 203, 0.1);">
+                                                    <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #7986CB; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                                                    <span class="small fw-semibold">Reservada</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-4">
                                                 <div class="d-flex align-items-center p-2 rounded" style="background: rgba(255, 183, 77, 0.1);">
                                                     <div class="legend-color-box me-2" style="width: 24px; height: 24px; background-color: #FFB74D; border-radius: 6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                                     <span class="small fw-semibold">Pendiente</span>

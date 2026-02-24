@@ -38,9 +38,12 @@ exit(); */
 
         <ul class="navbar-item theme-brand flex-row  text-center">
             <li class="nav-item theme-logo">
+                <a href="<?= base_url('dashboard/menu') ?>" class="nav-link d-flex align-items-center gap-2">
+                    <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriSync" class="navbar-logo" style="height: 36px; width: auto;">
+                </a>
             </li>
             <li class="nav-item theme-text">
-                <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #6aff99);">N</span>ext<span style="color: var(--user-primary, #6aff99);">L</span>ine</a>
+                <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #4dcba5);">N</span>utri<span style="color: var(--user-primary, #4dcba5);">S</span>ync</a>
             </li>
         </ul>
         <ul class="navbar-item flex-row ms-lg-auto ms-0 action-area">
@@ -109,7 +112,7 @@ exit(); */
 <!--  END NAVBAR  -->
 
 <!-- CRONÓMETRO GLOBAL DE CONSULTA ACTIVA -->
-<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4A90E2 0%, #6BCB77 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
+<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
     <div class="d-flex align-items-center justify-content-between">
         <div class="flex-grow-1">
             <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">
@@ -141,12 +144,12 @@ exit(); */
             <div class="navbar-nav theme-brand flex-row  text-center">
                 <div class="nav-logo">
                     <div class="nav-item theme-logo">
-                        <a href="./index.html">
-                            <img src="" class="navbar-logo" alt="logo">
+                        <a href="<?= base_url('dashboard/menu') ?>">
+                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" class="navbar-logo" alt="NutriSync" style="max-height: 64px; width: auto;">
                         </a>
                     </div>
                     <div class="nav-item theme-text">
-                        <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #6aff99);">N</span>ext<span style="color: var(--user-primary, #6aff99);">L</span>ine</a>
+                        <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #4dcba5);">N</span>utri<span style="color: var(--user-primary, #4dcba5);">S</span>ync</a>
                     </div>
                 </div>
                 <div class="nav-item sidebar-toggle">

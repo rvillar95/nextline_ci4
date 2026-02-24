@@ -134,6 +134,15 @@ $(document).ready(function() {
                 d.estado = $('#estado_filter').val();
                 d.paquete_id = $('#paquete_filter').val();
                 d.busqueda = $('#busqueda_filter').val();
+            },
+            "error": function(xhr, error, code) {
+                var msg = 'No se pudieron cargar las empresas. ';
+                if (xhr.status === 403) msg += 'Sin permiso (solo Super Admin).';
+                else if (xhr.status === 401) msg += 'Sesión expirada. Recarga la página.';
+                else if (xhr.responseJSON && xhr.responseJSON.error) msg += xhr.responseJSON.error;
+                else if (xhr.responseText && xhr.responseText.length < 200) msg += xhr.responseText;
+                console.error('DataTable empresas:', xhr.status, xhr.responseText);
+                if (typeof toastr !== 'undefined') toastr.error(msg); else alert(msg);
             }
         },
         "columns": [
@@ -148,7 +157,21 @@ $(document).ready(function() {
             { "data": 8, "orderable": false }
         ],
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            "emptyTable": "No hay empresas registradas. Haz clic en \"Nueva Empresa\" para crear la primera.",
+            "processing": "Procesando...",
+            "loadingRecords": "Cargando...",
+            "lengthMenu": "Mostrar _MENU_ registros",
+            "zeroRecords": "No se encontraron resultados",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+            "infoFiltered": "(filtrado de _MAX_ registros en total)",
+            "search": "Buscar:",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
         },
         "responsive": true,
         "autoWidth": false,
@@ -186,7 +209,7 @@ $(document).ready(function() {
             url: '<?= base_url('dashboard/empresa/eliminar') ?>/' + window.empresaIdAEliminar,
             type: 'POST',
             data: {
-                <?= csrf_field() ?>
+                csrf_test_name: '<?= csrf_hash() ?>'
             },
             success: function(response) {
                 if (response.success) {
@@ -209,7 +232,7 @@ $(document).ready(function() {
             url: '<?= base_url('dashboard/empresa/activar') ?>/' + id,
             type: 'POST',
             data: {
-                <?= csrf_field() ?>
+                csrf_test_name: '<?= csrf_hash() ?>'
             },
             success: function(response) {
                 if (response.success) {

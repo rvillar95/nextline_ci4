@@ -76,27 +76,38 @@ class EmpresaController extends BaseController
             return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(403);
         }
 
-        $empresa = new Empresa();
-        $draw = intval($this->request->getGet("draw"));
-        
-        $estado = $this->request->getGet('estado');
-        $paquete_id = $this->request->getGet('paquete_id');
-        $busqueda = $this->request->getGet('busqueda');
-        
-        $filtros = [];
-        if (!empty($estado)) {
-            $filtros['estado'] = $estado;
-        }
-        if (!empty($paquete_id)) {
-            $filtros['paquete_id'] = $paquete_id;
-        }
-        if (!empty($busqueda)) {
-            $filtros['busqueda'] = $busqueda;
-        }
-        
-        $rows = $empresa->getEmpresasCompletas($filtros);
-
+        $draw = intval($this->request->getGet("draw")) ?: 1;
         $data = array();
+
+        try {
+            $empresa = new Empresa();
+            $estado = $this->request->getGet('estado');
+            $paquete_id = $this->request->getGet('paquete_id');
+            $busqueda = $this->request->getGet('busqueda');
+            
+            $filtros = [];
+            if (!empty($estado)) {
+                $filtros['estado'] = $estado;
+            }
+            if (!empty($paquete_id)) {
+                $filtros['paquete_id'] = $paquete_id;
+            }
+            if (!empty($busqueda)) {
+                $filtros['busqueda'] = $busqueda;
+            }
+            
+            $rows = $empresa->getEmpresasCompletas($filtros);
+        } catch (\Throwable $e) {
+            log_message('error', 'EmpresaController::getEmpresas: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'draw' => $draw,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Error al cargar empresas: ' . $e->getMessage()
+            ])->setStatusCode(500);
+        }
+
         foreach ($rows as $r) {
             $estadoBadge = $r->estado == 'A' 
                 ? '<span class="badge bg-success">Activo</span>' 

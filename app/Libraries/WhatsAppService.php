@@ -43,7 +43,7 @@ class WhatsAppService
                 'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
                 'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
                 'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
-                'api_url' => 'https://graph.facebook.com/v18.0/' . env('WHATSAPP_PHONE_NUMBER_ID') . '/messages',
+                'api_url' => 'https://graph.facebook.com/v22.0/' . env('WHATSAPP_PHONE_NUMBER_ID') . '/messages',
                 'verify_token' => env('WHATSAPP_VERIFY_TOKEN', 'nextline_verify_token')
             ]
         ];
@@ -302,14 +302,18 @@ class WhatsAppService
     /**
      * Enviar mensaje usando una plantilla de WhatsApp Business API (ej. hello_world para testear)
      * Las plantillas se entregan aunque el usuario no haya escrito en 24h.
+     * Si la plantilla usa parameter_format "named", pasar $headerParamNames y $bodyParamNames con los nombres de las variables (ej. paciente, nutricionista).
      *
      * @param string $numeroDestino
      * @param string $templateName Nombre de la plantilla (ej. hello_world)
-     * @param string $languageCode Código de idioma (ej. en_US, es)
+     * @param string $languageCode Código de idioma (ej. en_US, es_CL)
      * @param array $bodyParams Parámetros del cuerpo en orden (vacío para hello_world)
+     * @param array $headerParams Parámetros del encabezado en orden (vacío si la plantilla no tiene header con variables)
+     * @param array $headerParamNames Nombres de variables del header (ej. ['paciente']) si la plantilla usa parámetros con nombre
+     * @param array $bodyParamNames Nombres de variables del body (ej. ['nutricionista','fecha','hora','control']) si la plantilla usa parámetros con nombre
      * @return array ['message_id' => ..., 'status' => 'sent']
      */
-    protected function enviarPorWhatsAppBusinessPlantilla($numeroDestino, $templateName, $languageCode = 'en_US', array $bodyParams = [])
+    protected function enviarPorWhatsAppBusinessPlantilla($numeroDestino, $templateName, $languageCode = 'en_US', array $bodyParams = [], array $headerParams = [], array $headerParamNames = [], array $bodyParamNames = [])
     {
         $config = $this->config['whatsapp_business'];
         if (empty($config['access_token']) || empty($config['phone_number_id'])) {
@@ -317,21 +321,53 @@ class WhatsAppService
         }
         $numeroFormateado = $this->formatearNumeroWhatsAppBusiness($numeroDestino);
 
+        // Código de idioma tal cual (ej. es_CL para Spanish Chile en Meta); no cambiar _ por -
+        $lang = trim((string) $languageCode);
+        if ($lang === '') {
+            $lang = 'es';
+        }
         $template = [
             'name' => $templateName,
-            'language' => ['code' => $languageCode]
+            'language' => ['code' => $lang]
         ];
+        $components = [];
+        if (!empty($headerParams)) {
+            $headerProcessed = [];
+            foreach ($headerParams as $i => $text) {
+                $s = trim((string) $text);
+                $s = $s === '' ? '-' : mb_substr($s, 0, 60);
+                $param = ['type' => 'text', 'text' => (string) $s];
+                if (!empty($headerParamNames) && isset($headerParamNames[$i])) {
+                    $param['parameter_name'] = (string) $headerParamNames[$i];
+                }
+                $headerProcessed[] = $param;
+            }
+            $components[] = ['type' => 'header', 'parameters' => $headerProcessed];
+            log_message('error', 'WhatsApp plantilla: header params count=' . count($headerProcessed) . ', first=' . (isset($headerProcessed[0]['text']) ? substr($headerProcessed[0]['text'], 0, 30) : 'n/a'));
+        }
         if (!empty($bodyParams)) {
-            $template['components'] = [
-                [
-                    'type' => 'body',
-                    'parameters' => array_map(function ($text) {
-                        return ['type' => 'text', 'text' => $text];
-                    }, $bodyParams)
-                ]
-            ];
+            $bodyProcessed = [];
+            foreach ($bodyParams as $i => $text) {
+                $s = trim((string) $text);
+                $s = $s === '' ? '-' : $s;
+                $param = ['type' => 'text', 'text' => (string) $s];
+                if (!empty($bodyParamNames) && isset($bodyParamNames[$i])) {
+                    $param['parameter_name'] = (string) $bodyParamNames[$i];
+                }
+                $bodyProcessed[] = $param;
+            }
+            $components[] = ['type' => 'body', 'parameters' => $bodyProcessed];
+            foreach ($bodyProcessed as $i => $p) {
+                $t = isset($p['text']) ? $p['text'] : '';
+                log_message('error', 'WhatsApp plantilla: body[' . $i . '] len=' . strlen($t) . ' val=' . substr($t, 0, 40));
+            }
+        }
+        if (!empty($components)) {
+            $template['components'] = $components;
         }
 
+        log_message('error', 'WhatsApp plantilla: enviando name=' . $templateName . ' language=' . $lang . ' to=' . (string) $numeroFormateado);
+        // Asegurar que la API reciba tipos correctos: "to" como string, template.name como string
         $requestOptions = [
             'headers' => [
                 'Authorization' => 'Bearer ' . $config['access_token'],
@@ -339,9 +375,13 @@ class WhatsAppService
             ],
             'json' => [
                 'messaging_product' => 'whatsapp',
-                'to' => $numeroFormateado,
+                'to' => (string) $numeroFormateado,
                 'type' => 'template',
-                'template' => $template
+                'template' => [
+                    'name' => (string) $templateName,
+                    'language' => ['code' => (string) $lang],
+                    'components' => $components
+                ]
             ]
         ];
         if (ENVIRONMENT === 'development') {
@@ -356,7 +396,12 @@ class WhatsAppService
         if ($statusCode >= 400 || !empty($body['error'])) {
             $errorMsg = $body['error']['message'] ?? $body['error']['error_user_msg'] ?? $rawBody;
             $errorCode = $body['error']['code'] ?? $statusCode;
+            $errorDetails = $body['error']['error_data'] ?? $body['error']['details'] ?? null;
             log_message('error', 'WhatsApp Business API (plantilla) error: code=' . $errorCode . ', message=' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
+            if ($errorDetails) {
+                log_message('error', 'WhatsApp Business API (plantilla) error details: ' . (is_string($errorDetails) ? $errorDetails : json_encode($errorDetails)));
+            }
+            log_message('error', 'WhatsApp Business API (plantilla) full response: ' . json_encode($body));
             throw new \Exception('WhatsApp Business API: ' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
         }
         $messageId = $body['messages'][0]['id'] ?? null;
@@ -377,11 +422,12 @@ class WhatsAppService
         // Obtener información de la cita
         log_message('error', 'WHATSAPP SERVICE: Ejecutando consulta para obtener información de la cita');
         $cita = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha, p.nombre, p.apellido, p.telefono, u.nombre as nutricionista_nombre, ma.nombre as modalidad')
+            ->select('da.*, a.fecha, p.nombre, p.apellido, p.telefono, u.nombre as nutricionista_nombre, ma.nombre as modalidad, e.direccion as empresa_direccion')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
             ->join('usuario u', 'u.id = da.usuario_id', 'left')
             ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+            ->join('empresa e', 'e.id = u.empresa_id', 'left')
             ->where('da.id', $detalleAgendaId)
             ->get()
             ->getRow();
@@ -437,12 +483,41 @@ class WhatsAppService
         
         log_message('error', 'WHATSAPP SERVICE: Mensaje preparado. Longitud=' . strlen($mensaje) . ' caracteres');
 
-        // Opción de usar plantilla para testear (ej. hello_world): se entrega aunque el paciente no haya escrito en 24h
-        $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', '');
-        if ($this->provider === 'whatsapp_business' && $plantillaConfirmacion === 'hello_world') {
-            log_message('error', 'WHATSAPP SERVICE: Usando plantilla hello_world para confirmación (test)');
+        // Usar plantilla de confirmación si está configurada: se entrega aunque el paciente no haya escrito en 24h
+        // Opciones: confirmacion_cita (4 vars), confirmacion_cita_presencial (5: + direccion), confirmacion_cita_online (5: + link_reunion)
+        $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', 'confirmacion_cita');
+        $usarPlantilla = ($this->provider === 'whatsapp_business' && $plantillaConfirmacion !== '' && $plantillaConfirmacion !== '0');
+        if ($usarPlantilla) {
+            $tipoConsultaLabel = $cita->tipo_consulta ? (ucfirst(str_replace('_', ' ', $cita->tipo_consulta))) : 'Consulta';
+            $safe = function ($v) {
+                $s = trim((string) $v);
+                return $s === '' ? '-' : $s;
+            };
+            $headerParams = [$safe($nombrePaciente)];
+            $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA', 'es');
+
+            // Elegir plantilla: genérica (4 params) o por modalidad: presencial (5 + direccion) / online (5 + link_reunion)
+            // Si env = "confirmacion_cita" se usa la plantilla genérica; si = "1" o otro valor se elige por modalidad
+            if ($plantillaConfirmacion === 'confirmacion_cita') {
+                $templateName = 'confirmacion_cita';
+                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel)];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'control'];
+            } elseif ($esOnline) {
+                $templateName = 'confirmacion_cita_online';
+                $linkReunion = !empty($meetLink) ? trim((string) $meetLink) : '-';
+                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($linkReunion)];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'control', 'link_reunion'];
+            } else {
+                $templateName = 'confirmacion_cita_presencial';
+                $direccion = isset($cita->empresa_direccion) ? trim((string) $cita->empresa_direccion) : '-';
+                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($direccion)];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'control', 'direccion'];
+            }
+            $headerParamNames = ['paciente'];
+
+            log_message('error', 'WHATSAPP SERVICE: Usando plantilla ' . $templateName . ' (idioma=' . $languageCode . ', header=1, body=' . count($bodyParams) . ', named params)');
             try {
-                $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla($cita->telefono, 'hello_world', 'en_US', []);
+                $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla($cita->telefono, $templateName, $languageCode, $bodyParams, $headerParams, $headerParamNames, $bodyParamNames);
                 $this->whatsappModel->registrarEnvio([
                     'paciente_id' => $pacienteId ?? $cita->paciente_id,
                     'nutricionista_id' => $cita->usuario_id ?? null,
@@ -450,16 +525,16 @@ class WhatsAppService
                     'tipo_mensaje' => 'confirmacion_cita',
                     'numero_destino' => $cita->telefono,
                     'numero_origen' => $this->getNumeroOrigen(),
-                    'mensaje' => 'Confirmación (plantilla hello_world)',
+                    'mensaje' => 'Confirmación (plantilla ' . $templateName . ')',
                     'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
                     'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
                     'metadata' => json_encode($resultadoPlantilla)
                 ]);
-                log_message('error', 'WHATSAPP SERVICE: Resultado plantilla hello_world: success=1');
+                log_message('error', 'WHATSAPP SERVICE: Resultado plantilla ' . $templateName . ': success=1');
                 log_message('error', 'WHATSAPP SERVICE - enviarConfirmacionCita: FIN');
                 return ['success' => true, 'message_id' => $resultadoPlantilla['message_id'] ?? null];
             } catch (\Exception $e) {
-                log_message('error', 'WHATSAPP SERVICE: Error enviando plantilla hello_world: ' . $e->getMessage());
+                log_message('error', 'WHATSAPP SERVICE: Error enviando plantilla ' . $templateName . ': ' . $e->getMessage());
                 log_message('error', 'WHATSAPP SERVICE - enviarConfirmacionCita: FIN');
                 return ['success' => false, 'error' => $e->getMessage()];
             }
@@ -486,9 +561,12 @@ class WhatsAppService
     }
 
     /**
-     * Enviar notificación de cancelación de cita por WhatsApp
+     * Enviar notificación de cancelación de cita por WhatsApp.
+     * @param int $detalleAgendaId
+     * @param int|null $pacienteId
+     * @param string|null $motivo Motivo de cancelación (opcional; si el nutricionista lo escribe en el modal, se incluye en el mensaje)
      */
-    public function enviarCancelacionCita($detalleAgendaId, $pacienteId = null)
+    public function enviarCancelacionCita($detalleAgendaId, $pacienteId = null, $motivo = null)
     {
         $db = \Config\Database::connect();
         

@@ -6,10 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <title>Dashboard NextLine</title>
+    <title>Dashboard NutriSync</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="icon" type="image/x-icon" href="<?= base_url("lib/images/logo_transparente_grande.ico") ?>" />
+    <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
     <script src="<?= base_url("lib/layouts/vertical-light-menu/loader.js") ?>"></script>
@@ -50,6 +50,7 @@
     
     <!-- CSS y JS para selector de iconos -->
     <link href="<?= base_url("lib/css/icon-selector.css") ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url("lib/css/buttons-ripple-fix.css") ?>" rel="stylesheet" type="text/css" />
     
     <!-- <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script> -->
     <script src="<?= base_url("lib/js/jquery-2.1.1.js") ?> "></script>
@@ -67,7 +68,7 @@
     <?php
     $usuarioHeader = session()->get('usuario') ?? [];
     $temaUsuario = $usuarioHeader['tema'] ?? 'claro';
-    $colorPrimario = $usuarioHeader['color_primario'] ?? '#6aff99';
+    $colorPrimario = $usuarioHeader['color_primario'] ?? '#4dcba5';
     $cardHeaderPorDefecto = (int)($usuarioHeader['card_header_por_defecto'] ?? 1);
     $cardHeaderEsGradiente = (int)($usuarioHeader['card_header_es_gradiente'] ?? 0);
     $colorCardHeaderBg = $usuarioHeader['color_card_header_bg'] ?? '#6c757d';
@@ -75,15 +76,15 @@
     $colorCardHeaderText = $usuarioHeader['color_card_header_text'] ?? '#ffffff';
     $mainHeaderPorDefecto = (int)($usuarioHeader['main_header_por_defecto'] ?? 1);
     $mainHeaderEsGradiente = (int)($usuarioHeader['main_header_es_gradiente'] ?? 0);
-    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#4A90E2';
+    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#4dcba5';
     $colorMainHeaderBg2 = $usuarioHeader['color_main_header_bg2'] ?? null;
     $colorMainHeaderText = $usuarioHeader['color_main_header_text'] ?? '#ffffff';
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#6aff99'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#4dcba5'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg)) { $colorCardHeaderBg = '#6c757d'; }
     if ($colorCardHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg2)) { $colorCardHeaderBg2 = '#495057'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderText)) { $colorCardHeaderText = '#ffffff'; }
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#4A90E2'; }
-    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#67C6E0'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#4dcba5'; }
+    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#bee6db'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderText)) { $colorMainHeaderText = '#ffffff'; }
     $hex = ltrim($colorCardHeaderBg, '#');
     $dr = max(0, (int)round(hexdec(substr($hex, 0, 2)) * 0.65));
@@ -95,6 +96,9 @@
     ?>
     <style id="user-theme-css">
         :root {
+            --nutrisync-primary: #4dcba5;
+            --nutrisync-bg: #fafeff;
+            --nutrisync-muted: #bee6db;
             --user-primary: <?= esc($colorPrimario) ?>;
             --user-primary-hover: <?= esc($colorPrimario) ?>dd;
             <?php if ($aplicarCardHeaderCustom): ?>
@@ -139,9 +143,9 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php else: ?>
-        /* Main-header por defecto: gradiente azul–cyan */
+        /* Main-header por defecto: gradiente NutriSync */
         body:not(.dark) .main-header {
-            background: linear-gradient(135deg, #4A90E2 0%, #67C6E0 100%) !important;
+            background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%) !important;
             color: #fff !important;
         }
         body:not(.dark) .main-header h2,
@@ -324,6 +328,8 @@
             color: #64748b !important;
             background-color: #1e293b !important;
         }
+        /* Fondo NutriSync por defecto (modo claro) */
+        body:not(.dark) { background-color: #fafeff !important; }
     </style>
 
 </head>

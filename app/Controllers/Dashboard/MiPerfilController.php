@@ -78,7 +78,7 @@ class MiPerfilController extends BaseController
             $tema = 'claro';
         }
 
-        $colorPrimario = $this->normalizarHex($this->request->getPost('color_primario'), '#6aff99');
+        $colorPrimario = $this->normalizarHex($this->request->getPost('color_primario'), '#4dcba5');
         $cardHeaderPorDefecto = (int) $this->request->getPost('card_header_por_defecto');
         $cardHeaderPorDefecto = $cardHeaderPorDefecto === 1 ? 1 : 0;
         $cardHeaderEsGradiente = (int) $this->request->getPost('card_header_es_gradiente');

@@ -46,6 +46,10 @@ $RECYCLE.BIN/
 Vagrantfile
 
 #-------------------------
+# Archives (evitar subir zips grandes)
+*.zip
+
+#-------------------------
 # Temporary Files
 #-------------------------
 writable/cache/*

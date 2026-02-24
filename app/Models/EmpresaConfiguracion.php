@@ -25,6 +25,7 @@ class EmpresaConfiguracion extends Model
         'mensaje_cancelacion_pendiente',
         'mensaje_cancelacion_confirmada',
         'mensaje_cancelacion_en_proceso',
+        'mensaje_reserva_recibida',
         'mp_access_token',
         'mp_public_key',
         'mp_access_token_sandbox',
@@ -235,7 +236,7 @@ class EmpresaConfiguracion extends Model
                     'phone_number_id' => $config['whatsapp_phone_number_id'],
                     'business_account_id' => $config['whatsapp_business_account_id'] ?? null,
                     'verify_token' => $config['whatsapp_verify_token'] ?? 'nextline_verify_token',
-                    'api_url' => 'https://graph.facebook.com/v18.0/' . $config['whatsapp_phone_number_id'] . '/messages'
+                    'api_url' => 'https://graph.facebook.com/v22.0/' . $config['whatsapp_phone_number_id'] . '/messages'
                 ]
             ];
         }

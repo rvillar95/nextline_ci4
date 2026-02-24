@@ -1,0 +1,21 @@
+/**
+ * Evita que el efecto ripple (MDB .ripple-wave o Waves .waves-ripple)
+ * agrande los botones en toda la web. Recorta el ripple al tamaño del botón.
+ */
+.btn,
+button[type="button"],
+button[type="submit"],
+button[type="reset"],
+a.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn .ripple-wave,
+.btn .waves-ripple,
+button .ripple-wave,
+button .waves-ripple,
+a.btn .ripple-wave,
+a.btn .waves-ripple {
+    pointer-events: none;
+}
