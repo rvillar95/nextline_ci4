@@ -45,13 +45,17 @@ class ImportSql extends BaseCommand
         $sql = preg_replace('/DEFINER\s*=\s*`[^`]+`@`[^`]+`\s+/', '', $sql);
 
         $db = \Config\Database::connect();
-        if (! $db->connID instanceof \mysqli) {
+        try {
+            $db->query('SELECT 1');
+        } catch (\Throwable $e) {
+            CLI::error('No se pudo conectar a la base de datos: ' . $e->getMessage());
+            return 1;
+        }
+        $mysqli = $db->connID ?? ($db->mysqli ?? null);
+        if (! $mysqli instanceof \mysqli) {
             CLI::error('Este comando solo funciona con el driver MySQLi.');
             return 1;
         }
-
-        /** @var \mysqli $mysqli */
-        $mysqli = $db->connID;
         CLI::write('Ejecutando consultas (puede tardar)...', 'yellow');
         set_time_limit(0);
 

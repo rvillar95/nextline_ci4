@@ -138,5 +138,6 @@ nb-configuration.xml
 *.xlsx
 *.xlsm
 
-# Dumps locales / snapshots (no versionar)
+# Dumps locales / snapshots (no versionar en raíz)
 nextline_pyme*.sql
+*.sql
