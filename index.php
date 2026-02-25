@@ -43,8 +43,27 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
  * variables en App Service → Configuración → Configuración de la aplicación.
  * Si existe .env.azure y no .env, se copia .env.azure → .env antes de arrancar.
  */
-if (getenv('WEBSITE_SITE_NAME') && ! is_file(FCPATH . '.env') && is_file(FCPATH . '.env.azure')) {
-    copy(FCPATH . '.env.azure', FCPATH . '.env');
+if (getenv('WEBSITE_SITE_NAME')) {
+    if (! is_file(FCPATH . '.env') && is_file(FCPATH . '.env.azure')) {
+        copy(FCPATH . '.env.azure', FCPATH . '.env');
+    }
+    // Fallback: si sigue sin haber .env, usar Connection String de Azure (MySQL)
+    if (! is_file(FCPATH . '.env') && ($cs = getenv('MYSQLCONNSTR_AZURE_MYSQL_CONNECTIONSTRING'))) {
+        $pairs = [];
+        foreach (explode(';', $cs) as $part) {
+            if (strpos($part, '=') !== false) {
+                [$k, $v] = explode('=', $part, 2);
+                $pairs[trim($k)] = trim($v);
+            }
+        }
+        $_ENV['CI_ENVIRONMENT'] = $_ENV['CI_ENVIRONMENT'] ?? 'production';
+        $_ENV['database.default.hostname'] = $pairs['Server'] ?? 'localhost';
+        $_ENV['database.default.database'] = $pairs['Database'] ?? 'mysql';
+        $_ENV['database.default.username'] = $pairs['User Id'] ?? '';
+        $_ENV['database.default.password'] = $pairs['Password'] ?? '';
+        $_ENV['database.default.DBDriver'] = 'MySQLi';
+        $_ENV['database.default.port'] = '3306';
+    }
 }
 
 /*
