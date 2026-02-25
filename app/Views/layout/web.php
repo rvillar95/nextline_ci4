@@ -13,28 +13,28 @@ $empresaContacto = [
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title><?= $title ?? 'NutriSync - Gestión nutricional' ?></title>
+    <title><?= $title ?? 'VitaSync - Gestión nutricional' ?></title>
     <link rel="icon" href="<?= base_url('lib/logo/icono-transparente.png') ?>" type="image/png" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta content="<?= $description ?? 'NutriSync - Plataforma de gestión para nutricionistas: agenda, pacientes, historiales y más' ?>" name="description" />
-    <meta content="<?= $keywords ?? 'nutrisync, nutrición, nutricionista, agenda, consultas, pacientes, chile' ?>" name="keywords" />
-    <meta content="NutriSync" name="author" />
+    <meta content="<?= $description ?? 'VitaSync - Plataforma de gestión para nutricionistas: agenda, pacientes, historiales y más' ?>" name="description" />
+    <meta content="<?= $keywords ?? 'vitasync, nutrición, nutricionista, agenda, consultas, pacientes, chile' ?>" name="keywords" />
+    <meta content="VitaSync" name="author" />
     
         <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="<?= current_url() ?>" />
-    <meta property="og:title" content="<?= $title ?? 'NutriSync - Gestión nutricional' ?>" />
+    <meta property="og:title" content="<?= $title ?? 'VitaSync - Gestión nutricional' ?>" />
     <meta property="og:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
     <meta property="og:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="NutriSync" />
+    <meta property="og:site_name" content="VitaSync" />
     <meta property="og:locale" content="es_CL" />
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="<?= current_url() ?>" />
-    <meta name="twitter:title" content="<?= $title ?? 'NutriSync - Gestión nutricional' ?>" />
+    <meta name="twitter:title" content="<?= $title ?? 'VitaSync - Gestión nutricional' ?>" />
     <meta name="twitter:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
     <meta name="twitter:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
     
@@ -49,7 +49,7 @@ $empresaContacto = [
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/style.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/navigation.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/nutrisync-colors.css') ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('lib/css/vitasync-colors.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/buttons-ripple-fix.css') ?>" rel="stylesheet" type="text/css" />
     
     <!-- Non-critical CSS - Deferred loading -->
@@ -126,9 +126,9 @@ $empresaContacto = [
         
         /* ===== HEADER Y NAVBAR MODERNO ===== */
         
-        /* Topbar Moderno - NutriSync */
+        /* Topbar Moderno - VitaSync */
         .topbar-modern {
-            background: var(--nutrisync-primary);
+            background: var(--vitasync-primary);
             padding: 3px 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
             position: relative;
@@ -194,14 +194,14 @@ $empresaContacto = [
         
         .social-link-modern:hover {
             background: #fafeff;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(77, 203, 165, 0.4);
         }
         
         .btn-topbar-modern {
             background: #fafeff;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             padding: 4px 12px;
             border-radius: 20px;
             text-decoration: none;
@@ -217,12 +217,12 @@ $empresaContacto = [
         .btn-topbar-modern:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
-            color: var(--nutrisync-primary) !important;
-            background: var(--nutrisync-muted) !important;
+            color: var(--vitasync-primary) !important;
+            background: var(--vitasync-muted) !important;
             text-decoration: none;
         }
         
-        /* Header Moderno - NutriSync */
+        /* Header Moderno - VitaSync */
         .header-modern {
             background: #fff !important;
             backdrop-filter: blur(10px);
@@ -231,7 +231,7 @@ $empresaContacto = [
             top: 0;
             z-index: 9999;
             box-shadow: 0 4px 20px rgba(77, 203, 165, 0.15);
-            border-bottom: 1px solid var(--nutrisync-muted);
+            border-bottom: 1px solid var(--vitasync-muted);
             transition: box-shadow 0.3s ease;
         }
         
@@ -307,13 +307,13 @@ $empresaContacto = [
         }
         
         .nav-link-modern:hover {
-            background: var(--nutrisync-muted);
-            color: var(--nutrisync-primary);
+            background: var(--vitasync-muted);
+            color: var(--vitasync-primary);
             transform: translateY(-2px);
         }
         
         .nav-link-modern.active {
-            background: var(--nutrisync-primary);
+            background: var(--vitasync-primary);
             color: white !important;
             box-shadow: 0 4px 15px rgba(77, 203, 165, 0.35);
         }
@@ -334,7 +334,7 @@ $empresaContacto = [
             align-items: center;
             gap: 10px;
             padding: 6px 12px;
-            background: var(--nutrisync-muted);
+            background: var(--vitasync-muted);
             border-radius: 25px;
             border: 1px solid rgba(77, 203, 165, 0.3);
         }
@@ -342,7 +342,7 @@ $empresaContacto = [
         .phone-icon-modern {
             width: 35px;
             height: 35px;
-            background: var(--nutrisync-primary);
+            background: var(--vitasync-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -363,19 +363,19 @@ $empresaContacto = [
         
         .phone-number-modern {
             font-size: 0.9rem;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             font-weight: 700;
         }
         
-        /* Mobile Menu Button - NutriSync */
+        /* Mobile Menu Button - VitaSync */
         .mobile-menu-btn-modern {
             display: none;
             flex-direction: column;
             justify-content: space-around;
             width: 35px;
             height: 35px;
-            background: var(--nutrisync-muted);
-            border: 2px solid var(--nutrisync-primary);
+            background: var(--vitasync-muted);
+            border: 2px solid var(--vitasync-primary);
             border-radius: 8px;
             cursor: pointer;
             padding: 6px;
@@ -383,14 +383,14 @@ $empresaContacto = [
         }
         
         .mobile-menu-btn-modern:hover {
-            background: var(--nutrisync-primary);
+            background: var(--vitasync-primary);
             transform: scale(1.05);
         }
         
         .mobile-menu-btn-modern span {
             width: 100%;
             height: 3px;
-            background: var(--nutrisync-primary);
+            background: var(--vitasync-primary);
             border-radius: 2px;
             transition: all 0.3s ease;
         }
@@ -470,7 +470,7 @@ $empresaContacto = [
                 backdrop-filter: blur(10px);
                 padding: 20px !important;
                 box-shadow: 0 8px 30px rgba(77, 203, 165, 0.2) !important;
-                border-top: 2px solid var(--nutrisync-primary) !important;
+                border-top: 2px solid var(--vitasync-primary) !important;
                 z-index: 2147483647 !important;
                 max-height: calc(100vh - 120px) !important;
                 min-height: 450px !important;
@@ -503,7 +503,7 @@ $empresaContacto = [
             .nav-link-modern {
                 padding: 16px 20px;
                 border-radius: 10px;
-                background: var(--nutrisync-muted);
+                background: var(--vitasync-muted);
                 border: 1px solid rgba(77, 203, 165, 0.3);
                 color: #2d3748 !important;
                 font-size: 0.95rem;
@@ -516,7 +516,7 @@ $empresaContacto = [
             
             .nav-link-modern i {
                 font-size: 1.2rem;
-                color: var(--nutrisync-primary);
+                color: var(--vitasync-primary);
                 margin-bottom: 0;
             }
             
@@ -526,9 +526,9 @@ $empresaContacto = [
             }
             
             .nav-link-modern:hover {
-                background: var(--nutrisync-primary);
+                background: var(--vitasync-primary);
                 transform: translateX(5px);
-                border-color: var(--nutrisync-primary);
+                border-color: var(--vitasync-primary);
                 color: white !important;
             }
             
@@ -536,7 +536,7 @@ $empresaContacto = [
             .nav-link-modern:hover span { color: white !important; }
             
             .nav-link-modern.active {
-                background: var(--nutrisync-primary);
+                background: var(--vitasync-primary);
                 color: white !important;
                 box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
                 border-color: transparent;
@@ -570,11 +570,11 @@ $empresaContacto = [
             }
         }
         
-        /* Botones NutriSync */
+        /* Botones VitaSync */
         .btn-custom {
-            background-color: var(--nutrisync-primary) !important;
+            background-color: var(--vitasync-primary) !important;
             color: #ffffff !important;
-            border: 2px solid var(--nutrisync-primary) !important;
+            border: 2px solid var(--vitasync-primary) !important;
             font-weight: 600 !important;
             text-transform: uppercase !important;
             letter-spacing: 1px !important;
@@ -592,7 +592,7 @@ $empresaContacto = [
         
         .btn-custom.btn-black.light {
             background-color: #ffffff !important;
-            color: var(--nutrisync-primary) !important;
+            color: var(--vitasync-primary) !important;
             border: 2px solid #ffffff !important;
             font-weight: 600 !important;
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
@@ -600,9 +600,9 @@ $empresaContacto = [
         }
         
         .btn-custom.btn-black.light:hover {
-            background-color: var(--nutrisync-muted) !important;
-            color: var(--nutrisync-primary) !important;
-            border-color: var(--nutrisync-muted) !important;
+            background-color: var(--vitasync-muted) !important;
+            color: var(--vitasync-primary) !important;
+            border-color: var(--vitasync-muted) !important;
             transform: translateY(-2px) !important;
         }
         
@@ -610,25 +610,25 @@ $empresaContacto = [
         .text-light h1, .text-light h2, .text-light h3, .text-light h4, .text-light h5, .text-light h6 { color: #ffffff !important; }
         .text-light p { color: rgba(255,255,255,0.9) !important; }
         .container { position: relative !important; z-index: 10 !important; }
-        .p-title { color: var(--nutrisync-primary) !important; font-weight: 600 !important; }
+        .p-title { color: var(--vitasync-primary) !important; font-weight: 600 !important; }
         h2 { color: #2d3748 !important; }
-        .small-border { background-color: var(--nutrisync-primary) !important; }
+        .small-border { background-color: var(--vitasync-primary) !important; }
         .estrellas-calificacion { margin: 10px 0; text-align: center; }
-        .estrellas-calificacion i { font-size: 5px; margin: 0 2px; color: var(--nutrisync-primary) !important; }
+        .estrellas-calificacion i { font-size: 5px; margin: 0 2px; color: var(--vitasync-primary) !important; }
         .estrellas-calificacion .fa-star-o { color: #ccc !important; }
         .de_testi h3 { margin-bottom: 10px !important; }
         .de_testi .estrellas-calificacion { margin: 10px 0 15px 0 !important; }
-        #section-highlight { background: linear-gradient(135deg, var(--nutrisync-primary), var(--nutrisync-muted)) !important; }
+        #section-highlight { background: linear-gradient(135deg, var(--vitasync-primary), var(--vitasync-muted)) !important; }
         #section-highlight .p-title, #section-highlight h2 { color: #fff !important; }
         #section-highlight p { color: rgba(255,255,255,0.9) !important; }
         .de_count { background: rgba(77, 203, 165, 0.2) !important; border-radius: 10px !important; padding: 20px !important; margin-bottom: 20px !important; }
-        .de_count h3 { color: var(--nutrisync-primary) !important; font-size: 2.5rem !important; font-weight: bold !important; }
+        .de_count h3 { color: var(--vitasync-primary) !important; font-size: 2.5rem !important; font-weight: bold !important; }
         .de_count p { color: #2d3748 !important; font-size: 1rem !important; }
         
-        /* ===== FOOTER MODERNO - NutriSync ===== */
+        /* ===== FOOTER MODERNO - VitaSync ===== */
         
         .footer-modern {
-            background: linear-gradient(to bottom, var(--nutrisync-primary) 0%, #3ab892 100%);
+            background: linear-gradient(to bottom, var(--vitasync-primary) 0%, #3ab892 100%);
             color: white;
             padding: 80px 0 0;
             position: relative;
@@ -801,7 +801,7 @@ $empresaContacto = [
         
         .newsletter-btn-modern {
             background: #fafeff;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             border: none;
             padding: 15px 20px;
             cursor: pointer;
@@ -812,8 +812,8 @@ $empresaContacto = [
         }
         
         .newsletter-btn-modern:hover {
-            background: var(--nutrisync-muted);
-            color: var(--nutrisync-primary);
+            background: var(--vitasync-muted);
+            color: var(--vitasync-primary);
             transform: scale(1.05);
         }
         
@@ -904,7 +904,7 @@ $empresaContacto = [
             gap: 8px;
             padding: 12px 25px;
             background: #fafeff;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             text-decoration: none;
             border-radius: 25px;
             font-size: 0.9rem;
@@ -914,10 +914,10 @@ $empresaContacto = [
         }
         
         .btn-contact-footer-modern:hover {
-            background: var(--nutrisync-muted);
+            background: var(--vitasync-muted);
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(77, 203, 165, 0.35);
-            color: var(--nutrisync-primary) !important;
+            color: var(--vitasync-primary) !important;
             text-decoration: none;
         }
         
@@ -956,7 +956,7 @@ $empresaContacto = [
         
         .social-icon-modern:hover {
             background: #fafeff;
-            color: var(--nutrisync-primary);
+            color: var(--vitasync-primary);
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
@@ -1080,7 +1080,7 @@ $empresaContacto = [
                     <!-- Logo -->
                     <div class="logo-modern">
                         <a href="<?= base_url() ?>" class="logo-link-modern">
-                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriSync" class="logo-img-modern" style="max-height: 75px; width: auto;" loading="eager">
+                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" class="logo-img-modern" style="max-height: 75px; width: auto;" loading="eager">
                         </a>
                     </div>
                     
@@ -1164,9 +1164,9 @@ $empresaContacto = [
                         <div class="footer-widget-modern">
                             <div class="footer-logo-modern">
                                 <a href="<?= base_url() ?>">
-                                    <img alt="NutriSync" src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" style="max-height: 44px; width: auto;" loading="lazy" />
+                                    <img alt="VitaSync" src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" style="max-height: 44px; width: auto;" loading="lazy" />
                                 </a>
-                                <h3 class="company-name-modern">NutriSync</h3>
+                                <h3 class="company-name-modern">VitaSync</h3>
                             </div>
                             <p class="company-description-modern">
                                 Plataforma de gestión para nutricionistas: agenda de citas, historiales clínicos, planes alimentarios y más.
@@ -1267,7 +1267,7 @@ $empresaContacto = [
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-md-6">
                             <p class="copyright-modern">
-                                &copy; <?= date('Y') ?> <strong>NutriSync</strong> | 
+                                &copy; <?= date('Y') ?> <strong>VitaSync</strong> | 
                                 <a href="<?= base_url('politica-privacidad') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacidad</a> | 
                                 <a href="<?= base_url('terminos-condiciones') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Términos</a>
                             </p>

@@ -22,6 +22,7 @@ class CSRFExceptWebhook extends BaseCSRF
         'cancelar-cita',
         'confirmar-cita',
         'inicio-sesion',
+        'reservar/reservar',
         // Rutas AJAX de Plan Alimentario
         'dashboard/plan-alimentario/actividades',
         'dashboard/plan-alimentario/intercambios',

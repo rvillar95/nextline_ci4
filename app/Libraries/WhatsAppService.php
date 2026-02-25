@@ -349,7 +349,12 @@ class WhatsAppService
             $bodyProcessed = [];
             foreach ($bodyParams as $i => $text) {
                 $s = trim((string) $text);
-                $s = $s === '' ? '-' : $s;
+                $paramName = (!empty($bodyParamNames) && isset($bodyParamNames[$i])) ? $bodyParamNames[$i] : '';
+                if ($s === '' && $paramName === 'motivo') {
+                    $s = ' '; // API exige valor no vacío; espacio para que no se vea guion ni texto
+                } elseif ($s === '') {
+                    $s = '-';
+                }
                 $param = ['type' => 'text', 'text' => (string) $s];
                 if (!empty($bodyParamNames) && isset($bodyParamNames[$i])) {
                     $param['parameter_name'] = (string) $bodyParamNames[$i];
@@ -456,12 +461,11 @@ class WhatsAppService
         $nombrePaciente = trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? ''));
         $nutricionista = $cita->nutricionista_nombre ?? 'Nutricionista';
         
-        // Determinar si es modalidad online
-        $modalidadLower = strtolower($cita->modalidad ?? '');
-        $esOnline = (stripos($modalidadLower, 'online') !== false || 
-                    (stripos($modalidadLower, 'presencial') === false && !empty($modalidadLower)));
+        // Plantilla según la modalidad que eligieron al aprobar (manual: Presencial → confirmacion_cita_presencial, Online → confirmacion_cita_online)
+        $modalidadLower = strtolower(trim($cita->modalidad ?? ''));
+        $esOnline = (stripos($modalidadLower, 'online') !== false);
         
-        log_message('error', 'WHATSAPP SERVICE: Preparando mensaje. esOnline=' . ($esOnline ? 'SÍ' : 'NO') . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
+        log_message('error', 'WHATSAPP SERVICE: Preparando mensaje. modalidad=' . ($cita->modalidad ?? 'N/A') . ' → esOnline=' . ($esOnline ? 'SÍ' : 'NO') . ', meetLink=' . ($meetLink ? 'SÍ' : 'NO'));
         
         // Mensaje simple e informativo (la confirmación se hace desde el email)
         $mensaje = "¡Hola {$nombrePaciente}!\n\n";
@@ -484,8 +488,9 @@ class WhatsAppService
         log_message('error', 'WHATSAPP SERVICE: Mensaje preparado. Longitud=' . strlen($mensaje) . ' caracteres');
 
         // Usar plantilla de confirmación si está configurada: se entrega aunque el paciente no haya escrito en 24h
-        // Opciones: confirmacion_cita (4 vars), confirmacion_cita_presencial (5: + direccion), confirmacion_cita_online (5: + link_reunion)
-        $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', 'confirmacion_cita');
+        // Por defecto usamos plantillas por modalidad (confirmacion_cita_online / confirmacion_cita_presencial).
+        // Si env = "confirmacion_cita" se fuerza la plantilla genérica de 4 vars.
+        $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', '1');
         $usarPlantilla = ($this->provider === 'whatsapp_business' && $plantillaConfirmacion !== '' && $plantillaConfirmacion !== '0');
         if ($usarPlantilla) {
             $tipoConsultaLabel = $cita->tipo_consulta ? (ucfirst(str_replace('_', ' ', $cita->tipo_consulta))) : 'Consulta';
@@ -496,8 +501,7 @@ class WhatsAppService
             $headerParams = [$safe($nombrePaciente)];
             $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA', 'es');
 
-            // Elegir plantilla: genérica (4 params) o por modalidad: presencial (5 + direccion) / online (5 + link_reunion)
-            // Si env = "confirmacion_cita" se usa la plantilla genérica; si = "1" o otro valor se elige por modalidad
+            // Elegir plantilla: solo si env es exactamente "confirmacion_cita" usamos la genérica; si no, por modalidad (online/presencial)
             if ($plantillaConfirmacion === 'confirmacion_cita') {
                 $templateName = 'confirmacion_cita';
                 $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel)];
@@ -506,12 +510,13 @@ class WhatsAppService
                 $templateName = 'confirmacion_cita_online';
                 $linkReunion = !empty($meetLink) ? trim((string) $meetLink) : '-';
                 $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($linkReunion)];
-                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'control', 'link_reunion'];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'tipo', 'link'];
+                $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA_ONLINE', 'en');
             } else {
                 $templateName = 'confirmacion_cita_presencial';
                 $direccion = isset($cita->empresa_direccion) ? trim((string) $cita->empresa_direccion) : '-';
                 $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($direccion)];
-                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'control', 'direccion'];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'tipo', 'direccion'];
             }
             $headerParamNames = ['paciente'];
 
@@ -632,6 +637,52 @@ class WhatsAppService
         
         // Obtener usuario_id correctamente (desde agenda_usuario_id o usuario_id)
         $usuarioId = $cita->agenda_usuario_id ?? $cita->usuario_id ?? null;
+
+        $safe = function ($v) {
+            $s = trim((string) $v);
+            return $s === '' ? '-' : $s;
+        };
+
+        // Plantilla cancelacion_cita (WhatsApp Business): header paciente, body nutricionista, fecha, hora, motivo. Idioma Spanish (CHL) = es o es_CL
+        $plantillaCancelacion = env('WHATSAPP_PLANTILLA_CANCELACION', 'cancelacion_cita');
+        $usarPlantillaCancelacion = ($this->provider === 'whatsapp_business' && $plantillaCancelacion !== '' && $plantillaCancelacion !== '0');
+        if ($usarPlantillaCancelacion) {
+            $languageCodeCancelacion = env('WHATSAPP_PLANTILLA_IDIOMA_CANCELACION', 'es_CL');
+            $motivoRaw = trim((string) $motivo);
+            $motivoTexto = $motivoRaw !== '' ? '💬 Motivo: ' . $motivoRaw : '';
+            $headerParams = [$safe($nombrePaciente)];
+            $headerParamNames = ['paciente'];
+            $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $motivoTexto];
+            $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'motivo'];
+            try {
+                $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla(
+                    $cita->telefono,
+                    $plantillaCancelacion,
+                    $languageCodeCancelacion,
+                    $bodyParams,
+                    $headerParams,
+                    $headerParamNames,
+                    $bodyParamNames
+                );
+                $this->whatsappModel->registrarEnvio([
+                    'paciente_id' => $pacienteId ?? $cita->paciente_id ?? null,
+                    'nutricionista_id' => $usuarioId,
+                    'agenda_id' => $cita->agenda_id ?? null,
+                    'tipo_mensaje' => 'cancelacion_cita',
+                    'numero_destino' => $cita->telefono,
+                    'numero_origen' => $this->getNumeroOrigen(),
+                    'mensaje' => 'Cancelación (plantilla ' . $plantillaCancelacion . ')',
+                    'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
+                    'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
+                    'metadata' => json_encode($resultadoPlantilla)
+                ]);
+                log_message('info', 'WhatsApp Cancelación: enviado por plantilla ' . $plantillaCancelacion);
+                return ['success' => true, 'message_id' => $resultadoPlantilla['message_id'] ?? null];
+            } catch (\Exception $e) {
+                log_message('error', 'WhatsApp Cancelación plantilla: ' . $e->getMessage());
+                // Fallback a mensaje de texto
+            }
+        }
         
         // Mensaje de cancelación (incluir motivo si se ingresó, como en el correo)
         $mensaje = "Hola {$nombrePaciente}\n\n";

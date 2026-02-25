@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <title>Dashboard NutriSync</title>
+    <title>Dashboard VitaSync</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
@@ -96,9 +96,9 @@
     ?>
     <style id="user-theme-css">
         :root {
-            --nutrisync-primary: #4dcba5;
-            --nutrisync-bg: #fafeff;
-            --nutrisync-muted: #bee6db;
+            --vitasync-primary: #4dcba5;
+            --vitasync-bg: #fafeff;
+            --vitasync-muted: #bee6db;
             --user-primary: <?= esc($colorPrimario) ?>;
             --user-primary-hover: <?= esc($colorPrimario) ?>dd;
             <?php if ($aplicarCardHeaderCustom): ?>
@@ -143,7 +143,7 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php else: ?>
-        /* Main-header por defecto: gradiente NutriSync */
+        /* Main-header por defecto: gradiente VitaSync */
         body:not(.dark) .main-header {
             background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%) !important;
             color: #fff !important;
@@ -158,6 +158,27 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php endif; ?>
+        /* Logo VitaSync: mismo aspecto en header y sidebar en todos los módulos */
+        .header-container .theme-brand .theme-logo a img.navbar-logo,
+        .header-container .navbar .theme-brand .theme-logo img {
+            height: 36px !important;
+            width: auto !important;
+            max-height: 36px !important;
+            object-fit: contain !important;
+        }
+        #sidebar .theme-brand div.theme-logo img.navbar-logo,
+        #sidebar .theme-brand .nav-logo img {
+            width: auto !important;
+            height: auto !important;
+            max-height: 48px !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
+        }
+        .sidebar-closed #sidebar .theme-brand div.theme-logo img.navbar-logo,
+        .sidebar-closed #sidebar .theme-brand .nav-logo img {
+            max-height: 40px !important;
+            max-width: 40px !important;
+        }
         .theme-text .nav-link span,
         .navbar .theme-text a,
         .sidebar-wrapper .menu .dropdown-toggle.active .nav-link span,
@@ -328,7 +349,7 @@
             color: #64748b !important;
             background-color: #1e293b !important;
         }
-        /* Fondo NutriSync por defecto (modo claro) */
+        /* Fondo VitaSync por defecto (modo claro) */
         body:not(.dark) { background-color: #fafeff !important; }
     </style>
 

@@ -133,6 +133,14 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="url_google_maps" class="form-label">URL de Google Maps</label>
+                            <input type="url" class="form-control" id="url_google_maps" name="url_google_maps"
+                                   value="<?= old('url_google_maps', $empresa->url_google_maps ?? '') ?>"
+                                   placeholder="https://maps.google.com/... o https://goo.gl/maps/...">
+                            <small class="form-text text-muted">Enlace del consultorio en Google Maps (para compartir ubicación).</small>
+                        </div>
+
+                        <div class="form-group">
                             <label for="descripcion" class="form-label">Descripción</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="3"><?= old('descripcion', $empresa->descripcion ?? '') ?></textarea>
                         </div>

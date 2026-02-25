@@ -9,9 +9,9 @@ class HomeController extends BaseController
     public function index()
     {
         $data = [
-            'title' => 'NutriSync - Gestión integral para nutricionistas',
+            'title' => 'VitaSync - Gestión integral para nutricionistas',
             'description' => 'Plataforma de gestión para nutricionistas: agenda de citas, historiales clínicos, planes alimentarios, pagos y recordatorios por WhatsApp.',
-            'keywords' => 'nutrisync, nutrición, nutricionista, agenda, consultas, pacientes, plan alimentario, Chile',
+            'keywords' => 'vitasync, nutrición, nutricionista, agenda, consultas, pacientes, plan alimentario, Chile',
         ];
 
         return view('Web/home', $data);

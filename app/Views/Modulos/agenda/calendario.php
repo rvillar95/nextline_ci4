@@ -62,11 +62,23 @@
         padding: 2px 4px !important;
         white-space: normal !important;
         word-wrap: break-word !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         text-overflow: ellipsis !important;
         display: -webkit-box !important;
-        -webkit-line-clamp: 3 !important;
+        -webkit-line-clamp: 2 !important;
         -webkit-box-orient: vertical !important;
+    }
+    
+    /* Evitar que el evento desborde y tape la fila de abajo */
+    .fc-timeGridWeek-view .fc-timegrid-event,
+    .fc-timeGridDay-view .fc-timegrid-event {
+        overflow: hidden !important;
+        border-radius: 4px !important;
+    }
+    .fc-timeGridWeek-view .fc-timegrid-event .fc-event-main,
+    .fc-timeGridDay-view .fc-timegrid-event .fc-event-main {
+        overflow: hidden !important;
+        height: 100% !important;
     }
     
     .fc-timeGridWeek-view .fc-event {
@@ -87,10 +99,8 @@
         gap: 2px !important;
     }
     
-    /* Asegurar que los eventos en vista semanal tengan suficiente espacio */
     .fc-timeGridWeek-view .fc-timegrid-event {
         margin: 1px 2px !important;
-        border-radius: 4px !important;
     }
     
     /* Mejorar legibilidad en celdas pequeñas */
@@ -129,27 +139,33 @@
         min-height: 60px !important;
     }
     
-    /* Asegurar que las filas tengan la altura correcta */
-    .fc-timeGridWeek-view tbody tr {
+    /* Solo las filas de contenido (slots de hora) tienen 60px; la fila del divider no */
+    .fc-timeGridWeek-view tbody tr.fc-scrollgrid-section-body {
         height: 60px !important;
+    }
+    .fc-timeGridWeek-view tbody tr:has(.fc-timegrid-divider) {
+        height: 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+    .fc-timeGridWeek-view tbody tr:has(.fc-timegrid-divider) td {
+        height: 0 !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        line-height: 0 !important;
+    }
+    .fc-timeGridDay-view tbody tr:has(.fc-timegrid-divider) {
+        height: 0 !important;
+        min-height: 0 !important;
+    }
+    .fc-timeGridDay-view tbody tr:has(.fc-timegrid-divider) td {
+        height: 0 !important;
+        min-height: 0 !important;
     }
     
     .fc-timeGridWeek-view .fc-timegrid-slot-label {
         height: 60px !important;
-    }
-    
-    /* La línea del divider debe tener altura 0 */
-    .fc-timegrid-divider.fc-cell-shaded,
-    tr.fc-scrollgrid-section.fc-scrollgrid-section-body .fc-timegrid-divider {
-       /* height: 0 !important;
-        min-height: 0 !important;
-        max-height: 0 !important;*/
-    }
-    
-    tr.fc-scrollgrid-section[role="presentation"] .fc-timegrid-divider {
-        /*height: 0 !important;
-        min-height: 0 !important;
-        max-height: 0 !important;*/
     }
     
     /* Padding para vista de día */
@@ -282,6 +298,52 @@
         color: white;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
+    /* Botones del header Agenda de Citas: integrados al header (mismo criterio que Lista de Citas) */
+    .main-header .agenda-header-actions .btn-agenda-ghost {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.85);
+        color: #fff;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .main-header .agenda-header-actions .btn-agenda-ghost:hover {
+        background: rgba(255,255,255,0.12);
+        border-color: #fff;
+        color: #fff;
+    }
+    .main-header .agenda-header-actions .btn-agenda-primary {
+        background: rgba(255,255,255,0.22);
+        border: 1px solid rgba(255,255,255,0.9);
+        color: #fff;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .main-header .agenda-header-actions .btn-agenda-primary:hover {
+        background: rgba(255,255,255,0.35);
+        border-color: #fff;
+        color: #fff;
+    }
+    .main-header .agenda-header-actions .btn-agenda-cancelar {
+        background: rgba(220, 53, 69, 0.25);
+        border: 1px solid rgba(255,255,255,0.6);
+        color: #fff;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .main-header .agenda-header-actions .btn-agenda-cancelar:hover {
+        background: rgba(220, 53, 69, 0.45);
+        border-color: rgba(255,255,255,0.9);
+        color: #fff;
+    }
 </style>
 
 <div class="container-fluid">
@@ -293,17 +355,14 @@
                         <h2 style="color: white;"><i class="fas fa-calendar-alt me-2"></i> Agenda de Citas</h2>
                         <p style="color: white;">Gestione las citas y horarios de sus pacientes</p>
                     </div>
-                    <div>
-                        <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-light me-2">
+                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                        <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-agenda-ghost" title="Ver lista de citas">
                             <i class="fas fa-list me-2"></i> Vista Lista
                         </a>
-                        <button class="btn btn-light me-2" onclick="abrirModalAgendar()">
-                            <i class="fas fa-plus me-2"></i> Agendar Cita
-                        </button>
-                        <button class="btn btn-light me-2" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
+                        <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
                             <i class="fas fa-clock me-2"></i> Crear Horarios
                         </button>
-                        <a href="<?= base_url('dashboard/agenda/cancelar-horas') ?>" class="btn btn-danger me-2" title="Cancelar horas masivamente por emergencia o enfermedad">
+                        <a href="<?= base_url('dashboard/agenda/cancelar-horas') ?>" class="btn btn-agenda-cancelar" title="Cancelar horas masivamente por emergencia o enfermedad">
                             <i class="fas fa-calendar-times me-2"></i> Cancelar Horas
                         </a>
                     </div>

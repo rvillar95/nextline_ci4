@@ -104,8 +104,14 @@
                                         <?php endif; ?>
                                         <?php if ($empresa->direccion): ?>
                                         <tr>
-                                            <th>Dirección:</th>
+                                            <th>Direcci?n:</th>
                                             <td><?= esc($empresa->direccion) ?></td>
+                                        </tr>
+                                        <?php endif; ?>
+                                        <?php if (!empty($empresa->url_google_maps)): ?>
+                                        <tr>
+                                            <th>Google Maps:</th>
+                                            <td><a href="<?= esc($empresa->url_google_maps) ?>" target="_blank" rel="noopener">Ver en Google Maps</a></td>
                                         </tr>
                                         <?php endif; ?>
                                         <?php if ($empresa->sitio_web): ?>
@@ -243,7 +249,7 @@
                                             <td><?= $empresa->fcreacion ? date('d/m/Y H:i', strtotime($empresa->fcreacion)) : 'N/A' ?></td>
                                         </tr>
                                         <tr>
-                                            <th>Última Actualización:</th>
+                                            <th>��ltima Actualización:</th>
                                             <td><?= $empresa->fmodificacion ? date('d/m/Y H:i', strtotime($empresa->fmodificacion)) : 'N/A' ?></td>
                                         </tr>
                                     </table>

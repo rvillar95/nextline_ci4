@@ -783,11 +783,9 @@ class AgendaController extends BaseController
                 }
             }
 
-            // Enviar WhatsApp de cancelación (mismo flujo que confirmar-cita: config enviar_whatsapp + enviarWhatsAppCancelacion = WhatsAppService(empresaId)->enviarCancelacionCita)
-            log_message('info', 'CANCELAR CITA (Lista): Verificando configuración de WhatsApp');
-            log_message('info', 'CANCELAR CITA (Lista): enviar_whatsapp=' . ($configuracion['enviar_whatsapp'] ?? 'N/A') . ', usuario_id=' . $usuario_id);
+            // Enviar WhatsApp de cancelación siempre (plantilla cancelacion_cita). El motivo se incluye solo si se llenó.
             if ($configuracion['enviar_whatsapp'] ?? 1) {
-                log_message('info', 'CANCELAR CITA (Lista): WhatsApp habilitado, enviando cancelación. id=' . $id . ', paciente_id=' . ($citaCompleta->paciente_id ?? 'N/A'));
+                log_message('info', 'CANCELAR CITA (Lista): Enviando plantilla cancelacion_cita. id=' . $id . ', paciente_id=' . ($citaCompleta->paciente_id ?? 'N/A'));
                 try {
                     $this->enviarWhatsAppCancelacion($id, $citaCompleta->paciente_id, $motivo);
                 } catch (\Exception $e) {
@@ -886,15 +884,8 @@ class AgendaController extends BaseController
                 log_message('error', 'Aprobar reserva: Error al enviar email de confirmación: ' . $e->getMessage());
             }
         }
-        // Enviar WhatsApp de confirmación al aprobar la reserva (mismo criterio que al confirmar cita desde dashboard)
-        if ($configuracion['enviar_whatsapp'] ?? 1) {
-            try {
-                $meetLink = null;
-                $this->enviarWhatsAppConfirmacion($detalleAgendaId, $pacienteId, $meetLink);
-            } catch (\Exception $e) {
-                log_message('error', 'Aprobar reserva: Error al enviar WhatsApp de confirmación: ' . $e->getMessage());
-            }
-        }
+        // WhatsApp NO se envía aquí: se envía solo cuando el paciente confirma desde el correo (confirmar-cita).
+        // Al aprobar solo pasamos la cita a Pendiente y enviamos el email con botones Confirmar/Cancelar.
 
         $response = $this->response->setJSON([
             'success' => true,

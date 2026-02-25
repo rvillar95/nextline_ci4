@@ -1,15 +1,15 @@
-/* Paleta NutriSync */
+/* Paleta VitaSync */
 :root {
-  --nutrisync-primary: #4dcba5;
-  --nutrisync-primary-rgb: 77, 203, 165;
-  --nutrisync-bg: #fafeff;
-  --nutrisync-muted: #bee6db;
-  --nutrisync-muted-rgb: 190, 230, 219;
+  --vitasync-primary: #4dcba5;
+  --vitasync-primary-rgb: 77, 203, 165;
+  --vitasync-bg: #fafeff;
+  --vitasync-muted: #bee6db;
+  --vitasync-muted-rgb: 190, 230, 219;
 }
 
-/* Sobrescribir colores corporativos para NutriSync */
+/* Sobrescribir colores corporativos para VitaSync */
 body {
-  background-color: var(--nutrisync-bg) !important;
+  background-color: var(--vitasync-bg) !important;
 }
 
 .bg-color,
@@ -26,14 +26,14 @@ section.bg-color,
 .btn-primary:hover,
 a.nav-link-modern.active,
 .nav-link-modern:hover {
-  background-color: var(--nutrisync-primary) !important;
-  border-color: var(--nutrisync-primary) !important;
+  background-color: var(--vitasync-primary) !important;
+  border-color: var(--vitasync-primary) !important;
   color: #fff !important;
 }
 
 .text-primary,
 a.text-primary {
-  color: var(--nutrisync-primary) !important;
+  color: var(--vitasync-primary) !important;
 }
 
 /* Texto e icono del ítem de menú activo en blanco para contraste sobre fondo verde */
@@ -49,10 +49,10 @@ a.text-primary {
 
 .footer-modern .footer-pattern,
 .footer-modern {
-  background-color: var(--nutrisync-muted) !important;
+  background-color: var(--vitasync-muted) !important;
 }
 
 .header-modern {
   background-color: #fff;
-  border-bottom: 1px solid var(--nutrisync-muted);
+  border-bottom: 1px solid var(--vitasync-muted);
 }

@@ -6,7 +6,7 @@
  * 1. Sube este archivo a: /home/nextline/deploy.php (FUERA de public_html por seguridad)
  * 2. Configura el SECRET_KEY abajo
  * 3. Configura la ruta de tu proyecto
- * 4. Configura el webhook en GitHub apuntando a: https://nutrisync.nextline.cl/deploy.php
+ * 4. Configura el webhook en GitHub apuntando a: https://vitasync.nextline.cl/deploy.php
  * 5. Configura permisos: chmod 755 /home/nextline/deploy.php
  */
 
@@ -18,8 +18,8 @@
 // Puedes generar una con: openssl rand -hex 32
 define('SECRET_KEY', 'CAMBIAR_POR_TU_CLAVE_SECRETA_AQUI');
 
-// Ruta donde está tu proyecto en el servidor (subdominio nutrisync.nextline.cl)
-define('REPO_PATH', '/home/nextline/nutrisync.nextline.cl');
+// Ruta donde está tu proyecto en el servidor (subdominio vitasync.nextline.cl)
+define('REPO_PATH', '/home/nextline/vitasync.nextline.cl');
 
 // Rama que quieres desplegar
 define('BRANCH', 'feature/endgame');

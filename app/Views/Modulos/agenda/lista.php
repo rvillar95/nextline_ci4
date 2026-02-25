@@ -5,6 +5,40 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
+<style>
+/* Botones del header Lista de Citas: integrados al header, sin bloque blanco */
+.main-header .agenda-header-actions .btn-agenda-ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.85);
+    color: #fff;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: background 0.2s, border-color 0.2s;
+}
+.main-header .agenda-header-actions .btn-agenda-ghost:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: #fff;
+    color: #fff;
+}
+.main-header .agenda-header-actions .btn-agenda-primary {
+    background: rgba(255,255,255,0.22);
+    border: 1px solid rgba(255,255,255,0.9);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: background 0.2s, border-color 0.2s;
+}
+.main-header .agenda-header-actions .btn-agenda-primary:hover {
+    background: rgba(255,255,255,0.35);
+    border-color: #fff;
+    color: #fff;
+}
+</style>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -14,15 +48,12 @@
                         <h2 style="color: white;"><i class="fas fa-calendar-check me-2"></i> Lista de Citas</h2>
                         <p style="color: white;">Gestione las citas agendadas de sus pacientes</p>
                     </div>
-                    <div>
-                        <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="btn btn-light me-2">
+                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                        <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="btn btn-agenda-ghost" title="Ver agenda en calendario">
                             <i class="fas fa-calendar-alt me-2"></i> Vista Calendario
                         </a>
-                        <button class="btn btn-light me-2" onclick="crearHorarios()" title="Crear horarios disponibles">
+                        <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles">
                             <i class="fas fa-clock me-2"></i> Crear Horarios
-                        </button>
-                        <button class="btn btn-danger" onclick="eliminarHorarios()" title="Eliminar horarios disponibles sin citas" style="background-color: #dc3545; border-color: #dc3545; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4); font-weight: 600;">
-                            <i class="fas fa-trash-alt me-2"></i> Eliminar Horarios
                         </button>
                     </div>
                 </div>

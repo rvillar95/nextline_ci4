@@ -116,9 +116,25 @@ La app usa esta plantilla cuando la modalidad no es "online" y `WHATSAPP_PLANTIL
 
 - **Header:** `{{paciente}}`
 - **Body:** `nutricionista`, `fecha`, `hora`, `control`, `link_reunion`
-- **Idioma:** es_CL. Contenido con emoticonos en `PLANTILLAS_FACEBOOK_DEVELOPER.md`.
+- **Idioma en Meta:** Si la creaste por error en **English**, en .env usa `WHATSAPP_PLANTILLA_IDIOMA_ONLINE=en` para que la API la encuentre (el texto puede seguir en español).
 
 La app usa esta plantilla cuando la modalidad es "online"; si no hay Meet link se envía "-".
+
+---
+
+## 5. cancelacion_cita
+
+**Uso:** Aviso al paciente cuando se cancela una cita (desde el módulo de agenda o cancelar horas).
+
+- **Header:** `{{paciente}}`
+- **Body (named):** `nutricionista`, `fecha`, `hora`, `motivo`
+- **Idioma:** Spanish (CHL) → `es` o `es_CL`
+
+**Configuración (.env):**
+- `WHATSAPP_PLANTILLA_CANCELACION` = `cancelacion_cita` (o `0`/vacío = mensaje de texto)
+- `WHATSAPP_PLANTILLA_IDIOMA_CANCELACION` = `es` (por defecto)
+
+Si la plantilla falla (ej. nombres de variables distintos en Meta), la app hace fallback a mensaje de texto.
 
 ---
 
@@ -128,7 +144,8 @@ La app usa esta plantilla cuando la modalidad es "online"; si no hay Meet link s
 |--------------------------------|--------|----------------|---------------------|----------------------|
 | `confirmacion_cita`            | es_CL  | paciente       | nutricionista, fecha, hora, control | Confirmación genérica (4 vars) |
 | `confirmacion_cita_presencial`| es_CL  | paciente       | + direccion         | Cita presencial (dirección empresa) |
-| `confirmacion_cita_online`    | es_CL  | paciente       | + link_reunion      | Cita online (enlace Meet) |
+| `confirmacion_cita_online`    | en / es_CL | paciente  | + link_reunion      | Cita online (si en Meta está en English, usar idioma `en`) |
+| `cancelacion_cita`            | es_CL  | paciente       | nutricionista, fecha, hora, motivo  | Aviso de cancelación de cita |
 | `hello_world`                  | en_US  | —              | —                   | Pruebas (opcional)   |
 
 Para agregar más plantillas con parámetros con nombre, usar en `enviarPorWhatsAppBusinessPlantilla()` los arrays `$headerParamNames` y `$bodyParamNames` con los nombres de las variables en el mismo orden que los valores.
