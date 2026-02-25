@@ -197,5 +197,20 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        // Azure Database for MySQL exige conexión SSL (require_secure_transport=ON)
+        $host = $this->default['hostname'] ?? '';
+        if (is_string($host) && str_contains($host, 'database.azure.com')) {
+            $caPath = '/etc/ssl/certs/ca-certificates.crt'; // Debian/Ubuntu/Azure App Service
+            if (! is_readable($caPath)) {
+                $caPath = '/etc/pki/tls/certs/ca-bundle.crt'; // RHEL/CentOS
+            }
+            if (is_readable($caPath)) {
+                $this->default['encrypt'] = [
+                    'ssl_ca'     => $caPath,
+                    'ssl_verify' => true,
+                ];
+            }
+        }
     }
 }
