@@ -36,6 +36,19 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
 
 /*
  *---------------------------------------------------------------
+ * ENV POR ENTORNO: Azure usa .env.azure si no existe .env
+ *---------------------------------------------------------------
+ * Local: ten tu .env con valores de desarrollo (no se versiona).
+ * Azure: sube .env.azure con valores de producción, o define las
+ * variables en App Service → Configuración → Configuración de la aplicación.
+ * Si existe .env.azure y no .env, se copia .env.azure → .env antes de arrancar.
+ */
+if (getenv('WEBSITE_SITE_NAME') && ! is_file(FCPATH . '.env') && is_file(FCPATH . '.env.azure')) {
+    copy(FCPATH . '.env.azure', FCPATH . '.env');
+}
+
+/*
+ *---------------------------------------------------------------
  * BOOTSTRAP THE APPLICATION
  *---------------------------------------------------------------
  * This process sets up the path constants, loads and registers
