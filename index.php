@@ -42,28 +42,46 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
  * Azure: sube .env.azure con valores de producción, o define las
  * variables en App Service → Configuración → Configuración de la aplicación.
  * Si existe .env.azure y no .env, se copia .env.azure → .env antes de arrancar.
+ * Si está definida MYSQLCONNSTR_* (Azure MySQL), se usa siempre para DB (sobrescribe .env).
  */
-if (getenv('WEBSITE_SITE_NAME')) {
+$isAzure = getenv('WEBSITE_SITE_NAME') !== false;
+if ($isAzure) {
     if (! is_file(FCPATH . '.env') && is_file(FCPATH . '.env.azure')) {
         copy(FCPATH . '.env.azure', FCPATH . '.env');
     }
-    // Fallback: si sigue sin haber .env, usar Connection String de Azure (MySQL)
-    if (! is_file(FCPATH . '.env') && ($cs = getenv('MYSQLCONNSTR_AZURE_MYSQL_CONNECTIONSTRING'))) {
-        $pairs = [];
-        foreach (explode(';', $cs) as $part) {
-            if (strpos($part, '=') !== false) {
-                [$k, $v] = explode('=', $part, 2);
-                $pairs[trim($k)] = trim($v);
-            }
+}
+// Connection string de Azure MySQL: tiene prioridad para que no se use localhost por .env o defaults
+// En Azure las cadenas de conexión pueden estar en getenv() o en $_SERVER
+$cs = getenv('MYSQLCONNSTR_AZURE_MYSQL_CONNECTIONSTRING')
+    ?: ($_SERVER['MYSQLCONNSTR_AZURE_MYSQL_CONNECTIONSTRING'] ?? null)
+    ?: getenv('MYSQLCONNSTR_default')
+    ?: ($_SERVER['MYSQLCONNSTR_default'] ?? null);
+if ($cs !== null && $cs !== '' && $cs !== false) {
+    $cs   = (string) $cs;
+    $pairs = [];
+    foreach (explode(';', $cs) as $part) {
+        if (strpos($part, '=') !== false) {
+            [$k, $v] = explode('=', $part, 2);
+            $pairs[trim($k)] = trim($v);
         }
-        $_ENV['CI_ENVIRONMENT'] = $_ENV['CI_ENVIRONMENT'] ?? 'production';
-        $_ENV['database.default.hostname'] = $pairs['Server'] ?? 'localhost';
-        $_ENV['database.default.database'] = $pairs['Database'] ?? 'mysql';
-        $_ENV['database.default.username'] = $pairs['User Id'] ?? '';
-        $_ENV['database.default.password'] = $pairs['Password'] ?? '';
-        $_ENV['database.default.DBDriver'] = 'MySQLi';
-        $_ENV['database.default.port'] = '3306';
     }
+    $host = $pairs['Server'] ?? $pairs['Data Source'] ?? 'localhost';
+    $db   = $pairs['Database'] ?? 'mysql';
+    $user = $pairs['User Id'] ?? $pairs['Uid'] ?? '';
+    $pass = $pairs['Password'] ?? $pairs['Pwd'] ?? '';
+    $_ENV['CI_ENVIRONMENT'] = $_ENV['CI_ENVIRONMENT'] ?? 'production';
+    $_ENV['database.default.hostname'] = $host;
+    $_ENV['database.default.database'] = $db;
+    $_ENV['database.default.username'] = $user;
+    $_ENV['database.default.password'] = $pass;
+    $_ENV['database.default.DBDriver'] = 'MySQLi';
+    $_ENV['database.default.port']      = '3306';
+    putenv('database.default.hostname=' . $host);
+    putenv('database.default.database=' . $db);
+    putenv('database.default.username=' . $user);
+    putenv('database.default.password=' . $pass);
+    putenv('database.default.DBDriver=MySQLi');
+    putenv('database.default.port=3306');
 }
 
 /*
