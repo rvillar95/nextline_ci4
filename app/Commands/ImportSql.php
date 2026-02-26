@@ -13,15 +13,22 @@ use CodeIgniter\CLI\CLI;
  *   2. cd /home/site/wwwroot && php spark import:sql
  *   3. Borra writable/nextline_pyme.sql después
  *
- * Ejecutar: php spark import:sql [archivo]
+ * Ejecutar: php spark import:sql [archivo] [--fresh]
  * Sin argumentos usa writable/nextline_pyme.sql
+ * --fresh: borra las tablas que vengan en el dump antes de importar (evita "Multiple primary key" si la BD ya tenía datos).
  */
 class ImportSql extends BaseCommand
 {
     protected $group        = 'Database';
     protected $name         = 'import:sql';
     protected $description  = 'Importa un archivo .sql en la base de datos (para uso puntual en servidor)';
-    protected $usage       = 'import:sql [archivo.sql]';
+    protected $usage       = 'import:sql [archivo.sql] [--fresh]';
+    protected $arguments   = [
+        'archivo' => 'Ruta al archivo .sql (opcional)',
+    ];
+    protected $options   = [
+        'fresh' => 'Borra las tablas del dump antes de importar (BD vacía para reimportar)',
+    ];
 
     public function run(array $params)
     {
@@ -43,8 +50,13 @@ class ImportSql extends BaseCommand
 
         // Quitar DEFINER para Azure MySQL
         $sql = preg_replace('/DEFINER\s*=\s*`[^`]+`@`[^`]+`\s+/', '', $sql);
+        // DELIMITER es comando del cliente mysql; el servidor no lo entiende → quitar esas líneas
+        $sql = preg_replace('/^\s*DELIMITER\s+\S+\s*$/m', "\n", $sql);
+        // Procedimientos usan $$ como fin de sentencia → convertir a ; para multi_query
+        $sql = preg_replace('/\$\$\s*(\r?\n)/m', ";\n", $sql);
 
         $db = \Config\Database::connect();
+        $useFresh = CLI::getOption('fresh') !== null;
         try {
             $db->query('SELECT 1');
         } catch (\Throwable $e) {
@@ -56,6 +68,20 @@ class ImportSql extends BaseCommand
             CLI::error('Este comando solo funciona con el driver MySQLi.');
             return 1;
         }
+        if ($useFresh) {
+            preg_match_all('/CREATE\s+TABLE\s+[`]([^`]+)[`]/i', $sql, $m);
+            $tables = array_unique($m[1] ?? []);
+            if ($tables !== []) {
+                CLI::write('Modo --fresh: borrando ' . count($tables) . ' tablas del dump...', 'yellow');
+                $mysqli->query('SET FOREIGN_KEY_CHECKS=0');
+                foreach ($tables as $t) {
+                    $safe = '`' . str_replace('`', '``', $t) . '`';
+                    $mysqli->query('DROP TABLE IF EXISTS ' . $safe);
+                }
+                $mysqli->query('SET FOREIGN_KEY_CHECKS=1');
+            }
+        }
+
         CLI::write('Ejecutando consultas (puede tardar)...', 'yellow');
         set_time_limit(0);
 
