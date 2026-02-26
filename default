@@ -1,6 +1,11 @@
 # Config Nginx para Azure App Service (PHP 8) - CodeIgniter 4
+#
 # Comando de inicio en Azure (Configuración de la pila):
-#   cp /home/site/wwwroot/default /etc/nginx/sites-enabled/default && service nginx reload
+#   Opción A (recomendada): /bin/bash /home/site/wwwroot/startup-nginx.sh
+#   El script espera a que exista este archivo y luego aplica la config (por si el deploy va después del arranque).
+#   Si la app no queda en marcha, añade al final: ; php-fpm
+#
+#   Opción B (directo, si el deploy ya terminó cuando arranca): cp /home/site/wwwroot/default /etc/nginx/sites-enabled/default && service nginx reload
 
 server {
     #proxy_cache cache;
