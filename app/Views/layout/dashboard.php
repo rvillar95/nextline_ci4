@@ -42,9 +42,6 @@ exit(); */
                     <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" class="navbar-logo" style="height: 36px; width: auto;">
                 </a>
             </li>
-            <li class="nav-item theme-text">
-                <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #4dcba5);">N</span>utri<span style="color: var(--user-primary, #4dcba5);">S</span>ync</a>
-            </li>
         </ul>
         <ul class="navbar-item flex-row ms-lg-auto ms-0 action-area">
             <li class="nav-item theme-toggle-item">

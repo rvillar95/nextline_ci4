@@ -83,6 +83,9 @@ class PacienteController extends BaseController
                 'particular' => '<span class="badge bg-info">Particular</span>',
                 'convenio' => '<span class="badge bg-success">Convenio</span>',
                 'seguro' => '<span class="badge bg-warning">Seguro</span>',
+                'fonasa' => '<span class="badge bg-primary">Fonasa</span>',
+                'isapre' => '<span class="badge bg-primary">Isapre</span>',
+                'otro' => '<span class="badge bg-secondary">Otro</span>',
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
@@ -166,7 +169,7 @@ class PacienteController extends BaseController
             'nombre' => 'required|string|max_length[100]',
             'apellido' => 'required|string|max_length[100]',
             'email' => 'permit_empty|valid_email|max_length[150]',
-            'tipo_paciente' => 'required|in_list[particular,convenio,seguro]'
+            'tipo_paciente' => 'required|in_list[particular,convenio,seguro,fonasa,isapre,otro]'
         ];
 
         $validationMessages = [
@@ -186,7 +189,7 @@ class PacienteController extends BaseController
             ],
             'tipo_paciente' => [
                 'required' => 'El tipo de paciente es obligatorio.',
-                'in_list' => 'El tipo de paciente debe ser: particular, convenio o seguro.'
+                'in_list' => 'El tipo de paciente debe ser: particular, convenio, seguro, fonasa, isapre u otro.'
             ]
         ];
 

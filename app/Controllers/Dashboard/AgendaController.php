@@ -61,9 +61,10 @@ class AgendaController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        // Cargar pacientes para el select
+        // Cargar pacientes del nutricionista en sesión para el select del modal Agendar Cita
         $pacienteModel = new Paciente();
-        $data['pacientes'] = $pacienteModel->getPacientesSelect();
+        $usuario = session()->get('usuario');
+        $data['pacientes'] = $pacienteModel->getPacientesSelect($usuario['id'] ?? null);
 
         // Cargar modalidades para el select
         $db = \Config\Database::connect();

@@ -427,7 +427,7 @@ class WhatsAppService
         // Obtener información de la cita
         log_message('error', 'WHATSAPP SERVICE: Ejecutando consulta para obtener información de la cita');
         $cita = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha, p.nombre, p.apellido, p.telefono, u.nombre as nutricionista_nombre, ma.nombre as modalidad, e.direccion as empresa_direccion')
+            ->select('da.*, a.fecha, p.nombre, p.apellido, p.telefono, u.nombre as nutricionista_nombre, ma.nombre as modalidad, e.direccion as empresa_direccion, e.url_google_maps as empresa_url_google_maps')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
             ->join('usuario u', 'u.id = da.usuario_id', 'left')
@@ -461,7 +461,7 @@ class WhatsAppService
         $nombrePaciente = trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? ''));
         $nutricionista = $cita->nutricionista_nombre ?? 'Nutricionista';
         
-        // Plantilla según la modalidad que eligieron al aprobar (manual: Presencial → confirmacion_cita_presencial, Online → confirmacion_cita_online)
+        // Plantilla según la modalidad que eligieron al aprobar (Presencial → confirmacion_cita_presencial2 con link Maps, Online → confirmacion_cita_online)
         $modalidadLower = strtolower(trim($cita->modalidad ?? ''));
         $esOnline = (stripos($modalidadLower, 'online') !== false);
         
@@ -488,7 +488,7 @@ class WhatsAppService
         log_message('error', 'WHATSAPP SERVICE: Mensaje preparado. Longitud=' . strlen($mensaje) . ' caracteres');
 
         // Usar plantilla de confirmación si está configurada: se entrega aunque el paciente no haya escrito en 24h
-        // Por defecto usamos plantillas por modalidad (confirmacion_cita_online / confirmacion_cita_presencial).
+        // Por defecto usamos plantillas por modalidad (confirmacion_cita_online / confirmacion_cita_presencial2).
         // Si env = "confirmacion_cita" se fuerza la plantilla genérica de 4 vars.
         $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', '1');
         $usarPlantilla = ($this->provider === 'whatsapp_business' && $plantillaConfirmacion !== '' && $plantillaConfirmacion !== '0');
@@ -501,7 +501,7 @@ class WhatsAppService
             $headerParams = [$safe($nombrePaciente)];
             $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA', 'es');
 
-            // Elegir plantilla: solo si env es exactamente "confirmacion_cita" usamos la genérica; si no, por modalidad (online/presencial)
+            // Elegir plantilla: solo si env es exactamente "confirmacion_cita" usamos la genérica; si no, por modalidad (online → confirmacion_cita_online, presencial → confirmacion_cita_presencial2 con link)
             if ($plantillaConfirmacion === 'confirmacion_cita') {
                 $templateName = 'confirmacion_cita';
                 $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel)];
@@ -513,10 +513,14 @@ class WhatsAppService
                 $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'tipo', 'link'];
                 $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA_ONLINE', 'en');
             } else {
-                $templateName = 'confirmacion_cita_presencial';
+                // Plantilla confirmacion_cita_presencial2: incluye {{link}} (Google Maps). Si no hay URL en empresa, se envía un espacio.
+                $templateName = 'confirmacion_cita_presencial2';
                 $direccion = isset($cita->empresa_direccion) ? trim((string) $cita->empresa_direccion) : '-';
-                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($direccion)];
-                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'tipo', 'direccion'];
+                $linkMaps = (isset($cita->empresa_url_google_maps) && trim((string) $cita->empresa_url_google_maps) !== '')
+                    ? trim((string) $cita->empresa_url_google_maps)
+                    : ' ';
+                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio), $safe($tipoConsultaLabel), $safe($direccion), $linkMaps];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora', 'tipo', 'direccion', 'link'];
             }
             $headerParamNames = ['paciente'];
 

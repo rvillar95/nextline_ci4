@@ -649,14 +649,11 @@
                     <input type="hidden" id="fecha_seleccionada" name="fecha_seleccionada">
                     <input type="hidden" id="hora_seleccionada" name="hora_seleccionada">
                     
-                    <div class="form-group">
+                    <div class="form-group position-relative">
                         <label>Paciente <span class="text-danger">*</span></label>
-                        <select name="paciente_id" id="paciente_id" class="form-control" required>
-                            <option value="">-- Seleccione un paciente --</option>
-                            <?php foreach ($pacientes as $paciente) : ?>
-                                <option value="<?= $paciente->id ?>"><?= esc($paciente->nombre_completo ?? ($paciente->nombre . ' ' . $paciente->apellido)) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <input type="hidden" name="paciente_id" id="paciente_id" value="">
+                        <input type="text" id="inputPacienteAgendar" class="form-control" placeholder="Escriba para buscar por nombre..." autocomplete="off">
+                        <div id="listaPacientesAgendar" class="list-group position-absolute shadow-sm" style="left: 0; right: 0; top: 100%; margin-top: 2px; z-index: 1050; max-height: 220px; overflow-y: auto; display: none;"></div>
                     </div>
                     
                     <div class="form-group">
@@ -709,6 +706,9 @@
         </div>
     </div>
 </div>
+<script>
+var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre]; }, $pacientes)) ?>;
+</script>
 
 <!-- Modal para elegir acción (Agendar o Editar Modalidad) -->
 <div class="modal fade" id="modalElegirAccion" tabindex="-1">
@@ -1185,11 +1185,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Combobox Paciente en modal Agendar: un solo input para buscar y seleccionar
+$(function() {
+    var $input = $('#inputPacienteAgendar');
+    var $lista = $('#listaPacientesAgendar');
+    var $hidden = $('#paciente_id');
+
+    function mostrarLista(termino) {
+        var t = (termino || '').toLowerCase().trim();
+        var filtrados = !t ? pacientesAgendarOpciones : pacientesAgendarOpciones.filter(function(o) {
+            return o.text.toLowerCase().indexOf(t) !== -1;
+        });
+        $lista.empty();
+        if (filtrados.length === 0) {
+            $lista.append('<div class="list-group-item text-muted">Sin coincidencias</div>');
+        } else {
+            filtrados.forEach(function(o) {
+                var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').attr('data-id', o.value).text(o.text);
+                $lista.append($a);
+            });
+        }
+        $lista.show();
+    }
+    function ocultarLista() {
+        $lista.hide();
+    }
+    function elegirPaciente(id, text) {
+        $hidden.val(id);
+        $input.val(text);
+        ocultarLista();
+    }
+
+    $input.on('focus', function() { mostrarLista($input.val()); });
+    $input.on('input', function() {
+        $hidden.val('');
+        mostrarLista($input.val());
+    });
+    $input.on('blur', function() {
+        setTimeout(ocultarLista, 200);
+    });
+    $lista.on('click', 'a.list-group-item-action', function(e) {
+        e.preventDefault();
+        elegirPaciente($(this).data('id'), $(this).text());
+    });
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#inputPacienteAgendar, #listaPacientesAgendar').length) ocultarLista();
+    });
+
+    $('#modalAgendar').on('show.bs.modal', function() {
+        $input.val('');
+        $hidden.val('');
+        $lista.hide();
+    });
+});
 function abrirModalAgendar() {
     $('#formAgendar')[0].reset();
     $('#detalle_agenda_id').val('');
     $('#fecha_seleccionada').val('');
     $('#hora_seleccionada').val('');
+    $('#inputPacienteAgendar').val('');
+    $('#paciente_id').val('');
+    $('#listaPacientesAgendar').hide();
     $('#modalAgendar').modal('show');
     
     toastr.warning('Por favor, seleccione un horario disponible del calendario haciendo clic en un evento disponible (verde).', 'Seleccione un Horario', {
@@ -1364,12 +1420,11 @@ $('#formAgendar').on('submit', function(e) {
         });
         return;
     }
-    
-    // Validar que se haya seleccionado un paciente
+    // Validar que se haya elegido un paciente (combobox)
     var pacienteId = $('#paciente_id').val();
     if (!pacienteId || pacienteId === '') {
-        toastr.error('Debe seleccionar un paciente.', 'Paciente Requerido', {
-            timeOut: 3000,
+        toastr.error('Debe buscar y seleccionar un paciente de la lista.', 'Paciente Requerido', {
+            timeOut: 4000,
             progressBar: true
         });
         return;

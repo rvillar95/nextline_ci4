@@ -43,6 +43,9 @@
                             <option value="particular">Particular</option>
                             <option value="convenio">Convenio</option>
                             <option value="seguro">Seguro</option>
+                            <option value="fonasa">Fonasa</option>
+                            <option value="isapre">Isapre</option>
+                            <option value="otro">Otro</option>
                         </select>
                     </div>
                     <div class="col-md-3">

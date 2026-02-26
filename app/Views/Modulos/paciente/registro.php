@@ -185,6 +185,9 @@
                                     <option value="particular" <?= old('tipo_paciente') == 'particular' ? 'selected' : '' ?>>Particular</option>
                                     <option value="convenio" <?= old('tipo_paciente') == 'convenio' ? 'selected' : '' ?>>Convenio</option>
                                     <option value="seguro" <?= old('tipo_paciente') == 'seguro' ? 'selected' : '' ?>>Seguro</option>
+                                    <option value="fonasa" <?= old('tipo_paciente') == 'fonasa' ? 'selected' : '' ?>>Fonasa</option>
+                                    <option value="isapre" <?= old('tipo_paciente') == 'isapre' ? 'selected' : '' ?>>Isapre</option>
+                                    <option value="otro" <?= old('tipo_paciente') == 'otro' ? 'selected' : '' ?>>Otro</option>
                                 </select>
                             </div>
                         </div>

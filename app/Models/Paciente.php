@@ -25,7 +25,7 @@ class Paciente extends Model
     protected $updatedField = 'factualizacion';
 
     protected $validationRules = [
-        'tipo_paciente' => 'required|in_list[particular,convenio,seguro]',
+        'tipo_paciente' => 'required|in_list[particular,convenio,seguro,fonasa,isapre,otro]',
         'nombre' => 'required|string|max_length[100]',
         'apellido' => 'required|string|max_length[100]',
         'rut_dni' => 'permit_empty|string|max_length[20]',
@@ -40,7 +40,7 @@ class Paciente extends Model
     protected $validationMessages = [
         'tipo_paciente' => [
             'required' => 'El tipo de paciente es obligatorio.',
-            'in_list' => 'El tipo de paciente debe ser: particular, convenio o seguro.'
+            'in_list' => 'El tipo de paciente debe ser: particular, convenio, seguro, fonasa, isapre u otro.'
         ],
         'nombre' => [
             'required' => 'El nombre del paciente es obligatorio.',

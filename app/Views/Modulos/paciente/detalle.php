@@ -185,12 +185,18 @@
                                     'particular' => 'bg-info',
                                     'convenio' => 'bg-success',
                                     'seguro' => 'bg-warning',
+                                    'fonasa' => 'bg-primary',
+                                    'isapre' => 'bg-primary',
+                                    'otro' => 'bg-secondary',
                                     default => 'bg-secondary'
                                 };
                                 $tipoText = match($tipo) {
                                     'particular' => 'Particular',
                                     'convenio' => 'Convenio',
                                     'seguro' => 'Seguro',
+                                    'fonasa' => 'Fonasa',
+                                    'isapre' => 'Isapre',
+                                    'otro' => 'Otro',
                                     default => 'No definido'
                                 };
                                 ?>

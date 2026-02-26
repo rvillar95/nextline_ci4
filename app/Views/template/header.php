@@ -12,6 +12,10 @@
     <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
+    <script>
+    // URL base para logos (evita que loader.js use rutas relativas y el logo desaparezca en rutas profundas)
+    window.VitaSyncBaseUrl = <?= json_encode(rtrim(base_url(), '/') . '/') ?>;
+    </script>
     <script src="<?= base_url("lib/layouts/vertical-light-menu/loader.js") ?>"></script>
 
     <!-- BEGIN GLOBAL MANDATORY STYLES -->
