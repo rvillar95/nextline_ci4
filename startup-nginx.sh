@@ -1,19 +1,25 @@
 #!/bin/bash
-# Espera a que exista el archivo default en wwwroot (el deploy puede terminar después del arranque)
-# y luego aplica la config de Nginx. Usar como Comando de inicio en Azure, seguido de ; php-fpm
 
-CONFIG_SRC="/home/site/wwwroot/default"
-CONFIG_DST="/etc/nginx/sites-enabled/default"
+echo "Aplicando configuración personalizada de Nginx..."
+
+# Esperar a que el archivo exista (máx 60 s por si el deploy termina después)
 MAX_WAIT=60
-SLEEP=3
-
-count=0
-while [ ! -f "$CONFIG_SRC" ] && [ $count -lt $MAX_WAIT ]; do
-  sleep $SLEEP
-  count=$((count + SLEEP))
+elapsed=0
+while [ ! -f /home/site/wwwroot/default ] && [ $elapsed -lt $MAX_WAIT ]; do
+  echo "Esperando archivo default..."
+  sleep 2
+  elapsed=$((elapsed + 2))
 done
 
-if [ -f "$CONFIG_SRC" ]; then
-  cp "$CONFIG_SRC" "$CONFIG_DST"
-  service nginx reload
+if [ ! -f /home/site/wwwroot/default ]; then
+  echo "Timeout: default no encontrado después de ${MAX_WAIT}s."
+  exit 1
 fi
+
+cp /home/site/wwwroot/default /etc/nginx/sites-enabled/default
+
+echo "Recargando Nginx..."
+service nginx reload
+
+echo "Iniciando PHP-FPM..."
+exec php-fpm
