@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vitasync-api
+  labels:
+    app: vitasync-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: vitasync-api
+  ports:
+    - port: 80
+      targetPort: 80
+

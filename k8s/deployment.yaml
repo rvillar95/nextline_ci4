@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vitasync-api
+  labels:
+    app: vitasync-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vitasync-api
+  template:
+    metadata:
+      labels:
+        app: vitasync-api
+    spec:
+      containers:
+        - name: vitasync-app
+          image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
+          ports:
+            - containerPort: 80
+
