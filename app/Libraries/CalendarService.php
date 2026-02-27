@@ -148,17 +148,19 @@ class CalendarService
                 $requestOptions['verify'] = $caBundlePath;
                 log_message('info', 'Usando CA bundle para Google OAuth: ' . $caBundlePath);
             } else {
-                // Si no hay CA bundle y estamos en desarrollo, deshabilitar SSL
+                // Si no hay CA bundle: en desarrollo deshabilitar SSL; en producción intentar sin verify (evitar Undefined key)
                 if (ENVIRONMENT === 'development') {
                     log_message('warning', 'No se encontró CA bundle. Deshabilitando verificación SSL para desarrollo.');
                     $requestOptions['verify'] = false;
                 } else {
-                    log_message('warning', 'No se encontró CA bundle. La verificación SSL de Google OAuth podría fallar.');
+                    log_message('warning', 'No se encontró CA bundle. Deshabilitando verificación SSL para evitar fallo en callback.');
+                    $requestOptions['verify'] = false;
                 }
             }
         }
-        
-        log_message('info', 'Opciones de request: verify=' . (is_bool($requestOptions['verify']) ? ($requestOptions['verify'] ? 'true' : 'false') : $requestOptions['verify']));
+
+        $verifyVal = $requestOptions['verify'] ?? true;
+        log_message('info', 'Opciones de request: verify=' . (is_bool($verifyVal) ? ($verifyVal ? 'true' : 'false') : $verifyVal));
         
         $response = $this->httpClient->request('POST', $config['token_url'], $requestOptions);
         $statusCode = $response->getStatusCode();
@@ -832,6 +834,20 @@ class CalendarService
     }
 
     /**
+     * Borrar token del usuario (para forzar reconexión cuando invalid_grant)
+     */
+    protected function borrarTokenUsuario($usuarioId)
+    {
+        $db = \Config\Database::connect();
+        $db->table('usuario_calendar_tokens')
+            ->where('usuario_id', $usuarioId)
+            ->where('provider', $this->provider)
+            ->delete();
+        $this->accessToken = null;
+        log_message('info', 'Token de calendario borrado para usuario ID: ' . $usuarioId . ', provider: ' . $this->provider);
+    }
+
+    /**
      * Refrescar token de acceso
      */
     protected function refreshToken($usuarioId, $refreshToken)
@@ -860,12 +876,11 @@ class CalendarService
             $caBundlePath = $this->findCaBundle();
             if ($caBundlePath) {
                 $requestOptions['verify'] = $caBundlePath;
-            } elseif (ENVIRONMENT === 'development') {
-                // Si no hay CA bundle y estamos en desarrollo, deshabilitar SSL
-                $requestOptions['verify'] = false;
+            } else {
+                $requestOptions['verify'] = (ENVIRONMENT === 'development') ? false : true;
             }
         }
-        
+
         try {
             $response = $this->httpClient->request('POST', $config['token_url'], $requestOptions);
             $statusCode = $response->getStatusCode();
@@ -887,6 +902,11 @@ class CalendarService
                 $errorMsg = $tokenData['error'] ?? 'Error desconocido';
                 $errorDesc = $tokenData['error_description'] ?? 'Sin descripción';
                 log_message('error', 'Error al refrescar token: ' . $errorMsg . ' - ' . $errorDesc);
+                // invalid_grant = token revocado/expirado (ej. app en Testing, usuario quitó acceso). Borrar token para forzar reconexión.
+                if (($errorMsg === 'invalid_grant' || stripos((string) $errorDesc, 'invalid_grant') !== false) && $usuarioId) {
+                    $this->borrarTokenUsuario($usuarioId);
+                    log_message('info', 'Token de calendario borrado por invalid_grant. El usuario debe reconectar desde Agenda.');
+                }
                 throw new \Exception('Error al refrescar token: ' . $errorMsg . ' - ' . $errorDesc);
             }
             
@@ -1014,16 +1034,15 @@ class CalendarService
     protected function agregarOpcionesSSL(&$requestOptions)
     {
         $disableSsl = (ENVIRONMENT === 'development' && env('GOOGLE_DISABLE_SSL_VERIFY', false));
-        
+
         if ($disableSsl) {
             $requestOptions['verify'] = false;
         } else {
             $caBundlePath = $this->findCaBundle();
             if ($caBundlePath) {
                 $requestOptions['verify'] = $caBundlePath;
-            } elseif (ENVIRONMENT === 'development') {
-                // Si no hay CA bundle y estamos en desarrollo, deshabilitar SSL
-                $requestOptions['verify'] = false;
+            } else {
+                $requestOptions['verify'] = (ENVIRONMENT === 'development') ? false : true;
             }
         }
     }
@@ -1034,11 +1053,13 @@ class CalendarService
     protected function findCaBundle()
     {
         $caBundlePaths = [
+            '/etc/ssl/certs/ca-certificates.crt',   // Debian/Ubuntu/Azure App Service Linux
+            '/etc/pki/tls/certs/ca-bundle.crt',      // RHEL/CentOS
             'C:/wamp64/bin/php/php8.1.0/extras/ssl/cacert.pem', // WAMP común
             'C:/wamp64/bin/php/php8.2.0/extras/ssl/cacert.pem', // WAMP PHP 8.2
             'C:/wamp64/bin/php/php8.3.0/extras/ssl/cacert.pem', // WAMP PHP 8.3
             'C:/xampp/apache/bin/curl-ca-bundle.crt', // XAMPP común
-            __DIR__ . '/../../vendor/twilio/sdk/src/Twilio/cacert.pem', // Bundle incluido en Twilio SDK (si está instalado)
+            __DIR__ . '/../../vendor/twilio/sdk/src/Twilio/cacert.pem', // Twilio SDK (si está instalado)
             getcwd() . '/vendor/twilio/sdk/src/Twilio/cacert.pem', // Path relativo
         ];
         
