@@ -35,6 +35,7 @@ jobs:
         with:
           workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: 'github-ci-deployer@vitasync-dev.iam.gserviceaccount.com'
+          project_id: '${{ env.PROJECT_ID }}'
 
       - name: 'Docker Auth'
         uses: 'docker/login-action@v3'
@@ -48,6 +49,7 @@ jobs:
         with:
           cluster_name: '${{ env.GKE_CLUSTER }}'
           location: '${{ env.GKE_ZONE }}'
+          project_id: '${{ env.PROJECT_ID }}'
 
       - name: 'Build and push Docker container'
         run: |
