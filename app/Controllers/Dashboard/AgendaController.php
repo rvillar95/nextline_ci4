@@ -2005,7 +2005,7 @@ class AgendaController extends BaseController
         $empresaId = $row ? ($row->empresa_id ?? null) : null;
 
         // Omitir solo si no hay proveedor en .env y no hay empresa (no se puede usar BD)
-        $whatsappProvider = env('WHATSAPP_PROVIDER');
+        $whatsappProvider = env('WHATSAPP_PROVIDER', 'whatsapp_business');
         if (empty($whatsappProvider) && $empresaId === null) {
             log_message('error', 'WHATSAPP CONFIRMACIÓN: WhatsApp no configurado (sin .env ni empresa), omitiendo envío');
             return false;
@@ -2062,7 +2062,7 @@ class AgendaController extends BaseController
             ->getRow();
         $empresaId = $row ? ($row->empresa_id ?? null) : null;
 
-        $whatsappProvider = env('WHATSAPP_PROVIDER');
+        $whatsappProvider = env('WHATSAPP_PROVIDER', 'whatsapp_business');
         if (empty($whatsappProvider) && $empresaId === null) {
             log_message('error', 'WHATSAPP CANCELACIÓN: WhatsApp no configurado, omitiendo envío');
             return false;

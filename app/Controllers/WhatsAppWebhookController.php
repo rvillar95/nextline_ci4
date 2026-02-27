@@ -41,58 +41,12 @@ class WhatsAppWebhookController extends BaseController
     }
 
     /**
-     * Webhook para recibir mensajes (WhatsApp Business API y Twilio)
+     * Webhook para recibir mensajes (WhatsApp Business API)
      * POST /whatsapp/webhook
      */
     public function webhook()
     {
-        $provider = env('WHATSAPP_PROVIDER', 'twilio');
-        
-        if ($provider === 'twilio') {
-            return $this->procesarWebhookTwilio();
-        } elseif ($provider === 'whatsapp_business') {
-            return $this->procesarWebhookWhatsAppBusiness();
-        }
-
-        return $this->response->setStatusCode(400)->setJSON(['error' => 'Provider no configurado']);
-    }
-
-    /**
-     * Procesar webhook de Twilio
-     */
-    protected function procesarWebhookTwilio()
-    {
-        $post = $this->request->getPost();
-        
-        // Twilio envía los datos como POST form
-        $numeroOrigen = $post['From'] ?? null;
-        $numeroDestino = $post['To'] ?? null;
-        $mensajeTexto = $post['Body'] ?? null;
-        $mensajeId = $post['MessageSid'] ?? null;
-        $status = $post['MessageStatus'] ?? null;
-        
-        // Si es actualización de estado
-        if ($status && $mensajeId) {
-            return $this->actualizarEstadoMensaje($mensajeId, $status);
-        }
-        
-        // Si es mensaje entrante
-        if ($numeroOrigen && $mensajeTexto) {
-            // Limpiar formato de Twilio (whatsapp:+56912345678 -> +56912345678)
-            $numeroOrigen = str_replace('whatsapp:', '', $numeroOrigen);
-            
-            log_message('info', 'Mensaje recibido de Twilio: ' . $numeroOrigen . ' - ' . $mensajeTexto);
-            
-            $resultado = $this->whatsappService->procesarMensajeEntrante(
-                $numeroOrigen,
-                $mensajeTexto,
-                $mensajeId
-            );
-            
-            return $this->response->setJSON($resultado);
-        }
-        
-        return $this->response->setStatusCode(400)->setJSON(['error' => 'Datos incompletos']);
+        return $this->procesarWebhookWhatsAppBusiness();
     }
 
     /**

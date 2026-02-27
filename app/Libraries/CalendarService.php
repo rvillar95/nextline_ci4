@@ -544,24 +544,30 @@ class CalendarService
      */
     protected function generarDescripcionEvento($citaData)
     {
-        $descripcion = "Consulta con {$citaData['nombre_nutricionista']}";
-        
-        // Agregar email del nutricionista si está disponible
+        $nutricionista = $citaData['nombre_nutricionista'] ?? 'Nutricionista';
+        $paciente      = $citaData['nombre_paciente'] ?? 'Paciente';
+        $tipoConsulta  = $citaData['tipo_consulta'] ?? 'Consulta';
+        $modalidad     = $citaData['modalidad'] ?? '-';
+        $motivo        = $citaData['motivo'] ?? null;
+
+        // Encabezado más amigable y con marca VitaSync
+        $descripcion  = "🩺 Consulta nutricional con {$nutricionista}";
+
         if (!empty($citaData['email_nutricionista'])) {
             $descripcion .= " ({$citaData['email_nutricionista']})";
         }
-        
+
         $descripcion .= "\n\n";
-        $descripcion .= "Paciente: {$citaData['nombre_paciente']}\n";
-        $descripcion .= "Tipo: {$citaData['tipo_consulta']}\n";
-        $descripcion .= "Modalidad: {$citaData['modalidad']}\n";
-        
-        if (!empty($citaData['motivo'])) {
-            $descripcion .= "Motivo: {$citaData['motivo']}\n";
+        $descripcion .= "👤 Paciente: {$paciente}\n";
+        $descripcion .= "📋 Tipo: {$tipoConsulta}\n";
+        $descripcion .= "🏷️ Modalidad: {$modalidad}\n";
+
+        if (!empty($motivo)) {
+            $descripcion .= "📝 Motivo: {$motivo}\n";
         }
-        
-        $descripcion .= "\nCreado desde NextLine Agenda";
-        
+
+        $descripcion .= "\n🔁 Evento creado automáticamente desde VitaSync (Nextline).";
+
         return $descripcion;
     }
 

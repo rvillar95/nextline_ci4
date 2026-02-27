@@ -6,17 +6,14 @@ use App\Models\WhatsAppMensaje;
 use App\Models\Paciente;
 use App\Models\EmpresaConfiguracion;
 use Config\Services;
-use Twilio\Rest\Client as TwilioClient;
-use Twilio\Http\CurlClient;
 
 /**
- * Servicio para manejar integración con WhatsApp
- * Soporta Twilio y WhatsApp Business API
+ * Servicio para integración con WhatsApp Business API.
  * Si se pasa $empresaId, usa credenciales guardadas en Configuración; si no, usa .env
  */
 class WhatsAppService
 {
-    protected $provider; // 'twilio' o 'whatsapp_business'
+    protected $provider = 'whatsapp_business';
     protected $config;
     protected $whatsappModel;
     protected $httpClient;
@@ -29,16 +26,8 @@ class WhatsAppService
         $this->whatsappModel = new WhatsAppMensaje();
         $this->httpClient = Services::curlrequest();
         
-        // Config por defecto desde .env
-        $this->provider = env('WHATSAPP_PROVIDER', 'twilio');
+        // Config por defecto desde .env (solo WhatsApp Business API)
         $this->config = [
-            'twilio' => [
-                'account_sid' => env('TWILIO_ACCOUNT_SID'),
-                'auth_token' => env('TWILIO_AUTH_TOKEN'),
-                'from_number' => env('TWILIO_WHATSAPP_FROM'),
-                'content_sid_confirmacion' => env('TWILIO_CONTENT_SID_CONFIRMACION'),
-                'api_url' => 'https://api.twilio.com/2010-04-01/Accounts/' . env('TWILIO_ACCOUNT_SID') . '/Messages.json'
-            ],
             'whatsapp_business' => [
                 'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
                 'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
@@ -52,20 +41,18 @@ class WhatsAppService
         if ($empresaId !== null) {
             $configModel = new EmpresaConfiguracion();
             $credenciales = $configModel->obtenerCredencialesWhatsApp($empresaId);
-            if ($credenciales && $credenciales['provider'] === 'whatsapp_business' && !empty($credenciales['whatsapp_business'])) {
-                $this->provider = 'whatsapp_business';
+            if ($credenciales && !empty($credenciales['whatsapp_business'])) {
                 $this->config['whatsapp_business'] = $credenciales['whatsapp_business'];
             } else {
                 $config = $configModel->obtenerConfiguracion($empresaId);
-                $providerEmpresa = isset($config['whatsapp_provider']) ? trim($config['whatsapp_provider']) : '';
-                if ($providerEmpresa === 'whatsapp_business') {
-                    log_message('warning', 'WhatsAppService: Empresa ' . $empresaId . ' tiene proveedor WhatsApp Business pero faltan Access Token o Phone number ID en Configuración; usando .env (' . $this->provider . ')');
+                if (!empty($config['whatsapp_provider']) && trim($config['whatsapp_provider']) === 'whatsapp_business') {
+                    log_message('warning', 'WhatsAppService: Empresa ' . $empresaId . ' tiene WhatsApp Business indicado pero faltan Access Token o Phone number ID; usando .env');
                 }
             }
         }
     }
 
-    /** Proveedor realmente usado: twilio o whatsapp_business */
+    /** Proveedor (siempre whatsapp_business) */
     public function getProvider()
     {
         return $this->provider;
@@ -78,10 +65,8 @@ class WhatsAppService
      * @param int|null $pacienteId ID del paciente
      * @param int|null $agendaId ID de la agenda
      * @param int|null $nutricionistaId ID del nutricionista
-     * @param string|null $contentSid SID de plantilla de Twilio (opcional)
-     * @param string|null $contentVariables Variables para la plantilla en formato JSON (opcional)
      */
-    public function enviarMensaje($numeroDestino, $mensaje = null, $pacienteId = null, $agendaId = null, $nutricionistaId = null, $contentSid = null, $contentVariables = null)
+    public function enviarMensaje($numeroDestino, $mensaje = null, $pacienteId = null, $agendaId = null, $nutricionistaId = null)
     {
         // Normalizar número (eliminar espacios, guiones, etc.)
         $numeroDestino = $this->normalizarNumero($numeroDestino);
@@ -90,15 +75,9 @@ class WhatsAppService
             $mensajeId = null;
             $estado = 'pendiente';
             
-            if ($this->provider === 'twilio') {
-                $resultado = $this->enviarPorTwilio($numeroDestino, $mensaje, $contentSid, $contentVariables);
-                $mensajeId = $resultado['message_id'] ?? null;
-                $estado = $resultado['status'] ?? 'queued';
-            } elseif ($this->provider === 'whatsapp_business') {
-                $resultado = $this->enviarPorWhatsAppBusiness($numeroDestino, $mensaje);
-                $mensajeId = $resultado['message_id'] ?? null;
-                $estado = $resultado['status'] ?? 'sent';
-            }
+            $resultado = $this->enviarPorWhatsAppBusiness($numeroDestino, $mensaje);
+            $mensajeId = $resultado['message_id'] ?? null;
+            $estado = $resultado['status'] ?? 'sent';
             
             // Obtener el mensaje real que se envió (puede ser diferente si se usó plantilla)
             $mensajeReal = $resultado['body'] ?? $mensaje ?? 'Mensaje desde plantilla';
@@ -144,102 +123,6 @@ class WhatsAppService
                 'error' => $e->getMessage()
             ];
         }
-    }
-
-    /**
-     * Enviar mensaje usando Twilio SDK oficial
-     * @param string $numeroDestino Número de destino
-     * @param string|null $mensaje Mensaje de texto (opcional si se usa plantilla)
-     * @param string|null $contentSid SID de plantilla de Twilio (opcional)
-     * @param string|null $contentVariables Variables para la plantilla en formato JSON (opcional)
-     */
-    protected function enviarPorTwilio($numeroDestino, $mensaje = null, $contentSid = null, $contentVariables = null)
-    {
-        $config = $this->config['twilio'];
-        
-        if (empty($config['account_sid']) || empty($config['auth_token']) || empty($config['from_number'])) {
-            throw new \Exception('Configuración de Twilio incompleta');
-        }
-        
-        // Formatear número para Twilio (whatsapp:+56912345678)
-        $numeroFormateado = $this->formatearNumeroTwilio($numeroDestino);
-        
-        // Configurar cliente HTTP de Twilio para manejar certificados SSL
-        // En desarrollo local (Windows/WAMP), a veces es necesario deshabilitar verificación SSL
-        $isDevelopment = (env('CI_ENVIRONMENT') === 'development' || env('CI_ENVIRONMENT') === '');
-        $disableSslVerify = env('TWILIO_DISABLE_SSL_VERIFY', $isDevelopment); // Permitir deshabilitar SSL en desarrollo
-        
-        $curlOptions = [
-            CURLOPT_SSL_VERIFYPEER => !$disableSslVerify, // Verificar SSL solo si está habilitado
-            CURLOPT_SSL_VERIFYHOST => $disableSslVerify ? 0 : 2, // Verificar host solo si está habilitado
-        ];
-        
-        // Si la verificación SSL está habilitada, intentar usar certificados del sistema
-        if (!$disableSslVerify) {
-            // Intentar encontrar el bundle de certificados CA
-            $caBundlePaths = [
-                __DIR__ . '/../../vendor/twilio/sdk/src/Twilio/cacert.pem', // Bundle incluido en Twilio SDK
-                'C:/wamp64/bin/php/php8.1.0/extras/ssl/cacert.pem', // WAMP común
-                'C:/xampp/apache/bin/curl-ca-bundle.crt', // XAMPP común
-                getcwd() . '/vendor/twilio/sdk/src/Twilio/cacert.pem', // Path relativo
-            ];
-            
-            foreach ($caBundlePaths as $caPath) {
-                if (file_exists($caPath)) {
-                    $curlOptions[CURLOPT_CAINFO] = $caPath;
-                    log_message('info', 'Usando certificado CA de Twilio: ' . $caPath);
-                    break;
-                }
-            }
-        } else {
-            log_message('warning', 'Verificación SSL deshabilitada para Twilio (solo desarrollo)');
-        }
-        
-        $httpClient = new CurlClient($curlOptions);
-        
-        // Inicializar cliente de Twilio con el HTTP client configurado
-        $twilio = new TwilioClient($config['account_sid'], $config['auth_token'], null, null, $httpClient);
-        
-        // Preparar parámetros del mensaje
-        $params = [
-            'from' => $config['from_number'],
-            'to' => $numeroFormateado
-        ];
-        
-        // Si se proporciona una plantilla (contentSid), usarla
-        if (!empty($contentSid)) {
-            $params['contentSid'] = $contentSid;
-            
-            // Si hay variables para la plantilla, agregarlas
-            if (!empty($contentVariables)) {
-                // Asegurar que contentVariables sea un string JSON válido
-                if (is_array($contentVariables)) {
-                    $contentVariables = json_encode($contentVariables);
-                }
-                $params['contentVariables'] = $contentVariables;
-            }
-            
-            // Body es opcional cuando se usa plantilla, pero Twilio lo requiere
-            // Usar un mensaje por defecto si no se proporciona
-            if (empty($mensaje)) {
-                $mensaje = 'Mensaje desde plantilla';
-            }
-        }
-        
-        // Agregar body si se proporciona mensaje
-        if (!empty($mensaje)) {
-            $params['body'] = $mensaje;
-        }
-        
-        // Enviar mensaje usando el SDK
-        $message = $twilio->messages->create($numeroFormateado, $params);
-        
-        return [
-            'message_id' => $message->sid,
-            'status' => $message->status ?? 'queued',
-            'body' => $message->body ?? null,
-            'date_created' => $message->dateCreated ? $message->dateCreated->format('Y-m-d H:i:s') : null
-        ];
     }
 
     /**
@@ -491,7 +374,7 @@ class WhatsAppService
         // Por defecto usamos plantillas por modalidad (confirmacion_cita_online / confirmacion_cita_presencial2).
         // Si env = "confirmacion_cita" se fuerza la plantilla genérica de 4 vars.
         $plantillaConfirmacion = env('WHATSAPP_PLANTILLA_CONFIRMACION', '1');
-        $usarPlantilla = ($this->provider === 'whatsapp_business' && $plantillaConfirmacion !== '' && $plantillaConfirmacion !== '0');
+        $usarPlantilla = ($plantillaConfirmacion !== '' && $plantillaConfirmacion !== '0');
         if ($usarPlantilla) {
             $tipoConsultaLabel = $cita->tipo_consulta ? (ucfirst(str_replace('_', ' ', $cita->tipo_consulta))) : 'Consulta';
             $safe = function ($v) {
@@ -531,7 +414,7 @@ class WhatsAppService
                     'paciente_id' => $pacienteId ?? $cita->paciente_id,
                     'nutricionista_id' => $cita->usuario_id ?? null,
                     'agenda_id' => $cita->agenda_id ?? null,
-                    'tipo_mensaje' => 'confirmacion_cita',
+                    'tipo_mensaje' => 'confirmacion',
                     'numero_destino' => $cita->telefono,
                     'numero_origen' => $this->getNumeroOrigen(),
                     'mensaje' => 'Confirmación (plantilla ' . $templateName . ')',
@@ -649,7 +532,7 @@ class WhatsAppService
 
         // Plantilla cancelacion_cita (WhatsApp Business): header paciente, body nutricionista, fecha, hora, motivo. Idioma Spanish (CHL) = es o es_CL
         $plantillaCancelacion = env('WHATSAPP_PLANTILLA_CANCELACION', 'cancelacion_cita');
-        $usarPlantillaCancelacion = ($this->provider === 'whatsapp_business' && $plantillaCancelacion !== '' && $plantillaCancelacion !== '0');
+        $usarPlantillaCancelacion = ($plantillaCancelacion !== '' && $plantillaCancelacion !== '0');
         if ($usarPlantillaCancelacion) {
             $languageCodeCancelacion = env('WHATSAPP_PLANTILLA_IDIOMA_CANCELACION', 'es_CL');
             $motivoRaw = trim((string) $motivo);
@@ -672,7 +555,7 @@ class WhatsAppService
                     'paciente_id' => $pacienteId ?? $cita->paciente_id ?? null,
                     'nutricionista_id' => $usuarioId,
                     'agenda_id' => $cita->agenda_id ?? null,
-                    'tipo_mensaje' => 'cancelacion_cita',
+                    'tipo_mensaje' => 'cancelacion',
                     'numero_destino' => $cita->telefono,
                     'numero_origen' => $this->getNumeroOrigen(),
                     'mensaje' => 'Cancelación (plantilla ' . $plantillaCancelacion . ')',
@@ -710,52 +593,6 @@ class WhatsAppService
             $cita->agenda_id ?? null,
             $usuarioId
         );
-        
-        // NOTA: Si prefieres usar plantilla de Twilio, descomenta el código de abajo
-        // y comenta el código de arriba. También necesitarás configurar TWILIO_CONTENT_SID_CONFIRMACION en .env
-        /*
-        $contentSid = $this->config['twilio']['content_sid_confirmacion'] ?? null;
-        
-        if ($contentSid) {
-            // Usar plantilla de Twilio
-            $fechaFormateada = $this->formatearFechaParaPlantilla($fecha);
-            $horaFormateada = $horaInicio;
-            
-            $contentVariables = json_encode([
-                "1" => $fechaFormateada,
-                "2" => $horaFormateada
-            ]);
-            
-            return $this->enviarMensaje(
-                $cita->telefono,
-                null,
-                $pacienteId ?? $cita->paciente_id,
-                $cita->agenda_id ?? null,
-                $cita->usuario_id ?? null,
-                $contentSid,
-                $contentVariables
-            );
-        } else {
-            // Mensaje de texto simple
-            $mensaje = "¡Hola {$nombrePaciente}!\n\n";
-            $mensaje .= "Tu cita con {$nutricionista} ha sido confirmada:\n\n";
-            $mensaje .= "📅 Fecha: {$fecha}\n";
-            $mensaje .= "🕐 Hora: {$horaInicio}\n";
-            if ($cita->tipo_consulta) {
-                $mensaje .= "📋 Tipo: {$cita->tipo_consulta}\n";
-            }
-            $mensaje .= "\n¡Te esperamos!\n";
-            $mensaje .= "Si necesitas cancelar o reagendar, responde a este mensaje.";
-            
-            return $this->enviarMensaje(
-                $cita->telefono,
-                $mensaje,
-                $pacienteId ?? $cita->paciente_id,
-                $cita->agenda_id ?? null,
-                $cita->usuario_id ?? null
-            );
-        }
-        */
     }
 
     /**
@@ -788,14 +625,68 @@ class WhatsAppService
             $horaInicio = date('H:i', strtotime($cita->hora_inicio));
             $nombrePaciente = trim(($cita->nombre ?? '') . ' ' . ($cita->apellido ?? ''));
             $nutricionista = $cita->nutricionista_nombre ?? 'Nutricionista';
+
+            $safe = function ($v) {
+                $s = trim((string) $v);
+                return $s === '' ? '-' : $s;
+            };
+
+            // Usar plantilla de WhatsApp Business para recordatorio si está configurada.
+            // Las plantillas se entregan aunque el paciente no haya escrito en las últimas 24h.
+            $plantillaRecordatorio = env('WHATSAPP_PLANTILLA_RECORDATORIO', 'recordatorio_cita');
+            $usarPlantillaRecordatorio = ($plantillaRecordatorio !== '' && $plantillaRecordatorio !== '0');
+            if ($usarPlantillaRecordatorio) {
+                $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA_RECORDATORIO', env('WHATSAPP_PLANTILLA_IDIOMA', 'es_CL'));
+                $headerParams = [$safe($nombrePaciente)];
+                $headerParamNames = ['paciente'];
+                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio)];
+                $bodyParamNames = ['nutricionista', 'fecha', 'hora'];
+
+                try {
+                    $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla(
+                        $cita->telefono,
+                        $plantillaRecordatorio,
+                        $languageCode,
+                        $bodyParams,
+                        $headerParams,
+                        $headerParamNames,
+                        $bodyParamNames
+                    );
+
+                    // Registrar en base de datos
+                    $this->whatsappModel->registrarEnvio([
+                        'paciente_id' => $cita->paciente_id ?? null,
+                        'nutricionista_id' => $cita->usuario_id ?? null,
+                        'agenda_id' => $cita->agenda_id ?? null,
+                        'tipo_mensaje' => 'recordatorio',
+                        'numero_destino' => $cita->telefono,
+                        'numero_origen' => $this->getNumeroOrigen(),
+                        'mensaje' => 'Recordatorio (plantilla ' . $plantillaRecordatorio . ', ' . (int) $horasAntes . 'h antes)',
+                        'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
+                        'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
+                        'metadata' => json_encode($resultadoPlantilla),
+                    ]);
+
+                    $enviados[] = [
+                        'success' => true,
+                        'message_id' => $resultadoPlantilla['message_id'] ?? null,
+                        'status' => $resultadoPlantilla['status'] ?? 'sent',
+                        'provider' => 'whatsapp_business',
+                        'template' => $plantillaRecordatorio,
+                    ];
+                    continue;
+                } catch (\Exception $e) {
+                    // Fallback a mensaje de texto
+                    log_message('error', 'WhatsApp Recordatorio plantilla: ' . $e->getMessage());
+                }
+            }
             
             $mensaje = "🔔 Recordatorio de Cita\n\n";
             $mensaje .= "Hola {$nombrePaciente},\n\n";
             $mensaje .= "Te recordamos tu cita con {$nutricionista}:\n\n";
             $mensaje .= "📅 Fecha: {$fecha}\n";
             $mensaje .= "🕐 Hora: {$horaInicio}\n";
-            $mensaje .= "\n¡Nos vemos pronto!\n";
-            $mensaje .= "Si necesitas cancelar o reagendar, responde a este mensaje.";
+            $mensaje .= "\n¡Nos vemos pronto!";
             
             $resultado = $this->enviarMensaje(
                 $cita->telefono,
@@ -1006,15 +897,6 @@ class WhatsAppService
     }
 
     /**
-     * Formatear número para Twilio
-     */
-    protected function formatearNumeroTwilio($numero)
-    {
-        $numero = $this->normalizarNumero($numero);
-        return 'whatsapp:' . $numero;
-    }
-
-    /**
      * Formatear número para WhatsApp Business API
      */
     protected function formatearNumeroWhatsAppBusiness($numero)
@@ -1029,12 +911,7 @@ class WhatsAppService
      */
     protected function getNumeroOrigen()
     {
-        if ($this->provider === 'twilio') {
-            return $this->config['twilio']['from_number'] ?? null;
-        } elseif ($this->provider === 'whatsapp_business') {
-            return $this->config['whatsapp_business']['phone_number_id'] ?? null;
-        }
-        return null;
+        return $this->config['whatsapp_business']['phone_number_id'] ?? null;
     }
 
     /**
@@ -1058,8 +935,7 @@ class WhatsAppService
     }
 
     /**
-     * Formatear fecha para plantilla de Twilio
-     * Convierte DD-MM-YYYY a formato para plantilla (ej: "12/1" para 12 de enero)
+     * Formatear fecha para plantillas (ej: DD-MM-YYYY → "12/1" para 12 de enero)
      */
     protected function formatearFechaParaPlantilla($fecha)
     {
