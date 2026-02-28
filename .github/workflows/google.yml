@@ -84,7 +84,7 @@ jobs:
             --from-literal=google-client-secret="${{ secrets.GOOGLE_CALENDAR_CLIENT_SECRET }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Email SMTP: contraseña desde secret del repo (opcional)
+      # Email SMTP: sin EMAIL_SMTP_PASSWORD en GitHub el secret queda con password vacía y el servidor devolverá "550 SMTP AUTH is required"
       - name: 'Create or update Email secret in GKE'
         run: |
           kubectl create secret generic vitasync-email \

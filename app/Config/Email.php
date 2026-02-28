@@ -55,13 +55,14 @@ class Email extends BaseConfig
         parent::__construct();
 
         // Cargar configuración desde .env (local) o variables de entorno (GKE)
-        $this->fromEmail = getenv('EMAIL_FROM_EMAIL') ?: env('email.fromEmail', '');
-        $this->fromName  = getenv('EMAIL_FROM_NAME') ?: env('email.fromName', '');
-        $this->SMTPHost  = getenv('EMAIL_SMTP_HOST') ?: env('email.SMTPHost', '');
-        $this->SMTPUser  = getenv('EMAIL_SMTP_USER') ?: env('email.SMTPUser', '');
-        $this->SMTPPass  = getenv('EMAIL_SMTP_PASS') ?: ($_SERVER['EMAIL_SMTP_PASS'] ?? env('email.SMTPPass', ''));
-        $this->SMTPPort  = (int) (getenv('EMAIL_SMTP_PORT') ?: env('email.SMTPPort', 465));
-        $this->SMTPCrypto = getenv('EMAIL_SMTP_CRYPTO') ?: env('email.SMTPCrypto', 'ssl');
+        $this->fromEmail = getenv('EMAIL_FROM_EMAIL') ?: ($_ENV['EMAIL_FROM_EMAIL'] ?? env('email.fromEmail', ''));
+        $this->fromName  = getenv('EMAIL_FROM_NAME') ?: ($_ENV['EMAIL_FROM_NAME'] ?? env('email.fromName', ''));
+        $this->SMTPHost  = getenv('EMAIL_SMTP_HOST') ?: ($_ENV['EMAIL_SMTP_HOST'] ?? env('email.SMTPHost', ''));
+        $this->SMTPUser  = getenv('EMAIL_SMTP_USER') ?: ($_ENV['EMAIL_SMTP_USER'] ?? env('email.SMTPUser', ''));
+        // SMTPPass debe estar definida para que el servidor acepte (SMTP AUTH); suele venir del Secret vitasync-email en GKE
+        $this->SMTPPass  = getenv('EMAIL_SMTP_PASS') ?: ($_SERVER['EMAIL_SMTP_PASS'] ?? $_ENV['EMAIL_SMTP_PASS'] ?? env('email.SMTPPass', ''));
+        $this->SMTPPort  = (int) (getenv('EMAIL_SMTP_PORT') ?: ($_ENV['EMAIL_SMTP_PORT'] ?? env('email.SMTPPort', 465)));
+        $this->SMTPCrypto = getenv('EMAIL_SMTP_CRYPTO') ?: ($_ENV['EMAIL_SMTP_CRYPTO'] ?? env('email.SMTPCrypto', 'ssl'));
     }
 
     /**

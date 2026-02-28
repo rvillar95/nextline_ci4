@@ -56,7 +56,7 @@ spec:
               value: "https://vitasync.cl/"
             - name: WHATSAPP_PLANTILLA_IDIOMA
               value: "es_CL"
-            # Email (SMTP): sin estas variables no se envían correos ("You did not specify a SMTP hostname")
+            # Email (SMTP): EMAIL_SMTP_PASS viene del Secret vitasync-email (smtp-password). Si está vacío → "550 SMTP AUTH is required"
             - name: EMAIL_FROM_EMAIL
               value: "noreply@vitasync.cl"
             - name: EMAIL_FROM_NAME
