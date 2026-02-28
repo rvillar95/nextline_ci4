@@ -32,6 +32,7 @@ La app lee la configuración de base de datos desde **variables de entorno** cua
 
 | Variable            | Origen en GKE                    | Ejemplo / descripción   |
 |---------------------|-----------------------------------|--------------------------|
+| `APP_BASE_URL`      | Deployment (env)                  | URL pública de la app (p. ej. `http://34.176.25.59` o `https://tudominio.com`) para redirects y `base_url()` |
 | `DATABASE_HOSTNAME` | Deployment (env)                  | IP de la instancia Cloud SQL |
 | `DATABASE_PORT`     | Deployment (env)                  | `3306`                   |
 | `DATABASE_NAME`     | Deployment (env)                  | `nextline_pyme`          |
@@ -74,6 +75,11 @@ No es obligatorio usar IP pública. Es **más seguro** no exponer la base de dat
 - **kustomization.yaml**: incluye `k8s/deployment.yaml` y `k8s/service.yaml`.
 - **Deployment** `vitasync-api`: env vars de base de datos y contraseña desde el Secret `vitasync-db`. La imagen se sustituye en el workflow con el tag correspondiente al commit.
 - **Service** tipo LoadBalancer: IP estática reservada en GCP (p. ej. `34.176.25.59`). El dominio (DNS) debe apuntar con un registro A a esa IP para acceder a la app.
+
+### Dominio y HTTPS (Cloudflare)
+
+- El dominio **vitasync.cl** apunta a la IP del LoadBalancer (`34.176.25.59`). La variable **`APP_BASE_URL`** en el deployment debe coincidir con la URL pública (p. ej. `http://vitasync.cl` o `https://vitasync.cl`) para que redirects y `base_url()` usen el dominio correcto.
+- Con **Cloudflare proxy** (registro A en modo "Proxied"): en SSL/TLS puedes usar **Flexible** para que los usuarios entren por `https://vitasync.cl` aunque el servidor siga en HTTP. Si más adelante quieres HTTPS hasta el servidor, cambia `APP_BASE_URL` a `https://vitasync.cl` y configura certificado en GKE (p. ej. cert-manager) o Cloudflare "Full (strict)".
 
 ### Resumen de archivos relevantes
 

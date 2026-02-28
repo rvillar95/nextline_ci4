@@ -69,6 +69,13 @@ jobs:
           tar -xzf kustomize.tar.gz
           chmod u+x ./kustomize
 
+      # Requiere secret del repo: DATABASE_PASSWORD (contraseña Cloud SQL)
+      - name: 'Create or update DB secret in GKE'
+        run: |
+          kubectl create secret generic vitasync-db \
+            --from-literal=password="${{ secrets.DATABASE_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: 'Deploy to GKE'
         run: |
           ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
