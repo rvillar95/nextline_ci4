@@ -80,6 +80,7 @@ No es obligatorio usar IP pública. Es **más seguro** no exponer la base de dat
 
 - El dominio **vitasync.cl** apunta a la IP del LoadBalancer (`34.176.25.59`). La variable **`APP_BASE_URL`** en el deployment debe coincidir con la URL pública (p. ej. `http://vitasync.cl` o `https://vitasync.cl`) para que redirects y `base_url()` usen el dominio correcto.
 - Con **Cloudflare proxy** (registro A en modo "Proxied"): en SSL/TLS puedes usar **Flexible** para que los usuarios entren por `https://vitasync.cl` aunque el servidor siga en HTTP. Si más adelante quieres HTTPS hasta el servidor, cambia `APP_BASE_URL` a `https://vitasync.cl` y configura certificado en GKE (p. ej. cert-manager) o Cloudflare "Full (strict)".
+- **ForceHTTPS:** El filtro que redirige a HTTPS solo se activa en producción si la variable de entorno **`FORCE_HTTPS=true`** está definida. Así, con `APP_BASE_URL=http://...` (o detrás de Cloudflare Flexible) los recursos se sirven por HTTP y la página no intenta cargar CSS/JS desde `https://` (evitando 522 y contenido mixto). Cuando tengas HTTPS real en origen, define `FORCE_HTTPS=true` en el deployment para forzar HTTPS.
 
 ### Resumen de archivos relevantes
 
