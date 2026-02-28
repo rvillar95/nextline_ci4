@@ -1,8 +1,8 @@
 FROM php:8.2-apache
 
-# Extensiones necesarias para CodeIgniter 4 (MySQL + intl)
-RUN apt-get update && apt-get install -y libicu-dev \
-    && docker-php-ext-install mysqli pdo pdo_mysql intl \
+# Extensiones necesarias para CodeIgniter 4 (MySQL, intl, zip para Composer)
+RUN apt-get update && apt-get install -y libicu-dev libzip-dev unzip \
+    && docker-php-ext-install mysqli pdo pdo_mysql intl zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Habilitar mod_rewrite para que funcionen las rutas de CodeIgniter
