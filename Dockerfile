@@ -12,7 +12,10 @@ RUN a2enmod rewrite
 ENV APACHE_DOCUMENT_ROOT=/var/www/html
 
 # Asegurar permisos y AllowOverride para la raíz (necesario para .htaccess de CodeIgniter)
-RUN printf "<Directory /var/www/html>\n\
+# PassEnv hace que las variables inyectadas por Kubernetes lleguen a PHP (getenv)
+RUN printf "ServerName localhost\n\
+PassEnv DATABASE_HOSTNAME DATABASE_PORT DATABASE_NAME DATABASE_USERNAME DATABASE_PASSWORD\n\
+<Directory /var/www/html>\n\
     AllowOverride All\n\
     Require all granted\n\
     DirectoryIndex index.php\n\
