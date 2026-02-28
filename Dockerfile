@@ -14,7 +14,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html
 # Asegurar permisos y AllowOverride para la raíz (necesario para .htaccess de CodeIgniter)
 # PassEnv hace que las variables inyectadas por Kubernetes lleguen a PHP (getenv)
 RUN printf "ServerName localhost\n\
-PassEnv APP_BASE_URL DATABASE_HOSTNAME DATABASE_PORT DATABASE_NAME DATABASE_USERNAME DATABASE_PASSWORD\n\
+PassEnv APP_BASE_URL DATABASE_HOSTNAME DATABASE_PORT DATABASE_NAME DATABASE_USERNAME DATABASE_PASSWORD GOOGLE_CALENDAR_CLIENT_ID GOOGLE_CALENDAR_CLIENT_SECRET GOOGLE_CALENDAR_REDIRECT_URI\n\
 <Directory /var/www/html>\n\
     AllowOverride All\n\
     Require all granted\n\

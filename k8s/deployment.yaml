@@ -35,4 +35,17 @@ spec:
                 secretKeyRef:
                   name: vitasync-db
                   key: password
+            # Calendario (Google): opcionales; si no existe el secret, la app arranca pero "Conectar calendario" fallará
+            - name: GOOGLE_CALENDAR_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: vitasync-calendar
+                  key: google-client-id
+                  optional: true
+            - name: GOOGLE_CALENDAR_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: vitasync-calendar
+                  key: google-client-secret
+                  optional: true
 

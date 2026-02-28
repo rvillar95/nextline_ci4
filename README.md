@@ -25,6 +25,7 @@ El pipeline **GitHub Actions** (`.github/workflows/google.yml`) se ejecuta en ca
 - **Secret de GitHub** (Settings → Secrets and variables → Actions, o en el environment `production`):
   - `GCP_CREDENTIALS`: JSON de la cuenta de servicio de GCP con permisos para GKE, Artifact Registry y (opcional) Cloud SQL.
   - `DATABASE_PASSWORD`: contraseña del usuario de la base de datos en Cloud SQL (usado para crear el Secret de Kubernetes `vitasync-db`).
+  - **Calendario (Google):** `GOOGLE_CALENDAR_CLIENT_ID` y `GOOGLE_CALENDAR_CLIENT_SECRET` (credenciales OAuth2 de Google Cloud Console para la API de Calendar). Si están definidos, el workflow crea el Secret `vitasync-calendar` y la app puede usar "Conectar calendario" en Agenda. Si no los configuras, la app arranca igual pero mostrará "falta client_id" al conectar el calendario.
 
 ### Conexión a Cloud SQL
 
