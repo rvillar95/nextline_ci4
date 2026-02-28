@@ -21,7 +21,7 @@ spec:
             - containerPort: 80
           env:
             - name: APP_BASE_URL
-              value: "http://vitasync.cl"
+              value: "http://34.176.25.59"
             - name: DATABASE_HOSTNAME
               value: "10.79.240.3"
             - name: DATABASE_PORT
