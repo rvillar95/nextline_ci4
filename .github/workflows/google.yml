@@ -76,9 +76,8 @@ jobs:
             --from-literal=password="${{ secrets.DATABASE_PASSWORD }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # Calendario Google: crea secret vitasync-calendar si existen los secrets del repo
+      # Calendario Google: crea secret vitasync-calendar (usa GOOGLE_CALENDAR_* del repo; si no están, queda vacío)
       - name: 'Create or update Calendar secret in GKE'
-        if: ${{ secrets.GOOGLE_CALENDAR_CLIENT_ID != '' && secrets.GOOGLE_CALENDAR_CLIENT_SECRET != '' }}
         run: |
           kubectl create secret generic vitasync-calendar \
             --from-literal=google-client-id="${{ secrets.GOOGLE_CALENDAR_CLIENT_ID }}" \
