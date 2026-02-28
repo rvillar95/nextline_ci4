@@ -1,0 +1,4 @@
+# No incluir .env en la imagen: en GKE la config de BD viene de variables de entorno (DATABASE_*).
+# Si .env está presente, BaseConfig carga database.default.hostname=localhost y la conexión falla.
+.env
+.env.*
