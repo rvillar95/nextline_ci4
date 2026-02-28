@@ -19,4 +19,18 @@ spec:
           image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
           ports:
             - containerPort: 80
+          env:
+            - name: DATABASE_HOSTNAME
+              value: "10.79.240.3"
+            - name: DATABASE_PORT
+              value: "3306"
+            - name: DATABASE_NAME
+              value: "nextline_pyme"
+            - name: DATABASE_USERNAME
+              value: "root"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vitasync-db
+                  key: password
 
