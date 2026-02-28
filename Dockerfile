@@ -19,7 +19,12 @@ RUN printf "<Directory /var/www/html>\n\
 
 WORKDIR /var/www/html
 
-# Copiar el código de la aplicación
+# Instalar Composer e instalar dependencias (vendor/ no está en el repo)
+COPY composer.json composer.lock /var/www/html/
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer install --no-dev --no-interaction --optimize-autoloader
+
+# Copiar el resto del código de la aplicación
 COPY . /var/www/html
 
 # Exponer el puerto por defecto de Apache
