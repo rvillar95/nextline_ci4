@@ -29,6 +29,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copiar el resto del código de la aplicación
 COPY . /var/www/html
 
+# CodeIgniter 4 necesita escribir en writable/ (cache, logs, session, uploads)
+RUN mkdir -p /var/www/html/writable/cache /var/www/html/writable/logs \
+    /var/www/html/writable/session /var/www/html/writable/uploads \
+    && chown -R www-data:www-data /var/www/html/writable
+
 # Exponer el puerto por defecto de Apache
 EXPOSE 80
 
