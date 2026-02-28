@@ -84,6 +84,13 @@ jobs:
             --from-literal=google-client-secret="${{ secrets.GOOGLE_CALENDAR_CLIENT_SECRET }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      # Email SMTP: contraseña desde secret del repo (opcional)
+      - name: 'Create or update Email secret in GKE'
+        run: |
+          kubectl create secret generic vitasync-email \
+            --from-literal=smtp-password="${{ secrets.EMAIL_SMTP_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: 'Deploy to GKE'
         run: |
           ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA

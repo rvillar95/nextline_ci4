@@ -48,4 +48,31 @@ spec:
                   name: vitasync-calendar
                   key: google-client-secret
                   optional: true
+            - name: GOOGLE_CALENDAR_REDIRECT_URI
+              value: "https://vitasync.cl/dashboard/agenda/calendario/callback"
+            - name: CALENDAR_PROVIDER
+              value: "google"
+            - name: MERCADOPAGO_WEBHOOK_BASE_URL
+              value: "https://vitasync.cl/"
+            - name: WHATSAPP_PLANTILLA_IDIOMA
+              value: "es_CL"
+            # Email (SMTP): sin estas variables no se envían correos ("You did not specify a SMTP hostname")
+            - name: EMAIL_FROM_EMAIL
+              value: "noreply@vitasync.cl"
+            - name: EMAIL_FROM_NAME
+              value: "VitaSync"
+            - name: EMAIL_SMTP_HOST
+              value: "mail.nextline.cl"
+            - name: EMAIL_SMTP_USER
+              value: "contacto@nextline.cl"
+            - name: EMAIL_SMTP_PORT
+              value: "465"
+            - name: EMAIL_SMTP_CRYPTO
+              value: "ssl"
+            - name: EMAIL_SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: vitasync-email
+                  key: smtp-password
+                  optional: true
 

@@ -53,15 +53,15 @@ class Email extends BaseConfig
     public function __construct()
     {
         parent::__construct();
-        
-        // Cargar configuración desde .env
-        $this->fromEmail = env('email.fromEmail', '');
-        $this->fromName = env('email.fromName', '');
-        $this->SMTPHost = env('email.SMTPHost', '');
-        $this->SMTPUser = env('email.SMTPUser', '');
-        $this->SMTPPass = env('email.SMTPPass', '');
-        $this->SMTPPort = (int) env('email.SMTPPort', 465);
-        $this->SMTPCrypto = env('email.SMTPCrypto', 'ssl');
+
+        // Cargar configuración desde .env (local) o variables de entorno (GKE)
+        $this->fromEmail = getenv('EMAIL_FROM_EMAIL') ?: env('email.fromEmail', '');
+        $this->fromName  = getenv('EMAIL_FROM_NAME') ?: env('email.fromName', '');
+        $this->SMTPHost  = getenv('EMAIL_SMTP_HOST') ?: env('email.SMTPHost', '');
+        $this->SMTPUser  = getenv('EMAIL_SMTP_USER') ?: env('email.SMTPUser', '');
+        $this->SMTPPass  = getenv('EMAIL_SMTP_PASS') ?: ($_SERVER['EMAIL_SMTP_PASS'] ?? env('email.SMTPPass', ''));
+        $this->SMTPPort  = (int) (getenv('EMAIL_SMTP_PORT') ?: env('email.SMTPPort', 465));
+        $this->SMTPCrypto = getenv('EMAIL_SMTP_CRYPTO') ?: env('email.SMTPCrypto', 'ssl');
     }
 
     /**
