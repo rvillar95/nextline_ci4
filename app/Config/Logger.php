@@ -39,7 +39,8 @@ class Logger extends BaseConfig
      *
      * @var int|list<int>
      */
-    public $threshold = (ENVIRONMENT === 'production') ? 4 : 9;
+    // En producción 7 (info) para que se cree writable/logs/log-*.log y se vean envíos de email; bajar a 4 para solo errores
+    public $threshold = (ENVIRONMENT === 'production') ? 7 : 9;
 
     /**
      * --------------------------------------------------------------------------
