@@ -109,7 +109,7 @@ exit(); */
 <!--  END NAVBAR  -->
 
 <!-- CRONÓMETRO GLOBAL DE CONSULTA ACTIVA -->
-<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
+<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 48px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
     <div class="d-flex align-items-center justify-content-between">
         <div class="flex-grow-1">
             <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">
@@ -817,6 +817,7 @@ exit(); */
                             $('#cronometroPacienteNombre').text(response.paciente.nombre || 'Paciente');
                             $('#cronometroBtnIrConsulta').attr('href', response.url_consulta);
                             $('#cronometroGlobalConsulta').fadeIn(300);
+                            document.body.classList.add('cronometro-consulta-visible');
                             
                             // Iniciar actualización del cronómetro
                             if (!cronometroInterval) {
@@ -825,6 +826,7 @@ exit(); */
                             }
                         } else {
                             // Ocultar cronómetro si no hay consulta activa
+                            document.body.classList.remove('cronometro-consulta-visible');
                             $('#cronometroGlobalConsulta').fadeOut(300);
                             if (cronometroInterval) {
                                 clearInterval(cronometroInterval);
@@ -840,6 +842,7 @@ exit(); */
                     },
                     error: function() {
                         // En caso de error, ocultar el cronómetro
+                        document.body.classList.remove('cronometro-consulta-visible');
                         $('#cronometroGlobalConsulta').fadeOut(300);
                         if (cronometroInterval) {
                             clearInterval(cronometroInterval);

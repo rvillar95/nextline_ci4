@@ -170,11 +170,18 @@ let distribucionComidas = {
 $(document).ready(function() {
     if (typeof planGuardado !== 'undefined' && planGuardado && planGuardado.id) {
         cargarDistribucionComidas(planGuardado.id);
+    } else {
+        // En editar historial el plan puede cargarse después; reintentar al tener plan
+        setTimeout(function() {
+            if (typeof planGuardado !== 'undefined' && planGuardado && planGuardado.id) {
+                cargarDistribucionComidas(planGuardado.id);
+            }
+        }, 800);
     }
 });
 
-// Al mostrar la pestaña Distribución: si no hay plan en memoria, obtenerlo por detalle_agenda_id
-$(document).on('shown.bs.tab', '#distribucion-tab, [data-bs-target="#distribucion"]', function() {
+// Al mostrar la pestaña Distribución (consulta o editar historial): si no hay plan en memoria, obtenerlo por detalle_agenda_id
+$(document).on('shown.bs.tab', '#distribucion-tab, #distribucion-tab-editar, [data-bs-target="#distribucion"], [data-bs-target="#distribucion-editar"]', function() {
     function abrirDistribucion(planId) {
         if ((typeof intercambios === 'undefined' || !intercambios || intercambios.length === 0)) {
             $.ajax({ url: '<?= base_url("dashboard/plan-alimentario/intercambios") ?>', method: 'GET', dataType: 'json', headers: { 'X-Requested-With': 'XMLHttpRequest' },

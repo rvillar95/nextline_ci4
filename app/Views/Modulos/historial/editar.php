@@ -128,6 +128,47 @@
         border-left: 4px solid #6c757d !important;
         background: linear-gradient(90deg, #fff5f5 0%, #f0f7ff 50%, #f0fff4 100%) !important;
     }
+    /* Tabs de secciones (igual que consulta): responsive */
+    .historial-secciones-tabs .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .historial-secciones-tabs .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-weight: 500;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .historial-secciones-tabs .nav-tabs .nav-link:hover {
+        color: #0d6efd;
+        border-color: transparent;
+    }
+    .historial-secciones-tabs .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background: #fff;
+        border-bottom-color: #0d6efd;
+    }
+    .historial-secciones-tabs .nav-tabs .nav-link .tab-badge {
+        font-size: 0.7rem;
+        margin-left: 0.35rem;
+        font-weight: 500;
+    }
+    .historial-secciones-tabs .tab-content {
+        padding: 1.25rem 0 0;
+    }
+    .historial-secciones-tabs .tab-content .tab-pane { display: none !important; }
+    .historial-secciones-tabs .tab-content .tab-pane.active { display: block !important; }
+    @media (max-width: 768px) {
+        .historial-secciones-tabs .nav-tabs .nav-link { padding: 0.6rem 0.75rem; font-size: 0.9rem; }
+        .historial-secciones-tabs .nav-tabs .nav-link .tab-badge { display: block; margin-left: 0; margin-top: 0.2rem; }
+    }
 </style>
 
 <div class="container-fluid">
@@ -247,25 +288,35 @@
                     </div>
                 </div>
 
-                <!-- 2) Información Clínica: Motivo, Plan, Recomendaciones (mismo orden que agenda/consulta) -->
-                <div class="section-card" style="border-left: 4px solid #28a745 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="text-success mb-0">
-                            <i class="fas fa-file-medical me-2"></i> Información Clínica
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
-                                <i class="fas fa-check me-1"></i> Guardado
-                            </span>
-                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="collapse" data-bs-target="#informacionClinicaCollapse" aria-expanded="false" aria-controls="informacionClinicaCollapse">
-                                <i class="fas fa-chevron-down me-2"></i> <span id="informacionClinicaToggleLabel">Expandir</span>
+                <!-- Secciones en tabs (igual que consulta): Información Clínica, Mediciones, Registro Clínico, Calorimetría y Plan -->
+                <div class="section-card historial-secciones-tabs" style="border-left: 4px solid #28a745 !important;">
+                    <ul class="nav nav-tabs" id="historialSeccionesTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-info-clinica-editar-btn" data-bs-toggle="tab" data-bs-target="#pane-info-clinica-editar" type="button" role="tab" aria-controls="pane-info-clinica-editar" aria-selected="true">
+                                <i class="fas fa-file-medical me-1"></i> Información Clínica <span class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
                             </button>
-                        </div>
-                    </div>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones.
-                    </p>
-                    <div class="collapse" id="informacionClinicaCollapse">
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-mediciones-editar-btn" data-bs-toggle="tab" data-bs-target="#pane-mediciones-editar" type="button" role="tab" aria-controls="pane-mediciones-editar" aria-selected="false">
+                                <i class="fas fa-ruler-combined me-1"></i> Mediciones <span class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-registro-editar-btn" data-bs-toggle="tab" data-bs-target="#pane-registro-editar" type="button" role="tab" aria-controls="pane-registro-editar" aria-selected="false">
+                                <i class="fas fa-file-medical me-1"></i> Registro Clínico <span class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-calorimetria-editar-btn" data-bs-toggle="tab" data-bs-target="#pane-calorimetria-editar" type="button" role="tab" aria-controls="pane-calorimetria-editar" aria-selected="false">
+                                <i class="fas fa-calculator me-1"></i> Calorimetría y Plan <span class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="historialSeccionesTabContent">
+                        <div class="tab-pane fade show active" id="pane-info-clinica-editar" role="tabpanel" aria-labelledby="tab-info-clinica-editar-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones.
+                        </p>
                         <div class="row mb-3">
                             <div class="col-md-12">
                                 <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
@@ -291,29 +342,13 @@
                         <div class="d-flex justify-content-end mt-3">
                             <button type="button" class="btn btn-success" onclick="guardarInformacionClinicaHistorial()"><i class="fas fa-save me-2"></i> Guardar</button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 3) Mediciones Corporales (mismo orden que agenda/consulta, con Expandir/Ocultar) -->
-                <div class="section-card" style="border-left: 4px solid #4A90E2 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="text-primary mb-0">
-                            <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
-                                <i class="fas fa-check me-1"></i> Guardado
-                            </span>
-                            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#medicionesCollapse" aria-expanded="false" aria-controls="medicionesCollapse">
-                                <i class="fas fa-chevron-down me-2"></i> <span id="medicionesToggleLabel">Expandir</span>
-                            </button>
                         </div>
-                    </div>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal.
-                    </p>
-                    <div class="collapse" id="medicionesCollapse">
-                    <!-- Leyenda de Métodos de Cálculo (dentro del collapse, igual que en Agenda/Consulta) -->
+                        <!-- /pane-info-clinica-editar -->
+                        <div class="tab-pane fade" id="pane-mediciones-editar" role="tabpanel" aria-labelledby="tab-mediciones-editar-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal.
+                        </p>
+                    <!-- Leyenda de Métodos de Cálculo -->
                     <div class="alert alert-light border mb-4" style="background-color: #f8f9fa;">
                         <div class="d-flex align-items-center mb-2">
                             <strong class="me-2"><i class="fas fa-info-circle me-1"></i> Leyenda de Métodos de Cálculo:</strong>
@@ -642,54 +677,22 @@
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-primary" onclick="guardarMedicionesHistorial()"><i class="fas fa-save me-2"></i> Guardar Mediciones</button>
                     </div>
-                    </div>
-                </div>
-
-                <!-- 4) Registro Clínico: anamnesis, exámenes, tendencia, recordatorio 24h (mismo orden que agenda/consulta) -->
-                <div class="section-card" style="border-left: 4px solid #28a745 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="text-success mb-0">
-                            <i class="fas fa-file-medical me-2"></i> Registro Clínico
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
-                                <i class="fas fa-check me-1"></i> Guardado
-                            </span>
-                            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="collapse" data-bs-target="#registroClinicoCollapse" aria-expanded="false" aria-controls="registroClinicoCollapse">
-                                <i class="fas fa-chevron-down me-2"></i> <span id="registroClinicoToggleLabel">Expandir</span>
-                            </button>
                         </div>
-                    </div>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h.
-                    </p>
-                    <div class="collapse" id="registroClinicoCollapse">
+                        <!-- /pane-mediciones-editar -->
+                        <div class="tab-pane fade" id="pane-registro-editar" role="tabpanel" aria-labelledby="tab-registro-editar-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h.
+                        </p>
                         <?= $this->include('Modulos/historial/partial_registro_clinico_editar') ?>
                         <div class="d-flex justify-content-end mt-3">
                             <button type="button" class="btn btn-success" onclick="guardarMedicionesHistorial()"><i class="fas fa-save me-2"></i> Guardar Registro Clínico</button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 5) Calorimetría y Plan Alimentario (mismo orden que agenda/consulta, con Expandir/Ocultar) -->
-                <div class="section-card" style="border-left: 4px solid #9C27B0 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="mb-0" style="color: #9C27B0;">
-                            <i class="fas fa-calculator me-2"></i> Calorimetría y Plan Alimentario
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Se guarda con el formulario">
-                                <i class="fas fa-check me-1"></i> Guardado
-                            </span>
-                            <button type="button" class="btn btn-sm btn-outline-purple" data-bs-toggle="collapse" data-bs-target="#calorimetriaPlanCollapse" aria-expanded="false" aria-controls="calorimetriaPlanCollapse" style="border-color: #9C27B0; color: #9C27B0;">
-                                <i class="fas fa-chevron-down me-2"></i> <span id="calorimetriaPlanToggleLabel">Expandir</span>
-                            </button>
                         </div>
-                    </div>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Calcula el gasto calórico y crea un plan alimentario estructurado con porciones e intercambios.
-                    </p>
-                    <div class="collapse" id="calorimetriaPlanCollapse">
+                        <!-- /pane-registro-editar -->
+                        <div class="tab-pane fade" id="pane-calorimetria-editar" role="tabpanel" aria-labelledby="tab-calorimetria-editar-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Calcula el gasto calórico y crea un plan alimentario estructurado con porciones e intercambios.
+                        </p>
                     <ul class="nav nav-tabs mb-3" id="planAlimentarioTabsEditar" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="calorimetria-tab-editar" data-bs-toggle="tab" data-bs-target="#calorimetria-editar" type="button" role="tab" aria-controls="calorimetria-editar" aria-selected="true"><i class="fas fa-fire me-2"></i> Calorimetría</button>
@@ -712,6 +715,8 @@
                             <?= $this->include('Modulos/plan_alimentario/distribucion_comidas') ?>
                         </div>
                     </div>
+                        </div>
+                        <!-- /pane-calorimetria-editar -->
                     </div>
                 </div>
 
@@ -1291,8 +1296,8 @@ $(document).ready(function() {
     setTimeout(function() {
         initTinyMCEHistorial();
     }, 400);
-    // Si el usuario cerró y vuelve a abrir la sección, init por si TinyMCE cargó tarde
-    $(document).on('shown.bs.collapse', '#informacionClinicaCollapse', function() {
+    // Si el usuario cambia al tab Información Clínica, init TinyMCE por si cargó tarde
+    $(document).on('shown.bs.tab', '#tab-info-clinica-editar-btn', function() {
         if (!tinymceHistorialInited && typeof tinymce !== 'undefined') {
             setTimeout(initTinyMCEHistorial, 100);
         }
@@ -2063,21 +2068,6 @@ function mostrarErrorUpgrade(response) {
 function imprimirResultados() {
     window.print();
 }
-// Expandir/Contraer (mismo comportamiento que agenda/consulta)
-    function bindExpandirContraer(collapseId, labelId) {
-        $('#' + collapseId).on('show.bs.collapse', function() {
-            $('#' + labelId).text('Contraer');
-            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-        }).on('hide.bs.collapse', function() {
-            $('#' + labelId).text('Expandir');
-            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
-        });
-    }
-    bindExpandirContraer('informacionClinicaCollapse', 'informacionClinicaToggleLabel');
-    bindExpandirContraer('medicionesCollapse', 'medicionesToggleLabel');
-    bindExpandirContraer('registroClinicoCollapse', 'registroClinicoToggleLabel');
-    bindExpandirContraer('calorimetriaPlanCollapse', 'calorimetriaPlanToggleLabel');
-
 }); // $(function(){ ... })
 } // if jQuery
 </script>

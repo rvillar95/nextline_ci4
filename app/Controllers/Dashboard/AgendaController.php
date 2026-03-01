@@ -906,29 +906,6 @@ class AgendaController extends BaseController
             return false;
         }
 
-        $configuracionModel = new EmpresaConfiguracion();
-        $usuario_id = session()->get('usuario')['id'];
-        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
-
-        $estadoCita = $cita->estado_cita ?? 'pendiente';
-        $mapEstados = [
-            'reservada' => 'mensaje_cancelacion_pendiente',
-            'pendiente' => 'mensaje_cancelacion_pendiente',
-            'confirmada' => 'mensaje_cancelacion_confirmada',
-            'agendada' => 'mensaje_cancelacion_pendiente',
-            'en_proceso' => 'mensaje_cancelacion_en_proceso'
-        ];
-        $campo = $mapEstados[$estadoCita] ?? 'mensaje_cancelacion_pendiente';
-        $mensaje = $configuracion[$campo] ?? '';
-
-        if (empty($mensaje)) {
-            $mensaje = "Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita programada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]";
-        }
-
-        if ($motivoCancelacion) {
-            $mensaje .= "\n\nMotivo: " . htmlspecialchars(trim($motivoCancelacion), ENT_QUOTES, 'UTF-8');
-        }
-
         $fechaRaw = $cita->fecha ?? '';
         if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaRaw, $m)) {
             $fechaFormateada = $m[1] . '/' . $m[2] . '/' . $m[3];
@@ -939,24 +916,16 @@ class AgendaController extends BaseController
         $nombrePaciente = trim(($cita->paciente_nombre ?? '') . ' ' . ($cita->paciente_apellido ?? ''));
         $nombreNutricionista = trim(($cita->nutricionista_nombre ?? '') . ' ' . ($cita->nutricionista_apellido ?? ''));
 
-        $mensaje = str_replace('[NOMBRE_PACIENTE]', $nombrePaciente, $mensaje);
-        $mensaje = str_replace('[FECHA]', $fechaFormateada, $mensaje);
-        $mensaje = str_replace('[HORA]', $horaFormateada, $mensaje);
-        $mensaje = str_replace('[NOMBRE_NUTRICIONISTA]', $nombreNutricionista, $mensaje);
-
-        // Si el mensaje viene de BD/config con "\n" literal (backslash+n), convertirlo a salto real para que nl2br genere <br>
-        $mensaje = str_replace(["\\n", "\\r\\n", "\\r"], ["\n", "\n", "\n"], $mensaje);
-        $mensajeHtml = nl2br($mensaje);
-
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'Sistema de Agenda'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($cita->paciente_email);
         $email->setSubject('Cancelación de Cita - ' . ($nombreNutricionista ?: 'Nutricionista'));
         $email->setMessage(view('emails/cancelacion_cita_paciente', [
             'paciente_nombre' => $nombrePaciente,
             'fecha' => $fechaFormateada,
             'hora' => $horaFormateada,
-            'mensaje' => $mensajeHtml,
+            'motivo' => $motivoCancelacion ? trim($motivoCancelacion) : '',
             'nutricionista_nombre' => $nombreNutricionista
         ]));
         return $email->send();
@@ -1580,9 +1549,10 @@ class AgendaController extends BaseController
             'baseUrl' => base_url()
         ]);
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para que en GKE se use EMAIL_FROM_EMAIL / EMAIL_FROM_NAME)
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'Sistema de Agenda'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($cita->paciente_email);
         $email->setSubject('📅 Confirmación de Cita - ' . $fechaFormateada . ' a las ' . $horaInicio);
         $email->setMessage($mensaje);
@@ -1856,9 +1826,10 @@ class AgendaController extends BaseController
             'baseUrl' => base_url()
         ]);
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para GKE)
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'NextLine Nutrición'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($paciente->email);
         $email->setSubject('💳 Pago de Consulta - ' . $plantilla->titulo);
         $email->setMessage($mensaje);
@@ -1950,12 +1921,12 @@ class AgendaController extends BaseController
             return false;
         }
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para GKE)
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Configurando email');
         $email = Services::email();
-        $fromEmail = env('email.fromEmail', 'noreply@example.com');
-        $fromName = env('email.fromName', 'Sistema de Agenda');
-        
+        $emailConfig = config(\Config\Email::class);
+        $fromEmail = $emailConfig->fromEmail;
+        $fromName = $emailConfig->fromName;
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: From: ' . $fromEmail . ' (' . $fromName . ')');
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: To: ' . $cita->nutricionista_email);
         
@@ -3537,6 +3508,7 @@ class AgendaController extends BaseController
         $detalleAgendaId = $post['detalle_agenda_id'] ?? null;
         $pacienteId = $post['paciente_id'] ?? null;
         $historialId = $post['historial_id'] ?? null;
+        $seccionGuardar = $post['seccion_guardar'] ?? 'ambos'; // 'mediciones' | 'registro' | 'ambos'
 
         if (!$detalleAgendaId || !$pacienteId) {
             return $this->response->setJSON([
@@ -3718,19 +3690,38 @@ class AgendaController extends BaseController
         
         $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
         
-        // Guardar tags en detalle_agenda
-        $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaId)
-            ->update(['tags' => $tagsJson]);
-        
-        // También guardar en historial_clinico para sincronización
-        $dataHistorial['tags'] = $tagsJson;
+        // Tags y detalle_agenda solo cuando se guarda registro o ambos (no solo mediciones)
+        if ($seccionGuardar !== 'mediciones') {
+            $db->table('detalle_agenda')
+                ->where('id', $detalleAgendaId)
+                ->update(['tags' => $tagsJson]);
+            $dataHistorial['tags'] = $tagsJson;
+        }
+
+        // Actualización parcial: solo las columnas de la sección indicada
+        if ($historialExistente && $seccionGuardar === 'mediciones') {
+            $keysMediciones = [
+                'peso_actual', 'altura_actual', 'altura_sentado', 'imc_actual',
+                'circunferencia_cintura', 'circunferencia_cadera', 'circunferencia_brazo_relajado', 'circunferencia_brazo_contraido',
+                'circunferencia_muslo_medio', 'circunferencia_pantorrilla', 'circunferencia_cuello', 'circunferencia_torax',
+                'circunferencia_cabeza', 'circunferencia_antebrazo_maximo', 'circunferencia_muslo_maximo', 'circunferencia_muneca',
+                'diametro_biacromial', 'diametro_bi_iliocristal', 'diametro_torax_transverso', 'diametro_torax_anteroposterior',
+                'diametro_humero', 'diametro_femur', 'diametro_muneca', 'diametro_tobillo',
+                'grasa_corporal', 'masa_muscular', 'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular',
+                'pliegue_suprailíaco', 'pliegue_supraespinal', 'pliegue_abdominal', 'pliegue_muslo_anterior', 'pliegue_pantorrilla_medial',
+                'pliegue_pectoral', 'pliegue_axilar_medio', 'pliegue_muslo_medial', 'suma_pliegues', 'grasa_corporal_calculada', 'estado'
+            ];
+            $dataHistorial = array_intersect_key($dataHistorial, array_flip($keysMediciones));
+        } elseif ($historialExistente && $seccionGuardar === 'registro') {
+            $keysRegistro = ['anamnesis_clinica', 'anamnesis_alimentaria', 'recordatorio_24h', 'tags', 'estado'];
+            $dataHistorial = array_intersect_key($dataHistorial, array_flip($keysRegistro));
+        }
 
         try {
             if ($historialId) {
                 // Actualizar registro existente
                 $historialModel->update($historialId, $dataHistorial);
-                $mensaje = 'Mediciones actualizadas correctamente';
+                $mensaje = $seccionGuardar === 'mediciones' ? 'Mediciones actualizadas correctamente' : ($seccionGuardar === 'registro' ? 'Registro clínico actualizado correctamente' : 'Mediciones actualizadas correctamente');
             } else {
                 // Crear nuevo registro
                 $nuevoId = $historialModel->insert($dataHistorial);
@@ -3738,7 +3729,8 @@ class AgendaController extends BaseController
                 $historialId = $nuevoId;
             }
 
-            // Exámenes bioquímicos: reemplazar todos los del historial
+            // Exámenes bioquímicos y tendencia: solo al guardar registro o ambos
+            if ($seccionGuardar !== 'mediciones') {
             $examenModel = new \App\Models\HistorialExamenBioquimico();
             $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $historialId)->delete();
             $examenesRaw = $post['examenes_bioquimicos'] ?? '';
@@ -3780,6 +3772,7 @@ class AgendaController extends BaseController
                     }
                 }
             }
+            } // fin si seccionGuardar !== 'mediciones'
 
             $response = $this->response->setJSON([
                 'success' => true,

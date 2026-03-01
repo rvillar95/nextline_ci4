@@ -171,6 +171,11 @@ class HistorialController extends BaseController
             $imcInfo = $r->imc_actual ? "IMC: {$r->imc_actual}" : '';
             $medidas = trim($pesoInfo . ($imcInfo ? ' | ' . $imcInfo : ''));
 
+            // Motivo sin etiquetas HTML (solo texto para la tabla)
+            $motivoTexto = strip_tags($r->motivo_consulta ?? '');
+            $motivoTexto = trim(preg_replace('/\s+/', ' ', $motivoTexto));
+            $motivoCorta = $motivoTexto !== '' ? (mb_substr($motivoTexto, 0, 50) . (mb_strlen($motivoTexto) > 50 ? '...' : '')) : '';
+
             // Obtener tags como badges
             $tagsHtml = '';
             if (!empty($r->tags)) {
@@ -184,18 +189,8 @@ class HistorialController extends BaseController
                 }
             }
 
-            $estadoBadge = $r->estado == 'A' 
-                ? '<span class="badge bg-success">Activo</span>' 
-                : '<span class="badge bg-danger">Inactivo</span>';
-
-            $botones = '';
-            if ($r->estado == 'A') {
-                $botones = '<button class="btn btn-sm btn-outline-primary" onclick="editarHistorial(' . $r->id . ')">Editar</button> ' .
-                          '<button class="btn btn-sm btn-outline-info" onclick="verHistorial(' . $r->id . ')">Ver</button> ' .
-                          '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHistorial(' . $r->id . ')">Eliminar</button>';
-            } else {
-                $botones = '<button class="btn btn-sm btn-outline-info" onclick="verHistorial(' . $r->id . ')">Ver</button>';
-            }
+            $botones = '<button class="btn btn-sm btn-outline-primary" onclick="verHistorial(' . $r->id . ')">Ver</button> ' .
+                       '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHistorial(' . $r->id . ')">Eliminar</button>';
 
             $data[] = array(
                 esc($nombrePaciente),
@@ -203,9 +198,8 @@ class HistorialController extends BaseController
                 esc($r->hora_consulta ?? ''),
                 $tipoBadge,
                 esc($medidas),
-                esc(substr($r->motivo_consulta ?? '', 0, 50)) . (strlen($r->motivo_consulta ?? '') > 50 ? '...' : ''),
+                esc($motivoCorta),
                 $tagsHtml ?: '<span class="text-muted">-</span>',
-                $estadoBadge,
                 $botones
             );
         }
