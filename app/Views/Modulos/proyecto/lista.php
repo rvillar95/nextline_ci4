@@ -20,10 +20,22 @@
                     <?php if (session()->getFlashdata('errors')): ?>
                         <div class="alert alert-danger">
                             <ul class="mb-0">
-                                <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                    <li><?= esc($error) ?></li>
-                                <?php endforeach; ?>
+                                <?php 
+                                $errors = session()->getFlashdata('errors');
+                                if (is_array($errors)):
+                                    foreach ($errors as $error): ?>
+                                        <li><?= esc($error) ?></li>
+                                    <?php endforeach;
+                                else: ?>
+                                    <li><?= esc($errors) ?></li>
+                                <?php endif; ?>
                             </ul>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (session()->getFlashdata('error')): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <?= session()->getFlashdata('error') ?>
                         </div>
                     <?php endif; ?>
                     

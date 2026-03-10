@@ -57,14 +57,13 @@ class ProyectoController extends BaseController
         // Obtener estadísticas
         $estadisticas = $proyectoModel->getEstadisticasProyectos();
         
-        // Tipos de proyecto para filtros
-        $tiposProyecto = [
-            'todos' => 'Todos los Proyectos',
-            'residencial' => 'Residencial',
-            'comercial' => 'Comercial',
-            'industrial' => 'Industrial',
-            'institucional' => 'Institucional',
-            'otro' => 'Otros'
+        // Tipos de proyecto para filtros (formato objeto para la vista)
+        $categorias = [
+            (object)['nombre' => 'Residencial', 'icono' => 'fas fa-home', 'slug' => 'residencial'],
+            (object)['nombre' => 'Comercial', 'icono' => 'fas fa-building', 'slug' => 'comercial'],
+            (object)['nombre' => 'Industrial', 'icono' => 'fas fa-industry', 'slug' => 'industrial'],
+            (object)['nombre' => 'Institucional', 'icono' => 'fas fa-university', 'slug' => 'institucional'],
+            (object)['nombre' => 'Otro', 'icono' => 'fas fa-folder', 'slug' => 'otro']
         ];
         
         $data = [
@@ -73,8 +72,8 @@ class ProyectoController extends BaseController
             'keywords' => 'proyectos construcción, obras terminadas, constructor Linares, proyectos residenciales, proyectos comerciales',
             'proyectos' => $proyectos,
             'estadisticas' => $estadisticas,
-            'tipos_proyecto' => $tiposProyecto,
-            'tipo_actual' => $tipo ?? 'todos',
+            'categorias' => $categorias,
+            'tipo_actual' => $tipo ?? '',
             'busqueda_actual' => $busqueda ?? ''
         ];
         

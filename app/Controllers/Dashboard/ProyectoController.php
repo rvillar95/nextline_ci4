@@ -248,7 +248,7 @@ class ProyectoController extends BaseController
         if ($proyecto->delete($id)) {
             return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto eliminado con éxito');
         } else {
-            return redirect()->back()->with('errors', 'Error al eliminar el proyecto');
+            return redirect()->back()->with('error', 'Error al eliminar el proyecto');
         }
     }
 
@@ -266,7 +266,7 @@ class ProyectoController extends BaseController
             'fecha_inicio', 'fecha_finalizacion', 'presupuesto', 'mostrar_presupuesto',
             'estado', 'descripcion_corta', 'descripcion_detallada', 'caracteristicas_tecnicas',
             'area_construida', 'materiales_principales', 'testimonio_cliente', 'nombre_cliente',
-            'destacado', 'meta_titulo', 'meta_descripcion', 'meta_keywords'
+            'destacado', 'meta_titulo', 'meta_descripcion', 'meta_keywords', 'estado_publico'
         ]);
         
         $arreglo = [
@@ -290,7 +290,8 @@ class ProyectoController extends BaseController
             'destacado' => $post['destacado'] ?? 0,
             'meta_titulo' => $post['meta_titulo'],
             'meta_descripcion' => $post['meta_descripcion'],
-            'meta_keywords' => $post['meta_keywords']
+            'meta_keywords' => $post['meta_keywords'],
+            'estado_publico' => $post['estado_publico'] ?? 'A'
         ];
 
         if ($proyecto->update($id, $arreglo)) {
@@ -299,7 +300,7 @@ class ProyectoController extends BaseController
             
             return redirect()->to(base_url('dashboard/proyecto/lista'))->with('success', 'Proyecto editado con éxito');
         } else {
-            return redirect()->back()->withInput()->with('errors', 'Error al editar el proyecto');
+            return redirect()->back()->withInput()->with('error', 'Error al editar el proyecto');
         }
     }
 

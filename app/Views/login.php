@@ -5,8 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
-    <title>SignIn Boxed | CORK - Multipurpose Bootstrap Dashboard Template </title>
-    <link rel="icon" type="image/x-icon" href="../src/assets/img/favicon.ico" />
+    <title>Login - MANSANCHEZ Constructor</title>
+    <link rel="icon" type="image/x-icon" href="<?= base_url('lib/images/logo_transparente_grande.ico') ?>" />
     <link href="<?= base_url("lib/") ?>/layouts/vertical-light-menu/css/light/loader.css" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/") ?>layouts/vertical-light-menu/css/dark/loader.css" rel="stylesheet" type="text/css" />
     <script src="<?= base_url("lib/") ?>layouts/vertical-light-menu/loader.js"></script>

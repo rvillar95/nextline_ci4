@@ -17,6 +17,9 @@ $routes->get('/layout', 'ViewController::layout');
 
 $routes->group('dashboard', function ($routes) {
     $routes->get('inicio', 'ViewController::index');
+    
+    // Ruta para renovar la sesión (keepalive)
+    $routes->get('keepalive', 'Dashboard\UsuarioController::keepalive');
 
     $routes->get('registro/usuario', 'ViewController::registro');
     $routes->get('menu', 'ViewController::menu');
@@ -146,7 +149,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getTestimonios', 'Dashboard\TestimonioController::getTestimonios'); //get Data
         $routes2->post('registrar', 'Dashboard\TestimonioController::registrar'); //accion
         $routes2->post('update', 'Dashboard\TestimonioController::update'); //accion
-        $routes2->get('eliminar/(:num)', 'Dashboard\TestimonioController::eliminar/$1'); //accion
+        $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar'); //accion
     });
 
     $routes->group('cliente', function ($routes2) {
@@ -193,6 +196,21 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('validar', 'Dashboard\UbicacionController::validarUbicacion');
         $routes2->get('estadisticas', 'Dashboard\UbicacionController::getEstadisticas');
     });
+
+    // Rutas para Listado de Materiales
+    $routes->group('listado-material', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\ListadoMaterialController::lista'); // Vista lista
+        $routes2->get('registro', 'Dashboard\ListadoMaterialController::registro'); // Vista registro
+        $routes2->get('editar/(:num)', 'Dashboard\ListadoMaterialController::editar/$1'); // Vista editar
+        $routes2->get('detalle/(:num)', 'Dashboard\ListadoMaterialController::detalle/$1'); // Vista detalle
+        $routes2->get('getListadosMateriales', 'Dashboard\ListadoMaterialController::getListadosMateriales'); // Get data
+        $routes2->get('getClientesSelect', 'Dashboard\ListadoMaterialController::getClientesSelect'); // Get clientes
+        $routes2->get('getProyectosByCliente', 'Dashboard\ListadoMaterialController::getProyectosByCliente'); // Get proyectos
+        $routes2->post('registrar', 'Dashboard\ListadoMaterialController::registrar'); // Accion registrar
+        $routes2->post('update/(:num)', 'Dashboard\ListadoMaterialController::update/$1'); // Accion update
+        $routes2->post('eliminar', 'Dashboard\ListadoMaterialController::eliminar'); // Accion eliminar
+        $routes2->get('generarPDF/(:num)', 'Dashboard\ListadoMaterialController::generarPDF/$1'); // Generar PDF
+    });
 });
 
 $routes->post('/inicio-sesion', 'Dashboard\UsuarioController::inicio_sesion');
@@ -217,5 +235,9 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+// Políticas
+$routes->get('politica-privacidad', 'Web\PoliticasController::privacidad');
+$routes->get('terminos-condiciones', 'Web\PoliticasController::terminos');
 
 //$routes->get('/getPerfil', 'PerfilController::getPerfil');

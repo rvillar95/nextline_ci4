@@ -43,7 +43,6 @@
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Categoría</th>
-                                    <th>Descripción Corta</th>
                                     <th>Precio</th>
                                     <th>Estado</th>
                                     <th>Destacado</th>

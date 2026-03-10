@@ -14,34 +14,65 @@ $empresaContacto = [
 <head>
     <meta charset="utf-8" />
     <title><?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?></title>
-    <link rel="icon" href="<?= base_url('lib/images/icon.png') ?>" type="image/gif" sizes="16x16" />
+    <link rel="icon" href="<?= base_url('lib/images/logo_transparente_grande.ico') ?>" type="image/x-icon" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta content="<?= $description ?? 'MANSANCHEZ - Constructor profesional con años de experiencia en construcción residencial y comercial' ?>" name="description" />
     <meta content="<?= $keywords ?? 'mansanchez, constructor, construcción, obras, proyectos, remodelación, chile' ?>" name="keywords" />
     <meta content="MANSANCHEZ" name="author" />
     
-    <!-- CSS Files -->
+        <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="<?= current_url() ?>" />
+    <meta property="og:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
+    <meta property="og:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial en Chile' ?>" />
+    <meta property="og:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="MANSANCHEZ Constructor" />
+    <meta property="og:locale" content="es_CL" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="<?= current_url() ?>" />
+    <meta name="twitter:title" content="<?= $title ?? 'MANSANCHEZ - Constructor Profesional' ?>" />
+    <meta name="twitter:description" content="<?= $description ?? 'Constructor profesional con más de 15 años de experiencia en construcción residencial y comercial' ?>" />
+    <meta name="twitter:image" content="<?= base_url('lib/images/logo-whatsapp.png') ?>" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    
+    <!-- CSS Files - Critical CSS first -->
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.carousel.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.theme.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/owl.transitions.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/magnific-popup.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/jquery.countdown.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/style.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Font Awesome Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" />
-    <!-- Icofont Icons -->
-    <link href="<?= base_url('lib/css/icofont.min.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- color scheme -->
-    <link href="<?= base_url('lib/css/colors/scheme-01.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/coloring.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- Colores corporativos MANSANCHEZ -->
+    <link href="<?= base_url('lib/css/navigation.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/mansanchez-colors.css') ?>" rel="stylesheet" type="text/css" />
-    <!-- RS5.0 Stylesheet -->
-    <link rel="stylesheet" href="<?= base_url('lib/css/settings.css') ?>" type="text/css" />
-    <link rel="stylesheet" href="<?= base_url('lib/css/layers.css') ?>" type="text/css" />
-    <link rel="stylesheet" href="<?= base_url('lib/css/navigation.css') ?>" type="text/css" />
+    
+    <!-- Non-critical CSS - Deferred loading -->
+    <link href="<?= base_url('lib/css/animate.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.carousel.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.theme.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/owl.transitions.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/magnific-popup.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/jquery.countdown.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- Font Awesome Icons - Deferred -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" type="text/css" /></noscript>
+    
+    <!-- Icofont Icons - Deferred -->
+    <link href="<?= base_url('lib/css/icofont.min.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- Color schemes - Deferred -->
+    <link href="<?= base_url('lib/css/colors/scheme-01.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    <link href="<?= base_url('lib/css/coloring.css') ?>" rel="stylesheet" type="text/css" media="print" onload="this.media='all'" />
+    
+    <!-- RS5.0 Stylesheet - Deferred -->
+    <link rel="stylesheet" href="<?= base_url('lib/css/settings.css') ?>" type="text/css" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="<?= base_url('lib/css/layers.css') ?>" type="text/css" media="print" onload="this.media='all'" />
     
     <!-- Custom CSS for page spacing and navbar -->
     <style>
@@ -65,6 +96,33 @@ $empresaContacto = [
             scroll-behavior: smooth;
         }
         
+        /* ===== WRAPPER Y BODY ===== */
+        #wrapper {
+            background: transparent !important;
+        }
+        
+        body {
+            background-color: #ffffff;
+        }
+        
+        #content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Asegurar que las secciones estén debajo del menú móvil */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-section-modern,
+        .no-bottom,
+        .no-top {
+            position: relative;
+            z-index: 1;
+        }
+        
         /* ===== HEADER Y NAVBAR MODERNO ===== */
         
         /* Topbar Moderno */
@@ -73,7 +131,7 @@ $empresaContacto = [
             padding: 3px 0;
             border-bottom: 1px solid rgba(240, 132, 26, 0.2);
             position: relative;
-            z-index: 1000;
+            z-index: 9998;
         }
         
         .topbar-content-modern {
@@ -164,12 +222,12 @@ $empresaContacto = [
         
         /* Header Moderno */
         .header-modern {
-            background: #1d2844;
+            background: #1d2844 !important;
             backdrop-filter: blur(10px);
             padding: 5px 0;
             position: sticky;
             top: 0;
-            z-index: 999;
+            z-index: 9999;
             box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
             border-bottom: 1px solid rgba(240, 132, 26, 0.2);
             transition: box-shadow 0.3s ease;
@@ -179,6 +237,7 @@ $empresaContacto = [
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: transparent;
         }
         
         /* Logo Moderno */
@@ -311,12 +370,19 @@ $empresaContacto = [
             display: none;
             flex-direction: column;
             justify-content: space-around;
-            width: 30px;
-            height: 30px;
-            background: transparent;
-            border: none;
+            width: 35px;
+            height: 35px;
+            background: rgba(240, 132, 26, 0.1);
+            border: 2px solid #f0841a;
+            border-radius: 8px;
             cursor: pointer;
-            padding: 0;
+            padding: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-btn-modern:hover {
+            background: rgba(240, 132, 26, 0.2);
+            transform: scale(1.05);
         }
         
         .mobile-menu-btn-modern span {
@@ -325,6 +391,18 @@ $empresaContacto = [
             background: #f0841a;
             border-radius: 2px;
             transition: all 0.3s ease;
+        }
+        
+        /* Animación para menú móvil */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         /* Responsive Design */
@@ -342,43 +420,32 @@ $empresaContacto = [
             }
         }
         
-        @media (max-width: 992px) {
+        @media (max-width: 993px) {
+            /* Ocultar topbar en tablets y móviles */
             .topbar-modern {
                 display: none;
             }
             
-            .header-content-modern {
-                flex-wrap: wrap;
-            }
-            
-            .nav-modern {
-                order: 3;
-                width: 100%;
-                margin-top: 15px;
-            }
-            
-            .nav-menu-modern {
-                justify-content: center;
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            
-            .nav-link-modern {
-                padding: 8px 12px;
-            }
-            
-            .nav-link-modern span {
-                font-size: 0.8rem;
-            }
-        }
-        
-        @media (max-width: 768px) {
+            /* Sobrescribir el CSS del template para header-mobile */
+            header.header-mobile,
+            header.header-modern.header-mobile,
             .header-modern {
-                padding: 10px 0;
+                padding: 15px 0 !important;
+                min-height: 120px !important;
+                height: 120px !important;
+                display: flex !important;
+                align-items: center !important;
+                overflow: visible !important;
+            }
+            
+            .header-content-modern {
+                flex-wrap: nowrap;
+                width: 100%;
             }
             
             .logo-img-modern {
-                height: 60px;
+                height: 70px !important;
+                width: auto;
             }
             
             .phone-modern {
@@ -387,33 +454,113 @@ $empresaContacto = [
             
             .mobile-menu-btn-modern {
                 display: flex;
+                flex-shrink: 0;
             }
             
+            /* Menú móvil desde 993px hacia abajo */
             .nav-modern {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: rgba(29, 40, 68, 0.98);
+                display: block !important;
+                position: fixed !important;
+                top: 120px !important;
+                left: 0 !important;
+                right: 0 !important;
+                background: #1d2844 !important;
                 backdrop-filter: blur(10px);
-                padding: 20px;
-                box-shadow: 0 4px 20px rgba(29, 40, 68, 0.3);
+                padding: 20px !important;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5) !important;
+                border-top: 2px solid #f0841a !important;
+                z-index: 2147483647 !important;
+                max-height: calc(100vh - 120px) !important;
+                min-height: 450px !important;
+                overflow-y: auto !important;
+                width: 100% !important;
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+                pointer-events: none;
             }
             
             .nav-modern.active {
-                display: block;
+                transform: translateY(0) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+                min-height: 450px !important;
+                display: block !important;
+                z-index: 2147483647 !important;
             }
             
             .nav-menu-modern {
+                display: flex !important;
                 flex-direction: column;
-                gap: 10px;
+                gap: 12px;
+                width: 100%;
             }
             
             .nav-link-modern {
-                padding: 15px 20px;
-                border-radius: 8px;
-                background: rgba(240, 132, 26, 0.1);
+                padding: 16px 20px;
+                border-radius: 10px;
+                background: rgba(240, 132, 26, 0.15);
+                border: 1px solid rgba(240, 132, 26, 0.3);
+                color: #f3d7b0 !important;
+                font-size: 0.95rem;
+                transition: all 0.3s ease;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .nav-link-modern i {
+                font-size: 1.2rem;
+                color: #f0841a;
+                margin-bottom: 0;
+            }
+            
+            .nav-link-modern span {
+                color: #f3d7b0 !important;
+                font-weight: 600;
+            }
+            
+            .nav-link-modern:hover {
+                background: rgba(240, 132, 26, 0.25);
+                transform: translateX(5px);
+                border-color: #f0841a;
+            }
+            
+            .nav-link-modern.active {
+                background: linear-gradient(135deg, #f0841a, #ff6b35);
+                color: white !important;
+                box-shadow: 0 4px 15px rgba(240, 132, 26, 0.4);
+                border-color: transparent;
+            }
+            
+            .nav-link-modern.active i,
+            .nav-link-modern.active span {
+                color: white !important;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* Ajustes adicionales para móviles pequeños */
+            header.header-mobile,
+            header.header-modern.header-mobile,
+            .header-modern {
+                min-height: 100px !important;
+                height: 100px !important;
+            }
+            
+            .logo-img-modern {
+                height: 60px !important;
+                width: auto;
+            }
+            
+            .nav-modern {
+                top: 100px !important;
+                max-height: calc(100vh - 100px) !important;
+                min-height: 400px !important;
+                z-index: 2147483647 !important;
             }
         }
         
@@ -1064,7 +1211,7 @@ $empresaContacto = [
                     <!-- Logo -->
                     <div class="logo-modern">
                         <a href="<?= base_url() ?>" class="logo-link-modern">
-                            <img src="<?= base_url('lib/images/logo-min.jpg') ?>" alt="MANSANCHEZ Constructor" class="logo-img-modern">
+                            <img src="<?= base_url('lib/images/logo-min.jpg') ?>" alt="MANSANCHEZ Constructor" class="logo-img-modern" width="150" height="60" loading="eager">
                         </a>
                     </div>
                     
@@ -1132,9 +1279,11 @@ $empresaContacto = [
         </header>
 
         <!-- Content -->
-        <div class="no-bottom no-top" id="content">
-            <?= $this->renderSection('content') ?>
-        </div>
+        <main role="main" aria-label="Contenido principal">
+            <div class="no-bottom no-top" id="content">
+                <?= $this->renderSection('content') ?>
+            </div>
+        </main>
 
         <!-- Footer Moderno -->
         <footer class="footer-modern">
@@ -1146,7 +1295,7 @@ $empresaContacto = [
                         <div class="footer-widget-modern">
                             <div class="footer-logo-modern">
                                 <a href="<?= base_url() ?>">
-                                    <img alt="MANSANCHEZ Constructor" src="<?= base_url('lib/images/logo-min.jpg') ?>" />
+                                    <img alt="MANSANCHEZ Constructor" src="<?= base_url('lib/images/logo-min.jpg') ?>" width="120" height="48" loading="lazy" />
                                 </a>
                                 <h3 class="company-name-modern">MANSANCHEZ</h3>
                             </div>
@@ -1185,6 +1334,8 @@ $empresaContacto = [
                                 <li><a href="<?= base_url('servicios') ?>"><i class="fas fa-cogs"></i> Servicios</a></li>
                                 <li><a href="<?= base_url('proyectos') ?>"><i class="fas fa-building"></i> Proyectos</a></li>
                                 <li><a href="<?= base_url('contacto') ?>"><i class="fas fa-envelope"></i> Contacto</a></li>
+                                <li><a href="<?= base_url('politica-privacidad') ?>"><i class="fas fa-shield-alt"></i> Privacidad</a></li>
+                                <li><a href="<?= base_url('terminos-condiciones') ?>"><i class="fas fa-file-contract"></i> Términos</a></li>
                             </ul>
                         </div>
                     </div>
@@ -1249,7 +1400,9 @@ $empresaContacto = [
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-md-6">
                             <p class="copyright-modern">
-                                &copy; Copyright <?= date('Y') ?> - MANSANCHEZ Constructor. Todos los derechos reservados.
+                                &copy; <?= date('Y') ?> <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.9); text-decoration: none;"><span style="color: #6aff99;">N</span>ext<span style="color: #6aff99;">L</span>ine</a> - <a href="https://nextline.cl" target="_blank" style="color: rgba(255,255,255,0.7); text-decoration: none;">Nextline.cl</a> | 
+                                <a href="<?= base_url('politica-privacidad') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacidad</a> | 
+                                <a href="<?= base_url('terminos-condiciones') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Términos</a>
                             </p>
                         </div>
                         <div class="col-lg-6 col-md-6 text-md-end">
@@ -1302,10 +1455,35 @@ $empresaContacto = [
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const navModern = document.querySelector('.nav-modern');
+        const header = document.querySelector('.header-modern');
+        
+        // Función para posicionar el menú correctamente
+        function positionMenu() {
+            if (navModern && header) {
+                const headerHeight = header.offsetHeight;
+                const topbarHeight = document.querySelector('.topbar-modern')?.offsetHeight || 0;
+                navModern.style.top = (headerHeight) + 'px';
+                console.log('Menu posicionado en:', headerHeight + 'px');
+            }
+        }
         
         if (mobileMenuBtn && navModern) {
-            mobileMenuBtn.addEventListener('click', function() {
+            console.log('Menu mobile inicializado correctamente');
+            
+            // Posicionar menú al cargar
+            positionMenu();
+            
+            // Toggle del menú móvil
+            mobileMenuBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('Click en hamburguesa');
                 navModern.classList.toggle('active');
+                console.log('Clase active:', navModern.classList.contains('active'));
+                
+                // Posicionar menú debajo del header
+                positionMenu();
                 
                 // Animate hamburger menu
                 const spans = this.querySelectorAll('span');
@@ -1342,6 +1520,11 @@ $empresaContacto = [
                     spans[2].style.transform = 'none';
                 }
             });
+            
+            // Reposicionar menú al hacer resize
+            window.addEventListener('resize', function() {
+                positionMenu();
+            });
         }
         
         // Smooth scrolling for anchor links
@@ -1362,7 +1545,6 @@ $empresaContacto = [
         });
         
         // Header scroll effect - Solo cambia la sombra, sin cambios de padding
-        const header = document.querySelector('.header-modern');
         if (header) {
             let ticking = false;
             

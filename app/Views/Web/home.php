@@ -174,7 +174,7 @@ function mostrarEstrellas($calificacion) {
                     <div class="col-lg-4 col-md-6 service-item-modern">
                         <div class="service-card-modern">
                             <div class="service-image-modern">
-                                <img src="<?= base_url($servicio->foto) ?>" alt="<?= esc($servicio->nombre) ?>" class="img-fluid">
+                                <img src="<?= base_url($servicio->foto) ?>" alt="<?= esc($servicio->nombre) ?>" class="img-fluid" loading="lazy">
                                 <div class="service-overlay-modern">
                                     <div class="service-icon-modern">
                                         <i class="fas fa-cog"></i>
@@ -203,7 +203,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Residencial" class="img-fluid">
+                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Residencial" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-home"></i>
@@ -229,7 +229,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Comercial" class="img-fluid">
+                            <img src="<?= base_url('lib/images/slider/construccion_4.jpg') ?>" alt="Construcción Comercial" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-building"></i>
@@ -255,7 +255,7 @@ function mostrarEstrellas($calificacion) {
                 <div class="col-lg-4 col-md-6 service-item-modern">
                     <div class="service-card-modern">
                         <div class="service-image-modern">
-                            <img src="<?= base_url('lib/images/services/remodelation.jpg') ?>" alt="Remodelaciones" class="img-fluid">
+                            <img src="<?= base_url('lib/images/services/remodelation.jpg') ?>" alt="Remodelaciones" class="img-fluid" width="400" height="300" loading="lazy">
                             <div class="service-overlay-modern">
                                 <div class="service-icon-modern">
                                     <i class="fas fa-tools"></i>
@@ -350,9 +350,9 @@ function mostrarEstrellas($calificacion) {
                             <div class="stat-icon-modern">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <div class="stat-number-modern">
+                            <!--div class="stat-number-modern">
                                 <span class="timer" data-to="50" data-speed="3000">0</span>+
-                            </div>
+                            </div-->
                             <div class="stat-label-modern">Empleados Especializados</div>
                         </div>
                     </div>
@@ -409,9 +409,9 @@ function mostrarEstrellas($calificacion) {
                             <div class="project-card">
                                 <div class="project-image">
                                     <?php if (!empty($proyecto->imagen_portada)): ?>
-                                        <img src="<?= base_url($proyecto->imagen_portada->ruta) ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" />
+                                        <img src="<?= base_url($proyecto->imagen_portada->ruta) ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
                                     <?php else: ?>
-                                        <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" />
+                                        <img src="<?= base_url('lib/images/placeholder-project.jpg') ?>" alt="<?= esc($proyecto->nombre) ?>" class="img-fluid" loading="lazy" />
                                     <?php endif; ?>
                                     <div class="project-overlay">
                                         <div class="project-badge">
@@ -1328,6 +1328,81 @@ function mostrarEstrellas($calificacion) {
     width: 100%;
 }
 
+/* ===== ESTILOS MODERNOS PARA NAVEGACIÓN DEL CARRUSEL DE TESTIMONIOS ===== */
+
+/* Flechas de navegación */
+#testimonial-carousel-modern .owl-nav {
+    margin-top: 50px;
+    text-align: center;
+}
+
+#testimonial-carousel-modern .owl-nav button {
+    width: 60px;
+    height: 60px;
+    background: white !important;
+    color: #1d2844 !important;
+    border-radius: 50% !important;
+    font-size: 24px !important;
+    margin: 0 10px !important;
+    transition: all 0.3s ease !important;
+    border: 3px solid white !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+#testimonial-carousel-modern .owl-nav button:hover {
+    background: #1d2844 !important;
+    color: white !important;
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3) !important;
+    border-color: #1d2844 !important;
+}
+
+#testimonial-carousel-modern .owl-nav button span {
+    line-height: 60px;
+    display: block;
+    font-weight: bold;
+}
+
+/* Puntos indicadores - Ocultos */
+#testimonial-carousel-modern.owl-theme .owl-dots {
+    display: none !important;
+}
+
+#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot {
+    display: inline-block;
+    margin: 0 8px;
+}
+
+#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
+    width: 14px !important;
+    height: 14px !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 2px solid white !important;
+    display: block !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    margin: 0 !important;
+}
+
+#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot:hover span {
+    background: white !important;
+    transform: scale(1.3) !important;
+    border-color: white !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+#testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
+    width: 40px !important;
+    height: 14px !important;
+    background: white !important;
+    border-radius: 10px !important;
+    border-color: white !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .hero-title-modern {
@@ -1451,6 +1526,32 @@ function mostrarEstrellas($calificacion) {
     .testimonial-text-modern {
         font-size: 1.1rem;
     }
+    
+    /* Flechas y puntos del carrusel en tablets */
+    #testimonial-carousel-modern .owl-nav button {
+        width: 55px;
+        height: 55px;
+        font-size: 22px !important;
+        border-width: 3px !important;
+    }
+    
+    #testimonial-carousel-modern .owl-nav button span {
+        line-height: 55px;
+    }
+    
+    #testimonial-carousel-modern .owl-nav {
+        margin-top: 35px;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
+        width: 13px !important;
+        height: 13px !important;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
+        width: 35px !important;
+        height: 13px !important;
+    }
 }
 
 @media (max-width: 576px) {
@@ -1522,6 +1623,41 @@ function mostrarEstrellas($calificacion) {
     
     .testimonial-text-modern {
         font-size: 1rem;
+    }
+    
+    /* Flechas y puntos del carrusel en móviles pequeños */
+    #testimonial-carousel-modern .owl-nav button {
+        width: 48px;
+        height: 48px;
+        font-size: 18px !important;
+        margin: 0 4px !important;
+        border-width: 2.5px !important;
+    }
+    
+    #testimonial-carousel-modern .owl-nav button span {
+        line-height: 48px;
+    }
+    
+    #testimonial-carousel-modern .owl-nav {
+        margin-top: 25px;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots {
+        margin-top: 15px !important;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot {
+        margin: 0 5px !important;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot span {
+        width: 11px !important;
+        height: 11px !important;
+    }
+    
+    #testimonial-carousel-modern.owl-theme .owl-dots .owl-dot.active span {
+        width: 28px !important;
+        height: 11px !important;
     }
 }
 .projects-grid {

@@ -83,7 +83,7 @@ final class ContactoController extends BaseController
         // Configurar email manualmente (sin initialize)
         $email = Services::email();
                         
-        $email->setFrom('no-reply@mansanchez.cl', 'Sistema MANSANCHEZ');
+        $email->setFrom(env('email.fromEmail', ''), env('email.fromName', ''));
         $email->setTo($empresa->email);
         $email->setSubject('🔔 Nueva Consulta desde el Sitio Web');
         
@@ -110,8 +110,8 @@ final class ContactoController extends BaseController
         $fecha = date('d/m/Y H:i');
         $nombre = esc($data['nombre'] ?? '');
         $correo = esc($data['correo'] ?? '');
-        $telefono = esc($data['telefono'] ?? 'No proporcionado');
-        $mensaje = esc($data['mensaje'] ?? 'Sin mensaje');
+        $telefono = esc($data['telefono'] ?? '');
+        $mensaje = esc($data['mensaje'] ?? '');
         
         return <<<HTML
 <!DOCTYPE html>
@@ -280,8 +280,8 @@ HTML;
      */
     private function validarRecaptcha(): bool
     {
-        // Verificar si reCAPTCHA está habilitado
-        if (!env('recaptcha.enabled', true)) {
+        // Verificar si reCAPTCHA está habilitado desde .env
+        if (!filter_var(env('recaptcha.enabled', 'true'), FILTER_VALIDATE_BOOLEAN)) {
             return true; // Si está deshabilitado, permitir el envío
         }
 
@@ -295,7 +295,7 @@ HTML;
         $secretKey = env('recaptcha.secretKey');
         
         if (empty($secretKey)) {
-            log_message('error', 'reCAPTCHA: Secret key no configurada');
+            log_message('error', 'reCAPTCHA: Secret key no configurada en .env');
             return true; // Permitir si no está configurado (para desarrollo)
         }
 

@@ -210,9 +210,14 @@ class TestimonioController extends BaseController
         }
     }
 
-    public function eliminar($id)
+    public function eliminar()
     {
         $testimonio = new Testimonio();
+        $id = $this->request->getPost('id');
+        
+        if (!$id) {
+            return redirect()->to(base_url('dashboard/testimonio/lista'))->with('error', 'ID de testimonio requerido');
+        }
         
         if ($testimonio->delete($id)) {
             return redirect()->to(base_url('dashboard/testimonio/lista'))->with('success', 'Testimonio eliminado con éxito');

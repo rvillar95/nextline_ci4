@@ -32,7 +32,7 @@ class Cotizacion extends Model
         'cliente_id' => 'required|integer|is_natural_no_zero',
         'numero_cotizacion' => 'permit_empty|string|max_length[50]|is_unique[cotizaciones.numero_cotizacion,id,{id}]',
         'proyecto_nombre' => 'required|string|max_length[200]',
-        'proyecto_descripcion' => 'permit_empty|string',
+        'proyecto_descripcion' => 'permit_empty|string|max_length[20000]',
         'proyecto_tipo' => 'required|in_list[residencial,comercial,industrial,mantenimiento,otro]',
         'proyecto_area' => 'permit_empty|decimal',
         'fecha_cotizacion' => 'required|valid_date',

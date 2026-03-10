@@ -51,14 +51,14 @@
                 
                 <!-- Botones de filtro modernos -->
                 <div class="filter-buttons-modern">
-                    <a href="<?= base_url('proyectos') ?>" class="btn-filter-modern <?= empty($categoria_actual) ? 'active' : '' ?>">
+                    <a href="<?= base_url('proyectos') ?>" class="btn-filter-modern <?= empty($tipo_actual) ? 'active' : '' ?>">
                         <i class="fas fa-th-large"></i>
                         <span>Todos</span>
                     </a>
                     <?php if (!empty($categorias)): ?>
                         <?php foreach ($categorias as $cat): ?>
-                            <a href="<?= base_url('proyectos?categoria=' . urlencode($cat->nombre)) ?>" 
-                               class="btn-filter-modern <?= $categoria_actual === $cat->nombre ? 'active' : '' ?>">
+                            <a href="<?= base_url('proyectos?tipo=' . $cat->slug) ?>" 
+                               class="btn-filter-modern <?= $tipo_actual === $cat->slug ? 'active' : '' ?>">
                                 <?php if (!empty($cat->icono)): ?>
                                     <i class="<?= esc($cat->icono) ?>"></i>
                                 <?php else: ?>

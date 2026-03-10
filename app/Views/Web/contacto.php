@@ -72,7 +72,7 @@
                             <div class="col-md-6">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">
-                                        <i class="fas fa-user"></i> Nombre Completo
+                                        <i class="fas fa-user"></i> Nombre Completo <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" name="nombre" class="form-control-modern" required value="<?= old('nombre') ?>" placeholder="Ingresa tu nombre completo">
                                 </div>
@@ -81,7 +81,7 @@
                             <div class="col-md-6">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">
-                                        <i class="fas fa-envelope"></i> Correo Electrónico
+                                        <i class="fas fa-envelope"></i> Correo Electrónico <span class="text-danger">*</span>
                                     </label>
                                     <input type="email" name="correo" class="form-control-modern" required value="<?= old('correo') ?>" placeholder="tu@email.com">
                                 </div>
@@ -90,9 +90,9 @@
                             <div class="col-md-6">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">
-                                        <i class="fas fa-phone"></i> Teléfono
+                                        <i class="fas fa-phone"></i> Teléfono <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" name="telefono" class="form-control-modern" value="<?= old('telefono') ?>" placeholder="+56 9 1234 5678">
+                                    <input type="text" name="telefono" class="form-control-modern" required value="<?= old('telefono') ?>" placeholder="+56 9 1234 5678">
                                 </div>
                             </div>
                             
@@ -116,10 +116,10 @@
                             <div class="col-12">
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">
-                                        <i class="fas fa-comment-dots"></i> Mensaje
+                                        <i class="fas fa-comment-dots"></i> Mensaje <span class="text-danger">*</span>
                                     </label>
-                                    <textarea name="mensaje" class="form-control-modern" rows="6" placeholder="Cuéntanos sobre tu proyecto, necesidades específicas, presupuesto estimado, fechas importantes..."><?= old('mensaje') ?></textarea>
-                                    <small class="form-help">Mientras más detalles nos proporciones, mejor podremos ayudarte</small>
+                                    <textarea name="mensaje" class="form-control-modern" rows="6" required placeholder="Cuéntanos sobre tu proyecto, necesidades específicas, presupuesto estimado, fechas importantes..."><?= old('mensaje') ?></textarea>
+                                    <small class="form-help">Mientras más detalles nos proporciones, mejor podremos ayudarte (mínimo 10 caracteres)</small>
                                 </div>
                             </div>
                             
@@ -431,11 +431,21 @@
         padding: 15px 30px;
         font-size: 1rem;
     }
+
 }
 </style>
 
 <!-- Google reCAPTCHA v3 -->
-<script src="https://www.google.com/recaptcha/api.js?render=6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_"></script>
+<script src="https://www.google.com/recaptcha/api.js?render=<?= env('recaptcha.siteKey', '') ?>"></script>
+<script>
+    // Aplicar z-index al badge de reCAPTCHA después de 2 segundos
+    setTimeout(function() {
+        const badge = document.querySelector('.grecaptcha-badge');
+        if (badge) {
+            badge.style.zIndex = '9999';
+        }
+    }, 2000);
+</script>
 <script>
     // Configurar reCAPTCHA v3
     grecaptcha.ready(function() {
@@ -451,8 +461,8 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verificando...';
             
-            // Obtener token de reCAPTCHA
-            grecaptcha.execute('6LfzneMrAAAAALCg8CWYl0aAdXgfKActSs6qip2_', {action: 'submit'})
+            // Obtener token de reCAPTCHA usando la clave desde .env
+            grecaptcha.execute('<?= env('recaptcha.siteKey', '') ?>', {action: 'submit'})
                 .then(function(token) {
                     // Insertar token en el campo oculto
                     document.getElementById('g-recaptcha-response').value = token;

@@ -9,7 +9,7 @@
     <title>Dashboard NextLine</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="icon" type="image/x-icon" href="<?= base_url("lib/src/assets/img/favicon.ico") ?>" />
+    <link rel="icon" type="image/x-icon" href="<?= base_url("lib/images/logo_transparente_grande.ico") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
     <script src="<?= base_url("lib/layouts/vertical-light-menu/loader.js") ?>"></script>

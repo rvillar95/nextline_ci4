@@ -233,7 +233,7 @@
                             <?php endif; ?>
 
                             <!-- Condiciones de Pago -->
-                            <?php if (!empty($cotizacion->condiciones_pago)): ?>
+                            <?php if (!empty($cotizacion->condiciones_generales)): ?>
                             <div class="card mt-3">
                                 <div class="card-header">
                                     <h5 class="card-title">
@@ -241,13 +241,13 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <p><?= nl2br(esc($cotizacion->condiciones_pago ?? '')) ?></p>
+                                    <p><?= nl2br(esc($cotizacion->condiciones_generales ?? '')) ?></p>
                                 </div>
                             </div>
                             <?php endif; ?>
 
                             <!-- Observaciones -->
-                            <?php if (!empty($cotizacion->observaciones)): ?>
+                            <?php if (!empty($cotizacion->observaciones_especiales)): ?>
                             <div class="card mt-3">
                                 <div class="card-header">
                                     <h5 class="card-title">
@@ -255,7 +255,7 @@
                                     </h5>
                                 </div>
                                 <div class="card-body">
-                                    <p><?= nl2br(esc($cotizacion->observaciones ?? '')) ?></p>
+                                    <p><?= nl2br(esc($cotizacion->observaciones_especiales ?? '')) ?></p>
                                 </div>
                             </div>
                             <?php endif; ?>
