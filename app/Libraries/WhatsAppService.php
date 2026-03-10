@@ -213,6 +213,7 @@ class WhatsAppService
             'name' => $templateName,
             'language' => ['code' => $lang]
         ];
+        // API Cloud: type, text y parameter_name (nombre de la variable en la plantilla, ej. paciente, fecha).
         $components = [];
         if (!empty($headerParams)) {
             $headerProcessed = [];
@@ -226,7 +227,7 @@ class WhatsAppService
                 $headerProcessed[] = $param;
             }
             $components[] = ['type' => 'header', 'parameters' => $headerProcessed];
-            log_message('error', 'WhatsApp plantilla: header params count=' . count($headerProcessed) . ', first=' . (isset($headerProcessed[0]['text']) ? substr($headerProcessed[0]['text'], 0, 30) : 'n/a'));
+            log_message('info', 'WhatsApp plantilla: header params=' . count($headerProcessed) . ', first=' . (isset($headerProcessed[0]['text']) ? substr($headerProcessed[0]['text'], 0, 30) : 'n/a'));
         }
         if (!empty($bodyParams)) {
             $bodyProcessed = [];
@@ -234,27 +235,35 @@ class WhatsAppService
                 $s = trim((string) $text);
                 $paramName = (!empty($bodyParamNames) && isset($bodyParamNames[$i])) ? $bodyParamNames[$i] : '';
                 if ($s === '' && $paramName === 'motivo') {
-                    $s = ' '; // API exige valor no vacío; espacio para que no se vea guion ni texto
+                    $s = ' '; // API exige valor no vacío
                 } elseif ($s === '') {
                     $s = '-';
                 }
                 $param = ['type' => 'text', 'text' => (string) $s];
-                if (!empty($bodyParamNames) && isset($bodyParamNames[$i])) {
-                    $param['parameter_name'] = (string) $bodyParamNames[$i];
+                if ($paramName !== '') {
+                    $param['parameter_name'] = (string) $paramName;
                 }
                 $bodyProcessed[] = $param;
             }
             $components[] = ['type' => 'body', 'parameters' => $bodyProcessed];
             foreach ($bodyProcessed as $i => $p) {
                 $t = isset($p['text']) ? $p['text'] : '';
-                log_message('error', 'WhatsApp plantilla: body[' . $i . '] len=' . strlen($t) . ' val=' . substr($t, 0, 40));
+                log_message('info', 'WhatsApp plantilla: body[' . $i . '] len=' . strlen($t) . ' val=' . substr($t, 0, 40));
             }
         }
         if (!empty($components)) {
             $template['components'] = $components;
         }
 
-        log_message('error', 'WhatsApp plantilla: enviando name=' . $templateName . ' language=' . $lang . ' to=' . (string) $numeroFormateado);
+        $payloadLog = [
+            'name' => $templateName,
+            'language' => $lang,
+            'to' => (string) $numeroFormateado,
+            'components_order' => array_column($components, 'type'),
+            'header_count' => !empty($headerParams) ? count($headerParams) : 0,
+            'body_count' => count($bodyParams),
+        ];
+        log_message('info', 'WhatsApp plantilla: enviando ' . json_encode($payloadLog));
         // Asegurar que la API reciba tipos correctos: "to" como string, template.name como string
         $requestOptions = [
             'headers' => [
@@ -293,7 +302,7 @@ class WhatsAppService
             throw new \Exception('WhatsApp Business API: ' . (is_string($errorMsg) ? $errorMsg : json_encode($errorMsg)));
         }
         $messageId = $body['messages'][0]['id'] ?? null;
-        log_message('error', 'WhatsApp Business API (plantilla ' . $templateName . '): HTTP ' . $statusCode . ', to=' . $numeroFormateado . ', message_id=' . ($messageId ?? 'n/a'));
+        log_message('info', 'WhatsApp Business API (plantilla ' . $templateName . '): HTTP ' . $statusCode . ', to=' . $numeroFormateado . ', message_id=' . ($messageId ?? 'n/a'));
         return ['message_id' => $messageId, 'status' => 'sent'];
     }
 
@@ -631,72 +640,64 @@ class WhatsAppService
                 return $s === '' ? '-' : $s;
             };
 
-            // Usar plantilla de WhatsApp Business para recordatorio si está configurada.
-            // Las plantillas se entregan aunque el paciente no haya escrito en las últimas 24h.
-            $plantillaRecordatorio = env('WHATSAPP_PLANTILLA_RECORDATORIO', 'recordatorio_cita');
-            $usarPlantillaRecordatorio = ($plantillaRecordatorio !== '' && $plantillaRecordatorio !== '0');
-            if ($usarPlantillaRecordatorio) {
-                $languageCode = env('WHATSAPP_PLANTILLA_IDIOMA_RECORDATORIO', env('WHATSAPP_PLANTILLA_IDIOMA', 'es_CL'));
-                $headerParams = [$safe($nombrePaciente)];
-                $headerParamNames = ['paciente'];
-                $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio)];
-                $bodyParamNames = ['nutricionista', 'fecha', 'hora'];
+            // Siempre usar plantilla recordatorio_cita2 (Servicio, Spanish Chile).
+            $plantillaRecordatorio = 'recordatorio_cita2';
+            $languageCode = 'es_CL';
+            $headerParams = [$safe($nombrePaciente)];
+            $headerParamNames = ['paciente'];
+            $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio)];
+            $bodyParamNames = ['nutricionista', 'fecha', 'hora'];
 
-                try {
-                    $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla(
-                        $cita->telefono,
-                        $plantillaRecordatorio,
-                        $languageCode,
-                        $bodyParams,
-                        $headerParams,
-                        $headerParamNames,
-                        $bodyParamNames
-                    );
+            try {
+                $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla(
+                    $cita->telefono,
+                    $plantillaRecordatorio,
+                    $languageCode,
+                    $bodyParams,
+                    $headerParams,
+                    $headerParamNames,
+                    $bodyParamNames
+                );
 
-                    // Registrar en base de datos
-                    $this->whatsappModel->registrarEnvio([
-                        'paciente_id' => $cita->paciente_id ?? null,
-                        'nutricionista_id' => $cita->usuario_id ?? null,
-                        'agenda_id' => $cita->agenda_id ?? null,
-                        'tipo_mensaje' => 'recordatorio',
-                        'numero_destino' => $cita->telefono,
-                        'numero_origen' => $this->getNumeroOrigen(),
-                        'mensaje' => 'Recordatorio (plantilla ' . $plantillaRecordatorio . ', ' . (int) $horasAntes . 'h antes)',
-                        'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
-                        'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
-                        'metadata' => json_encode($resultadoPlantilla),
-                    ]);
+                // Registrar en base de datos
+                $this->whatsappModel->registrarEnvio([
+                    'paciente_id' => $cita->paciente_id ?? null,
+                    'nutricionista_id' => $cita->usuario_id ?? null,
+                    'agenda_id' => $cita->agenda_id ?? null,
+                    'tipo_mensaje' => 'recordatorio',
+                    'numero_destino' => $cita->telefono,
+                    'numero_origen' => $this->getNumeroOrigen(),
+                    'mensaje' => 'Recordatorio (plantilla ' . $plantillaRecordatorio . ', ' . (int) $horasAntes . 'h antes)',
+                    'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
+                    'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
+                    'metadata' => json_encode($resultadoPlantilla),
+                ]);
 
-                    $enviados[] = [
-                        'success' => true,
-                        'message_id' => $resultadoPlantilla['message_id'] ?? null,
-                        'status' => $resultadoPlantilla['status'] ?? 'sent',
-                        'provider' => 'whatsapp_business',
-                        'template' => $plantillaRecordatorio,
-                    ];
-                    continue;
-                } catch (\Exception $e) {
-                    // Fallback a mensaje de texto
-                    log_message('error', 'WhatsApp Recordatorio plantilla: ' . $e->getMessage());
-                }
+                $enviados[] = [
+                    'success' => true,
+                    'message_id' => $resultadoPlantilla['message_id'] ?? null,
+                    'status' => $resultadoPlantilla['status'] ?? 'sent',
+                    'provider' => 'whatsapp_business',
+                    'template' => $plantillaRecordatorio,
+                ];
+            } catch (\Exception $e) {
+                log_message('error', 'WhatsApp Recordatorio plantilla: ' . $e->getMessage());
+                // Fallback a mensaje de texto si la plantilla falla
+                $mensaje = "🔔 Recordatorio de Cita\n\n";
+                $mensaje .= "Hola {$nombrePaciente},\n\n";
+                $mensaje .= "Te recordamos tu cita con {$nutricionista}:\n\n";
+                $mensaje .= "📅 Fecha: {$fecha}\n";
+                $mensaje .= "🕐 Hora: {$horaInicio}\n";
+                $mensaje .= "\n¡Nos vemos pronto!";
+                $resultado = $this->enviarMensaje(
+                    $cita->telefono,
+                    $mensaje,
+                    $cita->paciente_id,
+                    $cita->agenda_id ?? null,
+                    $cita->usuario_id ?? null
+                );
+                $enviados[] = $resultado;
             }
-            
-            $mensaje = "🔔 Recordatorio de Cita\n\n";
-            $mensaje .= "Hola {$nombrePaciente},\n\n";
-            $mensaje .= "Te recordamos tu cita con {$nutricionista}:\n\n";
-            $mensaje .= "📅 Fecha: {$fecha}\n";
-            $mensaje .= "🕐 Hora: {$horaInicio}\n";
-            $mensaje .= "\n¡Nos vemos pronto!";
-            
-            $resultado = $this->enviarMensaje(
-                $cita->telefono,
-                $mensaje,
-                $cita->paciente_id,
-                $cita->agenda_id ?? null,
-                $cita->usuario_id ?? null
-            );
-            
-            $enviados[] = $resultado;
         }
         
         return $enviados;
