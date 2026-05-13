@@ -19,8 +19,8 @@ PassEnv APP_BASE_URL DATABASE_HOSTNAME DATABASE_PORT DATABASE_NAME DATABASE_USER
     AllowOverride All\n\
     Require all granted\n\
     DirectoryIndex index.php\n\
-</Directory>\n" > /etc/apache2/conf-available/vitasync.conf \
-    && a2enconf vitasync
+</Directory>\n" > /etc/apache2/conf-available/nutrinext.conf \
+    && a2enconf nutrinext
 
 WORKDIR /var/www/html
 

@@ -15,7 +15,7 @@
         <ul class="navbar-item theme-brand flex-row  text-center">
             <li class="nav-item theme-logo">
                 <a href="index.html">
-                    <img src="<?= base_url("lib/src/assets/img/logo2.svg") ?>" class="" alt="VitaSync">
+                    <img src="<?= base_url("lib/src/assets/img/logo2.svg") ?>" class="" alt="NutriNext">
                 </a>
             </li>
             <li class="nav-item theme-text">

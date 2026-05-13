@@ -245,10 +245,10 @@ class Database extends Config
                     'ssl_verify' => true,
                 ];
             }
-            // Nunca usar la BD del sistema 'mysql' en Azure; la app usa 'vitasync'
+            // Nunca usar la BD del sistema 'mysql' en Azure; la app usa 'nutrinext'
             $dbName = $this->default['database'] ?? '';
             if ($dbName === 'mysql') {
-                $this->default['database'] = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'vitasync';
+                $this->default['database'] = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'nutrinext';
             }
         }
     }

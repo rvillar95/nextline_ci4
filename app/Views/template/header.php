@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <title>Dashboard VitaSync</title>
+    <title>Dashboard NutriNext</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
@@ -14,7 +14,7 @@
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
     <script>
     // URL base para logos (evita que loader.js use rutas relativas y el logo desaparezca en rutas profundas)
-    window.VitaSyncBaseUrl = <?= json_encode(rtrim(base_url(), '/') . '/') ?>;
+    window.NutriNextBaseUrl = <?= json_encode(rtrim(base_url(), '/') . '/') ?>;
     </script>
     <script src="<?= base_url("lib/layouts/vertical-light-menu/loader.js") ?>"></script>
 
@@ -100,9 +100,9 @@
     ?>
     <style id="user-theme-css">
         :root {
-            --vitasync-primary: #4dcba5;
-            --vitasync-bg: #fafeff;
-            --vitasync-muted: #bee6db;
+            --nutrinext-primary: #4dcba5;
+            --nutrinext-bg: #fafeff;
+            --nutrinext-muted: #bee6db;
             --user-primary: <?= esc($colorPrimario) ?>;
             --user-primary-hover: <?= esc($colorPrimario) ?>dd;
             <?php if ($aplicarCardHeaderCustom): ?>
@@ -147,7 +147,7 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php else: ?>
-        /* Main-header por defecto: gradiente VitaSync */
+        /* Main-header por defecto: gradiente NutriNext */
         body:not(.dark) .main-header {
             background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%) !important;
             color: #fff !important;
@@ -162,7 +162,7 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php endif; ?>
-        /* Logo VitaSync: mismo aspecto en header y sidebar en todos los módulos */
+        /* Logo NutriNext: mismo aspecto en header y sidebar en todos los módulos */
         .header-container .theme-brand .theme-logo a img.navbar-logo,
         .header-container .navbar .theme-brand .theme-logo img {
             height: 36px !important;
@@ -353,7 +353,7 @@
             color: #64748b !important;
             background-color: #1e293b !important;
         }
-        /* Fondo VitaSync por defecto (modo claro) */
+        /* Fondo NutriNext por defecto (modo claro) */
         body:not(.dark) { background-color: #fafeff !important; }
     </style>
 

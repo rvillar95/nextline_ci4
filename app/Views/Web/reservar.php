@@ -13,7 +13,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     </div>
 </section>
 
-<section class="py-5" style="background: var(--vitasync-bg, #fafeff);">
+<section class="py-5" style="background: var(--nutrinext-bg, #fafeff);">
     <div class="container">
         <input type="hidden" id="empresa_id" value="<?= (int)($empresa_id ?? 0) ?>">
         <?= csrf_field() ?>
@@ -149,19 +149,19 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
 
 <style>
 .reservar-hero {
-    background: linear-gradient(135deg, var(--vitasync-primary) 0%, var(--vitasync-muted) 100%);
+    background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%);
     padding: 80px 0 60px !important;
 }
 .nutricionista-card { transition: all 0.2s ease; }
-.nutricionista-card:hover { border-color: var(--vitasync-primary) !important; box-shadow: 0 4px 12px rgba(77, 203, 165, 0.2); }
-.nutricionista-card.selected { border-color: var(--vitasync-primary) !important; background: rgba(77, 203, 165, 0.08); box-shadow: 0 0 0 2px var(--vitasync-primary); }
+.nutricionista-card:hover { border-color: var(--nutrinext-primary) !important; box-shadow: 0 4px 12px rgba(77, 203, 165, 0.2); }
+.nutricionista-card.selected { border-color: var(--nutrinext-primary) !important; background: rgba(77, 203, 165, 0.08); box-shadow: 0 0 0 2px var(--nutrinext-primary); }
 .cursor-pointer { cursor: pointer; }
 .nutricionista-foto-wrap {
     width: 72px;
     height: 72px;
     border-radius: 50%;
     overflow: hidden;
-    background: var(--vitasync-muted);
+    background: var(--nutrinext-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,9 +178,9 @@ a.btn-buscar-horarios {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.5rem 1.25rem;
     border-radius: 0.375rem;
     font-size: 1rem;
@@ -205,9 +205,9 @@ a.btn-buscar-horarios .me-1 { margin-right: 0.35rem; }
 /* Botón “Reservar” de cada horario (enlace sin .btn para evitar ripple) */
 a.btn-reservar-slot {
     display: inline-block;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.35rem 0.75rem;
     border-radius: 0.375rem;
     font-size: 0.875rem;
@@ -227,9 +227,9 @@ a.btn-reservar-slot:hover {
 button.btn-confirmar-reserva {
     display: inline-flex;
     align-items: center;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.5rem 1.25rem;
     border-radius: 0.375rem;
     font-size: 1rem;

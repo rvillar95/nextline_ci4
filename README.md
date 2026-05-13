@@ -1,4 +1,4 @@
-# VitaSync (Nextline CI4)
+# NutriNext (Nextline CI4)
 
 Aplicación CodeIgniter 4 desplegada en **Google Cloud Platform (GKE)** con base de datos **Cloud SQL (MySQL)**.
 
@@ -17,16 +17,16 @@ Aplicación CodeIgniter 4 desplegada en **Google Cloud Platform (GKE)** con base
 El pipeline **GitHub Actions** (`.github/workflows/google.yml`) se ejecuta en cada push a `feature/gcp` y:
 
 1. Construye la imagen Docker (PHP 8.2 + Apache, extensiones mysqli, pdo_mysql, intl, zip).
-2. Sube la imagen a **Artifact Registry** (`southamerica-west1-docker.pkg.dev/vitasync-dev/vitasync-repository/vitasync-app`).
+2. Sube la imagen a **Artifact Registry** (`southamerica-west1-docker.pkg.dev/nutrinext-dev/nutrinext-repository/nutrinext-app`).
 3. Despliega en **GKE** con Kustomize (Deployment + Service LoadBalancer).
 
 ### Requisitos previos
 
 - **Secret de GitHub** (Settings → Secrets and variables → Actions, o en el environment `production`):
   - `GCP_CREDENTIALS`: JSON de la cuenta de servicio de GCP con permisos para GKE, Artifact Registry y (opcional) Cloud SQL.
-  - `DATABASE_PASSWORD`: contraseña del usuario de la base de datos en Cloud SQL (usado para crear el Secret de Kubernetes `vitasync-db`).
-  - **Calendario (Google):** `GOOGLE_CALENDAR_CLIENT_ID` y `GOOGLE_CALENDAR_CLIENT_SECRET` (credenciales OAuth2 de Google Cloud Console para la API de Calendar). Si están definidos, el workflow crea el Secret `vitasync-calendar` y la app puede usar "Conectar calendario" en Agenda. Si no los configuras, la app arranca igual pero mostrará "falta client_id" al conectar el calendario.
-  - **Email (SMTP):** `EMAIL_SMTP_PASSWORD` (contraseña del usuario SMTP). El workflow crea el Secret `vitasync-email`. En el deployment se configuran `EMAIL_SMTP_HOST`, `EMAIL_SMTP_USER`, etc.; si falta la contraseña, el servidor SMTP devolverá **550 SMTP AUTH is required** y los correos no se enviarán. Ajusta en `k8s/deployment.yaml` los valores de `EMAIL_*` (remitente, host, usuario) según tu servidor de correo.
+  - `DATABASE_PASSWORD`: contraseña del usuario de la base de datos en Cloud SQL (usado para crear el Secret de Kubernetes `nutrinext-db`).
+  - **Calendario (Google):** `GOOGLE_CALENDAR_CLIENT_ID` y `GOOGLE_CALENDAR_CLIENT_SECRET` (credenciales OAuth2 de Google Cloud Console para la API de Calendar). Si están definidos, el workflow crea el Secret `nutrinext-calendar` y la app puede usar "Conectar calendario" en Agenda. Si no los configuras, la app arranca igual pero mostrará "falta client_id" al conectar el calendario.
+  - **Email (SMTP):** `EMAIL_SMTP_PASSWORD` (contraseña del usuario SMTP). El workflow crea el Secret `nutrinext-email`. En el deployment se configuran `EMAIL_SMTP_HOST`, `EMAIL_SMTP_USER`, etc.; si falta la contraseña, el servidor SMTP devolverá **550 SMTP AUTH is required** y los correos no se enviarán. Ajusta en `k8s/deployment.yaml` los valores de `EMAIL_*` (remitente, host, usuario) según tu servidor de correo.
 
 ### Conexión a Cloud SQL
 
@@ -39,9 +39,9 @@ La app lee la configuración de base de datos desde **variables de entorno** cua
 | `DATABASE_PORT`     | Deployment (env)                  | `3306`                   |
 | `DATABASE_NAME`     | Deployment (env)                  | `nextline_pyme`          |
 | `DATABASE_USERNAME` | Deployment (env)                  | `root` (o el usuario que uses) |
-| `DATABASE_PASSWORD` | Secret de K8s `vitasync-db` (key `password`) | Se rellena desde el secret de GitHub `DATABASE_PASSWORD` en el workflow |
+| `DATABASE_PASSWORD` | Secret de K8s `nutrinext-db` (key `password`) | Se rellena desde el secret de GitHub `DATABASE_PASSWORD` en el workflow |
 
-El workflow crea o actualiza el Secret `vitasync-db` en el clúster antes de desplegar, usando el valor de `DATABASE_PASSWORD` del repositorio. No pongas la contraseña en el código ni en los YAML.
+El workflow crea o actualiza el Secret `nutrinext-db` en el clúster antes de desplegar, usando el valor de `DATABASE_PASSWORD` del repositorio. No pongas la contraseña en el código ni en los YAML.
 
 ### IP pública de Cloud SQL y seguridad
 
@@ -75,20 +75,20 @@ No es obligatorio usar IP pública. Es **más seguro** no exponer la base de dat
 ### Kubernetes (Kustomize)
 
 - **kustomization.yaml**: incluye `k8s/deployment.yaml` y `k8s/service.yaml`.
-- **Deployment** `vitasync-api`: env vars de base de datos y contraseña desde el Secret `vitasync-db`. La imagen se sustituye en el workflow con el tag correspondiente al commit.
+- **Deployment** `nutrinext-api`: env vars de base de datos y contraseña desde el Secret `nutrinext-db`. La imagen se sustituye en el workflow con el tag correspondiente al commit.
 - **Service** tipo LoadBalancer: IP estática reservada en GCP (p. ej. `34.176.25.59`). El dominio (DNS) debe apuntar con un registro A a esa IP para acceder a la app.
 
 ### Dominio y HTTPS (Cloudflare)
 
-- El dominio **vitasync.cl** apunta a la IP del LoadBalancer (`34.176.25.59`). La variable **`APP_BASE_URL`** en el deployment debe coincidir con la URL pública (p. ej. `http://vitasync.cl` o `https://vitasync.cl`) para que redirects y `base_url()` usen el dominio correcto.
-- Con **Cloudflare proxy** (registro A en modo "Proxied"): en SSL/TLS puedes usar **Flexible** para que los usuarios entren por `https://vitasync.cl` aunque el servidor siga en HTTP. Si más adelante quieres HTTPS hasta el servidor, cambia `APP_BASE_URL` a `https://vitasync.cl` y configura certificado en GKE (p. ej. cert-manager) o Cloudflare "Full (strict)".
+- El dominio **nutrinext.cl** apunta a la IP del LoadBalancer (`34.176.25.59`). La variable **`APP_BASE_URL`** en el deployment debe coincidir con la URL pública (p. ej. `http://nutrinext.cl` o `https://nutrinext.cl`) para que redirects y `base_url()` usen el dominio correcto.
+- Con **Cloudflare proxy** (registro A en modo "Proxied"): en SSL/TLS puedes usar **Flexible** para que los usuarios entren por `https://nutrinext.cl` aunque el servidor siga en HTTP. Si más adelante quieres HTTPS hasta el servidor, cambia `APP_BASE_URL` a `https://nutrinext.cl` y configura certificado en GKE (p. ej. cert-manager) o Cloudflare "Full (strict)".
 - **ForceHTTPS:** El filtro que redirige a HTTPS solo se activa en producción si la variable de entorno **`FORCE_HTTPS=true`** está definida. Así, con `APP_BASE_URL=http://...` (o detrás de Cloudflare Flexible) los recursos se sirven por HTTP y la página no intenta cargar CSS/JS desde `https://` (evitando 522 y contenido mixto). Cuando tengas HTTPS real en origen, define `FORCE_HTTPS=true` en el deployment para forzar HTTPS.
 
 ### Logs en GKE
 
 - Los archivos de **writable/logs/** se escriben dentro del contenedor; no son visibles en la consola de GKE por defecto.
 - La app está configurada para enviar **los mismos logs a stderr** (Logger con `ErrorlogHandler` + `TYPE_SAPI`). Así puedes verlos con:
-  - **kubectl:** `kubectl logs -f deployment/vitasync-api -n default`
+  - **kubectl:** `kubectl logs -f deployment/nutrinext-api -n default`
   - **Cloud Logging:** si el clúster envía logs a GCP, aparecen ahí (busca por el nombre del contenedor o del deployment).
 - Para depurar envío de correo, revisa en esos logs las líneas con nivel `error`, `info` o `debug` relacionadas con email (CodeIgniter y tu código que use `log_message()`).
 

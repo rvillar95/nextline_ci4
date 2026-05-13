@@ -2,8 +2,8 @@
 
 <?= $this->section('content') ?>
 
-<!-- Hero VitaSync -->
-<section class="vitasync-hero" style="background: linear-gradient(135deg, var(--vitasync-primary) 0%, var(--vitasync-muted) 100%); padding: 100px 0 80px; position: relative; overflow: hidden;">
+<!-- Hero NutriNext -->
+<section class="nutrinext-hero" style="background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%); padding: 100px 0 80px; position: relative; overflow: hidden;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
@@ -36,10 +36,10 @@
 </section>
 
 <!-- Funcionalidades del sistema -->
-<section id="funcionalidades" class="py-5" style="background: var(--vitasync-bg); padding: 80px 0 !important;">
+<section id="funcionalidades" class="py-5" style="background: var(--nutrinext-bg); padding: 80px 0 !important;">
     <div class="container">
         <div class="text-center mb-5">
-            <span class="d-inline-block mb-2" style="color: var(--vitasync-primary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">El sistema</span>
+            <span class="d-inline-block mb-2" style="color: var(--nutrinext-primary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">El sistema</span>
             <h2 class="mb-3" style="color: #2d3748; font-weight: 800; font-size: clamp(1.75rem, 4vw, 2.5rem);">Todo lo que necesitas en una sola plataforma</h2>
             <p class="text-muted mx-auto" style="max-width: 600px;">Funcionalidades pensadas para consultas nutricionales: desde la primera cita hasta el seguimiento y los pagos.</p>
         </div>
@@ -116,7 +116,7 @@
 </section>
 
 <!-- CTA -->
-<section class="py-5" style="background: linear-gradient(135deg, var(--vitasync-primary) 0%, var(--vitasync-muted) 100%); padding: 70px 0 !important;">
+<section class="py-5" style="background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%); padding: 70px 0 !important;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8 text-white">
@@ -136,8 +136,8 @@
 </section>
 
 <style>
-/* VitaSync landing */
-.vitasync-hero { position: relative; }
+/* NutriNext landing */
+.nutrinext-hero { position: relative; }
 .hero-badge-ns {
     display: inline-flex;
     align-items: center;
@@ -160,7 +160,7 @@ a.btn-hero-secondary {
 }
 a.btn-hero-primary {
     background: #fafeff;
-    color: var(--vitasync-primary);
+    color: var(--nutrinext-primary);
     padding: 14px 28px;
     border-radius: 50px;
     font-weight: 700;
@@ -168,8 +168,8 @@ a.btn-hero-primary {
     transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 a.btn-hero-primary:hover {
-    background: var(--vitasync-muted);
-    color: var(--vitasync-primary);
+    background: var(--nutrinext-muted);
+    color: var(--nutrinext-primary);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     text-decoration: none;
@@ -198,13 +198,13 @@ a.btn-hero-secondary:hover {
 .card-feature-ns:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 40px rgba(77, 203, 165, 0.15) !important;
-    border: 1px solid var(--vitasync-muted);
+    border: 1px solid var(--nutrinext-muted);
 }
 .feature-icon-ns {
     width: 52px;
     height: 52px;
-    background: var(--vitasync-muted);
-    color: var(--vitasync-primary);
+    background: var(--nutrinext-muted);
+    color: var(--nutrinext-primary);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -217,7 +217,7 @@ a.btn-cta-outline-ns {
 }
 .btn-cta-ns {
     background: #fafeff;
-    color: var(--vitasync-primary);
+    color: var(--nutrinext-primary);
     padding: 14px 24px;
     border-radius: 50px;
     font-weight: 700;
@@ -228,8 +228,8 @@ a.btn-cta-outline-ns {
     align-items: center;
 }
 .btn-cta-ns:hover {
-    background: var(--vitasync-muted);
-    color: var(--vitasync-primary);
+    background: var(--nutrinext-muted);
+    color: var(--nutrinext-primary);
     transform: translateY(-2px);
     text-decoration: none;
 }

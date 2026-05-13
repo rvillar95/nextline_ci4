@@ -39,7 +39,7 @@ exit(); */
         <ul class="navbar-item theme-brand flex-row  text-center">
             <li class="nav-item theme-logo">
                 <a href="<?= base_url('dashboard/menu') ?>" class="nav-link d-flex align-items-center gap-2">
-                    <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" class="navbar-logo" style="height: 36px; width: auto;">
+                    <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriNext" class="navbar-logo" style="height: 36px; width: auto;">
                 </a>
             </li>
         </ul>
@@ -142,7 +142,7 @@ exit(); */
                 <div class="nav-logo">
                     <div class="nav-item theme-logo">
                         <a href="<?= base_url('dashboard/menu') ?>">
-                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" class="navbar-logo" alt="VitaSync" style="max-height: 64px; width: auto;">
+                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" class="navbar-logo" alt="NutriNext" style="max-height: 64px; width: auto;">
                         </a>
                     </div>
                     <div class="nav-item theme-text">

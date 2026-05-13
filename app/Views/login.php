@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
-    <title>Iniciar sesión - VitaSync</title>
+    <title>Iniciar sesión - NutriNext</title>
     <link rel="icon" type="image/png" href="<?= base_url('lib/logo/icono-transparente.png') ?>" />
     <link href="<?= base_url("lib/") ?>/layouts/vertical-light-menu/css/light/loader.css" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/") ?>layouts/vertical-light-menu/css/dark/loader.css" rel="stylesheet" type="text/css" />
@@ -46,7 +46,7 @@
                     <div class="card mt-3 mb-3">
                         <div class="card-body">
                             <div class="text-center mb-4">
-                                <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" style="max-height: 64px; width: auto;">
+                                <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="NutriNext" style="max-height: 64px; width: auto;">
                             </div>
                             <div class="row">
                                 <div class="col-md-12 mb-3">

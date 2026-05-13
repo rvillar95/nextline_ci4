@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: vitasync-api
+  name: nutrinext-api
   labels:
-    app: vitasync-api
+    app: nutrinext-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vitasync-api
+      app: nutrinext-api
   template:
     metadata:
       labels:
-        app: vitasync-api
+        app: nutrinext-api
     spec:
       containers:
-        - name: vitasync-app
+        - name: nutrinext-app
           image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
           ports:
             - containerPort: 80
           env:
             - name: APP_BASE_URL
-              value: "https://vitasync.cl"
+              value: "https://nutrinext.cl"
             - name: DATABASE_HOSTNAME
               value: "10.79.240.3"
             - name: DATABASE_PORT
@@ -33,34 +33,34 @@ spec:
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: vitasync-db
+                  name: nutrinext-db
                   key: password
             # Calendario (Google): opcionales; si no existe el secret, la app arranca pero "Conectar calendario" fallará
             - name: GOOGLE_CALENDAR_CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: vitasync-calendar
+                  name: nutrinext-calendar
                   key: google-client-id
                   optional: true
             - name: GOOGLE_CALENDAR_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: vitasync-calendar
+                  name: nutrinext-calendar
                   key: google-client-secret
                   optional: true
             - name: GOOGLE_CALENDAR_REDIRECT_URI
-              value: "https://vitasync.cl/dashboard/agenda/calendario/callback"
+              value: "https://nutrinext.cl/dashboard/agenda/calendario/callback"
             - name: CALENDAR_PROVIDER
               value: "google"
             - name: MERCADOPAGO_WEBHOOK_BASE_URL
-              value: "https://vitasync.cl/"
+              value: "https://nutrinext.cl/"
             - name: WHATSAPP_PLANTILLA_IDIOMA
               value: "es_CL"
-            # Email (SMTP): EMAIL_SMTP_PASS viene del Secret vitasync-email (smtp-password). Si está vacío → "550 SMTP AUTH is required"
+            # Email (SMTP): EMAIL_SMTP_PASS viene del Secret nutrinext-email (smtp-password). Si está vacío → "550 SMTP AUTH is required"
             - name: EMAIL_FROM_EMAIL
-              value: "noreply@vitasync.cl"
+              value: "noreply@nutrinext.cl"
             - name: EMAIL_FROM_NAME
-              value: "VitaSync"
+              value: "NutriNext"
             - name: EMAIL_SMTP_HOST
               value: "mail.nextline.cl"
             - name: EMAIL_SMTP_USER
@@ -72,7 +72,7 @@ spec:
             - name: EMAIL_SMTP_PASS
               valueFrom:
                 secretKeyRef:
-                  name: vitasync-email
+                  name: nutrinext-email
                   key: smtp-password
                   optional: true
 
