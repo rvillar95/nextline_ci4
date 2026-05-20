@@ -30,30 +30,32 @@
 
     <div class="container">
 
-        <nav class="func-filters" aria-label="Filtrar por categoría">
+        
+        <?php
+        $urlTodas = base_url('funcionalidades');
+        $catActiva = $categoria_actual ?? '';
+        ?>
+        <div class="func-toolbar">
+            <div class="func-filter-mobile">
+                <label class="func-filter-mobile__label" for="func-cat-select">Ver categoría</label>
+                <select id="func-cat-select" class="func-filter-mobile__select" aria-label="Filtrar por categoría">
+                    <option value="<?= esc($urlTodas) ?>"<?= $catActiva === '' ? ' selected' : '' ?>>Todas las categorías</option>
+                    <?php foreach ($categorias as $key => $label): ?>
+                        <?php $urlCat = base_url('funcionalidades?categoria=' . urlencode($key)); ?>
+                        <option value="<?= esc($urlCat) ?>"<?= $catActiva === $key ? ' selected' : '' ?>><?= esc($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="func-filters--desktop" role="navigation" aria-label="Filtrar por categoría">
+                <a href="<?= esc($urlTodas) ?>" class="func-filter-pill <?= $catActiva === '' ? 'is-active' : '' ?>">Todas</a>
+                <?php foreach ($categorias as $key => $label): ?>
+                    <a href="<?= base_url('funcionalidades?categoria=' . urlencode($key)) ?>"
+                       class="func-filter-pill <?= $catActiva === $key ? 'is-active' : '' ?>"><?= esc($label) ?></a>
+                <?php endforeach; ?>
+            </div>
+        </div>
 
-            <a href="<?= base_url('funcionalidades') ?>"
-
-               class="func-filter-pill <?= empty($categoria_actual) ? 'is-active' : '' ?>">
-
-                Todas
-
-            </a>
-
-            <?php foreach ($categorias as $key => $label): ?>
-                <a href="<?= base_url('funcionalidades?categoria=' . urlencode($key)) ?>"
-
-                   class="func-filter-pill <?= ($categoria_actual ?? '') === $key ? 'is-active' : '' ?>">
-
-                    <?= esc($label) ?>
-
-                </a>
-
-            <?php endforeach; ?>
-
-        </nav>
-
-
+        <div class="func-list">
 
         <?php if (empty($servicios)): ?>
 
@@ -139,11 +141,20 @@
 
         <?php endif; ?>
 
+        </div>
+
     </div>
 
 </section>
 
-
+<script>
+document.getElementById('func-cat-select')?.addEventListener('change', function () {
+    var url = this.value;
+    if (url) {
+        window.location.href = url;
+    }
+});
+</script>
 
 <section class="py-5" style="background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);">
 

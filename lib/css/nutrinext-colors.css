@@ -45,16 +45,26 @@ body.nutrinext-web h6 {
   color: var(--text-main);
 }
 
+/* Hero con fondo verde: texto siempre claro */
+body.nutrinext-web .nutrinext-hero,
+body.nutrinext-web .nutrinext-hero h1,
+body.nutrinext-web .nutrinext-hero h2,
+body.nutrinext-web .nutrinext-hero h3,
+body.nutrinext-web .nutrinext-hero p,
+body.nutrinext-web .nutrinext-hero .section-eyebrow-ns {
+  color: #fff !important;
+}
+
 body.nutrinext-web .text-muted {
   color: var(--text-muted) !important;
 }
 
 /* Enlaces en contenido (acento tech) */
-body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):not(.social-link-modern):not(.social-icon-modern) {
+body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):not(.social-link-modern):not(.social-icon-modern):not(.func-filter-pill):not(.card-func-ns) {
   color: var(--brand-blue-tech);
 }
 
-body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):hover {
+body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):not(.func-filter-pill):not(.card-func-ns):hover {
   color: #1D4ED8;
 }
 

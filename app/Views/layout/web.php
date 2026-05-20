@@ -372,27 +372,59 @@ $empresaContacto = [
             display: none;
             flex-direction: column;
             justify-content: space-around;
-            width: 35px;
-            height: 35px;
+            align-items: stretch;
+            width: 46px;
+            height: 46px;
             background: var(--nutrinext-muted);
             border: 2px solid var(--nutrinext-primary);
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            padding: 6px;
-            transition: all 0.3s ease;
+            padding: 10px 9px;
+            transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         
-        .mobile-menu-btn-modern:hover {
+        @media (hover: hover) {
+            .mobile-menu-btn-modern:hover:not(.is-open) {
+                background: var(--nutrinext-primary);
+                transform: scale(1.05);
+            }
+
+            .mobile-menu-btn-modern:hover:not(.is-open) span {
+                background: #fff;
+            }
+        }
+
+        .mobile-menu-btn-modern.is-open {
             background: var(--nutrinext-primary);
-            transform: scale(1.05);
+            border-color: var(--nutrinext-primary);
+        }
+
+        .mobile-menu-btn-modern.is-open span {
+            background: #fff;
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
         }
         
         .mobile-menu-btn-modern span {
             width: 100%;
-            height: 3px;
+            height: 4px;
             background: var(--nutrinext-primary);
             border-radius: 2px;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease;
+            display: block;
+            flex-shrink: 0;
         }
         
         /* Animación para menú móvil */
@@ -566,7 +598,10 @@ $empresaContacto = [
                 top: 100px !important;
                 max-height: calc(100vh - 100px) !important;
                 min-height: 400px !important;
-                z-index: 2147483647 !important;
+            }
+
+            .nav-modern.active {
+                min-height: 400px !important;
             }
         }
         
@@ -1336,48 +1371,34 @@ $empresaContacto = [
             positionMenu();
             
             // Toggle del menú móvil
+            function setMobileMenuOpen(open) {
+                navModern.classList.toggle('active', open);
+                mobileMenuBtn.classList.toggle('is-open', open);
+                mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                positionMenu();
+            }
+
+            mobileMenuBtn.setAttribute('aria-label', 'Abrir menú');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+
             mobileMenuBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                navModern.classList.toggle('active');
-                
-                // Posicionar menú debajo del header
-                positionMenu();
-                
-                // Animate hamburger menu
-                const spans = this.querySelectorAll('span');
-                if (navModern.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
+                setMobileMenuOpen(!navModern.classList.contains('active'));
             });
             
             // Close mobile menu when clicking on a link
             const navLinks = navModern.querySelectorAll('.nav-link-modern');
             navLinks.forEach(link => {
                 link.addEventListener('click', function() {
-                    navModern.classList.remove('active');
-                    const spans = mobileMenuBtn.querySelectorAll('span');
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
+                    setMobileMenuOpen(false);
                 });
             });
             
             // Close mobile menu when clicking outside
             document.addEventListener('click', function(e) {
                 if (!navModern.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                    navModern.classList.remove('active');
-                    const spans = mobileMenuBtn.querySelectorAll('span');
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
+                    setMobileMenuOpen(false);
                 }
             });
             
