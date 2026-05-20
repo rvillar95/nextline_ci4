@@ -429,66 +429,98 @@ function calcularYGuardarCalorimetria() {
     });
 }
 
-function cargarCalorimetriaExistente() {
-    const detalleAgendaId = ($('#detalle_agenda_id_cal').val() || '').toString().trim();
-    if (!detalleAgendaId || detalleAgendaId === '0') return;
-    
+function aplicarCalorimetriaEnFormulario(cal, esReferencia) {
+    if (!cal) return false;
+    if (cal.peso != null) $('#cal_peso').val(cal.peso);
+    if (cal.talla != null) $('#cal_talla').val(cal.talla);
+    if (cal.edad != null) $('#cal_edad').val(cal.edad);
+    if (cal.sexo) $('#cal_sexo').val(cal.sexo);
+    calcularTMB();
+    if (esReferencia) {
+        $('.minutos-actividad').val(0);
+        $('.calorias-hombre, .calorias-mujer').text('0');
+    }
+    if (cal.actividades && cal.actividades.length) {
+        cal.actividades.forEach(function(act) {
+            if (!act.actividad_met_id) return;
+            const $input = $('.minutos-actividad[data-actividad-id="' + act.actividad_met_id + '"]');
+            if (!$input.length) return;
+            $input.val(act.minutos_dia);
+            calcularCaloriasActividad($input);
+        });
+        calcularTotalesCalorimetria();
+    }
+    $('#tmbResults').show();
+    if (parseFloat($('#tmb_usado').text()) > 0) {
+        $('#totalesCalorimetria').show();
+    }
+    if (!esReferencia) {
+        calorimetriaGuardada = cal;
+    }
+    if (cal.requerimiento_total != null && $('#plan_requerimiento_kcal').length) {
+        var tienePlanPropio = !esReferencia && (typeof planGuardado !== 'undefined' && planGuardado && planGuardado.requerimiento_kcal);
+        if (!tienePlanPropio) {
+            $('#plan_requerimiento_kcal').val(Math.round(parseFloat(cal.requerimiento_total)));
+        }
+    }
+    return true;
+}
+
+function cargarCalorimetriaDesdeDetalle(detalleAgendaId, esReferencia, callback) {
+    if (!detalleAgendaId || detalleAgendaId === '0') {
+        if (callback) callback(false);
+        return;
+    }
     $.ajax({
         url: '<?= base_url("dashboard/plan-alimentario/calorimetria") ?>/' + detalleAgendaId,
         method: 'GET',
         dataType: 'json',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         success: function(response) {
-            if (response.error) {
-                console.warn('Calorimetría:', response.error);
+            if (response.error || !response.calorimetria) {
+                if (callback) callback(false);
                 return;
             }
-            if (response.calorimetria) {
-                const cal = response.calorimetria;
-                $('#cal_peso').val(cal.peso);
-                $('#cal_talla').val(cal.talla);
-                $('#cal_edad').val(cal.edad);
-                $('#cal_sexo').val(cal.sexo);
-                
-                calcularTMB();
-                
-                // Cargar actividades guardadas (actividad_met_id viene enriquecido desde el backend)
-                if (cal.actividades && cal.actividades.length) {
-                    cal.actividades.forEach(function(act) {
-                        if (act.actividad_met_id) {
-                            const $input = $(`.minutos-actividad[data-actividad-id="${act.actividad_met_id}"]`);
-                            if ($input.length) {
-                                $input.val(act.minutos_dia);
-                                calcularCaloriasActividad($input);
-                            }
-                        }
-                    });
-                    calcularTotalesCalorimetria();
-                }
-                
-                $('#tmbResults').show();
-                if (parseFloat($('#tmb_usado').text()) > 0) {
-                    $('#totalesCalorimetria').show();
-                }
-                calorimetriaGuardada = cal;
-                // Pre-llenar Requerimiento Energético solo cuando no hay plan guardado en BD
-                if (cal.requerimiento_total != null && $('#plan_requerimiento_kcal').length) {
-                    var tienePlan = (typeof planGuardado !== 'undefined' && planGuardado && planGuardado.requerimiento_kcal);
-                    var vacio = !$('#plan_requerimiento_kcal').val() || parseFloat($('#plan_requerimiento_kcal').val()) <= 0;
-                    if (!tienePlan && vacio) {
-                        $('#plan_requerimiento_kcal').val(Math.round(parseFloat(cal.requerimiento_total)));
-                    }
-                }
-            }
+            var ok = aplicarCalorimetriaEnFormulario(response.calorimetria, esReferencia);
+            if (callback) callback(ok);
         },
         error: function(xhr) {
-            if (xhr.status === 404 || (xhr.responseJSON && xhr.responseJSON.calorimetria === null)) {
-                return; // Sin calorimetría guardada, es normal
+            if (callback) callback(false);
+            if (xhr.status !== 404 && !(xhr.responseJSON && xhr.responseJSON.calorimetria === null)) {
+                console.warn('Error al cargar calorimetría:', xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : xhr.statusText);
             }
-            console.warn('Error al cargar calorimetría:', xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : xhr.statusText);
         }
     });
 }
+
+function cargarCalorimetriaExistente() {
+    const detalleAgendaId = ($('#detalle_agenda_id_cal').val() || '').toString().trim();
+    if (!detalleAgendaId || detalleAgendaId === '0') return;
+
+    cargarCalorimetriaDesdeDetalle(detalleAgendaId, false, function(encontrada) {
+        if (!encontrada && window.referenciaDetalleAgendaId
+            && String(window.referenciaDetalleAgendaId) !== detalleAgendaId) {
+            cargarCalorimetriaDesdeDetalle(window.referenciaDetalleAgendaId, true);
+        }
+    });
+}
+
+/** Sincroniza peso/talla de Mediciones → Calorimetría y recalcula TMB. */
+function sincronizarCalorimetriaDesdeMediciones() {
+    if (!$('#cal_peso').length) return;
+    var peso = parseFloat($('#peso_actual').val());
+    var talla = parseFloat($('#altura_actual').val());
+    if (peso > 0) {
+        $('#cal_peso').val(peso);
+    }
+    if (talla > 0) {
+        $('#cal_talla').val(talla);
+    }
+    if (typeof calcularTMB === 'function') {
+        calcularTMB();
+    }
+}
+window.sincronizarCalorimetriaDesdeMediciones = sincronizarCalorimetriaDesdeMediciones;
 
 function limpiarCalorimetria() {
     $('#formCalorimetria')[0].reset();

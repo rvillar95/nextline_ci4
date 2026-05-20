@@ -29,15 +29,15 @@ class NosotrosController extends BaseController
             'anos_experiencia' => 15 // Puedes calcular esto dinámicamente si tienes fecha de fundación
         ];
         
-        $data = [
-            'title' => 'Nosotros - MANSANCHEZ Constructor',
-            'description' => 'Conoce más sobre MANSANCHEZ Constructor, nuestra historia, valores y compromiso con la excelencia en construcción.',
-            'keywords' => 'mansanchez, constructor, nosotros, empresa, historia, valores, equipo, experiencia',
-            'empresa' => $empresa,
+        return view('Web/nosotros', array_merge(seo_page([
+            'title'       => 'Nosotros | NutriNext - Plataforma para nutricionistas',
+            'description' => 'Conoce NutriNext: tecnología pensada para consultas nutricionales, con agenda, pacientes, historiales y comunicación con tus pacientes.',
+            'keywords'    => 'nutrinext, nosotros, plataforma nutrición, software consulta nutricional, Chile',
+            'canonical'   => seo_canonical_url('nosotros'),
+        ]), [
+            'empresa'     => $empresa,
             'testimonios' => $testimonios,
-            'estadisticas' => $estadisticas
-        ];
-        
-        return view('Web/nosotros', $data);
+            'estadisticas'=> $estadisticas,
+        ]));
     }
 }

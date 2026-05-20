@@ -158,7 +158,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="chart-container">
-                                <canvas id="chartCircunferencias"></canvas>
+                                <canvas id="chartCintura"></canvas>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -166,9 +166,14 @@
                                 <canvas id="chartGrasa"></canvas>
                             </div>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <div class="chart-container">
-                                <canvas id="chartPliegues"></canvas>
+                                <canvas id="chartMasaMuscularPct"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container">
+                                <canvas id="chartMasaGrasaKg"></canvas>
                             </div>
                         </div>
                     </div>
@@ -185,10 +190,9 @@
                                     <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Peso (kg)</th>
                                     <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">IMC</th>
                                     <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Cintura (cm)</th>
-                                    <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Cadera (cm)</th>
                                     <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Grasa (%)</th>
-                                    <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Masa Muscular (kg)</th>
-                                    <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Suma Pliegues (mm)</th>
+                                    <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">% Masa Muscular</th>
+                                    <th style="background-color: #667eea !important; color: #ffffff !important; border-color: #667eea !important;">Masa Grasa (kg)</th>
                                 </tr>
                             </thead>
                             <tbody id="tbodyComparacion">
@@ -525,17 +529,17 @@ function mostrarComparacion(historiales) {
     const pesos = historiales.map(h => h.peso_actual ? parseFloat(h.peso_actual) : null);
     const imcs = historiales.map(h => h.imc_actual ? parseFloat(h.imc_actual) : null);
     const cinturas = historiales.map(h => h.circunferencia_cintura ? parseFloat(h.circunferencia_cintura) : null);
-    const caderas = historiales.map(h => h.circunferencia_cadera ? parseFloat(h.circunferencia_cadera) : null);
     const grasas = historiales.map(h => h.grasa_corporal ? parseFloat(h.grasa_corporal) : null);
-    const pliegues = historiales.map(h => h.suma_pliegues ? parseFloat(h.suma_pliegues) : null);
+    const masaMuscularPct = historiales.map(h => h.masa_muscular_pct != null ? parseFloat(h.masa_muscular_pct) : null);
+    const masaGrasaKg = historiales.map(h => h.masa_grasa_kg != null ? parseFloat(h.masa_grasa_kg) : null);
 
     // Crear gráficos - los datos ya vienen ordenados del backend
-    // Pasamos las fechas formateadas y los datos en el mismo orden
     crearGrafico('chartPeso', 'Evolución del Peso', fechasFormateadas, pesos, 'kg', 'rgba(54, 162, 235, 0.6)');
     crearGrafico('chartIMC', 'Evolución del IMC', fechasFormateadas, imcs, '', 'rgba(255, 99, 132, 0.6)');
-    crearGraficoDual('chartCircunferencias', 'Evolución de Circunferencias', fechasFormateadas, cinturas, caderas, 'cm');
+    crearGrafico('chartCintura', 'Evolución de Cintura', fechasFormateadas, cinturas, 'cm', 'rgba(54, 162, 235, 0.6)');
     crearGrafico('chartGrasa', 'Evolución de Grasa Corporal', fechasFormateadas, grasas, '%', 'rgba(255, 206, 86, 0.6)');
-    crearGrafico('chartPliegues', 'Evolución de Suma de Pliegues', fechasFormateadas, pliegues, 'mm', 'rgba(75, 192, 192, 0.6)');
+    crearGrafico('chartMasaMuscularPct', 'Evolución de % Masa Muscular', fechasFormateadas, masaMuscularPct, '%', 'rgba(75, 192, 192, 0.6)');
+    crearGrafico('chartMasaGrasaKg', 'Evolución de Masa Grasa', fechasFormateadas, masaGrasaKg, 'kg', 'rgba(153, 102, 255, 0.6)');
 
     // Llenar tabla
     llenarTablaComparacion(historiales);
@@ -701,10 +705,9 @@ function llenarTablaComparacion(historiales) {
         const peso = h.peso_actual ? parseFloat(h.peso_actual).toFixed(1) : '-';
         const imc = h.imc_actual ? parseFloat(h.imc_actual).toFixed(2) : '-';
         const cintura = h.circunferencia_cintura ? parseFloat(h.circunferencia_cintura).toFixed(1) : '-';
-        const cadera = h.circunferencia_cadera ? parseFloat(h.circunferencia_cadera).toFixed(1) : '-';
         const grasa = h.grasa_corporal ? parseFloat(h.grasa_corporal).toFixed(1) : '-';
-        const masa = h.masa_muscular ? parseFloat(h.masa_muscular).toFixed(1) : '-';
-        const pliegues = h.suma_pliegues ? parseFloat(h.suma_pliegues).toFixed(2) : '-';
+        const masaMuscPct = h.masa_muscular_pct != null ? parseFloat(h.masa_muscular_pct).toFixed(1) : '-';
+        const masaGrasa = h.masa_grasa_kg != null ? parseFloat(h.masa_grasa_kg).toFixed(1) : '-';
 
         $tbody.append(`
             <tr>
@@ -712,10 +715,9 @@ function llenarTablaComparacion(historiales) {
                 <td style="color: #212529 !important; background-color: #ffffff !important;">${peso}</td>
                 <td style="color: #212529 !important; background-color: #ffffff !important;">${imc}</td>
                 <td style="color: #212529 !important; background-color: #ffffff !important;">${cintura}</td>
-                <td style="color: #212529 !important; background-color: #ffffff !important;">${cadera}</td>
                 <td style="color: #212529 !important; background-color: #ffffff !important;">${grasa}</td>
-                <td style="color: #212529 !important; background-color: #ffffff !important;">${masa}</td>
-                <td style="color: #212529 !important; background-color: #ffffff !important;">${pliegues}</td>
+                <td style="color: #212529 !important; background-color: #ffffff !important;">${masaMuscPct}</td>
+                <td style="color: #212529 !important; background-color: #ffffff !important;">${masaGrasa}</td>
             </tr>
         `);
     });
@@ -774,6 +776,30 @@ function mostrarAnalisisCambios(historiales) {
             cambio: cambio,
             porcentaje: ((cambio / parseFloat(primero.grasa_corporal)) * 100).toFixed(1),
             unidad: '%'
+        });
+    }
+
+    if (primero.masa_muscular_pct != null && ultimo.masa_muscular_pct != null) {
+        const cambio = parseFloat(ultimo.masa_muscular_pct) - parseFloat(primero.masa_muscular_pct);
+        cambios.push({
+            parametro: '% Masa Muscular',
+            inicial: primero.masa_muscular_pct,
+            final: ultimo.masa_muscular_pct,
+            cambio: cambio,
+            porcentaje: parseFloat(primero.masa_muscular_pct) !== 0 ? ((cambio / parseFloat(primero.masa_muscular_pct)) * 100).toFixed(1) : '0',
+            unidad: '%'
+        });
+    }
+
+    if (primero.masa_grasa_kg != null && ultimo.masa_grasa_kg != null) {
+        const cambio = parseFloat(ultimo.masa_grasa_kg) - parseFloat(primero.masa_grasa_kg);
+        cambios.push({
+            parametro: 'Masa Grasa',
+            inicial: primero.masa_grasa_kg,
+            final: ultimo.masa_grasa_kg,
+            cambio: cambio,
+            porcentaje: parseFloat(primero.masa_grasa_kg) !== 0 ? ((cambio / parseFloat(primero.masa_grasa_kg)) * 100).toFixed(1) : '0',
+            unidad: 'kg'
         });
     }
 

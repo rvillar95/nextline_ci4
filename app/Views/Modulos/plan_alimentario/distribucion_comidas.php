@@ -244,8 +244,11 @@ function cargarDistribucionComidas(planId) {
         },
         error: function() {
             // Si no hay comidas, solo mostrar contador vacío
-            if (planGuardado && planGuardado.porciones) {
-                porcionesObjetivo = planGuardado.porciones;
+            var planFallback = (typeof planGuardado !== 'undefined' && planGuardado)
+                ? planGuardado
+                : (typeof window.planReferenciaUltimaConsulta !== 'undefined' ? window.planReferenciaUltimaConsulta : null);
+            if (planFallback && planFallback.porciones) {
+                porcionesObjetivo = planFallback.porciones;
                 actualizarContadorPorciones();
                 actualizarResumenPlanHeader();
                 $('#sinPlanAlert').hide();
@@ -256,13 +259,16 @@ function cargarDistribucionComidas(planId) {
 }
 
 function actualizarResumenPlanHeader() {
-    if (typeof planGuardado === 'undefined' || !planGuardado) return;
-    var req = (planGuardado.requerimiento_kcal != null && planGuardado.requerimiento_kcal !== '') ? parseFloat(planGuardado.requerimiento_kcal) : null;
-    var prot = (planGuardado.prot_porcentaje != null && planGuardado.prot_porcentaje !== '') ? parseFloat(planGuardado.prot_porcentaje) : null;
-    var grasa = (planGuardado.grasa_porcentaje != null && planGuardado.grasa_porcentaje !== '') ? parseFloat(planGuardado.grasa_porcentaje) : null;
-    var cho = (planGuardado.cho_porcentaje != null && planGuardado.cho_porcentaje !== '') ? parseFloat(planGuardado.cho_porcentaje) : null;
-    var minA = (planGuardado.adecuacion_min != null && planGuardado.adecuacion_min !== '') ? parseFloat(planGuardado.adecuacion_min) : (req != null ? Math.round(req * 0.9) : null);
-    var maxA = (planGuardado.adecuacion_max != null && planGuardado.adecuacion_max !== '') ? parseFloat(planGuardado.adecuacion_max) : (req != null ? Math.round(req * 1.1) : null);
+    var planRef = (typeof planGuardado !== 'undefined' && planGuardado)
+        ? planGuardado
+        : (typeof window.planReferenciaUltimaConsulta !== 'undefined' ? window.planReferenciaUltimaConsulta : null);
+    if (!planRef) return;
+    var req = (planRef.requerimiento_kcal != null && planRef.requerimiento_kcal !== '') ? parseFloat(planRef.requerimiento_kcal) : null;
+    var prot = (planRef.prot_porcentaje != null && planRef.prot_porcentaje !== '') ? parseFloat(planRef.prot_porcentaje) : null;
+    var grasa = (planRef.grasa_porcentaje != null && planRef.grasa_porcentaje !== '') ? parseFloat(planRef.grasa_porcentaje) : null;
+    var cho = (planRef.cho_porcentaje != null && planRef.cho_porcentaje !== '') ? parseFloat(planRef.cho_porcentaje) : null;
+    var minA = (planRef.adecuacion_min != null && planRef.adecuacion_min !== '') ? parseFloat(planRef.adecuacion_min) : (req != null ? Math.round(req * 0.9) : null);
+    var maxA = (planRef.adecuacion_max != null && planRef.adecuacion_max !== '') ? parseFloat(planRef.adecuacion_max) : (req != null ? Math.round(req * 1.1) : null);
     $('#resumenReqKcal').text(req != null ? Math.round(req) : '—');
     $('#resumenAdecMin').text(minA != null ? Math.round(minA) : '—');
     $('#resumenAdecMax').text(maxA != null ? Math.round(maxA) : '—');

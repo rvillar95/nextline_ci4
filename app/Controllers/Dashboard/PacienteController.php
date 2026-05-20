@@ -389,7 +389,7 @@ class PacienteController extends BaseController
 
         // Cargar historial clínico
         $historialModel = new \App\Models\HistorialClinico();
-        $data['historial'] = $historialModel->getHistorialPorPaciente($id, 20);
+        $data['historial'] = $historialModel->getHistorialPorPaciente($id);
 
         // Cargar documentos
         $documentoModel = new \App\Models\Documento();

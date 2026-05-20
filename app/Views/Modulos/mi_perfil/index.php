@@ -78,9 +78,9 @@
                                 <div class="mb-3">
                                     <label class="form-label small fw-semibold" for="color_primario">Color de acento</label>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <input type="color" class="form-control form-control-color" id="color_primario" name="color_primario" value="<?= esc($usuario['color_primario'] ?? '#4dcba5') ?>" title="Elegir color" style="width: 2.5rem; height: 2.5rem; padding: 2px; cursor: pointer;">
+                                        <input type="color" class="form-control form-control-color" id="color_primario" name="color_primario" value="<?= esc($usuario['color_primario'] ?? '#7bc143') ?>" title="Elegir color" style="width: 2.5rem; height: 2.5rem; padding: 2px; cursor: pointer;">
                                         
-                                        <input type="text" class="form-control form-control-sm" id="color_primario_hex" maxlength="7" style="max-width: 100px;" value="<?= esc($usuario['color_primario'] ?? '#4dcba5') ?>" placeholder="#4dcba5">
+                                        <input type="text" class="form-control form-control-sm" id="color_primario_hex" maxlength="7" style="max-width: 100px;" value="<?= esc($usuario['color_primario'] ?? '#7bc143') ?>" placeholder="#7bc143">
                                     </div>
                                     <p class="text-muted small mb-0 mt-1">Se usa en botones, enlaces y detalles del menú.</p>
                                 </div>
@@ -223,7 +223,7 @@ $(function() {
     });
 
     function actualizarSwatch(hex) {
-        $('#color_swatch').css('background-color', hex || '#4dcba5');
+        $('#color_swatch').css('background-color', hex || '#7bc143');
     }
     $('#color_primario').on('input', function() {
         var hex = $(this).val();
@@ -304,7 +304,7 @@ $(function() {
     $('#formTema').on('submit', function(e) {
         e.preventDefault();
         var tema = $('input[name="tema"]:checked').val();
-        var color = $('#color_primario').val() || $('#color_primario_hex').val() || '#4dcba5';
+        var color = $('#color_primario').val() || $('#color_primario_hex').val() || '#7bc143';
         if (color.indexOf('#') !== 0) color = '#' + color;
         var porDefecto = $('#card_header_por_defecto').is(':checked') ? 1 : 0;
         var esGradiente = $('#card_header_gradiente').is(':checked') ? 1 : 0;

@@ -77,25 +77,11 @@
         color: white;
     }
     
-    /* Consultas anteriores: se pega debajo del header al hacer scroll */
-    .consultas-anteriores-sticky {
-        position: sticky;
-        top: 100px;
-        z-index: 1020;
-        transition: box-shadow 0.2s ease;
+    .ultima-consulta-ref {
+        font-size: 0.8rem;
+        line-height: 1.3;
     }
-    .consultas-anteriores-sticky.is-stuck {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-    #consultasAnterioresHojas {
-        flex: 1;
-        min-width: 0;
-    }
-    /* Cuando el cronómetro de consulta en curso está visible, reservar espacio a la derecha para no tapar el botón Expandir */
-    body.cronometro-consulta-visible #consultasAnterioresSticky > .d-flex.justify-content-between {
-        padding-right: 500px;
-    }
-    
+
     /* Estilos para campos según método de cálculo */
     .metodo-4 {
         border-left: 4px solid #dc3545 !important;
@@ -313,34 +299,6 @@
             </div>
             <?php endif; ?>
 
-            <!-- Consultas anteriores: colapsable, hojas + paginación en una línea (sticky al hacer scroll) -->
-            <div id="consultasAnterioresSticky" class="section-card consultas-anteriores-sticky" style="border-left: 4px solid #90A4AE !important;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="text-secondary mb-0 d-flex align-items-center flex-wrap">
-                        <span><i class="fas fa-copy me-2"></i> Consultas anteriores</span>
-                        <span class="badge bg-secondary ms-2" id="consultasAnterioresBadge" style="display: none;">0</span>
-                        <span id="consultasAnterioresSeleccionada" class="text-muted small ms-2 fw-normal" style="display: none;" title="Consulta cargada como referencia">— <span id="consultasAnterioresSeleccionadaFecha"></span></span>
-                    </h5>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleConsultasAnteriores" data-bs-toggle="collapse" data-bs-target="#consultasAnterioresCollapse" aria-expanded="false" aria-controls="consultasAnterioresCollapse" title="Expandir / Contraer">
-                        <i class="fas fa-chevron-up me-1"></i> <span id="consultasAnterioresToggleLabel">Expandir</span>
-                    </button>
-                </div>
-                <div class="collapse" id="consultasAnterioresCollapse">
-                    <p class="text-muted small mt-2 mb-2">
-                        <i class="fas fa-info-circle me-1"></i> Seleccioná una consulta para cargar sus datos en el formulario actual. Solo se rellenan los campos como referencia; la consulta anterior no se modifica. La fecha y hora se muestran al pasar el mouse.
-                    </p>
-                    <div id="consultasAnterioresContainer" class="d-flex flex-wrap align-items-center gap-2">
-                        <div id="consultasAnterioresHojas" class="d-flex flex-wrap gap-2 align-items-center">
-                            <span class="text-muted small" id="consultasAnterioresMensaje">Cargando consultas anteriores...</span>
-                        </div>
-                        <nav id="consultasAnterioresPaginacion" class="d-flex align-items-center gap-2 flex-wrap ms-auto" aria-label="Paginación consultas anteriores" style="display: none;">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresPrev" disabled><i class="fas fa-chevron-left me-1"></i> Anterior</button>
-                            <span class="small text-muted" id="consultasAnterioresPageInfo"></span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresNext" disabled><i class="fas fa-chevron-right ms-1"></i> Siguiente</button>
-                        </nav>
-                    </div>
-                </div>
-            </div>
 
             <!-- Control de Consulta -->
             <div class="section-card">
@@ -403,6 +361,52 @@
                 </div>
             </div>
 
+            <?php
+            $referencia_ultima_consulta = $referencia_ultima_consulta ?? [];
+            $referencia_ultima_fecha = $referencia_ultima_fecha ?? '';
+            $mostrar_ref_ultima = function ($campo, $unidad = '') use ($referencia_ultima_consulta) {
+                if (!array_key_exists($campo, $referencia_ultima_consulta)) {
+                    return '';
+                }
+                $v = $referencia_ultima_consulta[$campo];
+                if ($v === null || $v === '') {
+                    return '';
+                }
+                if (is_numeric($v)) {
+                    $n = round((float) $v, 2);
+                    $v = fmod($n, 1.0) == 0.0
+                        ? (string) (int) $n
+                        : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+                }
+                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc((string) $v) . esc($unidad) . '</small>';
+            };
+            $mostrar_ref_ultima_texto = function ($campo, $maxLen = 100) use ($referencia_ultima_consulta) {
+                if (empty($referencia_ultima_consulta[$campo])) {
+                    return '';
+                }
+                $v = trim(strip_tags((string) $referencia_ultima_consulta[$campo]));
+                if ($v === '') {
+                    return '';
+                }
+                if (mb_strlen($v) > $maxLen) {
+                    $v = mb_substr($v, 0, $maxLen) . '…';
+                }
+                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc($v) . '</small>';
+            };
+            ?>
+            <?php if ($referencia_ultima_fecha !== ''): ?>
+            <div class="alert alert-light border small mb-3 py-2">
+                <i class="fas fa-history me-1 text-secondary"></i>
+                Datos de la última consulta (<strong><?= esc($referencia_ultima_fecha) ?></strong>): campos vacíos se completan automáticamente; en mediciones se muestra referencia debajo de cada valor.
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($referencia_detalle_agenda_id) || !empty($referencia_ultima_consulta)): ?>
+            <script>
+            window.referenciaDetalleAgendaId = <?= json_encode($referencia_detalle_agenda_id ?? null) ?>;
+            window.referenciaUltimaConsulta = <?= json_encode($referencia_ultima_consulta ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+            </script>
+            <?php endif; ?>
+
             <!-- Secciones de consulta en tabs: Información Clínica, Mediciones, Registro Clínico, Calorimetría -->
             <div class="section-card consulta-secciones-tabs" style="border-left: 4px solid #28a745 !important;">
                 <ul class="nav nav-tabs" id="consultaSeccionesTabs" role="tablist">
@@ -434,16 +438,19 @@
                         </p>
                         <div class="mb-4">
                         <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
+                        <?= $mostrar_ref_ultima_texto('motivo_consulta') ?>
                         <p class="text-muted small mb-2">Indique el motivo de la consulta o el objetivo principal acordado con el paciente. Puede usar formato de texto.</p>
                         <textarea name="motivo_consulta" id="motivo_consulta" class="form-control" rows="4" placeholder="Ej: Control de peso, Mejorar hábitos alimentarios, Seguimiento diabetes..."><?= esc($historial['motivo_consulta'] ?? $cita->motivo ?? '') ?></textarea>
                     </div>
                     <div class="mb-4">
                         <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
+                        <?= $mostrar_ref_ultima_texto('plan_tratamiento') ?>
                         <p class="text-muted small mb-2">Describe el plan de tratamiento y alimentación acordado. Puedes usar formato de texto (negrita, cursiva, listas, etc.).</p>
                         <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="6" placeholder="Ej: Dieta mediterránea, 5 comidas al día, Eliminar azúcares refinados, Aumentar consumo de vegetales..."><?= esc($historial['plan_tratamiento'] ?? $cita->plan_alimentacion ?? '') ?></textarea>
                     </div>
                     <div class="mb-3">
                         <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
+                        <?= $mostrar_ref_ultima_texto('recomendaciones') ?>
                         <p class="text-muted small mb-2">Agrega recomendaciones y observaciones para el paciente. Puedes usar formato de texto.</p>
                         <textarea name="recomendaciones" id="recomendaciones" class="form-control" rows="5" placeholder="Ej: Realizar ejercicio cardiovascular 30 min 3 veces por semana, Tomar suplemento de vitamina D, Agendar próxima cita en 1 mes..."><?= esc(trim(($historial['recomendaciones'] ?? '') . (isset($historial['observaciones']) && (string)($historial['observaciones'] ?? '') !== '' ? "\n\n" . ($historial['observaciones'] ?? '') : '')) ?: ($cita->recomendaciones ?? '')) ?></textarea>
                     </div>
@@ -463,14 +470,62 @@
                 <?php
                 $ac = [];
                 $aa = [];
+                $refUltima = $referencia_ultima_consulta ?? [];
+                $jsonAnamnesisVacio = static function (array $arr): bool {
+                    foreach ($arr as $v) {
+                        if (trim((string) $v) !== '') {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
                 if (!empty($historial['anamnesis_clinica'])) {
                     $dec = is_string($historial['anamnesis_clinica']) ? json_decode($historial['anamnesis_clinica'], true) : $historial['anamnesis_clinica'];
-                    if (is_array($dec)) $ac = $dec;
+                    if (is_array($dec)) {
+                        $ac = $dec;
+                    }
+                }
+                if ($jsonAnamnesisVacio($ac) && !empty($refUltima['anamnesis_clinica'])) {
+                    $dec = is_string($refUltima['anamnesis_clinica']) ? json_decode($refUltima['anamnesis_clinica'], true) : $refUltima['anamnesis_clinica'];
+                    if (is_array($dec)) {
+                        $ac = $dec;
+                    }
                 }
                 if (!empty($historial['anamnesis_alimentaria'])) {
                     $dec = is_string($historial['anamnesis_alimentaria']) ? json_decode($historial['anamnesis_alimentaria'], true) : $historial['anamnesis_alimentaria'];
-                    if (is_array($dec)) $aa = $dec;
+                    if (is_array($dec)) {
+                        $aa = $dec;
+                    }
                 }
+                if ($jsonAnamnesisVacio($aa) && !empty($refUltima['anamnesis_alimentaria'])) {
+                    $dec = is_string($refUltima['anamnesis_alimentaria']) ? json_decode($refUltima['anamnesis_alimentaria'], true) : $refUltima['anamnesis_alimentaria'];
+                    if (is_array($dec)) {
+                        $aa = $dec;
+                    }
+                }
+                $tendenciaVacia = static function ($tendencia) {
+                    if (empty($tendencia) || !is_array($tendencia)) {
+                        return true;
+                    }
+                    foreach ($tendencia as $tc) {
+                        $pref = is_object($tc) ? ($tc->preferencia ?? '') : ($tc['preferencia'] ?? '');
+                        $alerg = is_object($tc) ? ($tc->alergia_intolerancia ?? '') : ($tc['alergia_intolerancia'] ?? '');
+                        if (trim((string) $pref) !== '' || trim((string) $alerg) !== '') {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                if ($tendenciaVacia($tendencia_consumo ?? []) && !empty($referencia_tendencia_consumo)) {
+                    $tendencia_consumo = $referencia_tendencia_consumo;
+                }
+                if (empty($examenes_bioquimicos) && !empty($referencia_examenes_bioquimicos)) {
+                    $examenes_bioquimicos = $referencia_examenes_bioquimicos;
+                }
+                $recordatorioActual = trim((string) ($historial['recordatorio_24h'] ?? ''));
+                $recordatorioPrefill = $recordatorioActual !== ''
+                    ? $recordatorioActual
+                    : trim((string) ($refUltima['recordatorio_24h'] ?? ''));
                 ?>
                     <div class="tab-pane fade" id="pane-mediciones" role="tabpanel" aria-labelledby="tab-mediciones-btn">
                         <p class="text-muted small mb-3">
@@ -956,7 +1011,7 @@
                                 <p class="text-muted small">Desayuno, colación, almuerzo, once, cena: horarios y contenido.</p>
                             </div>
                             <div class="col-12 mb-3">
-                                <textarea name="recordatorio_24h" id="recordatorio_24h" class="form-control" rows="5" placeholder="Ej: Desayuno 08:00: café con leche, pan integral, palta. Colación 11:00: fruta. Almuerzo 14:00: ensalada, pollo, arroz. Once 18:00: té, galleta. Cena 21:00: sopa, huevo..."><?= isset($historial['recordatorio_24h']) ? esc($historial['recordatorio_24h']) : '' ?></textarea>
+                                <textarea name="recordatorio_24h" id="recordatorio_24h" class="form-control" rows="5" placeholder="Ej: Desayuno 08:00: café con leche, pan integral, palta. Colación 11:00: fruta. Almuerzo 14:00: ensalada, pollo, arroz. Once 18:00: té, galleta. Cena 21:00: sopa, huevo..."><?= esc($recordatorioPrefill ?? '') ?></textarea>
                             </div>
                         </div>
 
@@ -1962,7 +2017,12 @@ function calcularSumaPliegues() {
 
 // Event listeners para cálculos automáticos
 $(document).ready(function() {
-    $('#peso_actual, #altura_actual').on('input', calcularIMC);
+    $('#peso_actual, #altura_actual').on('input', function() {
+        calcularIMC();
+        if (typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
+            window.sincronizarCalorimetriaDesdeMediciones();
+        }
+    });
     
     // Agregar listeners a todos los campos de pliegues por ID
     $('#pliegue_tricipital, #pliegue_bicipital, #pliegue_subescapular, #pliegue_suprailíaco, #pliegue_supraespinal, #pliegue_abdominal, #pliegue_muslo_anterior, #pliegue_pantorrilla_medial, #pliegue_pectoral, #pliegue_axilar_medio, #pliegue_muslo_medial').on('input', function() {
@@ -2112,6 +2172,9 @@ function guardarMediciones(event, seccionGuardar) {
                 if (response.historial_id && !$('#historial_id').val()) {
                     $('#historial_id').val(response.historial_id);
                 }
+                if (guardandoMed && typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
+                    window.sincronizarCalorimetriaDesdeMediciones();
+                }
             } else {
                 if (guardandoMed) actualizarEstadoMediciones('cambios');
                 if (guardandoReg) actualizarEstadoRegistroClinico('cambios');
@@ -2145,9 +2208,9 @@ $(document).ready(function() {
         var $el = $(this);
         // Solo actualizar el badge del tab que contiene el campo editado
         if ($el.closest('#pane-mediciones').length) {
-            if ($('#medicionesEstado').length && $('#medicionesEstado').hasClass('bg-success')) actualizarEstadoMediciones('cambios');
+            if ($('#medicionesEstado').length && !$('#medicionesEstado').hasClass('bg-primary')) actualizarEstadoMediciones('cambios');
         } else if ($el.closest('#pane-registro').length) {
-            if ($('#registroClinicoEstado').length && $('#registroClinicoEstado').hasClass('bg-success')) actualizarEstadoRegistroClinico('cambios');
+            if ($('#registroClinicoEstado').length && !$('#registroClinicoEstado').hasClass('bg-primary')) actualizarEstadoRegistroClinico('cambios');
         }
         // Auto-guardar solo la sección que tiene cambios (mediciones o registro clínico)
         if ($('#formMediciones input[name="detalle_agenda_id"]').val()) {
@@ -2165,7 +2228,7 @@ $(document).ready(function() {
     // Calorimetría y Plan Alimentario: marcar "Cambios sin guardar" al editar dentro del bloque
     $(document).on('change input', '#pane-calorimetria input, #pane-calorimetria select, #pane-calorimetria textarea', function() {
         var $b = $('#calorimetriaPlanEstado');
-        if ($b.length && $b.hasClass('bg-success')) {
+        if ($b.length && !$b.hasClass('bg-primary')) {
             actualizarEstadoCalorimetriaPlan('cambios');
         }
     });
@@ -2190,136 +2253,142 @@ $(document).on('click', '.btn-quitar-examen', function() {
     }
 });
 
-// Consultas anteriores: listar y rellenar formulario desde una consulta previa
-var consultasAnterioresPage = 1;
-var consultasAnterioresTotalPages = 0;
-
-function loadConsultasAnteriores(page) {
-    var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
-    if (!detalleId) { $('#consultasAnterioresMensaje').text('No hay cita actual.'); return; }
-    $('#consultasAnterioresMensaje').text('Cargando...');
-    $('#consultasAnterioresHojas').find('.hoja-consulta-anterior').remove();
-    $.get('<?= base_url("dashboard/agenda/getConsultasAnteriores") ?>', { detalle_agenda_id: detalleId, page: page || 1, per_page: 10 }, 'json')
-        .done(function(res) {
-            consultasAnterioresTotalPages = res.total_pages || 0;
-            consultasAnterioresPage = res.page || 1;
-            $('#consultasAnterioresMensaje').text('');
-            if (!res.consultas || res.consultas.length === 0) {
-                $('#consultasAnterioresMensaje').text('No hay consultas anteriores completadas para este paciente.');
-                $('#consultasAnterioresPaginacion').hide();
-                return;
+// Referencia de última consulta bajo labels (mediciones y registro)
+function initReferenciasUltimaConsulta() {
+    if (!window.referenciaUltimaConsulta) return;
+    var ref = window.referenciaUltimaConsulta;
+    function fmtVal(v) {
+        if (v === null || v === undefined || v === '') return null;
+        if (typeof v === 'number' || (!isNaN(parseFloat(v)) && isFinite(v) && String(v).trim() !== '')) {
+            var n = Math.round(parseFloat(v) * 100) / 100;
+            if (n % 1 === 0) {
+                return String(n);
             }
-            $.each(res.consultas, function(i, c) {
-                var label = c.label || (c.fecha + ' ' + (c.hora || ''));
-                var title = (c.fecha_fin_real || label) + ' — Clic para cargar en esta consulta';
-                var $btn = $('<button type="button" class="btn btn-sm btn-outline-secondary hoja-consulta-anterior" data-id="' + c.id + '" title="' + title + '">' + label + '</button>');
-                $('#consultasAnterioresHojas').append($btn);
-            });
-            $('#consultasAnterioresPaginacion').css('display', 'flex');
-            $('#consultasAnterioresPageInfo').text('Página ' + consultasAnterioresPage + ' de ' + (consultasAnterioresTotalPages || 1) + ' (' + (res.total || 0) + ' consultas)');
-            var totalConsultas = res.total || 0;
-            $('#consultasAnterioresBadge').text(totalConsultas).toggle(totalConsultas > 0);
-            $('#btnConsultasAnterioresPrev').prop('disabled', consultasAnterioresPage <= 1);
-            $('#btnConsultasAnterioresNext').prop('disabled', consultasAnterioresPage >= consultasAnterioresTotalPages);
-        })
-        .fail(function() {
-            $('#consultasAnterioresMensaje').text('Error al cargar consultas anteriores.');
-        });
-}
-
-function fillFormFromConsultaAnterior(data) {
-    var h = data.historial || {};
-    var d = data.detalle || {};
-    function val(v) { return (v !== undefined && v !== null && v !== '') ? v : ''; }
-    $('#peso_actual').val(val(h.peso_actual)); $('#altura_actual').val(val(h.altura_actual)); $('#altura_sentado').val(val(h.altura_sentado)); $('#imc_actual').val(val(h.imc_actual));
-    $('#circunferencia_cintura').val(val(h.circunferencia_cintura)); $('#circunferencia_cadera').val(val(h.circunferencia_cadera)); $('#circunferencia_brazo_relajado').val(val(h.circunferencia_brazo_relajado)); $('#circunferencia_brazo_contraido').val(val(h.circunferencia_brazo_contraido)); $('#circunferencia_muslo_medio').val(val(h.circunferencia_muslo_medio)); $('#circunferencia_pantorrilla').val(val(h.circunferencia_pantorrilla)); $('#circunferencia_cuello').val(val(h.circunferencia_cuello)); $('#circunferencia_torax').val(val(h.circunferencia_torax)); $('#circunferencia_cabeza').val(val(h.circunferencia_cabeza)); $('#circunferencia_antebrazo_maximo').val(val(h.circunferencia_antebrazo_maximo)); $('#circunferencia_muslo_maximo').val(val(h.circunferencia_muslo_maximo)); $('#circunferencia_muneca').val(val(h.circunferencia_muneca));
-    $('#pliegue_tricipital').val(val(h.pliegue_tricipital)); $('#pliegue_bicipital').val(val(h.pliegue_bicipital)); $('#pliegue_subescapular').val(val(h.pliegue_subescapular)); $('#pliegue_suprailíaco').val(val(h.pliegue_suprailíaco)); $('#pliegue_supraespinal').val(val(h.pliegue_supraespinal)); $('#pliegue_abdominal').val(val(h.pliegue_abdominal)); $('#pliegue_muslo_anterior').val(val(h.pliegue_muslo_anterior)); $('#pliegue_pantorrilla_medial').val(val(h.pliegue_pantorrilla_medial)); $('#pliegue_pectoral').val(val(h.pliegue_pectoral)); $('#pliegue_axilar_medio').val(val(h.pliegue_axilar_medio)); $('#pliegue_muslo_medial').val(val(h.pliegue_muslo_medial));
-    $('#suma_pliegues').val(val(h.suma_pliegues)); $('#grasa_corporal_calculada').val(val(h.grasa_corporal_calculada));
-    $('#diametro_biacromial').val(val(h.diametro_biacromial)); $('#diametro_bi_iliocristal').val(val(h.diametro_bi_iliocristal)); $('#diametro_torax_transverso').val(val(h.diametro_torax_transverso)); $('#diametro_torax_anteroposterior').val(val(h.diametro_torax_anteroposterior)); $('#diametro_humero').val(val(h.diametro_humero)); $('#diametro_femur').val(val(h.diametro_femur)); $('#diametro_muneca').val(val(h.diametro_muneca)); $('#diametro_tobillo').val(val(h.diametro_tobillo));
-    $('#grasa_corporal').val(val(h.grasa_corporal)); $('#masa_muscular').val(val(h.masa_muscular)); $('#masa_osea').val(val(h.masa_osea));
-    $('#recordatorio_24h').val(val(h.recordatorio_24h));
-    var ac = {}; try { ac = (typeof h.anamnesis_clinica === 'string' && h.anamnesis_clinica) ? JSON.parse(h.anamnesis_clinica) : (h.anamnesis_clinica || {}); } catch(e) {}
-    ['tabaco','alcohol','drogas','enfermedad_base','signos_sintomas','transito_bristol','medicamentos','suplementos','ingesta_hidrica','actividad_fisica','sueno','otros'].forEach(function(k) { var id = 'ac_' + k; if ($('#' + id).length) $('#' + id).val(val(ac[k])); });
-    $('#anamnesis_clinica').val(typeof h.anamnesis_clinica === 'string' ? h.anamnesis_clinica : JSON.stringify(ac));
-    var aa = {}; try { aa = (typeof h.anamnesis_alimentaria === 'string' && h.anamnesis_alimentaria) ? JSON.parse(h.anamnesis_alimentaria) : (h.anamnesis_alimentaria || {}); } catch(e) {}
-    ['relacion_familiar','quien_cocina','apetito','relacion_comida','dieta_restrictiva','historia_peso','ansiedad_comida','otros'].forEach(function(k) { var id = 'aa_' + k; if ($('#' + id).length) $('#' + id).val(val(aa[k])); });
-    $('#anamnesis_alimentaria').val(typeof h.anamnesis_alimentaria === 'string' ? h.anamnesis_alimentaria : JSON.stringify(aa));
-    var motivoVal = val(h.motivo_consulta) || val(d.motivo);
-    var planVal = val(h.plan_tratamiento) || val(d.plan_alimentacion);
-    var recVal = val(h.recomendaciones) || val(d.recomendaciones);
-    if (typeof tinymce !== 'undefined') {
-        if (tinymce.get('motivo_consulta')) tinymce.get('motivo_consulta').setContent(motivoVal); else $('#motivo_consulta').val(motivoVal);
-        if (tinymce.get('plan_tratamiento')) tinymce.get('plan_tratamiento').setContent(planVal); else $('#plan_tratamiento').val(planVal);
-        if (tinymce.get('recomendaciones')) tinymce.get('recomendaciones').setContent(recVal); else $('#recomendaciones').val(recVal);
-    } else {
-        $('#motivo_consulta').val(motivoVal); $('#plan_tratamiento').val(planVal); $('#recomendaciones').val(recVal);
-    }
-    $('#proxima_cita_recomendada').val(val(d.proxima_cita_recomendada)); $('#tags').val(val(d.tags_string));
-    if (typeof tagifyConsulta !== 'undefined' && tagifyConsulta && d.tags_string) { try { tagifyConsulta.loadOriginalValues(d.tags_string.split(/[\s,]+/).filter(Boolean)); } catch(e) { $('#tags').val(d.tags_string); } }
-    var examenes = data.examenes_bioquimicos || [];
-    var $tbody = $('#tbodyExamenesBioquimicos'); $tbody.find('tr.fila-examen').remove();
-    if (examenes.length === 0) { examenes = [{ nombre: '', valor: '', fecha_interpretacion: '' }]; }
-    $.each(examenes, function(i, ex) {
-        var nom = (ex.nombre !== undefined && ex.nombre !== null) ? ex.nombre : ''; var v = (ex.valor !== undefined && ex.valor !== null) ? ex.valor : ''; var f = (ex.fecha_interpretacion !== undefined && ex.fecha_interpretacion !== null) ? ex.fecha_interpretacion : '';
-        $tbody.append('<tr class="fila-examen"><td><input type="text" class="form-control form-control-sm" name="examen_nombre[]" placeholder="Ej: Glicemia" value="' + (nom.replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_valor[]" placeholder="Ej: 95" value="' + (String(v).replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_fecha[]" placeholder="Ej: 15-01-2026" value="' + (String(f).replace(/"/g, '&quot;')) + '"></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-examen" title="Quitar"><i class="fas fa-times"></i></button></td></tr>');
-    });
-    var filasExamenes = []; $tbody.find('tr.fila-examen').each(function() { var $tr = $(this); filasExamenes.push({ nombre: $tr.find('input[name="examen_nombre[]"]').val() || '', valor: $tr.find('input[name="examen_valor[]"]').val() || '', fecha_interpretacion: $tr.find('input[name="examen_fecha[]"]').val() || '' }); });
-    $('#examenes_bioquimicos_hidden').val(JSON.stringify(filasExamenes));
-    var tendencia = data.tendencia_consumo || [];
-    $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var grupo = $(this).data('grupo'); var row = tendencia.find(function(t) { return (t.grupo || '').toString() === (grupo || '').toString(); }); $(this).find('.tc-preferencia').val(row ? (row.preferencia || '') : ''); $(this).find('.tc-alergia').val(row ? (row.alergia_intolerancia || '') : ''); });
-    var tendenciaRows = []; $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var g = $(this).data('grupo'); tendenciaRows.push({ grupo: g, preferencia: $(this).find('.tc-preferencia').val() || '', alergia_intolerancia: $(this).find('.tc-alergia').val() || '' }); });
-    $('#tendencia_consumo').val(JSON.stringify(tendenciaRows));
-    toastr.success('Datos de la consulta anterior cargados en el formulario. Revisá y guardá cuando quieras.');
-}
-
-$(document).on('click', '.hoja-consulta-anterior', function() {
-    var idAnterior = $(this).data('id'); var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
-    if (!idAnterior || !detalleId) return;
-    var labelSeleccionada = $(this).text().trim();
-    $(this).addClass('active').siblings('.hoja-consulta-anterior').removeClass('active');
-    $('#consultasAnterioresSeleccionadaFecha').text(labelSeleccionada);
-    $('#consultasAnterioresSeleccionada').show();
-    $.get('<?= base_url("dashboard/agenda/getDatosConsultaAnterior") ?>', { detalle_agenda_id: detalleId, id_anterior: idAnterior }, 'json')
-        .done(function(res) { fillFormFromConsultaAnterior(res); })
-        .fail(function(xhr) { toastr.error(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error al cargar la consulta anterior.'); });
-});
-$(document).on('click', '#btnConsultasAnterioresPrev', function() { if (consultasAnterioresPage > 1) loadConsultasAnteriores(consultasAnterioresPage - 1); });
-$(document).on('click', '#btnConsultasAnterioresNext', function() { if (consultasAnterioresPage < consultasAnterioresTotalPages) loadConsultasAnteriores(consultasAnterioresPage + 1); });
-$(function() {
-    loadConsultasAnteriores(1);
-    // Sombra cuando "Consultas anteriores" queda fija al hacer scroll
-    var $sticky = $('#consultasAnterioresSticky');
-    if ($sticky.length) {
-        var stickyTop = 100;
-        function checkStuck() {
-            var rect = $sticky[0].getBoundingClientRect();
-            $sticky.toggleClass('is-stuck', rect.top <= stickyTop + 2);
+            return n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
         }
-        $(window).on('scroll.consultasSticky resize.consultasSticky', checkStuck);
-        checkStuck();
+        var s = String(v).trim();
+        return s === '' ? null : s;
     }
-    // Etiqueta e ícono del botón Contraer/Expandir (Consultas anteriores)
-    $('#consultasAnterioresCollapse').on('show.bs.collapse', function() {
-        $('#consultasAnterioresToggleLabel').text('Contraer');
-        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-    }).on('hide.bs.collapse', function() {
-        $('#consultasAnterioresToggleLabel').text('Expandir');
-        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    function addHintAfterLabel($label, text) {
+        if (!$label.length || !text) return;
+        if ($label.next('.ultima-consulta-ref').length) return;
+        $label.after('<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' + $('<span>').text(text).html() + '</small>');
+    }
+    Object.keys(ref).forEach(function(name) {
+        if (name.indexOf('[]') >= 0) return;
+        var v = fmtVal(ref[name]);
+        if (v === null) return;
+        var $input = $('#formMediciones, #pane-registro')
+            .find('[name="' + name.replace(/"/g, '\\"') + '"]')
+            .filter(':not([type="hidden"])')
+            .first();
+        if (!$input.length) return;
+        var $col = $input.closest('.col-md-3, .col-md-4, .col-md-6, .col-md-12');
+        if (!$col.length) return;
+        var $label = $col.children('label.form-label').first();
+        if (!$label.length) $label = $col.find('label.form-label').first();
+        addHintAfterLabel($label, v);
     });
-    // Tabs de secciones: recordar última pestaña activa (solo en esta consulta)
+    function hintsFromJson(jsonField, prefix) {
+        try {
+            var data = typeof ref[jsonField] === 'string' ? JSON.parse(ref[jsonField]) : ref[jsonField];
+            if (!data || typeof data !== 'object') return;
+            Object.keys(data).forEach(function(k) {
+                var v = fmtVal(data[k]);
+                if (v === null) return;
+                var id = prefix + k;
+                var $input = $('#' + id);
+                if (!$input.length) return;
+                var $col = $input.closest('[class*="col-"]');
+                addHintAfterLabel($col.find('label').first(), v.length > 80 ? v.substring(0, 80) + '…' : v);
+            });
+        } catch (e) {}
+    }
+    hintsFromJson('anamnesis_clinica', 'ac_');
+    hintsFromJson('anamnesis_alimentaria', 'aa_');
+    sincronizarAnamnesisHidden();
+}
+
+function sincronizarAnamnesisHidden() {
+    if (!$('#anamnesis_clinica').length) return;
+    var acObj = {
+        tabaco: $('#ac_tabaco').val() || '',
+        alcohol: $('#ac_alcohol').val() || '',
+        drogas: $('#ac_drogas').val() || '',
+        enfermedad_base: $('#ac_enfermedad_base').val() || '',
+        signos_sintomas: $('#ac_signos_sintomas').val() || '',
+        transito_bristol: $('#ac_transito_bristol').val() || '',
+        medicamentos: $('#ac_medicamentos').val() || '',
+        suplementos: $('#ac_suplementos').val() || '',
+        ingesta_hidrica: $('#ac_ingesta_hidrica').val() || '',
+        actividad_fisica: $('#ac_actividad_fisica').val() || '',
+        sueno: $('#ac_sueno').val() || '',
+        otros: $('#ac_otros').val() || ''
+    };
+    $('#anamnesis_clinica').val(JSON.stringify(acObj));
+    var aaObj = {
+        relacion_familiar: $('#aa_relacion_familiar').val() || '',
+        quien_cocina: $('#aa_quien_cocina').val() || '',
+        apetito: $('#aa_apetito').val() || '',
+        relacion_comida: $('#aa_relacion_comida').val() || '',
+        dieta_restrictiva: $('#aa_dieta_restrictiva').val() || '',
+        historia_peso: $('#aa_historia_peso').val() || '',
+        ansiedad_comida: $('#aa_ansiedad_comida').val() || '',
+        otros: $('#aa_otros').val() || ''
+    };
+    $('#anamnesis_alimentaria').val(JSON.stringify(aaObj));
+}
+
+function consultaTieneCambiosSinGuardar() {
+    return $('#infoClinicaEstado, #medicionesEstado, #registroClinicoEstado, #calorimetriaPlanEstado').filter('.bg-warning').length > 0;
+}
+
+function nombreTabConsulta(paneId) {
+    var map = {
+        '#pane-info-clinica': 'Información Clínica',
+        '#pane-mediciones': 'Mediciones',
+        '#pane-registro': 'Registro Clínico',
+        '#pane-calorimetria': 'Calorimetría y Plan'
+    };
+    return map[paneId] || 'esta sección';
+}
+
+function badgeIdPorPane(paneId) {
+    var map = {
+        '#pane-info-clinica': '#infoClinicaEstado',
+        '#pane-mediciones': '#medicionesEstado',
+        '#pane-registro': '#registroClinicoEstado',
+        '#pane-calorimetria': '#calorimetriaPlanEstado'
+    };
+    return map[paneId] || null;
+}
+
+$(function() {
+    initReferenciasUltimaConsulta();
+    sincronizarAnamnesisHidden();
+    window.addEventListener('beforeunload', function(e) {
+        if (consultaTieneCambiosSinGuardar()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
     var seccionesTabEl = document.getElementById('consultaSeccionesTabs');
     if (seccionesTabEl) {
-        // Registrar el listener ANTES de restaurar el tab, para que al recargar con Mediciones/Registro se actualice data-tab-visible y se vea el contenido
+        seccionesTabEl.addEventListener('hide.bs.tab', function(e) {
+            var paneId = e.target.getAttribute('data-bs-target');
+            var badgeId = badgeIdPorPane(paneId);
+            if (badgeId && $(badgeId).hasClass('bg-warning')) {
+                var nombre = nombreTabConsulta(paneId);
+                if (!confirm('Hay cambios sin guardar en ' + nombre + '. ¿Salir sin guardar?')) {
+                    e.preventDefault();
+                }
+            }
+        });
         seccionesTabEl.addEventListener('shown.bs.tab', function(e) {
             var target = e.target.getAttribute('data-bs-target');
             if (target && typeof sessionStorage !== 'undefined') sessionStorage.setItem('consultaSeccionTab', target);
-            // Mostrar el form solo cuando el tab activo es Mediciones o Registro; así no ocupa espacio en los otros
             var formMed = document.getElementById('formMediciones');
             if (formMed) formMed.setAttribute('data-tab-visible', (target === '#pane-mediciones' || target === '#pane-registro') ? 'true' : 'false');
-            // Llevar el contenido del tab al inicio del viewport para que se vea solo ese bloque arriba
-            var pane = target ? document.querySelector(target) : null;
-            //if (pane) pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Quitar el foco del tab para no dejar el anillo de focus visible
             if (e.target && e.target.blur) e.target.blur();
         });
         var lastTab = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('consultaSeccionTab');

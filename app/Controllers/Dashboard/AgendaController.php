@@ -13,6 +13,7 @@ use App\Models\EmpresaConfiguracion;
 use App\Traits\MaintainsFilters;
 use App\Libraries\WhatsAppService;
 use App\Libraries\CalendarService;
+use App\Services\NotificacionNutricionistaService;
 use Config\Services;
 
 class AgendaController extends BaseController
@@ -203,17 +204,22 @@ class AgendaController extends BaseController
                 default => '❔'
             };
             
-            // Construir título con icono de modalidad
-            $titulo = '';
+            // Título completo (tooltip / detalle) y corto (celda del calendario)
+            $tituloCompleto = '';
+            $nombreCorto = $this->nombreCortoCalendario($nombrePaciente);
             if ($estadoCita === 'cancelada') {
-                // Para citas canceladas, mostrar como cancelada incluso si no tiene paciente
-                $titulo = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $tituloCompleto = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $titulo = $iconoModalidad . ' Cancelada' . ($nombreCorto !== '' ? "\n" . $nombreCorto : '');
             } elseif ($estadoCita === 'reservada') {
-                $titulo = $iconoModalidad . ' Reservada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $tituloCompleto = $iconoModalidad . ' Reservada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $titulo = $iconoModalidad . ' Reservada' . ($nombreCorto !== '' ? "\n" . $nombreCorto : '');
             } elseif ($estaDisponible) {
-                $titulo = $iconoModalidad . ' Disponible';
+                $tituloCompleto = $iconoModalidad . ' Disponible';
+                $titulo = $tituloCompleto;
             } else {
-                $titulo = $iconoModalidad . ' ' . $nombrePaciente . ($evento->motivo ? ' - ' . substr($evento->motivo, 0, 25) : '');
+                $motivoCorto = $evento->motivo ? ' · ' . mb_substr($evento->motivo, 0, 18) : '';
+                $tituloCompleto = $iconoModalidad . ' ' . $nombrePaciente . ($evento->motivo ? ' - ' . $evento->motivo : '');
+                $titulo = $iconoModalidad . ' ' . ($nombreCorto !== '' ? $nombreCorto : $nombrePaciente) . $motivoCorto;
             }
 
             // Para citas completadas, agregar estilo especial para diferenciarlas mejor
@@ -239,7 +245,10 @@ class AgendaController extends BaseController
                     'tipo_consulta' => $evento->tipo_consulta,
                     'motivo' => $evento->motivo,
                     'modalidad_id' => $modalidadId,
-                    'modalidad_icono' => $iconoModalidad
+                    'modalidad_icono' => $iconoModalidad,
+                    'titulo_completo' => $tituloCompleto,
+                    'hora_inicio' => substr((string) $evento->hora_inicio, 0, 5),
+                    'hora_fin' => substr((string) $evento->hora_fin, 0, 5),
                 ]
             ];
         }
@@ -249,6 +258,23 @@ class AgendaController extends BaseController
             'events' => $data,
             'slotMinTime' => $horaMinimaFormateada
         ]);
+    }
+
+    /**
+     * Nombre abreviado para celdas del calendario (primer nombre + último apellido).
+     */
+    private function nombreCortoCalendario(string $nombreCompleto): string
+    {
+        $nombreCompleto = trim($nombreCompleto);
+        if ($nombreCompleto === '' || $nombreCompleto === 'Disponible') {
+            return '';
+        }
+        $partes = preg_split('/\s+/u', $nombreCompleto, -1, PREG_SPLIT_NO_EMPTY);
+        if ($partes === false || count($partes) <= 2) {
+            return $nombreCompleto;
+        }
+
+        return $partes[0] . ' ' . $partes[count($partes) - 1];
     }
 
     /**
@@ -946,6 +972,7 @@ class AgendaController extends BaseController
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         $estado_cita = $this->request->getGet('estado_cita');
+        $destacarId = (int) $this->request->getGet('destacar');
         
         // Obtener citas desde detalle_agenda; fecha/hora de referencia: da.fecha, da.hora_inicio, da.hora_fin
         // fecha_orden para ordenar (fecha en BD es DD-MM-YYYY)
@@ -966,9 +993,16 @@ class AgendaController extends BaseController
             $builder->where('da.estado_cita', $estado_cita);
         }
 
-        // Por defecto: solo citas cuya fecha+hora de inicio (detalle_agenda) sea >= ahora
+        // Por defecto: solo citas futuras; si viene ?destacar=ID, incluir esa cita aunque sea pasada
         if (!$fecha_desde && !$fecha_hasta) {
-            $builder->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false);
+            if ($destacarId > 0) {
+                $builder->groupStart()
+                    ->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false)
+                    ->orWhere('da.id', $destacarId)
+                    ->groupEnd();
+            } else {
+                $builder->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false);
+            }
         }
 
         // Ordenar por fecha y hora ascendente (usamos alias fecha_orden para evitar raw en ORDER BY)
@@ -1008,6 +1042,7 @@ class AgendaController extends BaseController
             $botones .= '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
 
             $data[] = array(
+                (int) $r->id,
                 esc($nombrePaciente),
                 esc($r->fecha ?: ''), // La fecha ya está en formato DD-MM-YYYY en la BD
                 esc($r->hora_inicio ?? ''),
@@ -2425,6 +2460,38 @@ class AgendaController extends BaseController
                 log_message('info', 'CONFIRMAR DESDE EMAIL: WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
             }
 
+            // Notificación in-app y correo al nutricionista
+            try {
+                if ($configuracion['enviar_email'] ?? 1) {
+                    (new NotificacionNutricionistaService())->notificarConfirmacionDesdeEmail(
+                        (int) $detalleAgendaId,
+                        (int) $pacienteId,
+                        $tienePago
+                    );
+                } else {
+                    $citaNotif = (new NotificacionNutricionistaService())->obtenerDatosCita((int) $detalleAgendaId, (int) $pacienteId);
+                    if ($citaNotif && !empty($citaNotif->usuario_id)) {
+                        $nombrePac = trim(($citaNotif->paciente_nombre ?? '') . ' ' . ($citaNotif->paciente_apellido ?? ''));
+                        $fechaN = $citaNotif->fecha ?? $citaNotif->fecha_agenda ?? '';
+                        $horaN = !empty($citaNotif->hora_inicio) ? date('H:i', strtotime($citaNotif->hora_inicio)) : '';
+                        $msg = $tienePago
+                            ? $nombrePac . ' confirmó la cita del ' . $fechaN . ' a las ' . $horaN . ' (pendiente de pago).'
+                            : $nombrePac . ' confirmó la cita del ' . $fechaN . ' a las ' . $horaN . '.';
+                        (new \App\Models\Notificacion())->crear(
+                            (int) $citaNotif->usuario_id,
+                            'confirmacion_email',
+                            $tienePago ? 'Paciente confirmó — pendiente de pago' : 'Cita confirmada por el paciente',
+                            $msg,
+                            base_url('dashboard/agenda/lista?destacar=' . $detalleAgendaId),
+                            'detalle_agenda',
+                            (int) $detalleAgendaId
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'CONFIRMAR DESDE EMAIL: notificación nutricionista: ' . $e->getMessage());
+            }
+
             // Mensaje final según si tiene pago o no
             $mensajeFinal = $tienePago 
                 ? 'Cita confirmada. Revisa tu correo para completar el pago.'
@@ -2677,6 +2744,15 @@ class AgendaController extends BaseController
                 }
             }
 
+            // Notificación in-app al nutricionista (el correo ya se envió arriba si aplica)
+            if ($citaCompleta) {
+                try {
+                    (new NotificacionNutricionistaService())->notificarCancelacionDesdeEmail($citaCompleta);
+                } catch (\Throwable $e) {
+                    log_message('error', 'CANCELAR DESDE EMAIL: notificación in-app: ' . $e->getMessage());
+                }
+            }
+
             log_message('info', 'CANCELAR DESDE EMAIL: Proceso completado exitosamente');
             log_message('info', '========================================');
 
@@ -2794,26 +2870,74 @@ class AgendaController extends BaseController
             $data['tags_string'] = '';
         }
 
-        // Buscar la última consulta completada del mismo paciente (para mostrar como referencia)
+        // Última cita anterior con ficha clínica guardada (sin exigir estado_cita completada)
+        $data['referencia_ultima_consulta'] = [];
+        $data['referencia_ultima_fecha'] = '';
+        $data['referencia_detalle_agenda_id'] = null;
+        $data['referencia_examenes_bioquimicos'] = [];
+        $data['referencia_tendencia_consumo'] = [];
         $consultaAnterior = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha as fecha_agenda,
-                      hc.peso_actual as peso_anterior, hc.altura_actual as altura_anterior, 
-                      hc.imc_actual as imc_anterior, hc.circunferencia_cintura as cintura_anterior,
-                      hc.circunferencia_cadera as cadera_anterior, hc.grasa_corporal as grasa_anterior,
-                      hc.masa_muscular as masa_muscular_anterior')
+            ->select('da.*, a.fecha as fecha_agenda')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->join('historial_clinico hc', 'hc.detalle_agenda_id = da.id', 'left')
+            ->join(
+                'historial_clinico hc',
+                'hc.detalle_agenda_id = da.id AND hc.paciente_id = da.paciente_id AND hc.estado = \'A\'',
+                'inner'
+            )
             ->where('da.paciente_id', $cita->paciente_id)
             ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId) // Excluir la consulta actual
-            ->where('da.fecha_fin_real IS NOT NULL') // Solo consultas terminadas
-            ->orderBy('da.fecha_fin_real', 'DESC')
+            ->where('da.id !=', $detalleAgendaId)
+            ->orderBy(
+                'TIMESTAMP(COALESCE(STR_TO_DATE(da.fecha, \'%d-%m-%Y\'), a.fecha), COALESCE(da.hora_inicio, \'00:00:00\'))',
+                'DESC',
+                false
+            )
             ->limit(1)
             ->get()
             ->getRow();
-        
-        $data['consulta_anterior'] = $consultaAnterior;
+
+        if ($consultaAnterior) {
+            $historialModel = new HistorialClinico();
+            $historialAnterior = $historialModel->withDeleted()
+                ->where('detalle_agenda_id', $consultaAnterior->id)
+                ->where('paciente_id', $cita->paciente_id)
+                ->first();
+            if ($historialAnterior) {
+                $data['referencia_detalle_agenda_id'] = (int) $consultaAnterior->id;
+                if ($historialAnterior->id) {
+                    $examenModel = new \App\Models\HistorialExamenBioquimico();
+                    $data['referencia_examenes_bioquimicos'] = $examenModel->getPorHistorial($historialAnterior->id);
+                    $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+                    $data['referencia_tendencia_consumo'] = $tendenciaModel->getPorHistorial($historialAnterior->id);
+                }
+                $hArr = is_object($historialAnterior) ? (array) $historialAnterior : $historialAnterior;
+                foreach (HistorialClinico::camposReferenciaUltimaConsulta() as $campo) {
+                    if (!array_key_exists($campo, $hArr)) {
+                        continue;
+                    }
+                    $v = $hArr[$campo];
+                    if ($v === null || $v === '') {
+                        continue;
+                    }
+                    if ($v instanceof \DateTimeInterface) {
+                        $data['referencia_ultima_consulta'][$campo] = $v->format('Y-m-d H:i:s');
+                    } else {
+                        $data['referencia_ultima_consulta'][$campo] = $v;
+                    }
+                }
+            }
+            $fechaRef = !empty($consultaAnterior->fecha) ? $consultaAnterior->fecha : null;
+            if (!$fechaRef && !empty($consultaAnterior->fecha_agenda)) {
+                $ts = strtotime($consultaAnterior->fecha_agenda);
+                $fechaRef = $ts ? date('d-m-Y', $ts) : null;
+            }
+            if ($fechaRef) {
+                $horaRef = !empty($consultaAnterior->hora_inicio)
+                    ? date('H:i', strtotime($consultaAnterior->hora_inicio))
+                    : '';
+                $data['referencia_ultima_fecha'] = trim($fechaRef . ($horaRef !== '' ? ' ' . $horaRef : ''));
+            }
+        }
 
         // Cargar métodos de cálculo disponibles (igual que en historial/editar)
         $perfilId = $usuario['perfil_id'];
@@ -2855,162 +2979,6 @@ class AgendaController extends BaseController
         }
 
         return view('Modulos/agenda/consulta', $data);
-    }
-
-    /**
-     * Listar consultas anteriores del mismo paciente (paginado) para "hojas" en vista consulta
-     */
-    public function getConsultasAnteriores()
-    {
-        $this->response->setContentType('application/json');
-        if (!session()->get('usuario')) {
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
-        }
-        $detalleAgendaId = (int) ($this->request->getGet('detalle_agenda_id') ?? 0);
-        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $perPage = min(20, max(5, (int) ($this->request->getGet('per_page') ?? 10)));
-        if (!$detalleAgendaId) {
-            return $this->response->setJSON(['error' => 'detalle_agenda_id requerido'])->setStatusCode(400);
-        }
-        $db = \Config\Database::connect();
-        $usuario_id = session()->get('usuario')['id'];
-        $citaActual = $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaId)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id IS NOT NULL')
-            ->get()->getRow();
-        if (!$citaActual) {
-            return $this->response->setJSON(['error' => 'Cita no encontrada'])->setStatusCode(404);
-        }
-        $paciente_id = (int) $citaActual->paciente_id;
-        $builder = $db->table('detalle_agenda da')
-            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
-            ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->where('da.paciente_id', $paciente_id)
-            ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId)
-            ->where('da.fecha_fin_real IS NOT NULL')
-            ->orderBy('da.fecha_fin_real', 'DESC');
-        $total = $builder->countAllResults(false);
-        $offset = ($page - 1) * $perPage;
-        $rows = $db->table('detalle_agenda da')
-            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
-            ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->where('da.paciente_id', $paciente_id)
-            ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId)
-            ->where('da.fecha_fin_real IS NOT NULL')
-            ->orderBy('da.fecha_fin_real', 'DESC')
-            ->limit($perPage, $offset)
-            ->get()
-            ->getResult();
-        $consultas = [];
-        foreach ($rows as $r) {
-            $fecha = $r->fecha_agenda ?? '';
-            $hora = $r->hora_inicio ? date('H:i', strtotime($r->hora_inicio)) : '';
-            $consultas[] = [
-                'id' => (int) $r->id,
-                'fecha' => $fecha,
-                'hora' => $hora,
-                'fecha_fin_real' => $r->fecha_fin_real ? date('d-m-Y H:i', strtotime($r->fecha_fin_real)) : '',
-                'label' => $fecha . ($hora ? ' ' . $hora : ''),
-            ];
-        }
-        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 0;
-        return $this->response->setJSON([
-            'consultas' => $consultas,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'total_pages' => $totalPages,
-        ]);
-    }
-
-    /**
-     * Obtener datos completos de una consulta anterior para rellenar el formulario actual (solo lectura, no modifica la consulta anterior)
-     */
-    public function getDatosConsultaAnterior()
-    {
-        $this->response->setContentType('application/json');
-        if (!session()->get('usuario')) {
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
-        }
-        $detalleAgendaIdActual = (int) ($this->request->getGet('detalle_agenda_id') ?? $this->request->getPost('detalle_agenda_id') ?? 0);
-        $idAnterior = (int) ($this->request->getGet('id_anterior') ?? $this->request->getPost('id_anterior') ?? 0);
-        if (!$detalleAgendaIdActual || !$idAnterior) {
-            return $this->response->setJSON(['error' => 'detalle_agenda_id e id_anterior requeridos'])->setStatusCode(400);
-        }
-        $db = \Config\Database::connect();
-        $usuario_id = session()->get('usuario')['id'];
-        $actual = $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaIdActual)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id IS NOT NULL')
-            ->get()->getRow();
-        if (!$actual) {
-            return $this->response->setJSON(['error' => 'Cita actual no encontrada'])->setStatusCode(404);
-        }
-        $anterior = $db->table('detalle_agenda')
-            ->where('id', $idAnterior)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id', $actual->paciente_id)
-            ->where('estado_cita', 'completada')
-            ->where('fecha_fin_real IS NOT NULL')
-            ->get()->getRow();
-        if (!$anterior) {
-            return $this->response->setJSON(['error' => 'Consulta anterior no encontrada o no pertenece al mismo paciente'])->setStatusCode(404);
-        }
-        $historialModel = new HistorialClinico();
-        $historialExistente = $historialModel->withDeleted()
-            ->where('detalle_agenda_id', $idAnterior)
-            ->where('paciente_id', $actual->paciente_id)
-            ->first();
-        $historial = [];
-        if ($historialExistente) {
-            $h = is_object($historialExistente) ? (array) $historialExistente : $historialExistente;
-            foreach ($h as $k => $v) {
-                if ($v instanceof \DateTimeInterface) {
-                    $historial[$k] = $v->format('Y-m-d H:i:s');
-                } else {
-                    $historial[$k] = $v;
-                }
-            }
-        }
-        $detalle = [
-            'motivo' => $anterior->motivo ?? null,
-            'objetivos' => $anterior->objetivos ?? null,
-            'plan_alimentacion' => $anterior->plan_alimentacion ?? null,
-            'recomendaciones' => $anterior->recomendaciones ?? null,
-            'notas_consulta' => $anterior->notas_consulta ?? null,
-            'proxima_cita_recomendada' => $anterior->proxima_cita_recomendada ?? null,
-        ];
-        $tags_string = '';
-        if (!empty($anterior->tags)) {
-            $arr = json_decode($anterior->tags, true);
-            if (is_array($arr)) {
-                $tags_string = implode(', ', $arr);
-            } else {
-                $tags_string = $anterior->tags;
-            }
-        }
-        $detalle['tags_string'] = $tags_string;
-        $examenes_bioquimicos = [];
-        $tendencia_consumo = [];
-        if (!empty($historial['id'])) {
-            $examenModel = new \App\Models\HistorialExamenBioquimico();
-            $examenes_bioquimicos = $examenModel->getPorHistorial($historial['id']);
-            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
-            $tcIndexed = $tendenciaModel->getPorHistorial($historial['id']);
-            $tendencia_consumo = is_array($tcIndexed) ? array_values($tcIndexed) : [];
-        }
-        return $this->response->setJSON([
-            'historial' => $historial,
-            'detalle' => $detalle,
-            'examenes_bioquimicos' => $examenes_bioquimicos,
-            'tendencia_consumo' => $tendencia_consumo,
-        ]);
     }
 
     /**

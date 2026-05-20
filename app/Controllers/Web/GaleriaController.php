@@ -49,18 +49,28 @@ class GaleriaController extends BaseController
             $categoriaActual = null;
         }
 
-        // Preparar datos para la vista
-        $data = [
-            'galerias' => $galerias,
-            'categorias' => $categorias,
-            'categoria_actual' => $categoriaActual,
-            'titulo_pagina' => $categoriaActual ? $categoriaActual->nombre : 'Nuestra Galería',
-            'meta_titulo' => $categoriaActual ? $categoriaActual->meta_titulo : 'Galería de Obras - NextLine Constructor',
-            'meta_descripcion' => $categoriaActual ? $categoriaActual->meta_descripcion : 'Explora nuestra galería de obras construidas en Linares, Maule. Casas, edificios, quinchos y más proyectos de construcción.',
-            'meta_keywords' => $categoriaActual ? $categoriaActual->meta_keywords : 'galería, obras, construcción, Linares, Maule, Chile, proyectos, casas, edificios'
-        ];
+        $tituloPagina = $categoriaActual ? $categoriaActual->nombre : 'Galería';
+        $seoTitle = $categoriaActual
+            ? ($categoriaActual->meta_titulo ?: $categoriaActual->nombre . ' | NutriNext')
+            : 'Galería | NutriNext';
+        $seoDesc = $categoriaActual
+            ? ($categoriaActual->meta_descripcion ?: 'Galería de ' . $categoriaActual->nombre . ' en NutriNext.')
+            : 'Galería de imágenes y recursos visuales en NutriNext.';
 
-        return view('Web/galeria', $data);
+        return view('Web/galeria', array_merge(seo_page([
+            'title'       => $seoTitle,
+            'description' => mb_substr(strip_tags($seoDesc), 0, 160),
+            'keywords'    => ($categoriaActual ? ($categoriaActual->meta_keywords ?? null) : null) ?? 'galería, nutrinext, nutrición',
+            'canonical'   => seo_canonical_url('galeria'),
+        ]), [
+            'galerias'         => $galerias,
+            'categorias'       => $categorias,
+            'categoria_actual' => $categoriaActual,
+            'titulo_pagina'    => $tituloPagina,
+            'meta_titulo'      => $seoTitle,
+            'meta_descripcion' => $seoDesc,
+            'meta_keywords'    => ($categoriaActual ? ($categoriaActual->meta_keywords ?? null) : null) ?? 'galería, nutrinext',
+        ]));
     }
 
     /**
@@ -87,17 +97,19 @@ class GaleriaController extends BaseController
             $galeriasRelacionadas = array_slice($galeriasRelacionadas, 0, 6);
         }
 
-        // Preparar datos para la vista
-        $data = [
-            'galeria' => $galeria,
-            'galerias_relacionadas' => $galeriasRelacionadas,
-            'titulo_pagina' => $galeria->nombre,
-            'meta_titulo' => $galeria->nombre . ' - Galería NextLine Constructor',
-            'meta_descripcion' => $galeria->descripcion ?: 'Imagen de ' . $galeria->nombre . ' construida por NextLine Constructor en Linares, Maule.',
-            'meta_keywords' => strtolower($galeria->nombre) . ', galería, construcción, Linares, Maule, Chile'
-        ];
-
-        return view('Web/galeria_detalle', $data);
+        return view('Web/galeria_detalle', array_merge(seo_page([
+            'title'       => $galeria->nombre . ' | Galería NutriNext',
+            'description' => mb_substr(strip_tags($galeria->descripcion ?: 'Imagen de la galería NutriNext: ' . $galeria->nombre), 0, 160),
+            'keywords'    => strtolower($galeria->nombre) . ', galería, nutrinext',
+            'canonical'   => seo_canonical_url('galeria/detalle/' . $id),
+        ]), [
+            'galeria'              => $galeria,
+            'galerias_relacionadas'=> $galeriasRelacionadas,
+            'titulo_pagina'        => $galeria->nombre,
+            'meta_titulo'          => $galeria->nombre . ' | Galería NutriNext',
+            'meta_descripcion'     => $galeria->descripcion,
+            'meta_keywords'        => strtolower($galeria->nombre) . ', galería, nutrinext',
+        ]));
     }
 
     /**
@@ -120,17 +132,19 @@ class GaleriaController extends BaseController
         // Obtener todas las categorías para el filtro
         $categorias = $this->galeriaCategoriaModel->getCategoriasActivas();
 
-        // Preparar datos para la vista
-        $data = [
-            'galerias' => $galerias,
-            'categorias' => $categorias,
+        return view('Web/galeria', array_merge(seo_page([
+            'title'       => ($categoria->meta_titulo ?: $categoria->nombre) . ' | Galería NutriNext',
+            'description' => mb_substr(strip_tags($categoria->meta_descripcion ?: 'Galería: ' . $categoria->nombre), 0, 160),
+            'keywords'    => $categoria->meta_keywords ?: 'galería, ' . strtolower($categoria->nombre) . ', nutrinext',
+            'canonical'   => seo_canonical_url('galeria/categoria/' . $categoria->slug),
+        ]), [
+            'galerias'         => $galerias,
+            'categorias'       => $categorias,
             'categoria_actual' => $categoria,
-            'titulo_pagina' => $categoria->nombre,
-            'meta_titulo' => $categoria->meta_titulo,
+            'titulo_pagina'    => $categoria->nombre,
+            'meta_titulo'      => $categoria->meta_titulo,
             'meta_descripcion' => $categoria->meta_descripcion,
-            'meta_keywords' => $categoria->meta_keywords
-        ];
-
-        return view('Web/galeria', $data);
+            'meta_keywords'    => $categoria->meta_keywords,
+        ]));
     }
 }

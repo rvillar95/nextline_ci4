@@ -9,7 +9,7 @@
     <title>Dashboard NutriNext</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
+    <link rel="icon" type="image/png" href="<?= base_url("lib/logo/isotipo.png") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
     <script>
@@ -72,7 +72,7 @@
     <?php
     $usuarioHeader = session()->get('usuario') ?? [];
     $temaUsuario = $usuarioHeader['tema'] ?? 'claro';
-    $colorPrimario = $usuarioHeader['color_primario'] ?? '#4dcba5';
+    $colorPrimario = $usuarioHeader['color_primario'] ?? '#7bc143';
     $cardHeaderPorDefecto = (int)($usuarioHeader['card_header_por_defecto'] ?? 1);
     $cardHeaderEsGradiente = (int)($usuarioHeader['card_header_es_gradiente'] ?? 0);
     $colorCardHeaderBg = $usuarioHeader['color_card_header_bg'] ?? '#6c757d';
@@ -80,15 +80,15 @@
     $colorCardHeaderText = $usuarioHeader['color_card_header_text'] ?? '#ffffff';
     $mainHeaderPorDefecto = (int)($usuarioHeader['main_header_por_defecto'] ?? 1);
     $mainHeaderEsGradiente = (int)($usuarioHeader['main_header_es_gradiente'] ?? 0);
-    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#4dcba5';
+    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#7bc143';
     $colorMainHeaderBg2 = $usuarioHeader['color_main_header_bg2'] ?? null;
     $colorMainHeaderText = $usuarioHeader['color_main_header_text'] ?? '#ffffff';
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#4dcba5'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#7bc143'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg)) { $colorCardHeaderBg = '#6c757d'; }
     if ($colorCardHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg2)) { $colorCardHeaderBg2 = '#495057'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderText)) { $colorCardHeaderText = '#ffffff'; }
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#4dcba5'; }
-    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#bee6db'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#7bc143'; }
+    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#2daae1'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderText)) { $colorMainHeaderText = '#ffffff'; }
     $hex = ltrim($colorCardHeaderBg, '#');
     $dr = max(0, (int)round(hexdec(substr($hex, 0, 2)) * 0.65));
@@ -100,9 +100,9 @@
     ?>
     <style id="user-theme-css">
         :root {
-            --nutrinext-primary: #4dcba5;
-            --nutrinext-bg: #fafeff;
-            --nutrinext-muted: #bee6db;
+            --nutrinext-primary: #7bc143;
+            --nutrinext-bg: #f8fbf5;
+            --nutrinext-muted: #d4edc4;
             --user-primary: <?= esc($colorPrimario) ?>;
             --user-primary-hover: <?= esc($colorPrimario) ?>dd;
             <?php if ($aplicarCardHeaderCustom): ?>
@@ -149,7 +149,7 @@
         <?php else: ?>
         /* Main-header por defecto: gradiente NutriNext */
         body:not(.dark) .main-header {
-            background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%) !important;
+            background: linear-gradient(135deg, #7bc143 0%, #2daae1 100%) !important;
             color: #fff !important;
         }
         body:not(.dark) .main-header h2,

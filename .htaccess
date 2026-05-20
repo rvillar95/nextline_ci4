@@ -1,12 +1,14 @@
 # Disable directory browsing
 Options -Indexes
 
-# Increase PHP limits for file uploads
-php_value upload_max_filesize 50M
-php_value post_max_size 50M
-php_value max_execution_time 300
-php_value max_input_time 300
-php_value memory_limit 256M
+# Límites PHP (WAMP/Apache). En LiteSpeed/cPanel configurarlos en el panel, no con php_value.
+<IfModule mod_php.c>
+	php_value upload_max_filesize 50M
+	php_value post_max_size 50M
+	php_value max_execution_time 300
+	php_value max_input_time 300
+	php_value memory_limit 256M
+</IfModule>
 
 # ----------------------------------------------------------------------
 # Rewrite engine
@@ -18,20 +20,34 @@ php_value memory_limit 256M
 	Options +FollowSymlinks
 	RewriteEngine On
 
-	# If you installed CodeIgniter in a subfolder, you will need to
-	# change the following line to match the subfolder you need.
-	# http://httpd.apache.org/docs/current/mod/mod_rewrite.html#rewritebase
-	# RewriteBase /
+	# WAMP / localhost (subcarpeta). En producción (raíz del dominio) usar: RewriteBase /
+	RewriteBase /codeigniter4/nextline_ci4/
+
+	# Marcar entorno local (no forzar HTTPS ni www)
+	RewriteCond %{HTTP_HOST} ^localhost$ [NC,OR]
+	RewriteCond %{HTTP_HOST} ^127\.0\.0\.1$ [NC]
+	RewriteRule ^ - [E=IS_LOCAL:1]
+
+	# --- Solo producción: HTTPS y www (omitido en localhost) ---
+	RewriteCond %{ENV:IS_LOCAL} !^1$
+	RewriteCond %{SERVER_PORT} =443 [OR]
+	RewriteCond %{HTTPS} =on [OR]
+	RewriteCond %{HTTP:X-Forwarded-Proto} =https [NC,OR]
+	RewriteCond %{HTTP:X-Forwarded-SSL} =on [NC]
+	RewriteRule ^ - [E=CI_HTTPS:on]
+
+	RewriteCond %{ENV:IS_LOCAL} !^1$
+	RewriteCond %{ENV:CI_HTTPS} !on
+	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+	RewriteCond %{ENV:IS_LOCAL} !^1$
+	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+	RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 
 	# Redirect Trailing Slashes...
 	RewriteCond %{REQUEST_FILENAME} !-d
 	RewriteCond %{REQUEST_URI} (.+)/$
 	RewriteRule ^ %1 [L,R=301]
-
-	# Rewrite "www.example.com -> example.com"
-	RewriteCond %{HTTPS} !=on
-	RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
-	RewriteRule ^ http://%1%{REQUEST_URI} [R=301,L]
 
 	# Checks to see if the user is attempting to access a valid file,
 	# such as an image or css document, if this isn't true it sends the
@@ -78,8 +94,8 @@ ServerSignature Off
     # Content Security Policy (ajustar según necesidades)
     # Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://www.google.com;"
     
-    # HSTS (HTTP Strict Transport Security) - DESCOMENTAR SOLO CUANDO TENGAS SSL
-    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    # HSTS solo en producción con HTTPS (no aplica en localhost)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=CI_HTTPS
 </IfModule>
 
 # ----------------------------------------------------------------------

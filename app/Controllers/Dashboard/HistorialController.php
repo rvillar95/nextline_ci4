@@ -1168,6 +1168,12 @@ class HistorialController extends BaseController
         foreach ($historialIds as $id) {
             $h = $historial->getHistorialCompleto($id);
             if ($h) {
+                $peso = $h->peso_actual !== null && $h->peso_actual !== '' ? (float) $h->peso_actual : null;
+                $grasaPct = $h->grasa_corporal !== null && $h->grasa_corporal !== '' ? (float) $h->grasa_corporal : null;
+                $masaMuscKg = $h->masa_muscular !== null && $h->masa_muscular !== '' ? (float) $h->masa_muscular : null;
+                $masaGrasaKg = ($peso !== null && $grasaPct !== null) ? round($peso * $grasaPct / 100, 1) : null;
+                $masaMuscularPct = ($peso !== null && $peso > 0 && $masaMuscKg !== null) ? round($masaMuscKg / $peso * 100, 1) : null;
+
                 $historiales[] = [
                     'id' => $h->id,
                     'fecha_consulta' => $h->fecha_consulta,
@@ -1177,9 +1183,10 @@ class HistorialController extends BaseController
                     'altura_actual' => $h->altura_actual,
                     'imc_actual' => $h->imc_actual,
                     'circunferencia_cintura' => $h->circunferencia_cintura,
-                    'circunferencia_cadera' => $h->circunferencia_cadera,
                     'grasa_corporal' => $h->grasa_corporal,
                     'masa_muscular' => $h->masa_muscular,
+                    'masa_grasa_kg' => $masaGrasaKg,
+                    'masa_muscular_pct' => $masaMuscularPct,
                     'motivo_consulta' => $h->motivo_consulta,
                     'anamnesis' => $h->anamnesis,
                     'diagnostico' => $h->diagnostico,

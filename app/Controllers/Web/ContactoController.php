@@ -14,7 +14,13 @@ final class ContactoController extends BaseController
     {
         // carga de servicios para el select (si ya tienes el modelo Servicio)
         $servicios = db_connect()->table('servicio')->select('id,nombre')->where('estado','A')->get()->getResultArray();
-        return view('Web/contacto', ['servicios' => $servicios]);
+
+        return view('Web/contacto', array_merge(seo_page([
+            'title'       => 'Contacto | NutriNext',
+            'description' => 'Escríbenos para conocer NutriNext, solicitar una demo o resolver dudas sobre la plataforma para nutricionistas.',
+            'keywords'    => 'contacto nutrinext, demo nutricionista, soporte plataforma nutrición',
+            'canonical'   => seo_canonical_url('contacto'),
+        ]), ['servicios' => $servicios]));
     }
 
     public function enviar()
@@ -273,7 +279,12 @@ HTML;
 
     public function gracias()
     {
-        return view('Web/gracias');
+        return view('Web/gracias', seo_page([
+            'title'       => 'Mensaje enviado | NutriNext',
+            'description' => 'Gracias por contactarnos. Te responderemos a la brevedad.',
+            'robots'      => 'noindex, nofollow',
+            'canonical'   => seo_canonical_url('gracias'),
+        ]));
     }
 
     /**

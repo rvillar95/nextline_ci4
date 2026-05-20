@@ -1,0 +1,249 @@
+/* Listado y detalle de funcionalidades — sitio público NutriNext */
+
+.func-page-section {
+    background: var(--nutrinext-bg);
+    padding: 3.5rem 0 4rem !important;
+}
+
+/* Filtros por categoría */
+.func-filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+    padding: 0.35rem;
+    background: var(--bg-card);
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    max-width: 100%;
+}
+
+.func-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.func-filter-pill:hover {
+    color: var(--brand-green-dark);
+    background: var(--surface-green-soft);
+    text-decoration: none;
+}
+
+.func-filter-pill.is-active {
+    color: #fff;
+    background: var(--brand-green-primary);
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+/* Encabezado de categoría */
+.func-categoria-block {
+    margin-bottom: 2.5rem;
+}
+
+.func-categoria-block:last-child {
+    margin-bottom: 0;
+}
+
+.func-categoria-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.func-categoria-header__accent {
+    width: 4px;
+    height: 1.75rem;
+    border-radius: 4px;
+    background: var(--brand-green-primary);
+    flex-shrink: 0;
+}
+
+.func-categoria-header__title {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-main);
+}
+
+.func-categoria-header__count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+}
+
+/* Grid de tarjetas */
+.func-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Tarjeta */
+a.card-func-ns {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+a.card-func-ns:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.25);
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-func-ns__top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem 0;
+}
+
+.card-func-ns__bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--func-accent, var(--brand-green-primary));
+}
+
+a.card-func-ns {
+    position: relative;
+}
+
+.card-func-ns__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    background: var(--func-accent-soft, var(--surface-green-soft));
+    color: var(--func-accent, var(--brand-green-primary));
+}
+
+.card-func-ns__body {
+    padding: 1rem 1.25rem 0.5rem;
+    flex: 1;
+}
+
+.card-func-ns__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.card-func-ns__desc {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+
+.card-func-ns__footer {
+    padding: 0.75rem 1.25rem 1.25rem;
+    margin-top: auto;
+}
+
+.card-func-ns__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-green-primary);
+    transition: gap 0.2s ease, color 0.2s ease;
+}
+
+a.card-func-ns:hover .card-func-ns__cta {
+    gap: 0.55rem;
+    color: var(--brand-green-dark);
+}
+
+.card-func-ns__cta i {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+a.card-func-ns:hover .card-func-ns__cta i {
+    transform: translateX(3px);
+}
+
+/* Estado vacío */
+.func-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px dashed var(--border-light);
+}
+
+.func-empty i {
+    font-size: 2.5rem;
+    color: var(--brand-green-primary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+/* Detalle — sidebar y contenido */
+.func-detail-content h2,
+.func-detail-content h3 {
+    color: var(--text-main);
+}
+
+.func-detail-sidebar .card {
+    border-radius: 16px;
+}
+
+.func-detail-list li {
+    padding: 0.35rem 0;
+}
+
+@media (max-width: 768px) {
+    .func-filters {
+        border-radius: 16px;
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.5rem;
+    }
+
+    .func-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}

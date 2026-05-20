@@ -13,7 +13,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     </div>
 </section>
 
-<section class="py-5" style="background: var(--nutrinext-bg, #fafeff);">
+<section class="py-5" style="background: var(--bg-light);">
     <div class="container">
         <input type="hidden" id="empresa_id" value="<?= (int)($empresa_id ?? 0) ?>">
         <?= csrf_field() ?>
@@ -73,7 +73,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
                         <div class="row g-2 align-items-end">
                             <div class="col-md-6">
                                 <label class="form-label small mb-0">Día</label>
-                                <input type="date" id="fecha_dia" class="form-control" value="<?= date('Y-m-d') ?>">
+                                <input type="date" id="fecha_dia" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>">
                             </div>
                             <div class="col-md-6 d-flex align-items-end">
                                 <label class="form-label small mb-0 d-md-block d-none">&nbsp;</label>
@@ -153,8 +153,8 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     padding: 80px 0 60px !important;
 }
 .nutricionista-card { transition: all 0.2s ease; }
-.nutricionista-card:hover { border-color: var(--nutrinext-primary) !important; box-shadow: 0 4px 12px rgba(77, 203, 165, 0.2); }
-.nutricionista-card.selected { border-color: var(--nutrinext-primary) !important; background: rgba(77, 203, 165, 0.08); box-shadow: 0 0 0 2px var(--nutrinext-primary); }
+.nutricionista-card:hover { border-color: var(--nutrinext-primary) !important; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2); }
+.nutricionista-card.selected { border-color: var(--nutrinext-primary) !important; background: rgba(34, 197, 94, 0.08); box-shadow: 0 0 0 2px var(--nutrinext-primary); }
 .cursor-pointer { cursor: pointer; }
 .nutricionista-foto-wrap {
     width: 72px;
@@ -191,14 +191,14 @@ a.btn-buscar-horarios {
     transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 a.btn-buscar-horarios:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
     text-decoration: none;
 }
 a.btn-buscar-horarios:focus {
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(77, 203, 165, 0.35);
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.35);
 }
 a.btn-buscar-horarios .me-1 { margin-right: 0.35rem; }
 
@@ -217,8 +217,8 @@ a.btn-reservar-slot {
     transition: background 0.2s, border-color 0.2s;
 }
 a.btn-reservar-slot:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
     text-decoration: none;
 }
@@ -238,8 +238,8 @@ button.btn-confirmar-reserva {
     transition: background 0.2s, border-color 0.2s;
 }
 button.btn-confirmar-reserva:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
 }
 button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
@@ -316,12 +316,27 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         seleccionarNutricionista(cards[0]);
     }
 
+    function fechaHoyYmd() {
+        var d = new Date();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + m + '-' + day;
+    }
+
+    function esFechaPasada(fechaYmd) {
+        return fechaYmd && fechaYmd < fechaHoyYmd();
+    }
+
     function buscarSlots() {
         var nutricionistaIdEl = document.getElementById('nutricionista_id');
         var nutricionistaId = nutricionistaIdEl ? nutricionistaIdEl.value : '';
         var fechaDia = document.getElementById('fecha_dia').value;
         if (!fechaDia) {
             document.getElementById('slotsContainer').innerHTML = '<p class="text-muted mb-0">Seleccione un día.</p>';
+            return;
+        }
+        if (esFechaPasada(fechaDia)) {
+            document.getElementById('slotsContainer').innerHTML = '<p class="text-danger mb-0">No puede reservar en fechas pasadas. Elija hoy o una fecha futura.</p>';
             return;
         }
         var container = document.getElementById('slotsContainer');

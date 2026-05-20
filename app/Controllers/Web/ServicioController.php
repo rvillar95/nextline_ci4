@@ -24,16 +24,16 @@ class ServicioController extends BaseController
                                            ->orderBy('nombre', 'ASC')
                                            ->findAll();
         
-        $data = [
-            'title' => 'Nuestros Servicios - MANSANCHEZ Constructor',
-            'description' => 'Servicios de construcción profesional: construcción residencial, comercial, remodelaciones y más.',
-            'keywords' => 'servicios construcción, constructor, remodelaciones, obras, mansanchez',
-            'servicios' => $servicios,
-            'categorias' => $categorias,
-            'categoria_actual' => $categoria
-        ];
-        
-        return view('Web/servicios', $data);
+        return view('Web/servicios', array_merge(seo_page([
+            'title'       => 'Servicios | NutriNext',
+            'description' => 'Funcionalidades y servicios de la plataforma NutriNext para nutricionistas y consultas nutricionales.',
+            'keywords'    => 'servicios nutrinext, funcionalidades nutricionista, software consulta',
+            'canonical'   => seo_canonical_url('servicios'),
+        ]), [
+            'servicios'        => $servicios,
+            'categorias'       => $categorias,
+            'categoria_actual' => $categoria,
+        ]));
     }
 
     public function detalle($slug)
@@ -56,15 +56,17 @@ class ServicioController extends BaseController
         // Limitar a 3 servicios relacionados
         $servicios_relacionados = array_slice($servicios_relacionados, 0, 3);
         
-        $data = [
-            'title' => $servicio->nombre . ' - NextLine Constructor',
-            'description' => $servicio->descripcionCorta,
-            'keywords' => $servicio->nombre . ', ' . ($servicio->categoria_nombre ?? $servicio->categoria) . ', constructor',
-            'servicio' => $servicio,
-            'servicios_relacionados' => $servicios_relacionados
-        ];
-        
-        return view('Web/servicio_detalle', $data);
+        $desc = $servicio->descripcionCorta ?: 'Detalle del servicio en NutriNext.';
+
+        return view('Web/servicio_detalle', array_merge(seo_page([
+            'title'       => $servicio->nombre . ' | NutriNext',
+            'description' => mb_substr(strip_tags($desc), 0, 160),
+            'keywords'    => $servicio->nombre . ', nutrinext, ' . ($servicio->categoria_nombre ?? $servicio->categoria ?? 'nutrición'),
+            'canonical'   => seo_canonical_url('servicios/' . $servicio->slug),
+        ]), [
+            'servicio'               => $servicio,
+            'servicios_relacionados' => $servicios_relacionados,
+        ]));
     }
 
     public function registro()

@@ -56,20 +56,17 @@
     }
     
     /* Estilos específicos para vista semanal (timeGridWeek) */
-    .fc-timeGridWeek-view .fc-event-title {
-        font-size: 0.95em !important;
-        line-height: 1.4 !important;
-        padding: 2px 4px !important;
-        white-space: normal !important;
+    .fc-timeGridWeek-view .fc-event-title,
+    .fc-timeGridDay-view .fc-event-title {
+        font-size: 0.8em !important;
+        line-height: 1.25 !important;
+        padding: 1px 3px !important;
+        white-space: pre-wrap !important;
         word-wrap: break-word !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
+        overflow: visible !important;
+        display: block !important;
     }
     
-    /* Evitar que el evento desborde y tape la fila de abajo */
     .fc-timeGridWeek-view .fc-timegrid-event,
     .fc-timeGridDay-view .fc-timegrid-event {
         overflow: hidden !important;
@@ -79,6 +76,8 @@
     .fc-timeGridDay-view .fc-timegrid-event .fc-event-main {
         overflow: hidden !important;
         height: 100% !important;
+        display: flex !important;
+        align-items: flex-start !important;
     }
     
     .fc-timeGridWeek-view .fc-event {
@@ -130,13 +129,23 @@
     }
     
     .fc-timeGridWeek-view .fc-timegrid-slot-minor {
-        height: 30px !important;
-        min-height: 30px !important;
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-timegrid-slot-minor {
+        height: 52px !important;
+        min-height: 52px !important;
     }
     
     .fc-timeGridWeek-view .fc-timegrid-slot-major {
-        height: 60px !important;
-        min-height: 60px !important;
+        height: 104px !important;
+        min-height: 104px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-timegrid-slot-major {
+        height: 104px !important;
+        min-height: 104px !important;
     }
     
     /* Solo las filas de contenido (slots de hora) tienen 60px; la fila del divider no */
@@ -203,7 +212,9 @@
         font-size: 0.85em;
         z-index: 10000;
         pointer-events: none;
-        white-space: nowrap;
+        white-space: normal;
+        max-width: 320px;
+        line-height: 1.4;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         opacity: 0;
         transition: opacity 0.2s ease;
@@ -906,8 +917,17 @@ document.addEventListener('DOMContentLoaded', function() {
         initialView: 'timeGridWeek',
         locale: 'es',
         slotMinTime: '09:00:00', // Hora mínima por defecto, se actualizará dinámicamente
+        slotDuration: '00:30:00',
         height: 'auto', // Altura automática
         contentHeight: 'auto', // Altura de contenido automática
+        views: {
+            timeGridWeek: {
+                displayEventTime: false
+            },
+            timeGridDay: {
+                displayEventTime: false
+            }
+        },
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -1056,58 +1076,76 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         eventMouseEnter: function(info) {
-            // Solo mostrar tooltip para bloques disponibles
-            var estado = info.event.extendedProps.estado_cita || 'disponible';
-            var pacienteId = info.event.extendedProps.paciente_id;
-            
+            var props = info.event.extendedProps;
+            var estado = props.estado_cita || 'disponible';
+            var pacienteId = props.paciente_id;
+            var modalidadId = props.modalidad_id || 3;
+            var inicio = new Date(info.event.start);
+            var fin = new Date(info.event.end);
+            var duracionMinutos = Math.round((fin - inicio) / (1000 * 60));
+            var horaInicio = props.hora_inicio || (info.event.startStr.split('T')[1] || '').substring(0, 5);
+            var horaFin = props.hora_fin || (info.event.endStr.split('T')[1] || '').substring(0, 5);
+
+            var iconoModalidad = '❔';
+            var nombreModalidad = 'No definido';
+            if (modalidadId == 1) {
+                iconoModalidad = '🏥';
+                nombreModalidad = 'Presencial';
+            } else if (modalidadId == 2) {
+                iconoModalidad = '💻';
+                nombreModalidad = 'Online';
+            }
+
+            var etiquetasEstado = {
+                disponible: 'Disponible',
+                reservada: 'Reservada',
+                confirmada: 'Confirmada',
+                agendada: 'Agendada',
+                pendiente: 'Pendiente',
+                en_proceso: 'En proceso',
+                completada: 'Completada',
+                cancelada: 'Cancelada',
+                no_asistio: 'No asistió',
+                bloqueado: 'Bloqueado',
+                no_disponible: 'No disponible'
+            };
+            var etiquetaEstado = etiquetasEstado[estado] || estado;
+
+            var tooltip = document.createElement('div');
+            tooltip.className = 'fc-event-tooltip';
+
             if (!pacienteId && (estado === 'disponible' || !estado || estado === null)) {
-                var modalidadId = info.event.extendedProps.modalidad_id || 3;
-                var inicio = new Date(info.event.start);
-                var fin = new Date(info.event.end);
-                var duracionMinutos = Math.round((fin - inicio) / (1000 * 60));
-                
-                // Iconos de modalidad
-                var iconoModalidad = '';
-                var nombreModalidad = '';
-                if (modalidadId == 1) {
-                    iconoModalidad = '🏥';
-                    nombreModalidad = 'Presencial';
-                } else if (modalidadId == 2) {
-                    iconoModalidad = '💻';
-                    nombreModalidad = 'Online';
-                } else {
-                    iconoModalidad = '❔';
-                    nombreModalidad = 'No Definido';
-                }
-                
-                // Crear tooltip
-                var tooltip = document.createElement('div');
-                tooltip.className = 'fc-event-tooltip';
-                tooltip.innerHTML = '<span class="tooltip-estado">Disponible</span>' +
+                tooltip.innerHTML = '<span class="tooltip-estado">' + etiquetaEstado + '</span>' +
                     '<span class="tooltip-separator">|</span>' +
                     '<span class="tooltip-modalidad">' + iconoModalidad + ' ' + nombreModalidad + '</span>' +
                     '<span class="tooltip-separator">•</span>' +
                     '<span class="tooltip-duracion">' + duracionMinutos + ' min</span>';
-                
-                // Posicionar tooltip
-                var rect = info.el.getBoundingClientRect();
-                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-                
-                tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
-                tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2)) + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                
-                document.body.appendChild(tooltip);
-                
-                // Mostrar tooltip con animación
-                setTimeout(function() {
-                    tooltip.classList.add('show');
-                }, 10);
-                
-                // Guardar referencia para limpiar
-                info.el._tooltip = tooltip;
+            } else {
+                var tituloCompleto = props.titulo_completo || info.event.title;
+                var lineas = [
+                    '<strong>' + (horaInicio && horaFin ? horaInicio + ' – ' + horaFin : '') + '</strong>',
+                    tituloCompleto,
+                    iconoModalidad + ' ' + nombreModalidad + ' · ' + duracionMinutos + ' min'
+                ];
+                if (props.motivo) {
+                    lineas.push('Motivo: ' + props.motivo);
+                }
+                tooltip.innerHTML = lineas.filter(Boolean).join('<br>');
             }
+
+            var rect = info.el.getBoundingClientRect();
+            var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+            tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
+            tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2)) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+
+            document.body.appendChild(tooltip);
+            setTimeout(function() {
+                tooltip.classList.add('show');
+            }, 10);
+            info.el._tooltip = tooltip;
         },
         eventMouseLeave: function(info) {
             // Remover tooltip si existe
@@ -1127,20 +1165,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para ajustar altura de los slots
     function ajustarAlturaSlots() {
-        // Forzar altura mínima de 60px en cada slot
+        var alturaSlot = 52;
         var slots = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot, .fc-timeGridDay-view .fc-timegrid-slot');
         slots.forEach(function(slot) {
-            if (slot.offsetHeight < 60) {
-                slot.style.height = '60px';
-                slot.style.minHeight = '60px';
+            if (slot.classList.contains('fc-timegrid-slot-minor') || slot.offsetHeight < alturaSlot) {
+                slot.style.height = alturaSlot + 'px';
+                slot.style.minHeight = alturaSlot + 'px';
             }
         });
         
         var slotLanes = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot-lane, .fc-timeGridDay-view .fc-timegrid-slot-lane');
         slotLanes.forEach(function(lane) {
-            if (lane.offsetHeight < 60) {
-                lane.style.height = '60px';
-                lane.style.minHeight = '60px';
+            if (lane.offsetHeight < alturaSlot) {
+                lane.style.height = alturaSlot + 'px';
+                lane.style.minHeight = alturaSlot + 'px';
             }
         });
         

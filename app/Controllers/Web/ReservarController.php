@@ -5,6 +5,7 @@ namespace App\Controllers\Web;
 use App\Controllers\BaseController;
 use App\Models\Paciente;
 use App\Models\EmpresaConfiguracion;
+use App\Services\NotificacionNutricionistaService;
 use Config\Services;
 
 /**
@@ -30,19 +31,34 @@ class ReservarController extends BaseController
             'nutricionistas' => [],
             'csrf_token' => csrf_hash(),
         ];
-        // Nutricionistas: perfil_id = 9 y con al menos un slot libre en detalle_agenda
+        // Nutricionistas: perfil_id = 9 y con al menos un slot libre futuro en detalle_agenda
+        $hoy = date('Y-m-d');
+        $horaAhora = date('H:i:s');
         $data['nutricionistas'] = $db->table('usuario u')
             ->select('u.id, u.nombre, u.apellido, u.foto')
             ->join('detalle_agenda da', 'da.usuario_id = u.id')
+            ->join('agenda a', 'a.id = da.agenda_id')
             ->where('u.perfil_id', 9)
             ->where('u.estado', 'A')
             ->where('da.paciente_id', null)
             ->where('da.estado', 1)
+            ->groupStart()
+                ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') > ", $hoy)
+                ->orGroupStart()
+                    ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') = ", $hoy)
+                    ->where('da.hora_inicio >=', $horaAhora)
+                ->groupEnd()
+            ->groupEnd()
             ->groupBy('u.id')
             ->orderBy('u.nombre')
             ->get()
             ->getResult();
-        return view('Web/reservar', $data);
+        return view('Web/reservar', array_merge(seo_page([
+            'title'       => 'Reservar hora | NutriNext - Consulta nutricional online',
+            'description' => 'Reserva tu hora con un nutricionista de forma online. Elige profesional, fecha y horario disponible sin necesidad de crear cuenta.',
+            'keywords'    => 'reservar cita nutricionista, agendar consulta nutricional, hora nutrición online, nutrinext',
+            'canonical'   => seo_canonical_url('reservar'),
+        ]), $data));
     }
 
     /**
@@ -55,8 +71,12 @@ class ReservarController extends BaseController
         $this->response->setContentType('application/json');
         $nutricionistaId = $this->request->getGet('nutricionista_id');
         $fecha = $this->request->getGet('fecha');
-        if (!$fecha) {
+        if (!$fecha || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
             $fecha = date('Y-m-d');
+        }
+        $hoy = date('Y-m-d');
+        if ($fecha < $hoy) {
+            return $this->response->setJSON(['success' => true, 'slots' => []]);
         }
         $db = \Config\Database::connect();
         $builder = $db->table('detalle_agenda da')
@@ -70,6 +90,16 @@ class ReservarController extends BaseController
             $builder->where('da.usuario_id', (int) $nutricionistaId);
         }
         $slots = $builder->orderBy('da.hora_inicio')->get()->getResultArray();
+        if ($fecha === $hoy) {
+            $horaAhora = date('H:i:s');
+            $slots = array_values(array_filter($slots, static function (array $s) use ($horaAhora): bool {
+                $hi = $s['hora_inicio'] ?? '';
+                if (is_string($hi) && strlen($hi) === 5) {
+                    $hi .= ':00';
+                }
+                return $hi >= $horaAhora;
+            }));
+        }
         return $this->response->setJSON(['success' => true, 'slots' => $slots]);
     }
 
@@ -142,6 +172,13 @@ class ReservarController extends BaseController
             ])->setStatusCode(400);
         }
 
+        if ($this->slotEsPasado($slot)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No puede reservar un horario en el pasado. Elija una fecha y hora futuras.',
+            ])->setStatusCode(400);
+        }
+
         $rutNormalized = preg_replace('/[^0-9kK]/', '', $rutDni);
         $pacienteModel = new Paciente();
         $existente = $db->table('pacientes')
@@ -183,6 +220,19 @@ class ReservarController extends BaseController
             ]);
 
         $this->enviarEmailReservaRecibida($detalleAgendaId, $pacienteId, $slot);
+        $fecha = $slot->fecha ?? $slot->fecha_agenda ?? '';
+        $horaInicio = date('H:i', strtotime($slot->hora_inicio ?? '00:00'));
+        $horaFin = !empty($slot->hora_fin) ? date('H:i', strtotime($slot->hora_fin)) : '';
+        (new NotificacionNutricionistaService())->notificarReservaWeb(
+            $detalleAgendaId,
+            (int) $slot->usuario_id,
+            trim($nombre . ' ' . $apellido),
+            $email,
+            $telefono,
+            $fecha,
+            $horaInicio,
+            $horaFin
+        );
 
         return $this->response->setJSON([
             'success' => true,
@@ -238,5 +288,34 @@ class ReservarController extends BaseController
         $email->setSubject('Reserva recibida - ' . $fecha . ' a las ' . $hora);
         $email->setMessage($html);
         $email->send();
+    }
+
+    private function parseFechaAgenda(?string $fechaDa, ?string $fechaAgenda): ?\DateTime
+    {
+        $fecha = $fechaDa ?: $fechaAgenda;
+        if (!$fecha) {
+            return null;
+        }
+        if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fecha, $m)) {
+            return new \DateTime($m[3] . '-' . $m[2] . '-' . $m[1]);
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $fecha)) {
+            return new \DateTime(substr($fecha, 0, 10));
+        }
+        return null;
+    }
+
+    private function slotEsPasado(object $slot): bool
+    {
+        $dt = $this->parseFechaAgenda($slot->fecha ?? null, $slot->fecha_agenda ?? null);
+        if (!$dt) {
+            return true;
+        }
+        $hora = $slot->hora_inicio ?? '00:00:00';
+        if (is_string($hora) && strlen($hora) === 5) {
+            $hora .= ':00';
+        }
+        $fechaHora = new \DateTime($dt->format('Y-m-d') . ' ' . $hora);
+        return $fechaHora < new \DateTime();
     }
 }

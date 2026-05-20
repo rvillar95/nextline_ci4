@@ -37,6 +37,17 @@
     border-color: #fff;
     color: #fff;
 }
+#tablaAgenda tr.cita-destacada td {
+    background-color: rgba(123, 193, 67, 0.35) !important;
+    box-shadow: inset 0 0 0 2px #7bc143;
+}
+@keyframes citaDestacadaPulse {
+    0%, 100% { background-color: rgba(123, 193, 67, 0.35); }
+    50% { background-color: rgba(123, 193, 67, 0.55); }
+}
+#tablaAgenda tr.cita-destacada td {
+    animation: citaDestacadaPulse 1.2s ease-in-out 4;
+}
 </style>
 
 <div class="container-fluid">
@@ -64,6 +75,7 @@
                     <table id="tablaAgenda" class="table table-bordered table-striped nowrap" style="width:100%">
                         <thead>
                             <tr>
+                                <th class="d-none">ID</th>
                                 <th>Paciente</th>
                                 <th>Fecha</th>
                                 <th>Hora Inicio</th>
@@ -125,14 +137,50 @@ toastr.options = {
     "hideMethod": "fadeOut"
 };
 
+function obtenerParamUrl(nombre) {
+    return new URLSearchParams(window.location.search).get(nombre);
+}
+
+function destacarCitaEnTabla(table, citaId) {
+    if (!citaId) return;
+    var id = parseInt(citaId, 10);
+    if (!id) return;
+    var $row = null;
+    table.rows().every(function() {
+        var d = this.data();
+        if (d && parseInt(d[0], 10) === id) {
+            $row = $(this.node());
+            return false;
+        }
+    });
+    if ($row && $row.length) {
+        $('#tablaAgenda tr.cita-destacada').removeClass('cita-destacada');
+        $row.addClass('cita-destacada');
+        var top = $row.offset().top - 140;
+        $('html, body').animate({ scrollTop: top > 0 ? top : 0 }, 400);
+        if (typeof toastr !== 'undefined') {
+            toastr.info('Reserva destacada en la lista. Puede aprobarla con el botón correspondiente.', 'Nueva reserva', { timeOut: 6000 });
+        }
+    }
+}
+
 $(document).ready(function() {
+    var destacarId = obtenerParamUrl('destacar');
     var table = $('#tablaAgenda').DataTable({
         "processing": true,
         "serverSide": true,
         "ajax": {
             "url": "<?= base_url('dashboard/agenda/getAgenda') ?>",
-            "type": "GET"
+            "type": "GET",
+            "data": function(d) {
+                if (destacarId) {
+                    d.destacar = destacarId;
+                }
+            }
         },
+        "columnDefs": [
+            { "targets": 0, "visible": false, "searchable": false, "orderable": false }
+        ],
         "columns": [
             { "data": 0 },
             { "data": 1 },
@@ -140,13 +188,25 @@ $(document).ready(function() {
             { "data": 3 },
             { "data": 4 },
             { "data": 5 },
-            { "data": 6, "orderable": false }
+            { "data": 6 },
+            { "data": 7, "orderable": false }
         ],
+        "order": [[2, 'asc'], [3, 'asc']],
+        "createdRow": function(row, data) {
+            if (data && data[0]) {
+                $(row).attr('id', 'cita-' + data[0]);
+            }
+        },
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
         },
         "responsive": true,
-        "pageLength": 25
+        "pageLength": 25,
+        "drawCallback": function() {
+            if (destacarId) {
+                destacarCitaEnTabla(table, destacarId);
+            }
+        }
     });
 });
 

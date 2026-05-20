@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 
 <!-- Hero NutriNext -->
-<section class="nutrinext-hero" style="background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%); padding: 100px 0 80px; position: relative; overflow: hidden;">
+<section class="nutrinext-hero" style="background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%); padding: 100px 0 80px; position: relative; overflow: hidden;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-7">
@@ -35,88 +35,33 @@
     </div>
 </section>
 
-<!-- Funcionalidades del sistema -->
+<!-- Funcionalidades de la plataforma -->
 <section id="funcionalidades" class="py-5" style="background: var(--nutrinext-bg); padding: 80px 0 !important;">
     <div class="container">
-        <div class="text-center mb-5">
-            <span class="d-inline-block mb-2" style="color: var(--nutrinext-primary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">El sistema</span>
-            <h2 class="mb-3" style="color: #2d3748; font-weight: 800; font-size: clamp(1.75rem, 4vw, 2.5rem);">Todo lo que necesitas en una sola plataforma</h2>
-            <p class="text-muted mx-auto" style="max-width: 600px;">Funcionalidades pensadas para consultas nutricionales: desde la primera cita hasta el seguimiento y los pagos.</p>
+        <div class="section-header-ns mb-5">
+            <p class="section-eyebrow-ns">Funcionalidades</p>
+            <h2 class="section-title-ns">Todo lo que necesitas en una sola plataforma</h2>
+            <p class="section-lead-ns text-muted">Pensado para consultas nutricionales: desde la primera cita hasta el seguimiento y los pagos.</p>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Agenda de citas</h3>
-                        <p class="text-muted mb-0 small">Gestiona horarios, disponibilidad y citas presenciales u online. Sincronización con Google y Microsoft Calendar.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fas fa-user-friends"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Pacientes</h3>
-                        <p class="text-muted mb-0 small">Ficha del paciente, datos de contacto, historial de consultas y documentos en un solo lugar.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fas fa-file-medical"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Historial clínico</h3>
-                        <p class="text-muted mb-0 small">Registro de consultas, mediciones, notas clínicas y evolución. Comparativa entre fechas.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fas fa-utensils"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Plan alimentario</h3>
-                        <p class="text-muted mb-0 small">Planes por porciones, intercambios y calorimetría. Generación de documentos para el paciente.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fas fa-credit-card"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">Pagos</h3>
-                        <p class="text-muted mb-0 small">Integración con Mercado Pago. Cobra consultas y planes desde la plataforma con link de pago.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4">
-                <div class="card card-feature-ns h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="feature-icon-ns mb-3">
-                            <i class="fab fa-whatsapp"></i>
-                        </div>
-                        <h3 class="h5 fw-bold mb-2" style="color: #2d3748;">WhatsApp y recordatorios</h3>
-                        <p class="text-muted mb-0 small">Confirmación y cancelación de citas por WhatsApp. Recordatorios automáticos configurable.</p>
-                    </div>
-                </div>
-            </div>
+        <div class="text-center mb-4">
+            <a href="<?= base_url('funcionalidades') ?>" class="btn btn-outline-success btn-sm">Ver todas las funcionalidades</a>
+        </div>
+        <link href="<?= base_url('lib/css/nutrinext-funcionalidades.css') ?>" rel="stylesheet" type="text/css" />
+        <div class="func-cards-grid">
+            <?php if (! empty($funcionalidades_home)): ?>
+                <?php foreach ($funcionalidades_home as $s): ?>
+                    <?= view('Web/partials/card_funcionalidad', ['s' => $s]) ?>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p class="text-center text-muted mb-0">Las funcionalidades se mostrarán aquí cuando estén visibles en la web.</p>
+            <?php endif; ?>
         </div>
     </div>
 </section>
 
 <!-- CTA -->
-<section class="py-5" style="background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%); padding: 70px 0 !important;">
+<section class="py-5" style="background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%); padding: 70px 0 !important;">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8 text-white">
@@ -127,8 +72,8 @@
                 <a href="<?= base_url('reservar') ?>" class="btn-cta-ns me-2 mb-2">
                     <i class="fas fa-calendar-check me-2"></i> Reservar
                 </a>
-                <a href="<?= base_url('contacto') ?>" class="btn-cta-outline-ns mb-2">
-                    <i class="fas fa-envelope me-2"></i> Contacto
+                <a href="<?= base_url('login') ?>" class="btn-cta-outline-ns mb-2">
+                    <i class="fas fa-sign-in-alt me-2"></i> Iniciar sesión
                 </a>
             </div>
         </div>
@@ -150,6 +95,39 @@
     font-weight: 600;
 }
 .hero-badge-ns i { font-size: 1rem; }
+.section-header-ns {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+}
+.section-eyebrow-ns {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: 6px 16px;
+    background: rgba(var(--nutrinext-primary-rgb), 0.12);
+    color: var(--nutrinext-primary);
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+}
+.section-title-ns {
+    margin: 0 0 1rem;
+    color: var(--text-main);
+    font-weight: 800;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    max-width: 720px;
+}
+.section-lead-ns {
+    margin: 0;
+    max-width: 600px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
 /* Enlaces con aspecto de botón, sin .btn para evitar ripple */
 a.btn-hero-primary,
 a.btn-hero-secondary {
@@ -159,8 +137,8 @@ a.btn-hero-secondary {
     cursor: pointer;
 }
 a.btn-hero-primary {
-    background: #fafeff;
-    color: var(--nutrinext-primary);
+    background: #fff;
+    color: var(--brand-green-primary);
     padding: 14px 28px;
     border-radius: 50px;
     font-weight: 700;
@@ -168,8 +146,8 @@ a.btn-hero-primary {
     transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 a.btn-hero-primary:hover {
-    background: var(--nutrinext-muted);
-    color: var(--nutrinext-primary);
+    background: var(--surface-green-soft);
+    color: var(--brand-green-dark);
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     text-decoration: none;
@@ -193,18 +171,19 @@ a.btn-hero-secondary:hover {
 .card-feature-ns {
     border-radius: 16px;
     transition: all 0.3s ease;
-    background: #fff;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
 }
 .card-feature-ns:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 40px rgba(77, 203, 165, 0.15) !important;
-    border: 1px solid var(--nutrinext-muted);
+    box-shadow: 0 12px 40px rgba(34, 197, 94, 0.12) !important;
+    border: 1px solid var(--border-light);
 }
 .feature-icon-ns {
     width: 52px;
     height: 52px;
-    background: var(--nutrinext-muted);
-    color: var(--nutrinext-primary);
+    background: var(--surface-green-soft);
+    color: var(--brand-green-primary);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -216,8 +195,8 @@ a.btn-cta-outline-ns {
     cursor: pointer;
 }
 .btn-cta-ns {
-    background: #fafeff;
-    color: var(--nutrinext-primary);
+    background: #fff;
+    color: var(--brand-green-primary);
     padding: 14px 24px;
     border-radius: 50px;
     font-weight: 700;
@@ -228,14 +207,14 @@ a.btn-cta-outline-ns {
     align-items: center;
 }
 .btn-cta-ns:hover {
-    background: var(--nutrinext-muted);
-    color: var(--nutrinext-primary);
+    background: var(--surface-green-soft);
+    color: var(--brand-green-dark);
     transform: translateY(-2px);
     text-decoration: none;
 }
 .btn-cta-outline-ns {
     background: transparent;
-    color: #fafeff;
+    color: #fff;
     padding: 14px 24px;
     border-radius: 50px;
     font-weight: 700;

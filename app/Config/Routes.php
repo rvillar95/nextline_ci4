@@ -5,6 +5,9 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
+$routes->get('sitemap.xml', 'Web\SeoController::sitemap');
+$routes->get('robots.txt', 'Web\SeoController::robots');
+
 $routes->get('/', 'Web\HomeController::index');
 
 $routes->get('/test', 'UsuarioController::test');
@@ -246,6 +249,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('activar/(:num)', 'Dashboard\EmpresaController::activar/$1'); //accion activar
     });
 
+    $routes->group('servicio-nutrinext', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\ServicioNutrinextController::lista');
+        $routes2->get('registro', 'Dashboard\ServicioNutrinextController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\ServicioNutrinextController::editar/$1');
+        $routes2->get('getServicios', 'Dashboard\ServicioNutrinextController::getServicios');
+        $routes2->post('registrar', 'Dashboard\ServicioNutrinextController::registrar');
+        $routes2->post('update', 'Dashboard\ServicioNutrinextController::update');
+        $routes2->post('eliminar', 'Dashboard\ServicioNutrinextController::eliminar');
+    });
+
     $routes->group('paquete', function ($routes2) {
         $routes2->get('', 'Dashboard\PaqueteController::lista'); //vista lista por defecto (solo SA)
         $routes2->get('lista', 'Dashboard\PaqueteController::lista'); //vista lista (solo SA)
@@ -307,6 +320,12 @@ $routes->group('dashboard', function ($routes) {
     // MÓDULOS DE NUTRICIONISTAS
     // ============================================
     
+    $routes->group('notificaciones', function ($routes2) {
+        $routes2->get('listar', 'Dashboard\NotificacionController::listar');
+        $routes2->post('marcar-leida', 'Dashboard\NotificacionController::marcarLeida');
+        $routes2->post('marcar-todas-leidas', 'Dashboard\NotificacionController::marcarTodasLeidas');
+    });
+
     $routes->group('agenda', function ($routes2) {
         $routes2->get('lista', 'Dashboard\AgendaController::lista');
         $routes2->get('gestionar', 'Dashboard\AgendaController::gestionar');
@@ -334,8 +353,6 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
         $routes2->get('getEstadisticas', 'Dashboard\AgendaController::getEstadisticas');
         $routes2->post('guardarMediciones', 'Dashboard\AgendaController::guardarMediciones');
-        $routes2->get('getConsultasAnteriores', 'Dashboard\AgendaController::getConsultasAnteriores');
-        $routes2->get('getDatosConsultaAnterior', 'Dashboard\AgendaController::getDatosConsultaAnterior');
         $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
     });
@@ -418,6 +435,9 @@ $routes->group('api', function ($routes) {
 $routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {});
 
 // Rutas públicas del sitio web
+$routes->get('funcionalidades', 'Web\ServicioNutrinextController::index');
+$routes->get('funcionalidades/(:segment)', 'Web\ServicioNutrinextController::detalle/$1');
+
 $routes->get('servicios', 'Web\ServicioController::index');
 $routes->get('servicios/(:segment)', 'Web\ServicioController::detalle/$1');
 $routes->get('servicios-categorias', 'Web\ServicioCategoriaController::index');

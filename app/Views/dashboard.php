@@ -300,7 +300,7 @@
                 <div class="nav-logo">
                     <div class="nav-item theme-logo">
                         <a href="./index.html">
-                            <img src="<?= base_url("lib/logo/logo-grande-sin-margen.png") ?>" class="navbar-logo" alt="logo">
+                            <img src="<?= base_url("lib/logo/logo-horizontal.png") ?>" class="navbar-logo" alt="NutriNext">
                         </a>
                     </div>
                     <div class="nav-item theme-text">

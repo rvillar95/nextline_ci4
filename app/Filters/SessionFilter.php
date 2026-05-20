@@ -207,6 +207,9 @@ final class SessionFilter implements FilterInterface
             '/dashboard/agenda/guardarInformacionClinica',
             '/dashboard/agenda/guardarMediciones',
             '/dashboard/agenda/consulta',
+            '/dashboard/notificaciones/listar',
+            '/dashboard/notificaciones/marcar-leida',
+            '/dashboard/notificaciones/marcar-todas-leidas',
         ];
         
         foreach ($calendarioExcepciones as $excepcion) {

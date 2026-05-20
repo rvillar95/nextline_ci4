@@ -77,6 +77,29 @@ class HistorialClinico extends Model
     }
 
     /**
+     * Campos del historial que se muestran como referencia en el formulario de consulta.
+     */
+    public static function camposReferenciaUltimaConsulta(): array
+    {
+        return [
+            'peso_actual', 'altura_actual', 'altura_sentado', 'imc_actual',
+            'circunferencia_cintura', 'circunferencia_cadera', 'circunferencia_brazo_relajado',
+            'circunferencia_brazo_contraido', 'circunferencia_antebrazo_maximo', 'circunferencia_muslo_medio',
+            'circunferencia_muslo_maximo', 'circunferencia_pantorrilla', 'circunferencia_cuello',
+            'circunferencia_torax', 'circunferencia_cabeza', 'circunferencia_muneca',
+            'diametro_biacromial', 'diametro_bi_iliocristal', 'diametro_torax_transverso',
+            'diametro_torax_anteroposterior', 'diametro_humero', 'diametro_femur', 'diametro_muneca',
+            'diametro_tobillo',
+            'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular', 'pliegue_suprailíaco',
+            'pliegue_supraespinal', 'pliegue_abdominal', 'pliegue_muslo_anterior', 'pliegue_pantorrilla_medial',
+            'pliegue_pectoral', 'pliegue_axilar_medio', 'pliegue_muslo_medial',
+            'suma_pliegues', 'grasa_corporal', 'grasa_corporal_calculada', 'masa_muscular', 'masa_osea',
+            'motivo_consulta', 'plan_tratamiento', 'recomendaciones', 'observaciones', 'diagnostico',
+            'anamnesis_clinica', 'anamnesis_alimentaria', 'recordatorio_24h',
+        ];
+    }
+
+    /**
      * Obtener historial por paciente
      */
     public function getHistorialPorPaciente($pacienteId, $limit = null)

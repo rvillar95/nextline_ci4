@@ -28,6 +28,14 @@ class App extends BaseConfig
         if ($appBaseUrl !== null && $appBaseUrl !== '') {
             $this->baseURL = rtrim($appBaseUrl, '/') . '/';
         }
+
+        // Detrás de proxy/SSL en hosting: confiar cabeceras (evita bucles con redirects)
+        if (str_starts_with($this->baseURL, 'https://')) {
+            $this->proxyIPs = [
+                '127.0.0.1' => 'X-Forwarded-For',
+                '::1'       => 'X-Forwarded-For',
+            ];
+        }
     }
 
     /**

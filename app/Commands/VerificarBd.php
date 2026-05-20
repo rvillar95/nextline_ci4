@@ -51,6 +51,7 @@ class VerificarBd extends BaseCommand
         'modulo',
         'modulo_detalle',
         'modalidad_agenda',
+        'notificaciones',
         'paquete_modulo',
         'paquete_modulo_detalle',
         'paquetes',

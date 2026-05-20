@@ -29,15 +29,15 @@ class GaleriaCategoriaController extends BaseController
             $galeriasPorCategoria[$categoria->id] = $galerias;
         }
         
-        $data = [
-            'title' => 'Categorías de Galería - NextLine Constructor',
-            'description' => 'Explora nuestras obras organizadas por categorías. Casas, edificios, ampliaciones y más.',
-            'keywords' => 'categorías galería, obras construcción, casas, edificios, ampliaciones',
-            'categorias' => $categorias,
-            'galerias_por_categoria' => $galeriasPorCategoria
-        ];
-        
-        return view('Web/galeria_categorias', $data);
+        return view('Web/galeria_categorias', array_merge(seo_page([
+            'title'       => 'Categorías de galería | NutriNext',
+            'description' => 'Explora la galería de NutriNext organizada por categorías.',
+            'keywords'    => 'galería nutrinext, categorías, nutrición',
+            'canonical'   => seo_canonical_url('galeria-categorias'),
+        ]), [
+            'categorias'             => $categorias,
+            'galerias_por_categoria' => $galeriasPorCategoria,
+        ]));
     }
     
     public function detalle($slug)
@@ -67,15 +67,15 @@ class GaleriaCategoriaController extends BaseController
                                         ->limit(6)
                                         ->findAll();
         
-        $data = [
-            'title' => $categoria->meta_titulo ?: $categoria->nombre . ' - NextLine Constructor',
-            'description' => $categoria->meta_descripcion ?: 'Galería de ' . $categoria->nombre . ' en NextLine Constructor.',
-            'keywords' => $categoria->meta_keywords ?: 'galería ' . strtolower($categoria->nombre) . ', obras construcción, NextLine',
-            'categoria' => $categoria,
-            'galerias' => $galerias,
-            'otras_categorias' => $otrasCategorias
-        ];
-        
-        return view('Web/galeria_categoria_detalle', $data);
+        return view('Web/galeria_categoria_detalle', array_merge(seo_page([
+            'title'       => ($categoria->meta_titulo ?: $categoria->nombre) . ' | Galería NutriNext',
+            'description' => mb_substr(strip_tags($categoria->meta_descripcion ?: 'Galería: ' . $categoria->nombre), 0, 160),
+            'keywords'    => $categoria->meta_keywords ?: 'galería, nutrinext, ' . strtolower($categoria->nombre),
+            'canonical'   => seo_canonical_url('galeria-categorias/' . $categoria->slug),
+        ]), [
+            'categoria'        => $categoria,
+            'galerias'         => $galerias,
+            'otras_categorias' => $otrasCategorias,
+        ]));
     }
 }
