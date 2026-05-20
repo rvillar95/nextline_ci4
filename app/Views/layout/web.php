@@ -1124,6 +1124,7 @@ $empresaContacto = [
                     $uriNav = uri_string();
                     $navInicioActive = ($uriNav === '' || $uriNav === 'home');
                     $navFuncActive = str_starts_with($uriNav, 'funcionalidades');
+                    $navPreciosActive = str_starts_with($uriNav, 'precios');
                     $navEquipoActive = str_starts_with($uriNav, 'equipo');
                     $navReservarActive = str_starts_with($uriNav, 'reservar');
                     $navContactoActive = str_starts_with($uriNav, 'contacto');
@@ -1140,6 +1141,12 @@ $empresaContacto = [
                                 <a href="<?= base_url('funcionalidades') ?>" class="nav-link-modern <?= $navFuncActive ? 'active' : '' ?>">
                                     <i class="fas fa-th-large"></i>
                                     <span>Funcionalidades</span>
+                                </a>
+                            </li>
+                            <li class="nav-item-modern">
+                                <a href="<?= base_url('precios') ?>" class="nav-link-modern <?= $navPreciosActive ? 'active' : '' ?>">
+                                    <i class="fas fa-tags"></i>
+                                    <span>Precios</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">

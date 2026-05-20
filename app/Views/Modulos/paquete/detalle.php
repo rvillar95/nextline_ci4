@@ -17,6 +17,9 @@
                         <a href="<?= base_url('dashboard/paquete/editar/' . $paquete->id) ?>" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Editar
                         </a>
+                        <a href="<?= base_url('dashboard/paquete/gestionar-metodos/' . $paquete->id) ?>" class="btn btn-secondary">
+                            <i class="fas fa-calculator"></i> Métodos cálculo
+                        </a>
                         <a href="<?= base_url('dashboard/paquete/gestionar-modulos/' . $paquete->id) ?>" class="btn btn-warning">
                             <i class="fas fa-cogs"></i> Gestionar Módulos
                         </a>

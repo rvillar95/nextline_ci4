@@ -2049,9 +2049,8 @@ function mostrarErrorUpgrade(response) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary" onclick="window.location.href='<?= base_url('dashboard/paquetes') ?>'">
-                            Ver Planes
-                        </button>
+                        <a href="<?= base_url('precios') ?>" class="btn btn-primary">Ver planes</a>
+                        <a href="<?= base_url('contacto') ?>" class="btn btn-outline-success">Contactar ventas</a>
                     </div>
                 </div>
             </div>

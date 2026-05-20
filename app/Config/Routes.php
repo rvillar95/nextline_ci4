@@ -267,9 +267,11 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'Dashboard\PaqueteController::editar/$1'); //vista editar
         $routes2->get('detalle/(:num)', 'Dashboard\PaqueteController::detalle/$1'); //vista detalle
         $routes2->get('gestionar-modulos/(:num)', 'Dashboard\PaqueteController::gestionarModulos/$1'); //vista gestionar módulos
+        $routes2->get('gestionar-metodos/(:num)', 'Dashboard\PaqueteController::gestionarMetodos/$1'); //vista métodos composición
         $routes2->post('registrar', 'Dashboard\PaqueteController::registrar'); //accion crear
         $routes2->post('update', 'Dashboard\PaqueteController::update'); //accion actualizar
         $routes2->post('guardar-modulos', 'Dashboard\PaqueteController::guardarModulos'); //accion guardar módulos
+        $routes2->post('guardar-metodos', 'Dashboard\PaqueteController::guardarMetodos'); //accion guardar métodos cálculo
         $routes2->post('eliminar/(:num)', 'Dashboard\PaqueteController::eliminar/$1'); //accion eliminar
         $routes2->post('activar/(:num)', 'Dashboard\PaqueteController::activar/$1'); //accion activar
     });
@@ -458,6 +460,8 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+$routes->get('precios', 'Web\PreciosController::index');
 
 // Equipo de nutricionistas (web pública)
 $routes->get('equipo', 'Web\EquipoController::index');

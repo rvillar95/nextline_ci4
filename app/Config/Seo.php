@@ -26,6 +26,7 @@ class Seo extends BaseConfig
     public array $staticPages = [
         '' => ['priority' => '1.0', 'changefreq' => 'weekly'],
         'reservar' => ['priority' => '0.95', 'changefreq' => 'weekly'],
+        'precios' => ['priority' => '0.92', 'changefreq' => 'weekly'],
         'funcionalidades' => ['priority' => '0.9', 'changefreq' => 'weekly'],
         'equipo' => ['priority' => '0.85', 'changefreq' => 'monthly'],
         'nosotros' => ['priority' => '0.8', 'changefreq' => 'monthly'],

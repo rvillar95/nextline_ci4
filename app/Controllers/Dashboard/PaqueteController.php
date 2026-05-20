@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\Paquete;
 use App\Models\ModuloDetalle;
 use App\Models\Modulo;
+use App\Models\MetodoCalculo;
 use App\Traits\MaintainsFilters;
 
 class PaqueteController extends BaseController
@@ -121,6 +122,7 @@ class PaqueteController extends BaseController
                 $botones = '<button class="btn btn-sm btn-outline-primary" onclick="editarPaquete(' . $r->id . ')">Editar</button> ' .
                           '<button class="btn btn-sm btn-outline-info" onclick="verDetallePaquete(' . $r->id . ')">Ver</button> ' .
                           '<button class="btn btn-sm btn-outline-warning" onclick="gestionarModulos(' . $r->id . ')">Módulos</button> ' .
+                          '<button class="btn btn-sm btn-outline-secondary" onclick="gestionarMetodos(' . $r->id . ')">Métodos</button> ' .
                           '<button class="btn btn-sm btn-outline-danger" onclick="eliminarPaquete(' . $r->id . ')">Desactivar</button>';
             } else {
                 $botones = '<button class="btn btn-sm btn-outline-success" onclick="activarPaquete(' . $r->id . ')">Activar</button> ' .
@@ -394,6 +396,124 @@ class PaqueteController extends BaseController
             'success' => true,
             'message' => 'Módulos actualizados con éxito',
             'csrf_token' => csrf_hash()
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * Gestionar métodos de composición corporal incluidos en el paquete (paquete_modulo_detalle)
+     */
+    public function gestionarMetodos($id)
+    {
+        if (!$this->esSuperAdmin()) {
+            return redirect()->to(base_url('dashboard/menu'))
+                ->with('error', 'No tienes permisos para acceder a esta sección');
+        }
+
+        $menuTotal = [];
+        $modulo = new ModuloDetalle();
+        $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
+        foreach ($data['menu'] as $entity) {
+            $submenu = $modulo->getSubMenu($entity['id']);
+            $menuTotal[] = ['menu' => $entity, 'submenu' => $submenu];
+        }
+        $data['data'] = $menuTotal;
+
+        $paquete = new Paquete();
+        $data['paquete'] = $paquete->find($id);
+        if (!$data['paquete']) {
+            return redirect()->to(base_url('dashboard/paquete/lista'))
+                ->with('error', 'Paquete no encontrado');
+        }
+
+        $metodosModel = new MetodoCalculo();
+        $data['metodos'] = $metodosModel->getMetodosActivos();
+
+        $db = \Config\Database::connect();
+        $asignados = $db->table('paquete_modulo_detalle pmd')
+            ->select('pmd.modulo_detalle_id, md.ruta')
+            ->join('modulo_detalle md', 'md.id = pmd.modulo_detalle_id')
+            ->where('pmd.paquete_id', $id)
+            ->where('pmd.incluido', 'S')
+            ->where('md.ruta LIKE', '/calcular-%')
+            ->get()
+            ->getResultArray();
+
+        $data['rutasAsignadas'] = array_column($asignados, 'ruta');
+        $data['titulo'] = 'Métodos de composición del paquete';
+
+        return view('Modulos/paquete/gestionar_metodos', $data);
+    }
+
+    /**
+     * Guardar métodos de cálculo del paquete (rutas /calcular-*)
+     */
+    public function guardarMetodos()
+    {
+        if (!$this->esSuperAdmin()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No autorizado',
+            ])->setStatusCode(403);
+        }
+
+        $paqueteId = (int) $this->request->getPost('paquete_id');
+        $rutas     = $this->request->getPost('rutas');
+
+        if ($paqueteId <= 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'ID de paquete requerido',
+            ])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+
+        $idsCalcular = $db->table('modulo_detalle')
+            ->select('id')
+            ->like('ruta', '/calcular-', 'after')
+            ->where('estado', 'A')
+            ->get()
+            ->getResultArray();
+        $idsCalcular = array_column($idsCalcular, 'id');
+
+        if (!empty($idsCalcular)) {
+            $db->table('paquete_modulo_detalle')
+                ->where('paquete_id', $paqueteId)
+                ->whereIn('modulo_detalle_id', $idsCalcular)
+                ->delete();
+        }
+
+        if (!empty($rutas) && is_array($rutas)) {
+            $insert = [];
+            foreach ($rutas as $ruta) {
+                $ruta = trim((string) $ruta);
+                if ($ruta === '' || !str_starts_with($ruta, '/calcular-')) {
+                    continue;
+                }
+                $row = $db->table('modulo_detalle')
+                    ->select('id')
+                    ->where('ruta', $ruta)
+                    ->where('estado', 'A')
+                    ->get()
+                    ->getRow();
+                if ($row) {
+                    $insert[] = [
+                        'paquete_id' => $paqueteId,
+                        'modulo_detalle_id' => $row->id,
+                        'incluido' => 'S',
+                        'fcreacion' => date('Y-m-d H:i:s'),
+                    ];
+                }
+            }
+            if (!empty($insert)) {
+                $db->table('paquete_modulo_detalle')->insertBatch($insert);
+            }
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Métodos de cálculo actualizados',
+            'csrf_token' => csrf_hash(),
         ])->setHeader('X-CSRF-TOKEN', csrf_hash());
     }
 

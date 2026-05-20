@@ -122,6 +122,14 @@ final class SessionFilter implements FilterInterface
             return redirect()->to(route_to('login'));
         }
 
+        // 2.5) Suscripción vencida (no aplica a Super Admin ni plan partner)
+        if ((int) ($user['poder'] ?? 0) !== 3) {
+            $suscripcionBlock = $this->checkSuscripcionVencida($user, $path, $request);
+            if ($suscripcionBlock !== null) {
+                return $suscripcionBlock;
+            }
+        }
+
         // 3) Permisos por perfil (con o sin caché)
         $perfilId = (int) ($user['perfil_id'] ?? 0);
         if ($perfilId <= 0) {
@@ -570,6 +578,69 @@ final class SessionFilter implements FilterInterface
 
         $raw = '/' . trim($raw, '/');
         return $raw === '//' ? '/' : $raw;
+    }
+
+    /**
+     * Bloquea acceso si la empresa tiene suscripción registrada y no está activa.
+     * Sin fila en suscripciones = comportamiento legacy (solo paquete).
+     */
+    private function checkSuscripcionVencida(array $user, string $path, RequestInterface $request): ?ResponseInterface
+    {
+        $exemptPatterns = [
+            '/dashboard/menu',
+            '/logout',
+            '/dashboard/mi-perfil',
+        ];
+        foreach ($exemptPatterns as $pattern) {
+            if ($this->matchesPattern($path, $pattern)) {
+                return null;
+            }
+        }
+
+        $empresaId = (int) ($user['empresa_id'] ?? 0);
+        if ($empresaId <= 0) {
+            return null;
+        }
+
+        $db = \Config\Database::connect();
+        $paquete = $db->table('empresa e')
+            ->select('p.slug, p.precio_mensual')
+            ->join('paquetes p', 'p.id = e.paquete_id', 'left')
+            ->where('e.id', $empresaId)
+            ->get()
+            ->getRow();
+
+        if ($paquete && ($paquete->slug === 'nutri-partner' || (float) $paquete->precio_mensual <= 0)) {
+            return null;
+        }
+
+        $suscripcionModel = new \App\Models\Suscripcion();
+        $ultima           = $suscripcionModel->where('empresa_id', $empresaId)
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$ultima) {
+            return null;
+        }
+
+        if ($suscripcionModel->estaActiva($empresaId)) {
+            return null;
+        }
+
+        $message = 'Tu suscripción no está activa. Contacta a soporte para renovar el plan.';
+
+        if ($request->isAJAX() || $request->hasHeader('X-Requested-With')) {
+            return service('response')
+                ->setContentType('application/json')
+                ->setStatusCode(403)
+                ->setJSON([
+                    'error' => $message,
+                    'suscripcion_vencida' => true,
+                ]);
+        }
+
+        return redirect()->to(base_url('dashboard/menu'))
+            ->with('error', $message);
     }
 
     /** Denegación (mantengo tu patrón de redirect con flash) */
