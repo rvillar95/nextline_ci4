@@ -27,6 +27,7 @@ class Seo extends BaseConfig
         '' => ['priority' => '1.0', 'changefreq' => 'weekly'],
         'reservar' => ['priority' => '0.95', 'changefreq' => 'weekly'],
         'funcionalidades' => ['priority' => '0.9', 'changefreq' => 'weekly'],
+        'equipo' => ['priority' => '0.85', 'changefreq' => 'monthly'],
         'nosotros' => ['priority' => '0.8', 'changefreq' => 'monthly'],
         'servicios' => ['priority' => '0.85', 'changefreq' => 'weekly'],
         'servicios-categorias' => ['priority' => '0.75', 'changefreq' => 'weekly'],

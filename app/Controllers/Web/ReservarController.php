@@ -38,7 +38,7 @@ class ReservarController extends BaseController
             ->select('u.id, u.nombre, u.apellido, u.foto')
             ->join('detalle_agenda da', 'da.usuario_id = u.id')
             ->join('agenda a', 'a.id = da.agenda_id')
-            ->where('u.perfil_id', 9)
+            ->where('u.perfil_id', \App\Models\Usuario::PERFIL_NUTRICIONISTA)
             ->where('u.estado', 'A')
             ->where('da.paciente_id', null)
             ->where('da.estado', 1)

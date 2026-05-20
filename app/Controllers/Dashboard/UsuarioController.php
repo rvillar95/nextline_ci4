@@ -148,15 +148,25 @@ class UsuarioController extends BaseController
         $estado = $this->request->getPost('estado');
 
 
-        if ($usuarioModel->update($id, [
+        $updateData = [
             'nombre' => $nombre,
             'apellido' => $apellido,
             'correo' => $correo,
             'telefono' => $telefono,
             'perfil_id' => $perfil,
             'empresa_id' => !empty($empresa) ? $empresa : null,
-            'estado' => $estado
-        ])) {
+            'estado' => $estado,
+        ];
+
+        if ((int) $perfil === Usuario::PERFIL_NUTRICIONISTA) {
+            $updateData['titulo_profesional'] = $this->truncarCampo($this->request->getPost('titulo_profesional'), 150);
+            $updateData['especialidad'] = $this->truncarCampo($this->request->getPost('especialidad'), 200);
+            $updateData['carrera'] = $this->truncarCampo($this->request->getPost('carrera'), 200);
+            $updateData['presentacion'] = $this->truncarCampo($this->request->getPost('presentacion'), 5000);
+            $updateData['descripcion_profesional'] = $this->truncarCampo($this->request->getPost('descripcion_profesional'), 10000);
+        }
+
+        if ($usuarioModel->update($id, $updateData)) {
             return redirect()->to(base_url('dashboard/usuario/editar/' . $id))->with('success', 'Usuario editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el usuario');
@@ -230,6 +240,18 @@ class UsuarioController extends BaseController
      * Mantener la sesión activa (keepalive)
      * Esta ruta se llama periódicamente para renovar la sesión del usuario
      */
+    private function truncarCampo($valor, int $max): ?string
+    {
+        if ($valor === null) {
+            return null;
+        }
+        $s = trim((string) $valor);
+        if ($s === '') {
+            return null;
+        }
+        return mb_strlen($s) > $max ? mb_substr($s, 0, $max) : $s;
+    }
+
     public function keepalive()
     {
         // Solo verificar que la sesión esté activa

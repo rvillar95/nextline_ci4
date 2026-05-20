@@ -418,9 +418,13 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('mi-perfil', function ($routes2) {
+        $routes2->get('', 'Dashboard\MiPerfilController::index');
         $routes2->get('ver', 'Dashboard\MiPerfilController::index');
         $routes2->post('guardar', 'Dashboard\MiPerfilController::guardar');
         $routes2->post('subir-foto', 'Dashboard\MiPerfilController::subirFoto');
+        $routes2->post('perfil-publico', 'Dashboard\MiPerfilController::guardarPerfilPublico');
+        $routes2->post('credencial', 'Dashboard\MiPerfilController::guardarCredencial');
+        $routes2->post('credencial/eliminar', 'Dashboard\MiPerfilController::eliminarCredencial');
     });
 });
 
@@ -454,6 +458,10 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+// Equipo de nutricionistas (web pública)
+$routes->get('equipo', 'Web\EquipoController::index');
+$routes->get('equipo/(:num)', 'Web\EquipoController::detalle/$1');
 
 // Reserva pública (paciente reserva hora sin login)
 $routes->get('reservar', 'Web\ReservarController::index');

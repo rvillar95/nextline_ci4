@@ -49,6 +49,15 @@
                         </div>
                     </div>
 
+                    <?php if (!empty($es_nutricionista)): ?>
+                        <?= view('Modulos/mi_perfil/perfil_publico', [
+                            'usuario' => $usuario,
+                            'credenciales' => $credenciales ?? [],
+                            'tipos_credencial' => $tipos_credencial ?? [],
+                            'tipos_label' => $tipos_label ?? [],
+                        ]) ?>
+                    <?php endif; ?>
+
                     <!-- Tema (claro / oscuro) y color de acento -->
                     <div class="card mb-4">
                         <div class="card-header bg-info text-white">

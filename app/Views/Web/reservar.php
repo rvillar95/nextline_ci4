@@ -310,10 +310,20 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         card.addEventListener('click', function() { seleccionarNutricionista(this); });
     });
 
-    // Si solo hay un nutricionista (además de "Todos"), auto-seleccionar el primero
-    var cards = document.querySelectorAll('.nutricionista-card[data-id]');
-    if (cards.length === 1) {
-        seleccionarNutricionista(cards[0]);
+    // Preselección desde /equipo o enlace directo ?nutricionista_id=
+    var paramsUrl = new URLSearchParams(window.location.search);
+    var preNutricionistaId = paramsUrl.get('nutricionista_id');
+    if (preNutricionistaId) {
+        var cardPre = document.getElementById('card-' + preNutricionistaId);
+        if (cardPre) {
+            seleccionarNutricionista(cardPre);
+        }
+    } else {
+        // Si solo hay un nutricionista (además de "Todos"), auto-seleccionar el primero
+        var cards = document.querySelectorAll('.nutricionista-card[data-id]');
+        if (cards.length === 1) {
+            seleccionarNutricionista(cards[0]);
+        }
     }
 
     function fechaHoyYmd() {

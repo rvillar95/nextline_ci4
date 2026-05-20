@@ -1,0 +1,65 @@
+.equipo-hero {
+    background: linear-gradient(135deg, var(--brand-green-primary, #22c55e) 0%, var(--brand-green-dark, #15803d) 100%);
+    padding: 100px 0 70px;
+}
+
+.equipo-hero-sub {
+    max-width: 640px;
+    opacity: 0.95;
+}
+
+.equipo-card {
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.equipo-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(34, 197, 94, 0.15) !important;
+}
+
+.equipo-card-foto-wrap {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--nutrinext-primary, #22c55e);
+    background: #f8f9fa;
+}
+
+.equipo-card-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.equipo-detalle-hero {
+    background: linear-gradient(135deg, var(--brand-green-primary, #22c55e) 0%, var(--brand-green-dark, #15803d) 100%);
+    padding: 80px 0 50px;
+}
+
+.equipo-detalle-foto-wrap {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgba(255, 255, 255, 0.9);
+    background: #fff;
+}
+
+.equipo-detalle-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.equipo-credencial-item {
+    border-left: 3px solid var(--nutrinext-primary, #22c55e);
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.equipo-text-block {
+    white-space: pre-line;
+    line-height: 1.7;
+}

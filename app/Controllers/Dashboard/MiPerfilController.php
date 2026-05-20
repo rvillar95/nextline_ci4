@@ -4,6 +4,7 @@ namespace App\Controllers\Dashboard;
 
 use App\Controllers\BaseController;
 use App\Models\Usuario;
+use App\Models\UsuarioCredencial;
 
 class MiPerfilController extends BaseController
 {
@@ -59,6 +60,13 @@ class MiPerfilController extends BaseController
         $data['usuario'] = is_array($usuario) ? $usuario : (array) $usuario;
         $data['titulo'] = 'Mi perfil';
         $data['csrf_token'] = csrf_hash();
+        $data['es_nutricionista'] = (int) ($data['usuario']['perfil_id'] ?? 0) === Usuario::PERFIL_NUTRICIONISTA;
+        if ($data['es_nutricionista']) {
+            $credencialModel = new UsuarioCredencial();
+            $data['credenciales'] = $credencialModel->getPorUsuario($usuarioId);
+            $data['tipos_credencial'] = UsuarioCredencial::TIPOS;
+            $data['tipos_label'] = UsuarioCredencial::TIPOS_LABEL;
+        }
 
         return view('Modulos/mi_perfil/index', $data);
     }
@@ -215,5 +223,258 @@ class MiPerfilController extends BaseController
             'foto_url' => base_url($rutaRelativa),
             'csrf_token' => csrf_hash()
         ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * Guardar textos del perfil público (nutricionistas).
+     */
+    public function guardarPerfilPublico()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $usuarioId = $this->resolveUsuarioIdObjetivo();
+        if (!$this->puedeEditarUsuario($usuarioId)) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(403);
+        }
+
+        $usuario = $this->usuarioModel->find($usuarioId);
+        if (!$usuario || (int) ($usuario['perfil_id'] ?? 0) !== Usuario::PERFIL_NUTRICIONISTA) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Solo aplica a nutricionistas'])->setStatusCode(400);
+        }
+
+        $correo = trim((string) $this->request->getPost('correo'));
+        if ($correo !== '' && !filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Correo no válido'])->setStatusCode(400);
+        }
+
+        $data = [
+            'titulo_profesional'      => $this->truncar($this->request->getPost('titulo_profesional'), 150),
+            'especialidad'            => $this->truncar($this->request->getPost('especialidad'), 200),
+            'carrera'                 => $this->truncar($this->request->getPost('carrera'), 200),
+            'presentacion'            => $this->truncar($this->request->getPost('presentacion'), 5000),
+            'descripcion_profesional' => $this->truncar($this->request->getPost('descripcion_profesional'), 10000),
+            'telefono'                => $this->truncar($this->request->getPost('telefono'), 100),
+            'correo'                  => $correo,
+        ];
+
+        $this->usuarioModel->update($usuarioId, $data);
+
+        if ((int) session()->get('usuario')['id'] === $usuarioId) {
+            $sess = session()->get('usuario');
+            foreach (['titulo_profesional', 'especialidad', 'carrera', 'presentacion', 'descripcion_profesional', 'telefono', 'correo'] as $k) {
+                $sess[$k] = $data[$k];
+            }
+            session()->set('usuario', $sess);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Perfil público guardado',
+            'csrf_token' => csrf_hash(),
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * Crear o actualizar credencial (formación / documento).
+     */
+    public function guardarCredencial()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $usuarioId = $this->resolveUsuarioIdObjetivo();
+        if (!$this->puedeEditarUsuario($usuarioId)) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(403);
+        }
+
+        $credencialModel = new UsuarioCredencial();
+        $id = (int) $this->request->getPost('id');
+        $tipo = $this->request->getPost('tipo');
+        if (!in_array($tipo, UsuarioCredencial::TIPOS, true)) {
+            $tipo = 'otro';
+        }
+
+        $nombre = trim((string) $this->request->getPost('nombre'));
+        if ($nombre === '') {
+            return $this->response->setJSON(['success' => false, 'error' => 'El nombre es obligatorio'])->setStatusCode(400);
+        }
+
+        $anio = $this->request->getPost('anio');
+        $anio = ($anio !== null && $anio !== '') ? (int) $anio : null;
+        if ($anio !== null && ($anio < 1950 || $anio > (int) date('Y') + 1)) {
+            $anio = null;
+        }
+
+        $visibleWeb = $this->request->getPost('visible_web') === 'N' ? 'N' : 'S';
+        $orden = (int) $this->request->getPost('orden');
+
+        $payload = [
+            'usuario_id'  => $usuarioId,
+            'tipo'        => $tipo,
+            'nombre'      => $this->truncar($nombre, 200),
+            'institucion' => $this->truncar($this->request->getPost('institucion'), 200) ?: null,
+            'anio'        => $anio,
+            'descripcion' => $this->truncar($this->request->getPost('descripcion'), 2000) ?: null,
+            'orden'       => $orden,
+            'visible_web' => $visibleWeb,
+        ];
+
+        if ($id > 0) {
+            $existente = $credencialModel->where('id', $id)->where('usuario_id', $usuarioId)->first();
+            if (!$existente) {
+                return $this->response->setJSON(['success' => false, 'error' => 'Credencial no encontrada'])->setStatusCode(404);
+            }
+        }
+
+        $file = $this->request->getFile('archivo');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $upload = $this->subirArchivoCredencial($file, $usuarioId);
+            if (isset($upload['error'])) {
+                return $this->response->setJSON(['success' => false, 'error' => $upload['error']])->setStatusCode(400);
+            }
+            if ($id > 0 && !empty($existente['archivo_ruta'])) {
+                $this->eliminarArchivoFisico($existente['archivo_ruta']);
+            }
+            $payload['archivo_ruta'] = $upload['ruta'];
+            $payload['archivo_nombre'] = $upload['nombre'];
+        }
+
+        if ($id > 0) {
+            $credencialModel->update($id, $payload);
+            $credencialId = $id;
+        } else {
+            $credencialModel->insert($payload);
+            $credencialId = (int) $credencialModel->getInsertID();
+        }
+
+        $row = $credencialModel->find($credencialId);
+
+        return $this->response->setJSON([
+            'success'    => true,
+            'message'    => 'Credencial guardada',
+            'credencial' => $row,
+            'csrf_token' => csrf_hash(),
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * Eliminar credencial y archivo asociado.
+     */
+    public function eliminarCredencial()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $usuarioId = $this->resolveUsuarioIdObjetivo();
+        if (!$this->puedeEditarUsuario($usuarioId)) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(403);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $credencialModel = new UsuarioCredencial();
+        $row = $credencialModel->where('id', $id)->where('usuario_id', $usuarioId)->first();
+        if (!$row) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No encontrada'])->setStatusCode(404);
+        }
+
+        if (!empty($row['archivo_ruta'])) {
+            $this->eliminarArchivoFisico($row['archivo_ruta']);
+        }
+        $credencialModel->delete($id);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Credencial eliminada',
+            'csrf_token' => csrf_hash(),
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    private function resolveUsuarioIdObjetivo(): int
+    {
+        $postId = (int) $this->request->getPost('usuario_id');
+        if ($postId > 0) {
+            return $postId;
+        }
+        return (int) session()->get('usuario')['id'];
+    }
+
+    private function puedeEditarUsuario(int $usuarioId): bool
+    {
+        $sessionUser = session()->get('usuario');
+        if ((int) $sessionUser['id'] === $usuarioId) {
+            return true;
+        }
+        $poder = (int) ($sessionUser['poder'] ?? 0);
+        return $poder >= 90;
+    }
+
+    private function truncar($valor, int $max): ?string
+    {
+        if ($valor === null) {
+            return null;
+        }
+        $s = trim((string) $valor);
+        if ($s === '') {
+            return null;
+        }
+        if (mb_strlen($s) > $max) {
+            $s = mb_substr($s, 0, $max);
+        }
+        return $s;
+    }
+
+    /**
+     * @return array{ruta: string, nombre: string}|array{error: string}
+     */
+    private function subirArchivoCredencial($file, int $usuarioId): array
+    {
+        $allowedMimes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ];
+        $mime = $file->getMimeType();
+        if (!in_array($mime, $allowedMimes, true)) {
+            return ['error' => 'Formato no permitido. Use PDF, JPG, PNG o WebP'];
+        }
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            return ['error' => 'El archivo no debe superar 5 MB'];
+        }
+
+        $dir = FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'credenciales' . DIRECTORY_SEPARATOR . $usuarioId;
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $ext = $file->getClientExtension() ?: 'pdf';
+        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientName());
+        $newName = time() . '_' . $safeName;
+        if (!$file->move($dir, $newName)) {
+            return ['error' => 'Error al guardar el archivo'];
+        }
+
+        return [
+            'ruta'   => 'uploads/credenciales/' . $usuarioId . '/' . $newName,
+            'nombre' => $file->getClientName(),
+        ];
+    }
+
+    private function eliminarArchivoFisico(?string $rutaRelativa): void
+    {
+        if (!$rutaRelativa) {
+            return;
+        }
+        $path = FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $rutaRelativa);
+        if (is_file($path)) {
+            @unlink($path);
+        }
     }
 }

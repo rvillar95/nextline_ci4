@@ -268,6 +268,49 @@
                         </div>
                     </div>
 
+                    <?php if ((int) ($usuario['perfil_id'] ?? 0) === 9): ?>
+                    <div class="section-title mt-4">
+                        <i class="fas fa-globe" style="color: #22c55e;"></i>
+                        <span>Perfil público (página Equipo)</span>
+                    </div>
+                    <p class="text-muted small">Visible en <a href="<?= base_url('equipo/' . (int) $usuario['id']) ?>" target="_blank" rel="noopener">/equipo</a>. Títulos y documentos los gestiona el profesional en Mi Perfil.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Título profesional</label>
+                                <input type="text" name="titulo_profesional" class="form-control" maxlength="150"
+                                       value="<?= esc($usuario['titulo_profesional'] ?? '') ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Especialidad</label>
+                                <input type="text" name="especialidad" class="form-control" maxlength="200"
+                                       value="<?= esc($usuario['especialidad'] ?? '') ?>">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Carrera / formación principal</label>
+                                <input type="text" name="carrera" class="form-control" maxlength="200"
+                                       value="<?= esc($usuario['carrera'] ?? '') ?>">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Presentación</label>
+                                <textarea name="presentacion" class="form-control" rows="3"><?= esc($usuario['presentacion'] ?? '') ?></textarea>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Descripción profesional</label>
+                                <textarea name="descripcion_profesional" class="form-control" rows="4"><?= esc($usuario['descripcion_profesional'] ?? '') ?></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">

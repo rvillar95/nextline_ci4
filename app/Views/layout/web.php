@@ -1124,6 +1124,7 @@ $empresaContacto = [
                     $uriNav = uri_string();
                     $navInicioActive = ($uriNav === '' || $uriNav === 'home');
                     $navFuncActive = str_starts_with($uriNav, 'funcionalidades');
+                    $navEquipoActive = str_starts_with($uriNav, 'equipo');
                     $navReservarActive = str_starts_with($uriNav, 'reservar');
                     $navContactoActive = str_starts_with($uriNav, 'contacto');
                     ?>
@@ -1139,6 +1140,12 @@ $empresaContacto = [
                                 <a href="<?= base_url('funcionalidades') ?>" class="nav-link-modern <?= $navFuncActive ? 'active' : '' ?>">
                                     <i class="fas fa-th-large"></i>
                                     <span>Funcionalidades</span>
+                                </a>
+                            </li>
+                            <li class="nav-item-modern">
+                                <a href="<?= base_url('equipo') ?>" class="nav-link-modern <?= $navEquipoActive ? 'active' : '' ?>">
+                                    <i class="fas fa-user-md"></i>
+                                    <span>Equipo</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
@@ -1229,6 +1236,7 @@ $empresaContacto = [
                             <ul class="footer-links-modern">
                                 <li><a href="<?= base_url() ?>"><i class="fas fa-home"></i> Inicio</a></li>
                                 <li><a href="<?= base_url('funcionalidades') ?>"><i class="fas fa-th-large"></i> Funcionalidades</a></li>
+                                <li><a href="<?= base_url('equipo') ?>"><i class="fas fa-user-md"></i> Equipo</a></li>
                                 <li><a href="<?= base_url('reservar') ?>"><i class="fas fa-calendar-check"></i> Reservar hora</a></li>
                                 <li><a href="<?= base_url('contacto') ?>"><i class="fas fa-envelope"></i> Contacto</a></li>
                                 <li><a href="<?= base_url('login') ?>"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>
