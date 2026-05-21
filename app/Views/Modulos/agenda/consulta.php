@@ -237,8 +237,8 @@
             ?>
             <!-- Aprobar reserva (cita reservada por paciente desde link público) -->
             <div class="section-card" style="border-left: 4px solid #7986CB !important; background: linear-gradient(135deg, rgba(121,134,203,0.08) 0%, #fff 100%);">
-                <h5 class="text-primary mb-3"><i class="fas fa-user-clock me-2"></i> Reservada por el paciente</h5>
-                <p class="text-muted mb-4">Esta cita fue reservada desde el link público. Asigne tipo de consulta, modalidad y opcionalmente tipo de pago; luego apruebe para que la cita pase a <strong>Pendiente</strong> y se envíe el correo de confirmación al paciente.</p>
+                <h5 class="text-primary mb-3"><i class="fas fa-user-clock me-2"></i> Reserva pendiente de aprobación</h5>
+                <p class="text-muted mb-4">Esta cita está en estado <strong>Reservada</strong> (solicitud web o agendada desde otra consulta). Revise modalidad y pago si aplica; al aprobar pasará a <strong>Pendiente</strong> y el paciente recibirá el correo para confirmar la cita.</p>
                 <form id="formAprobarReserva" class="row g-3">
                     <?= csrf_field() ?>
                     <input type="hidden" name="detalle_agenda_id" value="<?= (int)$cita->id ?>">
@@ -268,12 +268,37 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary" id="btnAprobarReserva">
                             <i class="fas fa-check-circle me-2"></i> Aprobar reserva y enviar confirmación al paciente
                         </button>
+                        <button type="button" class="btn btn-outline-danger" id="btnRechazarReservaConsulta">
+                            <i class="fas fa-ban me-2"></i> Rechazar solicitud
+                        </button>
                     </div>
                 </form>
+            </div>
+            <!-- Modal rechazar reserva (consulta) -->
+            <div class="modal fade" id="modalRechazarReservaConsulta" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title"><i class="fas fa-ban me-2 text-danger"></i>Rechazar solicitud de hora</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">El horario volverá a estar disponible. Si el paciente tiene correo, recibirá la notificación de cancelación.</p>
+                            <label class="form-label small text-muted">Motivo del rechazo (opcional)</label>
+                            <textarea class="form-control" id="motivoRechazarReservaConsulta" rows="2" placeholder="Ej.: Sin cupo en ese horario"></textarea>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-danger" id="btnConfirmarRechazarReservaConsulta">
+                                <i class="fas fa-ban me-1"></i> Sí, rechazar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <?php endif; ?>
 
@@ -1141,12 +1166,13 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="modalAgendarHoraRealLabel">
-                    <i class="fas fa-calendar-plus me-2"></i> Agendar hora real en agenda
+                    <i class="fas fa-calendar-plus me-2"></i> Agendar próxima cita
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3">Elegí una fecha y buscá horarios disponibles. Luego reservá el slot para <strong id="nombrePacienteAgendar"><?= esc($cita->nombre . ' ' . $cita->apellido) ?></strong>.</p>
+                <p class="text-muted small mb-3">Elegí fecha y horario, modalidad, tipo de consulta y pago si aplica. La cita quedará en <strong>Pendiente</strong> y al paciente le llegará el <strong>correo de confirmación de cita</strong> (para que confirme o cancele).</p>
+                <div id="pasoAgendarBuscar">
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label small">Fecha para buscar horarios</label>
@@ -1165,6 +1191,66 @@
                 <div id="slotsAgendarLista" class="mb-0" style="display: none;"></div>
                 <div id="slotsAgendarVacio" class="alert alert-warning mb-0" style="display: none;">
                     <i class="fas fa-info-circle me-2"></i> No hay horarios disponibles en la fecha elegida. Probá otra fecha o creá horarios desde el calendario.
+                </div>
+                </div>
+                <div id="pasoAgendarConfirmar" style="display: none;">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fas fa-user me-1"></i> Paciente: <strong id="nombrePacienteAgendar"><?= esc($cita->nombre . ' ' . $cita->apellido) ?></strong>
+                        <span class="d-block mt-1"><i class="fas fa-clock me-1"></i> Horario: <strong id="agendarHorarioLabel"></strong></span>
+                    </div>
+                    <input type="hidden" id="agendar_detalle_agenda_id" value="">
+                    <input type="hidden" id="agendar_fecha_label" value="">
+                    <input type="hidden" id="agendar_hora_label" value="">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Modalidad <span class="text-danger">*</span></label>
+                            <select id="agendar_modalidad_id" class="form-select" required>
+                                <?php
+                                $modsAgendar = array_values(array_filter($modalidades ?? [], static function ($m) {
+                                    return (int) ($m->id ?? 0) !== 3;
+                                }));
+                                if (empty($modsAgendar)): ?>
+                                <option value="1">Presencial</option>
+                                <option value="2">Online</option>
+                                <?php else: foreach ($modsAgendar as $m): ?>
+                                <option value="<?= (int)$m->id ?>"><?= esc($m->nombre ?? '') ?></option>
+                                <?php endforeach; endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Tipo de consulta</label>
+                            <select id="agendar_tipo_consulta" class="form-select">
+                                <option value="seguimiento" selected>Seguimiento</option>
+                                <option value="control">Control</option>
+                                <option value="primera_vez">Primera vez</option>
+                                <option value="emergencia">Emergencia</option>
+                            </select>
+                        </div>
+                        <?php if (!empty($plantillas_pago)): ?>
+                        <div class="col-12">
+                            <label class="form-label small">Tipo de pago (opcional)</label>
+                            <select id="agendar_boton_pago_plantilla_id" class="form-select">
+                                <option value="">-- Sin pago --</option>
+                                <?php foreach ($plantillas_pago as $pp): ?>
+                                <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> - <?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">Si selecciona pago, la cita quedará En proceso hasta que el paciente confirme desde el correo.</small>
+                        </div>
+                        <?php endif; ?>
+                        <div class="col-12">
+                            <label class="form-label small">Motivo</label>
+                            <textarea id="agendar_motivo" class="form-control" rows="2">Próxima cita recomendada desde consulta</textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVolverBuscarHorarios">
+                            <i class="fas fa-arrow-left me-1"></i> Elegir otro horario
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="btnConfirmarAgendarConsulta">
+                            <i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1726,6 +1812,50 @@ $(document).ready(function() {
                     $form.find('input[name="csrf_test_name"]').val(r.csrf_token);
                 }
                 toastr.error((r.message || r.error || 'Error al aprobar la reserva'), 'Error');
+            }
+        });
+    });
+
+    $('#btnRechazarReservaConsulta').on('click', function() {
+        $('#motivoRechazarReservaConsulta').val('');
+        new bootstrap.Modal(document.getElementById('modalRechazarReservaConsulta')).show();
+    });
+
+    $('#btnConfirmarRechazarReservaConsulta').on('click', function() {
+        var $btn = $(this);
+        var detalleId = <?= (int)($cita->id ?? 0) ?>;
+        var motivo = $('#motivoRechazarReservaConsulta').val().trim();
+        var csrfToken = $('input[name="csrf_test_name"]').val() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+        var csrfName = 'csrf_test_name';
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Rechazando...');
+        $.ajax({
+            url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+            type: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+            data: { [csrfName]: csrfToken, id: detalleId, motivo: motivo },
+            dataType: 'json',
+            success: function(response, textStatus, xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                else if (response && response.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                    $('input[name="csrf_test_name"]').val(response.csrf_token);
+                }
+                $btn.prop('disabled', false).html('<i class="fas fa-ban me-1"></i> Sí, rechazar');
+                if (response && (response.error || !response.success)) {
+                    toastr.error(response.message || response.error || 'Error al rechazar', 'Error');
+                    return;
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalRechazarReservaConsulta')).hide();
+                toastr.success(response.message || 'Reserva rechazada.', 'Éxito', { timeOut: 4000 });
+                setTimeout(function() {
+                    window.location.href = '<?= base_url('dashboard/agenda/lista') ?>';
+                }, 1200);
+            },
+            error: function(xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                $btn.prop('disabled', false).html('<i class="fas fa-ban me-1"></i> Sí, rechazar');
+                var r = (xhr && xhr.responseJSON) || {};
+                toastr.error(r.message || r.error || 'Error al rechazar la reserva', 'Error');
             }
         });
     });
@@ -2955,6 +3085,12 @@ $(document).ready(function() {
     var pacienteIdAgendar = <?= (int)($cita->paciente_id ?? 0) ?>;
     var flatpickrModalAgendar = null;
     
+    function mostrarPasoAgendarBuscar() {
+        $('#pasoAgendarConfirmar').hide();
+        $('#pasoAgendarBuscar').show();
+        $('#agendar_detalle_agenda_id').val('');
+    }
+
     window.abrirModalAgendarHoraReal = function() {
         var fechaRec = ($('#proxima_cita_recomendada').val() || '').split(' ')[0] || '';
         if (!fechaRec) {
@@ -2965,6 +3101,7 @@ $(document).ready(function() {
             fechaRec = dd + '-' + mm + '-' + yyyy;
         }
         $('#modalAgendarFechaBuscar').val(fechaRec);
+        mostrarPasoAgendarBuscar();
         $('#slotsAgendarLoading').hide();
         $('#slotsAgendarLista').hide().empty();
         $('#slotsAgendarVacio').hide();
@@ -3013,8 +3150,14 @@ $(document).ready(function() {
         $.get('<?= base_url('dashboard/agenda/getEventos') ?>', { start: start, end: end }, function(res) {
             $('#slotsAgendarLoading').hide();
             var events = (res && res.events) ? res.events : [];
+            var ahora = new Date();
             var disponibles = events.filter(function(ev) {
-                return (ev.extendedProps && ev.extendedProps.estado_cita === 'disponible') || (!ev.extendedProps || !ev.extendedProps.paciente_id);
+                var p = ev.extendedProps || {};
+                if (p.paciente_id) return false;
+                var estado = (p.estado_cita || 'disponible').toLowerCase();
+                if (estado === 'cancelada' || estado === 'no_disponible' || estado === 'bloqueado') return false;
+                if (ev.start && new Date(ev.start) < ahora) return false;
+                return true;
             });
             if (disponibles.length === 0) {
                 $('#slotsAgendarVacio').show();
@@ -3027,9 +3170,9 @@ $(document).ready(function() {
                 var fechaLabel = startDt ? (String(startDt.getDate()).padStart(2, '0') + '-' + String(startDt.getMonth() + 1).padStart(2, '0') + '-' + startDt.getFullYear()) : '';
                 var horaDisplay = (startDt && endDt) ? (startDt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) + ' - ' + endDt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })) : '';
                 var horaParaGuardar = (startDt && endDt) ? (String(startDt.getHours()).padStart(2, '0') + ':' + String(startDt.getMinutes()).padStart(2, '0') + ' - ' + String(endDt.getHours()).padStart(2, '0') + ':' + String(endDt.getMinutes()).padStart(2, '0')) : '';
-                var modId = (ev.extendedProps && ev.extendedProps.modalidad_id) ? ev.extendedProps.modalidad_id : 3;
-                var modLabel = modId == 1 ? 'Presencial' : (modId == 2 ? 'Online' : 'Sin definir');
-                html += '<tr><td>' + fechaLabel + '</td><td>' + horaDisplay + '</td><td>' + modLabel + '</td><td><button type="button" class="btn btn-sm btn-success btn-reservar-slot" data-id="' + ev.id + '" data-fecha="' + fechaLabel + '" data-hora="' + horaParaGuardar + '"><i class="fas fa-check me-1"></i> Reservar</button></td></tr>';
+                var modId = (ev.extendedProps && ev.extendedProps.modalidad_id) ? parseInt(ev.extendedProps.modalidad_id, 10) : 3;
+                var modLabel = modId === 1 ? 'Presencial' : (modId === 2 ? 'Online' : 'Sin definir');
+                html += '<tr><td>' + fechaLabel + '</td><td>' + horaDisplay + '</td><td>' + modLabel + '</td><td><button type="button" class="btn btn-sm btn-success btn-elegir-slot-agendar" data-id="' + ev.id + '" data-fecha="' + fechaLabel + '" data-hora="' + horaParaGuardar + '" data-modalidad="' + modId + '"><i class="fas fa-arrow-right me-1"></i> Continuar</button></td></tr>';
             });
             html += '</tbody></table></div>';
             $('#slotsAgendarLista').html(html).show();
@@ -3040,50 +3183,75 @@ $(document).ready(function() {
         });
     });
     
-    $(document).on('click', '.btn-reservar-slot', function() {
+    $(document).on('click', '.btn-elegir-slot-agendar', function() {
         var detalleAgendaId = $(this).data('id');
         var fechaLabel = $(this).data('fecha');
         var horaLabel = $(this).data('hora');
+        var modId = parseInt($(this).data('modalidad'), 10) || 1;
+        if (!detalleAgendaId) return;
+        $('#agendar_detalle_agenda_id').val(detalleAgendaId);
+        $('#agendar_fecha_label').val(fechaLabel);
+        $('#agendar_hora_label').val(horaLabel);
+        $('#agendarHorarioLabel').text(fechaLabel + ' · ' + horaLabel);
+        var $selMod = $('#agendar_modalidad_id');
+        if ($selMod.length && (modId === 1 || modId === 2)) {
+            $selMod.val(String(modId));
+        }
+        $('#pasoAgendarBuscar').hide();
+        $('#pasoAgendarConfirmar').show();
+    });
+
+    $('#btnVolverBuscarHorarios').on('click', function() {
+        mostrarPasoAgendarBuscar();
+    });
+
+    $('#btnConfirmarAgendarConsulta').on('click', function() {
+        var detalleAgendaId = $('#agendar_detalle_agenda_id').val();
+        var fechaLabel = $('#agendar_fecha_label').val();
+        var horaLabel = $('#agendar_hora_label').val();
+        var modalidadId = $('#agendar_modalidad_id').val();
         if (!detalleAgendaId || !pacienteIdAgendar) {
             toastr.error('Faltan datos para reservar.', 'Error');
             return;
         }
+        if (!modalidadId) {
+            toastr.warning('Seleccioná modalidad Presencial u Online.', 'Modalidad requerida');
+            return;
+        }
         var $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Reservando...');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Agendando...');
         var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || '<?= csrf_hash() ?>';
         $.ajax({
-            url: '<?= base_url('dashboard/agenda/agendar') ?>',
+            url: '<?= base_url('dashboard/agenda/agendarDesdeConsulta') ?>',
             type: 'POST',
             data: {
                 detalle_agenda_id: detalleAgendaId,
                 paciente_id: pacienteIdAgendar,
-                tipo_consulta: 'seguimiento',
-                motivo: 'Próxima cita recomendada desde consulta',
+                modalidad_id: modalidadId,
+                tipo_consulta: $('#agendar_tipo_consulta').val() || 'seguimiento',
+                motivo: $('#agendar_motivo').val() || 'Próxima cita desde consulta',
+                boton_pago_plantilla_id: $('#agendar_boton_pago_plantilla_id').val() || '',
                 csrf_test_name: csrfToken
             },
             headers: { 'X-CSRF-TOKEN': csrfToken },
             dataType: 'json',
             success: function(response, textStatus, xhr) {
-                // Actualizar token CSRF (meta + input) para que Guardar todo / Finalizar sigan funcionando
                 actualizarTokenCSRF(xhr);
+                $btn.prop('disabled', false).html('<i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación');
                 if (response && response.success) {
                     bootstrap.Modal.getInstance(document.getElementById('modalAgendarHoraReal')).hide();
-                    toastr.success('Cita agendada: ' + fechaLabel + ' a las ' + horaLabel + '. Podés verla en el calendario.', 'Éxito', { timeOut: 5000 });
-                    // Guardar en formato 24h (ej. "30-01-2026 15:30 - 16:00") para que persista y se vea bien al actualizar
+                    toastr.success(response.message || 'Cita agendada.', 'Éxito', { timeOut: 7000 });
                     $('#proxima_cita_recomendada').val(fechaLabel + ' ' + horaLabel);
+                    setTimeout(function() { guardarNotasConsulta(); }, 400);
                     setTimeout(function() {
-                        guardarNotasConsulta();
-                    }, 400);
-                    setTimeout(function() {
-                        toastr.info('Podés ver la cita en <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="alert-link">Calendario</a>', 'Ver agenda', { timeOut: 6000 });
-                    }, 800);
+                        toastr.info('La cita quedó Pendiente hasta que el paciente confirme desde el correo. <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="alert-link">Ver calendario</a>', 'Agenda', { timeOut: 8000 });
+                    }, 900);
                 } else {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Reservar');
                     toastr.error(response.message || response.error || 'Error al agendar.', 'Error');
                 }
             },
             error: function(xhr) {
-                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Reservar');
+                $btn.prop('disabled', false).html('<i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación');
                 actualizarTokenCSRF(xhr);
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) ? (xhr.responseJSON.message || xhr.responseJSON.error) : 'Error al agendar la cita.';
                 toastr.error(msg, 'Error');

@@ -13,12 +13,12 @@ SET @empresa_id = (
        OR e.`nombre` LIKE '%Martinez%'
        OR e.`nombre` LIKE '%Martínez%'
        OR CONCAT(IFNULL(u.`nombre`, ''), ' ', IFNULL(u.`apellido`, '')) LIKE '%Valentina%'
-       OR u.`email` LIKE '%valentina%'
+       OR u.`correo` LIKE '%valentina%'
     ORDER BY e.`id` ASC
     LIMIT 1
 );
 
-INSERT INTO `empresa` (`nombre`, `email`, `telefono`, `paquete_id`, `estado`, `fcreacion`, `factualizacion`)
+INSERT INTO `empresa` (`nombre`, `email`, `telefono`, `paquete_id`, `estado`, `fcreacion`, `fmodificacion`)
 SELECT 'Valentina Martínez - Nutrición', 'valentina@nutrinext.cl', NULL, @paquete_partner_id, 'A', NOW(), NOW()
 FROM DUAL
 WHERE @empresa_id IS NULL AND @paquete_partner_id IS NOT NULL
@@ -29,7 +29,7 @@ SET @empresa_id = IFNULL(@empresa_id, (
 ));
 
 UPDATE `empresa`
-SET `paquete_id` = @paquete_partner_id, `factualizacion` = NOW()
+SET `paquete_id` = @paquete_partner_id, `fmodificacion` = NOW()
 WHERE `id` = @empresa_id AND @paquete_partner_id IS NOT NULL;
 
 -- Suscripción piloto (12 meses, sin cobro) — solo si existe tabla
@@ -66,17 +66,14 @@ WHERE pf.`empresa_id` = @empresa_id AND pf.`estado` = 'A' AND @paquete_partner_i
     SELECT 1 FROM `perfil_modulo` x WHERE x.`perfil_id` = pf.`id` AND x.`modulo_id` = pm.`modulo_id`
   );
 
--- Perfil público visible en /equipo
+-- Visible en /equipo: EquipoController usa perfil_id = 9 (Nutricionista), estado = A.
+-- Opcional: ejecutar antes 2026-05-20_perfil_publico_usuario_credencial.sql y completar ficha en Mi Perfil.
 UPDATE `usuario` u
-SET u.`perfil_publico` = 'S',
-    u.`perfil_publico_orden` = 1,
+SET u.`perfil_id` = 9,
     u.`factualizacion` = NOW()
 WHERE u.`empresa_id` = @empresa_id
-  AND (u.`nombre` LIKE '%Valentina%' OR u.`email` LIKE '%valentina%')
-  AND EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = DATABASE() AND table_name = 'usuario' AND column_name = 'perfil_publico'
-  );
+  AND (u.`nombre` LIKE '%Valentina%' OR u.`correo` LIKE '%valentina%')
+  AND EXISTS (SELECT 1 FROM `perfil` WHERE `id` = 9 AND `estado` = 'A');
 
 SELECT CONCAT('Piloto Valentina: empresa_id=', IFNULL(@empresa_id, 'N/A'),
   ' paquete_partner_id=', IFNULL(@paquete_partner_id, 'N/A')) AS resultado;

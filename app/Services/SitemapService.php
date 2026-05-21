@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Usuario;
 use Config\Seo;
 
 class SitemapService
@@ -35,10 +36,7 @@ class SitemapService
 
         $db = \Config\Database::connect();
 
-        $this->appendSlugUrls($urls, $db, 'servicio', $base . '/servicios/', 'monthly', '0.8');
-        $this->appendSlugUrls($urls, $db, 'servicio_categoria', $base . '/servicios-categorias/', 'monthly', '0.7');
-        $this->appendSlugUrls($urls, $db, 'proyectos', $base . '/proyectos/', 'monthly', '0.75', 'estado_publico');
-
+        // Detalle de funcionalidades (catálogo NutriNext)
         $this->appendUrlsSafely($urls, function () use ($db, $base) {
             $rows = $db->table('servicio_nutrinext')
                 ->select('codigo, factualizacion')
@@ -61,39 +59,22 @@ class SitemapService
             return $entries;
         });
 
+        // Fichas públicas del equipo
         $this->appendUrlsSafely($urls, function () use ($db, $base) {
-            $rows = $db->table('galeria')
+            $rows = $db->table('usuario')
                 ->select('id, factualizacion')
+                ->where('perfil_id', Usuario::PERFIL_NUTRICIONISTA)
                 ->where('estado', 'A')
                 ->get()
                 ->getResult();
             $entries = [];
             foreach ($rows as $row) {
                 $entries[] = $this->entry(
-                    $base . '/galeria/detalle/' . (int) $row->id,
+                    $base . '/equipo/' . (int) $row->id,
                     $this->formatDate($row->factualizacion ?? null),
                     'monthly',
-                    '0.6'
+                    '0.75'
                 );
-            }
-
-            return $entries;
-        });
-
-        $this->appendUrlsSafely($urls, function () use ($db, $base) {
-            $rows = $db->table('galeria_categoria')
-                ->select('slug, factualizacion')
-                ->where('estado', 'A')
-                ->where('slug IS NOT NULL')
-                ->where('slug !=', '')
-                ->get()
-                ->getResult();
-            $entries = [];
-            foreach ($rows as $row) {
-                $slug = rawurlencode($row->slug);
-                $lastmod = $this->formatDate($row->factualizacion ?? null);
-                $entries[] = $this->entry($base . '/galeria-categorias/' . $slug, $lastmod, 'monthly', '0.65');
-                $entries[] = $this->entry($base . '/galeria/categoria/' . $slug, $lastmod, 'monthly', '0.65');
             }
 
             return $entries;
@@ -123,44 +104,6 @@ class SitemapService
         $lines[] = '</urlset>';
 
         return implode("\n", $lines) . "\n";
-    }
-
-    /**
-     * @param list<array{loc: string, lastmod: string, changefreq: string, priority: string}> $urls
-     */
-    protected function appendSlugUrls(
-        array &$urls,
-        $db,
-        string $table,
-        string $urlPrefix,
-        string $changefreq,
-        string $priority,
-        string $estadoColumn = 'estado'
-    ): void {
-        $this->appendUrlsSafely($urls, function () use ($db, $table, $urlPrefix, $changefreq, $priority, $estadoColumn) {
-            $builder = $db->table($table)
-                ->select('slug, factualizacion')
-                ->where($estadoColumn, 'A')
-                ->where('slug IS NOT NULL')
-                ->where('slug !=', '');
-
-            if ($table === 'proyectos') {
-                $builder->where('feliminacion', null);
-            }
-
-            $rows = $builder->get()->getResult();
-            $entries = [];
-            foreach ($rows as $row) {
-                $entries[] = $this->entry(
-                    $urlPrefix . rawurlencode($row->slug),
-                    $this->formatDate($row->factualizacion ?? null),
-                    $changefreq,
-                    $priority
-                );
-            }
-
-            return $entries;
-        });
     }
 
     /**

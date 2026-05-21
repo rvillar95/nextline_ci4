@@ -291,8 +291,8 @@ $(document).ready(function() {
                                         <div>${estadoBadge}</div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="text-muted small d-block mb-1">Servicio de Interés</label>
-                                        <div class="fw-bold">${lead.servicio_nombre || 'Sin servicio'}</div>
+                                        <label class="text-muted small d-block mb-1">Plan de interés</label>
+                                        <div class="fw-bold">${lead.plan_nombre || (lead.plan_interes === 'otro' ? 'Otro / Consulta general' : (lead.plan_interes || lead.servicio_nombre || 'Sin especificar'))}</div>
                                     </div>
                                     <div class="mb-0">
                                         <label class="text-muted small d-block mb-1">Fecha de Registro</label>

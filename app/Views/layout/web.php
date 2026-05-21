@@ -3,10 +3,11 @@
 $empresaModel = new \App\Models\Empresa();
 $empresaData = $empresaModel->getDatosParaPDF();
 $empresaContacto = [
-    'direccion' => $empresaData['direccion'] ?? 'Santiago, Chile',
+    'direccion' => $empresaData['direccion'] ?? 'Chile',
     'telefono' => $empresaData['telefono'] ?? '+56 9 1234 5678',
-    'email' => $empresaData['email'] ?? 'info@mansanchez.cl',
-    'sitio_web' => $empresaData['sitio_web'] ?? 'www.mansanchez.cl'
+    'email' => $empresaData['email'] ?? 'contacto@nutrinext.cl',
+    'sitio_web' => $empresaData['sitio_web'] ?? 'nutrinext.cl',
+    'nombre' => $empresaData['nombre'] ?? 'NutriNext',
 ];
 ?>
 <!DOCTYPE html>
@@ -286,7 +287,7 @@ $empresaContacto = [
             flex-direction: column;
             align-items: center;
             padding: 8px 15px;
-            color: var(--text-main);
+            color: var(--brand-green-dark);
             text-decoration: none;
             border-radius: 12px;
             transition: all 0.3s ease;
@@ -294,16 +295,22 @@ $empresaContacto = [
             position: relative;
             overflow: hidden;
         }
+
+        .nav-link-modern:visited:not(.active) {
+            color: var(--brand-green-dark);
+        }
         
         .nav-link-modern i {
             font-size: 1rem;
             margin-bottom: 3px;
             transition: all 0.3s ease;
+            color: inherit;
         }
         
         .nav-link-modern span {
             font-size: 0.85rem;
             font-weight: 600;
+            color: inherit;
         }
         
         .nav-link-modern:hover {
@@ -532,12 +539,12 @@ $empresaContacto = [
                 width: 100%;
             }
             
-            .nav-link-modern {
+            .nav-link-modern:not(.active) {
                 padding: 16px 20px;
                 border-radius: 10px;
                 background: var(--nutrinext-muted);
                 border: 1px solid rgba(34, 197, 94, 0.3);
-                color: var(--text-main) !important;
+                color: var(--brand-green-dark) !important;
                 font-size: 0.95rem;
                 transition: all 0.3s ease;
                 display: flex;
@@ -545,16 +552,20 @@ $empresaContacto = [
                 align-items: center;
                 gap: 12px;
             }
-            
-            .nav-link-modern i {
-                font-size: 1.2rem;
-                color: var(--nutrinext-primary);
-                margin-bottom: 0;
+
+            .nav-link-modern:not(.active):visited {
+                color: var(--brand-green-dark) !important;
             }
             
-            .nav-link-modern span {
-                color: var(--text-main) !important;
+            .nav-link-modern:not(.active) i,
+            .nav-link-modern:not(.active) span {
+                color: inherit !important;
                 font-weight: 600;
+            }
+
+            .nav-link-modern:not(.active) i {
+                font-size: 1.2rem;
+                margin-bottom: 0;
             }
             
             .nav-link-modern:hover {
@@ -568,6 +579,12 @@ $empresaContacto = [
             .nav-link-modern:hover span { color: white !important; }
             
             .nav-link-modern.active {
+                padding: 16px 20px;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
                 background: var(--nutrinext-primary);
                 color: white !important;
                 box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
@@ -1319,14 +1336,9 @@ $empresaContacto = [
                             </p>
                         </div>
                         <div class="col-lg-6 col-md-6 text-md-end">
-                        <div class="social-icons-modern">
-                            <a href="https://web.facebook.com/man.msanchez" target="_blank" class="social-icon-modern" title="Facebook">
-                                <i class="fab fa-facebook-f" style="color:white;"></i>
-                            </a>
-                            <a href="https://www.instagram.com/mansanchez45/" target="_blank" class="social-icon-modern" title="Instagram">
-                                <i class="fab fa-instagram" style="color:white;"></i>
-                            </a>
-                        </div>
+                            <p class="copyright-modern mb-0 text-md-end" style="opacity: 0.85;">
+                                <?= esc($empresaContacto['nombre']) ?> · Software para nutricionistas
+                            </p>
                         </div>
                     </div>
                 </div>

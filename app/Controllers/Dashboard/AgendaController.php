@@ -596,6 +596,175 @@ class AgendaController extends BaseController
         }
     }
 
+    /**
+     * Agendar próxima cita desde consulta (mismo flujo que agendar en calendario).
+     * Estado pendiente (o en_proceso si hay pago) + correo de confirmación de cita al paciente.
+     */
+    public function agendarDesdeConsulta()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'Su sesión ha expirado.'])->setStatusCode(401);
+        }
+
+        $rules = [
+            'detalle_agenda_id' => 'required|integer|greater_than[0]',
+            'paciente_id' => 'required|integer|greater_than[0]',
+            'modalidad_id' => 'required|integer|greater_than[0]',
+        ];
+        if (!$this->validate($rules)) {
+            $errors = $this->validator->getErrors();
+            return $this->response->setJSON([
+                'error' => 'Error de validación',
+                'message' => implode(', ', array_values($errors)),
+                'errors' => $errors,
+            ])->setStatusCode(400);
+        }
+
+        $post = $this->request->getPost([
+            'detalle_agenda_id', 'paciente_id', 'modalidad_id', 'tipo_consulta', 'motivo', 'boton_pago_plantilla_id'
+        ]);
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $detalleAgendaId = (int) $post['detalle_agenda_id'];
+        $pacienteId = (int) $post['paciente_id'];
+        $modalidadId = (int) $post['modalidad_id'];
+        if (!in_array($modalidadId, [1, 2], true)) {
+            return $this->response->setJSON([
+                'error' => 'Modalidad inválida',
+                'message' => 'Debe seleccionar modalidad Presencial u Online.',
+            ])->setStatusCode(400);
+        }
+        $tipoConsulta = $post['tipo_consulta'] ?? 'seguimiento';
+        $motivo = trim((string) ($post['motivo'] ?? 'Próxima cita desde consulta'));
+        $botonPagoPlantillaId = !empty($post['boton_pago_plantilla_id']) ? (int) $post['boton_pago_plantilla_id'] : null;
+
+        $db = \Config\Database::connect();
+
+        try {
+            $detalle = $db->table('detalle_agenda da')
+                ->select('da.id, da.usuario_id, da.paciente_id, da.estado_cita, da.hora_inicio, da.hora_fin, a.fecha as fecha_agenda')
+                ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                ->where('da.id', $detalleAgendaId)
+                ->where('da.usuario_id', $usuarioId)
+                ->get()
+                ->getRow();
+
+            if (!$detalle) {
+                return $this->response->setJSON([
+                    'error' => 'No autorizado',
+                    'message' => 'No tiene permiso para usar este horario.',
+                ])->setStatusCode(403);
+            }
+
+            if (!empty($detalle->paciente_id)) {
+                return $this->response->setJSON([
+                    'error' => 'Horario ocupado',
+                    'message' => 'Este horario ya no está disponible. Elija otro.',
+                ])->setStatusCode(400);
+            }
+
+            $estadoCitaActual = strtolower(trim((string) ($detalle->estado_cita ?? '')));
+            if (in_array($estadoCitaActual, ['cancelada', 'no_disponible', 'bloqueado'], true)) {
+                return $this->response->setJSON([
+                    'error' => 'Horario no disponible',
+                    'message' => 'Este horario no se puede agendar.',
+                ])->setStatusCode(400);
+            }
+
+            $paciente = $db->table('pacientes')
+                ->select('id, email')
+                ->where('id', $pacienteId)
+                ->where('estado', 'A')
+                ->get()
+                ->getRow();
+
+            if (!$paciente) {
+                return $this->response->setJSON([
+                    'error' => 'Paciente no encontrado',
+                    'message' => 'El paciente no existe o está inactivo.',
+                ])->setStatusCode(400);
+            }
+
+            if (empty($paciente->email)) {
+                return $this->response->setJSON([
+                    'error' => 'Sin correo',
+                    'message' => 'El paciente debe tener correo electrónico para enviar la confirmación de cita.',
+                ])->setStatusCode(400);
+            }
+
+            $estadoCita = !empty($botonPagoPlantillaId) ? 'en_proceso' : 'pendiente';
+
+            $dataUpdate = [
+                'paciente_id' => $pacienteId,
+                'modalidad_id' => $modalidadId,
+                'tipo_consulta' => $tipoConsulta,
+                'motivo' => $motivo,
+                'estado_cita' => $estadoCita,
+                'estado' => 2,
+            ];
+
+            $updated = $db->table('detalle_agenda')
+                ->where('id', $detalleAgendaId)
+                ->where('paciente_id', null)
+                ->update($dataUpdate);
+
+            if (!$updated) {
+                return $this->response->setJSON([
+                    'error' => 'Error al agendar',
+                    'message' => 'No se pudo agendar el horario. Puede que ya esté ocupado.',
+                ])->setStatusCode(500);
+            }
+
+            // Asegurar estado_cita (evitar NULL en BD)
+            $verificacion = $db->table('detalle_agenda')
+                ->select('estado_cita')
+                ->where('id', $detalleAgendaId)
+                ->get()
+                ->getRow();
+            if ($verificacion && ($verificacion->estado_cita === null || $verificacion->estado_cita === '')) {
+                $db->query("UPDATE detalle_agenda SET estado_cita = ? WHERE id = ?", [$estadoCita, $detalleAgendaId]);
+            }
+
+            if (!empty($botonPagoPlantillaId)) {
+                try {
+                    $this->crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $botonPagoPlantillaId);
+                } catch (\Exception $e) {
+                    log_message('error', 'Agendar desde consulta: error al crear pago: ' . $e->getMessage());
+                }
+            }
+
+            $configuracionModel = new EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
+            if ($configuracion['enviar_email'] ?? 1) {
+                try {
+                    $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
+                } catch (\Exception $e) {
+                    log_message('error', 'Agendar desde consulta: error email confirmación: ' . $e->getMessage());
+                }
+            }
+
+            $msgEstado = ($estadoCita === 'en_proceso')
+                ? 'Cita agendada en estado En proceso (con pago).'
+                : 'Cita agendada en estado Pendiente.';
+
+            $response = $this->response->setJSON([
+                'success' => true,
+                'message' => $msgEstado . ' Se envió el correo de confirmación al paciente.',
+                'estado_cita' => $estadoCita,
+                'detalle_agenda_id' => $detalleAgendaId,
+                'csrf_token' => csrf_hash(),
+            ]);
+            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+            return $response;
+        } catch (\Exception $e) {
+            log_message('error', 'agendarDesdeConsulta: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => 'Error al agendar',
+                'message' => 'Ocurrió un error inesperado. Intente nuevamente.',
+            ])->setStatusCode(500);
+        }
+    }
+
     public function confirmarCita()
     {
         error_log('========================================');
@@ -612,14 +781,14 @@ class AgendaController extends BaseController
         
         if (!session()->get('usuario')) {
             log_message('warning', 'CONFIRMAR CITA: No hay sesión de usuario');
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
         }
 
         $id = $this->request->getPost('id');
         log_message('info', 'CONFIRMAR CITA: ID recibido=' . ($id ?? 'N/A'));
         
         if (!$id) {
-            return $this->response->setJSON(['error' => 'ID requerido'])->setStatusCode(400);
+            return $this->agendaJsonResponse(['error' => 'ID requerido'], 400);
         }
 
         $db = \Config\Database::connect();
@@ -634,24 +803,26 @@ class AgendaController extends BaseController
             ->getRow();
 
         if (!$detalle) {
-            return $this->response->setJSON([
+            return $this->agendaJsonResponse([
                 'error' => 'No autorizado',
-                'message' => 'No tiene permiso para modificar esta cita o la cita no existe'
-            ])->setStatusCode(403);
+                'message' => 'No tiene permiso para modificar esta cita o la cita no existe',
+            ], 403);
         }
+
+        $estadoActual = strtolower(trim((string) ($detalle->estado_cita ?? '')));
 
         // Verificar que la cita esté en estado pendiente, en_proceso o agendada
         $estadosValidos = ['pendiente', 'en_proceso', 'agendada'];
-        if (!in_array($detalle->estado_cita, $estadosValidos)) {
-            return $this->response->setJSON([
+        if (!in_array($estadoActual, $estadosValidos, true)) {
+            return $this->agendaJsonResponse([
                 'error' => 'Estado inválido',
-                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente, en_proceso o agendada. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido')
-            ])->setStatusCode(400);
+                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente, en_proceso o agendada. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido'),
+            ], 400);
         }
         
         // Si está en 'en_proceso', cambiar a 'pendiente' (esperando pago)
         // Si está en 'pendiente' o 'agendada', cambiar a 'confirmada'
-        $nuevoEstado = ($detalle->estado_cita === 'en_proceso') ? 'pendiente' : 'confirmada';
+        $nuevoEstado = ($estadoActual === 'en_proceso') ? 'pendiente' : 'confirmada';
 
         // Actualizar estado según el estado actual
         $updated = $db->table('detalle_agenda')
@@ -717,16 +888,13 @@ class AgendaController extends BaseController
                 log_message('info', 'CONFIRMAR CITA (Dashboard): WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
             }
 
-            $response = $this->response->setJSON([
-                'success' => true, 
+            return $this->agendaJsonResponse([
+                'success' => true,
                 'message' => 'Cita confirmada',
-                'csrf_token' => csrf_hash()
             ]);
-            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
-            return $response;
-        } else {
-            return $this->response->setJSON(['error' => 'Error al confirmar la cita'])->setStatusCode(500);
         }
+
+        return $this->agendaJsonResponse(['error' => 'Error al confirmar la cita'], 500);
     }
 
     public function cancelarCita()
@@ -823,16 +991,18 @@ class AgendaController extends BaseController
                 log_message('info', 'CANCELAR CITA (Lista): WhatsApp deshabilitado en configuraciones. usuario_id=' . $usuario_id);
             }
 
-            $response = $this->response->setJSON([
-                'success' => true, 
-                'message' => 'Cita cancelada y horario liberado',
-                'csrf_token' => csrf_hash()
+            $esReservaWeb = strtolower(trim((string) ($citaCompleta->estado_cita ?? ''))) === 'reservada';
+            $msgExito = $esReservaWeb
+                ? 'Reserva rechazada. El horario quedó disponible nuevamente.'
+                : 'Cita cancelada y horario liberado';
+
+            return $this->agendaJsonResponse([
+                'success' => true,
+                'message' => $msgExito,
             ]);
-            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
-            return $response;
-        } else {
-            return $this->response->setJSON(['error' => 'Error al cancelar la cita'])->setStatusCode(500);
         }
+
+        return $this->agendaJsonResponse(['error' => 'Error al cancelar la cita'], 500);
     }
 
     /**
@@ -868,6 +1038,10 @@ class AgendaController extends BaseController
 
         if (!$detalle) {
             return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'Cita no encontrada o sin permiso'])->setStatusCode(403);
+        }
+
+        if (empty($botonPagoPlantillaId) && preg_match('/\[plantilla_pago_pendiente=(\d+)\]/', (string) ($detalle->observaciones ?? ''), $mPago)) {
+            $botonPagoPlantillaId = (int) $mPago[1];
         }
 
         $estadoActual = strtolower(trim((string)($detalle->estado_cita ?? '')));
@@ -1026,18 +1200,18 @@ class AgendaController extends BaseController
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
-            // No mostrar Confirmar/Cancelar en completada (no se pueden cancelar) ni en reservada (se aprueba con otro flujo).
+            // Confirmar/Cancelar solo en estados que el nutricionista puede gestionar desde la lista.
             $estadoCitaLower = strtolower(trim((string)($r->estado_cita ?? '')));
-            $esCompletada = ($estadoCitaLower === 'completada');
-            $esCancelada = ($estadoCitaLower === 'cancelada');
             $esReservada = ($estadoCitaLower === 'reservada');
+            $puedeConfirmarOCancelar = in_array($estadoCitaLower, ['pendiente', 'en_proceso', 'agendada'], true);
             $botones = '';
-            if (!$esCompletada && !$esCancelada && !$esReservada) {
+            if ($puedeConfirmarOCancelar) {
                 $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
                           '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
             }
             if ($esReservada) {
                 $botones .= '<a href="' . base_url('dashboard/agenda/consulta?id=' . $r->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-check-circle me-1"></i> Aprobar</a> ';
+                $botones .= '<button type="button" class="btn btn-sm btn-outline-danger" onclick="rechazarReserva(' . $r->id . ')"><i class="fas fa-times me-1"></i> Rechazar</button> ';
             }
             $botones .= '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
 
@@ -4199,5 +4373,16 @@ class AgendaController extends BaseController
             log_message('error', 'Error al eliminar evento del calendario: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Respuesta JSON de agenda con token CSRF renovado (evita "The action you requested..." en el siguiente POST).
+     */
+    private function agendaJsonResponse(array $payload, int $status = 200)
+    {
+        $payload['csrf_token'] = csrf_hash();
+        $response = $this->response->setJSON($payload)->setStatusCode($status);
+        $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+        return $response;
     }
 }

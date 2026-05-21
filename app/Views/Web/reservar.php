@@ -149,7 +149,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
 
 <style>
 .reservar-hero {
-    background: linear-gradient(135deg, var(--nutrinext-primary) 0%, var(--nutrinext-muted) 100%);
+    background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);
     padding: 80px 0 60px !important;
 }
 .nutricionista-card { transition: all 0.2s ease; }

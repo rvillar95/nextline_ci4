@@ -337,6 +337,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getDetalleCita', 'Dashboard\AgendaController::getDetalleCita');
         $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');
         $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
+        $routes2->post('agendarDesdeConsulta', 'Dashboard\AgendaController::agendarDesdeConsulta');
         // Rutas para integración con calendario
         $routes2->get('calendario/connect', 'Dashboard\AgendaController::conectarCalendario');
         $routes2->get('calendario/verificar-token', 'Dashboard\AgendaController::verificarTokenCalendario');

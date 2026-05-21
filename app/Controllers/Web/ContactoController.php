@@ -4,274 +4,191 @@ declare(strict_types=1);
 namespace App\Controllers\Web;
 
 use App\Controllers\BaseController;
+use App\Libraries\RecaptchaEnterpriseService;
 use App\Models\LeadModel;
 use App\Models\Empresa;
+use App\Models\Paquete;
 use Config\Services;
 
 final class ContactoController extends BaseController
 {
     public function index()
     {
-        // carga de servicios para el select (si ya tienes el modelo Servicio)
-        $servicios = db_connect()->table('servicio')->select('id,nombre')->where('estado','A')->get()->getResultArray();
+        $empresaModel = new Empresa();
+        $empresa = $empresaModel->getEmpresaActiva();
+        $empresaData = $empresaModel->getDatosParaPDF();
+
+        $paqueteModel = new Paquete();
+        $planes = $paqueteModel->where('activo', 'A')
+            ->where('slug !=', 'nutri-partner')
+            ->groupStart()
+                ->like('slug', 'nutri-', 'after')
+                ->orWhereIn('slug', ['presencia', 'gestion'])
+            ->groupEnd()
+            ->orderBy('orden', 'ASC')
+            ->orderBy('precio_mensual', 'ASC')
+            ->findAll();
+
+        $planSeleccionado = trim((string) $this->request->getGet('plan'));
+
+        $recaptchaSiteKey = trim((string) env('recaptcha.siteKey', ''));
+        $recaptchaEnabled = filter_var(env('recaptcha.enabled', 'true'), FILTER_VALIDATE_BOOLEAN)
+            && $recaptchaSiteKey !== '';
+        $recaptchaEnterprise = filter_var(env('recaptcha.enterprise', 'false'), FILTER_VALIDATE_BOOLEAN);
 
         return view('Web/contacto', array_merge(seo_page([
             'title'       => 'Contacto | NutriNext',
-            'description' => 'Escríbenos para conocer NutriNext, solicitar una demo o resolver dudas sobre la plataforma para nutricionistas.',
-            'keywords'    => 'contacto nutrinext, demo nutricionista, soporte plataforma nutrición',
+            'description' => 'Escríbenos para conocer NutriNext, solicitar una demo o contratar un plan para tu consulta nutricional.',
+            'keywords'    => 'contacto nutrinext, demo nutricionista, planes nutrinext chile',
             'canonical'   => seo_canonical_url('contacto'),
-        ]), ['servicios' => $servicios]));
+        ]), [
+            'planes'             => $planes,
+            'plan_seleccionado'  => $planSeleccionado,
+            'empresa_contacto'   => [
+                'telefono'  => $empresaData['telefono'] ?? '+56 9 1234 5678',
+                'email'     => $empresaData['email'] ?? 'info@nutrinext.cl',
+                'direccion' => $empresaData['direccion'] ?? 'Chile',
+            ],
+            'recaptcha_enabled'   => $recaptchaEnabled,
+            'recaptcha_site_key'  => $recaptchaSiteKey,
+            'recaptcha_enterprise'=> $recaptchaEnterprise,
+            'recaptcha_action'    => trim((string) env('recaptcha.action', 'contacto')) ?: 'contacto',
+        ]));
     }
 
     public function enviar()
     {
-        // Anti-bot simple (honeypot oculto en el form)
         if (($this->request->getPost('company') ?? '') !== '') {
             return redirect()->to(base_url('/gracias'));
         }
 
-        // Validar reCAPTCHA v3
         if (!$this->validarRecaptcha()) {
-            return redirect()->back()
+            return redirect()->to(base_url('contacto'))
                 ->withInput()
+                ->with('error', 'La verificación de seguridad falló. Por favor, intenta nuevamente.')
                 ->with('errors', ['recaptcha' => 'La verificación de seguridad falló. Por favor, intenta nuevamente.']);
         }
 
         $lead = new LeadModel();
+        $db   = db_connect();
+        $tieneColumnaPlan = $db->fieldExists('plan_interes', 'lead_contacto');
 
-        if (! $this->validate($lead->getValidationRules(), $lead->getValidationMessages())) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        if (!$this->validate($lead->getValidationRules(), $lead->getValidationMessages())) {
+            return redirect()->to(base_url('contacto'))
+                ->withInput()
+                ->with('error', 'Revisa los campos marcados e intenta de nuevo.')
+                ->with('errors', $this->validator->getErrors());
         }
 
         $data = $this->request->getPost([
-            'nombre','correo','telefono','mensaje','servicio_id','utm_source','utm_medium','utm_campaign'
+            'nombre', 'correo', 'telefono', 'mensaje', 'plan_interes', 'utm_source', 'utm_medium', 'utm_campaign',
         ]);
-        $data['estado_id'] = 1; // Nuevo
+        $data['estado_id']   = 1;
+        $data['servicio_id'] = null;
 
-        if (! $lead->insert($data, true)) {
-            return redirect()->back()->withInput()->with('errors', $lead->errors());
+        $planSlug = trim((string) ($data['plan_interes'] ?? ''));
+        if (!$tieneColumnaPlan) {
+            $planLabel = $this->nombrePlanInteres($planSlug);
+            $data['mensaje'] = '[Plan de interés: ' . $planLabel . "]\n\n" . ($data['mensaje'] ?? '');
+            unset($data['plan_interes']);
         }
 
-        // Enviar notificación por email a la empresa
+        $insertId = $lead->skipValidation(true)->insert($data);
+        if ($insertId === false) {
+            log_message('error', 'Lead contacto insert falló: ' . json_encode($lead->errors()));
+            return redirect()->to(base_url('contacto'))
+                ->withInput()
+                ->with('error', 'No se pudo guardar tu consulta. Intenta nuevamente.')
+                ->with('errors', $lead->errors());
+        }
+
+        $dataEmail = $data;
+        $dataEmail['plan_interes'] = $planSlug;
+
+        $emailOk = false;
         try {
-            $this->enviarNotificacionEmail($data);
+            $emailOk = $this->enviarNotificacionEmail($dataEmail);
         } catch (\Exception $e) {
             log_message('error', 'Error al enviar email de notificación: ' . $e->getMessage());
-            // No redirigimos con error, solo logueamos
         }
 
-        return redirect()->to(base_url('/gracias'))->with('success', 'Gracias por contactarnos.');
+        $flash = '¡Gracias! Recibimos tu consulta y te responderemos pronto.';
+        if (!$emailOk) {
+            $flash .= ' (El aviso por correo no pudo enviarse; tu mensaje sí quedó registrado.)';
+            log_message('warning', 'Lead contacto guardado pero email no enviado');
+        }
+
+        return redirect()->to(base_url('contacto'))
+            ->with('success', $flash);
     }
 
-    /**
-     * Enviar notificación por email con diseño moderno
-     */
-    private function enviarNotificacionEmail(array $data)
+    /** Destino fijo de notificaciones del formulario web /contacto */
+    private const CONTACTO_NOTIFICACION_EMAIL = 'rvillar1995@gmail.com';
+
+    private function enviarNotificacionEmail(array $data): bool
     {
-        // Obtener correo de la empresa
-        $empresaModel = new Empresa();
-        $empresa = $empresaModel->getEmpresaActiva();
-        
-        if (!$empresa || empty($empresa->email)) {
-            log_message('warning', 'No se pudo enviar el email: empresa sin correo configurado');
-            return false;
-        }
+        $planNombre = $this->nombrePlanInteres($data['plan_interes'] ?? null);
 
-        // Obtener nombre del servicio
-        $servicio = db_connect()->table('servicio')
-            ->select('nombre')
-            ->where('id', $data['servicio_id'] ?? 0)
-            ->get()
-            ->getRow();
-
-        $servicioNombre = $servicio ? $servicio->nombre : 'No especificado';
-
-        // Configurar email manualmente (sin initialize)
         $email = Services::email();
-                        
-        // Usar la configuración del .env
         $email->setFrom(env('email.fromEmail', ''), env('email.fromName', ''));
-        $email->setTo($empresa->email);
-        $email->setSubject('🔔 Nueva Consulta desde el Sitio Web');
-        
-        // Crear el mensaje HTML moderno
-        $mensaje = $this->crearMensajeHTML($data, $servicioNombre, $empresa);
-        
-        $email->setMessage($mensaje);
-        
-        // Enviar
+        $email->setTo(self::CONTACTO_NOTIFICACION_EMAIL);
+        $email->setSubject('Nueva consulta web — ' . $planNombre);
+        $email->setMessage($this->crearMensajeHTML($data, $planNombre));
+
         if ($email->send()) {
-            log_message('info', 'Email de notificación enviado exitosamente a: ' . $empresa->email);
+            log_message('info', 'Email de notificación enviado a: ' . self::CONTACTO_NOTIFICACION_EMAIL);
             return true;
-        } else {
-            log_message('error', 'Error al enviar email: ' . $email->printDebugger(['headers']));
-            return false;
         }
+
+        log_message('error', 'Error al enviar email: ' . $email->printDebugger(['headers']));
+        return false;
     }
 
-    /**
-     * Crear mensaje HTML moderno para el email
-     */
-    private function crearMensajeHTML(array $data, string $servicioNombre, object $empresa): string
+    private function nombrePlanInteres(?string $slug): string
+    {
+        if ($slug === null || $slug === '') {
+            return 'No especificado';
+        }
+        if ($slug === 'otro') {
+            return 'Otro / Consulta general';
+        }
+
+        $paquete = (new Paquete())->where('slug', $slug)->where('activo', 'A')->first();
+        return $paquete ? (string) $paquete->nombre : $slug;
+    }
+
+    private function crearMensajeHTML(array $data, string $planNombre): string
     {
         $fecha = date('d/m/Y H:i');
         $nombre = esc($data['nombre'] ?? '');
         $correo = esc($data['correo'] ?? '');
         $telefono = esc($data['telefono'] ?? '');
         $mensaje = esc($data['mensaje'] ?? '');
-        
+
         return <<<HTML
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Consulta</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 20px 0;">
-        <tr>
-            <td align="center">
-                <!-- Contenedor Principal -->
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);">
-                    
-                    <!-- Header con Gradiente -->
-                    <tr>
-                        <td style="background: linear-gradient(135deg, #1d2844 0%, #4a5f7a 100%); padding: 40px 30px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">
-                                🔔 Nueva Consulta Recibida
-                            </h1>
-                            <p style="margin: 10px 0 0 0; color: rgba(255, 255, 255, 0.9); font-size: 16px;">
-                                {$fecha}
-                            </p>
-                        </td>
-                    </tr>
-                    
-                    <!-- Badge de Alerta -->
-                    <tr>
-                        <td style="padding: 30px 30px 0 30px;">
-                            <div style="background: linear-gradient(135deg, #f0841a, #ff6b35); color: white; padding: 15px 25px; border-radius: 12px; text-align: center; font-weight: 600; font-size: 16px; box-shadow: 0 4px 15px rgba(240, 132, 26, 0.3);">
-                                ✨ Se ha recibido una nueva consulta desde el formulario web
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <!-- Datos del Cliente -->
-                    <tr>
-                        <td style="padding: 30px;">
-                            <h2 style="margin: 0 0 20px 0; color: #1d2844; font-size: 22px; font-weight: 700; border-bottom: 3px solid #f0841a; padding-bottom: 10px;">
-                                📋 Datos del Cliente
-                            </h2>
-                            
-                            <!-- Nombre -->
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #f0841a;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                    <tr>
-                                        <td style="padding: 5px 0;">
-                                            <div style="display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #f0841a, #ff6b35); border-radius: 50%; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 15px;">
-                                                <span style="color: white; font-size: 18px;">👤</span>
-                                            </div>
-                                            <span style="color: #6c757d; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Nombre Completo</span>
-                                            <p style="margin: 10px 0 0 55px; color: #1d2844; font-size: 18px; font-weight: 700;">
-                                                {$nombre}
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <!-- Email -->
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #1d2844;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                    <tr>
-                                        <td style="padding: 5px 0;">
-                                            <div style="display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #1d2844, #4a5f7a); border-radius: 50%; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 15px;">
-                                                <span style="color: white; font-size: 18px;">📧</span>
-                                            </div>
-                                            <span style="color: #6c757d; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Correo Electrónico</span>
-                                            <p style="margin: 10px 0 0 55px; color: #1d2844; font-size: 18px; font-weight: 700;">
-                                                <a href="mailto:{$correo}" style="color: #f0841a; text-decoration: none;">{$correo}</a>
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <!-- Teléfono -->
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #28a745;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                    <tr>
-                                        <td style="padding: 5px 0;">
-                                            <div style="display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #28a745, #20c997); border-radius: 50%; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 15px;">
-                                                <span style="color: white; font-size: 18px;">📱</span>
-                                            </div>
-                                            <span style="color: #6c757d; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Teléfono</span>
-                                            <p style="margin: 10px 0 0 55px; color: #1d2844; font-size: 18px; font-weight: 700;">
-                                                <a href="tel:{$telefono}" style="color: #28a745; text-decoration: none;">{$telefono}</a>
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            
-                            <!-- Servicio -->
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #6610f2;">
-                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                    <tr>
-                                        <td style="padding: 5px 0;">
-                                            <div style="display: inline-block; width: 40px; height: 40px; background: linear-gradient(135deg, #6610f2, #6f42c1); border-radius: 50%; text-align: center; line-height: 40px; vertical-align: middle; margin-right: 15px;">
-                                                <span style="color: white; font-size: 18px;">🛠️</span>
-                                            </div>
-                                            <span style="color: #6c757d; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Servicio de Interés</span>
-                                            <p style="margin: 10px 0 0 55px; color: #1d2844; font-size: 18px; font-weight: 700;">
-                                                {$servicioNombre}
-                                            </p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <!-- Mensaje -->
-                    <tr>
-                        <td style="padding: 0 30px 30px 30px;">
-                            <h2 style="margin: 0 0 20px 0; color: #1d2844; font-size: 22px; font-weight: 700; border-bottom: 3px solid #f0841a; padding-bottom: 10px;">
-                                💬 Mensaje del Cliente
-                            </h2>
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 25px; border-left: 4px solid #f0841a;">
-                                <p style="margin: 0; color: #555; font-size: 16px; line-height: 1.8; white-space: pre-wrap;">
-                                    {$mensaje}
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <!-- Call to Action -->
-                    <tr>
-                        <td style="padding: 0 30px 30px 30px; text-align: center;">
-                            <a href="mailto:{$correo}?subject=Re: Su consulta en MANSANCHEZ" style="display: inline-block; background: linear-gradient(135deg, #f0841a, #ff6b35); color: white; text-decoration: none; padding: 18px 40px; border-radius: 50px; font-weight: 700; font-size: 16px; box-shadow: 0 8px 25px rgba(240, 132, 26, 0.3); text-transform: uppercase; letter-spacing: 0.5px;">
-                                📧 Responder al Cliente
-                            </a>
-                        </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                        <td style="background: #1d2844; padding: 30px; text-align: center;">
-                            <p style="margin: 0 0 10px 0; color: rgba(255, 255, 255, 0.8); font-size: 14px;">
-                                Este correo fue generado automáticamente desde el sitio web
-                            </p>
-                            <p style="margin: 0; color: rgba(255, 255, 255, 0.6); font-size: 12px;">
-                                © 2025 {$empresa->nombre} - Todos los derechos reservados
-                            </p>
-                        </td>
-                    </tr>
-                    
-                </table>
-            </td>
-        </tr>
-    </table>
+<head><meta charset="UTF-8"><title>Nueva consulta</title></head>
+<body style="margin:0;padding:20px;background:#f8fafc;font-family:Segoe UI,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+<table width="600" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08);">
+<tr><td style="background:linear-gradient(135deg,#15803D,#22C55E);padding:28px;text-align:center;">
+<h1 style="margin:0;color:#fff;font-size:22px;">Nueva consulta — NutriNext</h1>
+<p style="margin:8px 0 0;color:rgba(255,255,255,.9);font-size:14px;">{$fecha}</p>
+</td></tr>
+<tr><td style="padding:28px;">
+<p style="margin:0 0 16px;color:#1f2937;"><strong>Nombre:</strong> {$nombre}</p>
+<p style="margin:0 0 16px;color:#1f2937;"><strong>Correo:</strong> <a href="mailto:{$correo}" style="color:#15803D;">{$correo}</a></p>
+<p style="margin:0 0 16px;color:#1f2937;"><strong>Teléfono:</strong> {$telefono}</p>
+<p style="margin:0 0 16px;color:#1f2937;"><strong>Plan de interés:</strong> {$planNombre}</p>
+<p style="margin:0 0 8px;color:#1f2937;font-weight:700;">Mensaje:</p>
+<div style="background:#f1f5f9;border-radius:8px;padding:16px;color:#374151;white-space:pre-wrap;">{$mensaje}</div>
+</td></tr>
+<tr><td style="background:#1f2937;padding:16px;text-align:center;color:rgba(255,255,255,.7);font-size:12px;">
+NutriNext — formulario web
+</td></tr>
+</table>
+</td></tr></table>
 </body>
 </html>
 HTML;
@@ -287,71 +204,34 @@ HTML;
         ]));
     }
 
-    /**
-     * Validar Google reCAPTCHA v3
-     */
     private function validarRecaptcha(): bool
     {
-        // Verificar si reCAPTCHA está habilitado desde .env
         if (!filter_var(env('recaptcha.enabled', 'true'), FILTER_VALIDATE_BOOLEAN)) {
-            return true; // Si está deshabilitado, permitir el envío
+            return true;
         }
 
-        $recaptchaResponse = $this->request->getPost('g-recaptcha-response');
-
-        if (empty($recaptchaResponse)) {
+        $token = trim((string) $this->request->getPost('g-recaptcha-response'));
+        if ($token === '') {
             log_message('warning', 'reCAPTCHA: Token no recibido');
             return false;
         }
 
-        $secretKey = env('recaptcha.secretKey');
-        
-        if (empty($secretKey)) {
-            log_message('error', 'reCAPTCHA: Secret key no configurada en .env');
-            return true; // Permitir si no está configurado (para desarrollo)
+        $service = new RecaptchaEnterpriseService();
+        $userIp  = $this->request->getIPAddress();
+
+        if (filter_var(env('recaptcha.enterprise', 'false'), FILTER_VALIDATE_BOOLEAN)) {
+            $enterprise = $service->verify($token, $userIp);
+            if ($enterprise !== null) {
+                return $enterprise;
+            }
         }
 
-        // Preparar datos para enviar a Google
-        $data = [
-            'secret'   => $secretKey,
-            'response' => $recaptchaResponse,
-            'remoteip' => $this->request->getIPAddress()
-        ];
-
-        // Enviar petición a Google
-        $verify = curl_init();
-        curl_setopt($verify, CURLOPT_URL, 'https://www.google.com/recaptcha/api/siteverify');
-        curl_setopt($verify, CURLOPT_POST, true);
-        curl_setopt($verify, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($verify, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($verify, CURLOPT_RETURNTRANSFER, true);
-        
-        $response = curl_exec($verify);
-        curl_close($verify);
-
-        if (!$response) {
-            log_message('error', 'reCAPTCHA: Error al conectar con Google');
-            return true; // Permitir si hay error de conexión
+        $siteverify = $service->verifySiteverify($token, $userIp);
+        if ($siteverify !== null) {
+            return $siteverify;
         }
 
-        $responseData = json_decode($response, true);
-
-        // Verificar respuesta
-        if (!isset($responseData['success']) || !$responseData['success']) {
-            log_message('warning', 'reCAPTCHA: Validación fallida - ' . json_encode($responseData));
-            return false;
-        }
-
-        // Verificar score (puntuación)
-        $minScore = (float) env('recaptcha.minScore', 0.5);
-        $score = $responseData['score'] ?? 0;
-
-        log_message('info', "reCAPTCHA: Score obtenido = {$score}, mínimo requerido = {$minScore}");
-
-        if ($score < $minScore) {
-            log_message('warning', "reCAPTCHA: Score demasiado bajo ({$score} < {$minScore})");
-            return false;
-        }
+        log_message('info', 'reCAPTCHA: sin credenciales Enterprise ni secretKey — omitiendo validación');
 
         return true;
     }

@@ -14,6 +14,12 @@ Disallow: /login
 Disallow: /confirmar-cita
 Disallow: /cancelar-cita
 Disallow: /gracias
+Disallow: /nosotros
+Disallow: /servicios
+Disallow: /servicios-categorias
+Disallow: /proyectos
+Disallow: /galeria
+Disallow: /galeria-categorias
 Disallow: /reservar/disponibilidad
 Disallow: /reservar/paciente-por-rut
 Disallow: /whatsapp/

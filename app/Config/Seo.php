@@ -22,21 +22,18 @@ class Seo extends BaseConfig
 
     public string $twitterHandle = '';
 
-    /** Páginas estáticas indexables (ruta relativa sin barra inicial). */
+    /**
+     * Páginas estáticas indexables NutriNext (sin rutas legacy MANSANCHEZ:
+     * servicios, proyectos, galería, nosotros antiguo, etc.).
+     */
     public array $staticPages = [
-        '' => ['priority' => '1.0', 'changefreq' => 'weekly'],
-        'reservar' => ['priority' => '0.95', 'changefreq' => 'weekly'],
-        'precios' => ['priority' => '0.92', 'changefreq' => 'weekly'],
-        'funcionalidades' => ['priority' => '0.9', 'changefreq' => 'weekly'],
-        'equipo' => ['priority' => '0.85', 'changefreq' => 'monthly'],
-        'nosotros' => ['priority' => '0.8', 'changefreq' => 'monthly'],
-        'servicios' => ['priority' => '0.85', 'changefreq' => 'weekly'],
-        'servicios-categorias' => ['priority' => '0.75', 'changefreq' => 'weekly'],
-        'proyectos' => ['priority' => '0.7', 'changefreq' => 'weekly'],
-        'galeria' => ['priority' => '0.7', 'changefreq' => 'weekly'],
-        'galeria-categorias' => ['priority' => '0.65', 'changefreq' => 'weekly'],
-        'contacto' => ['priority' => '0.8', 'changefreq' => 'monthly'],
-        'politica-privacidad' => ['priority' => '0.3', 'changefreq' => 'yearly'],
-        'terminos-condiciones' => ['priority' => '0.3', 'changefreq' => 'yearly'],
+        ''                      => ['priority' => '1.0',  'changefreq' => 'weekly'],
+        'funcionalidades'       => ['priority' => '0.9',  'changefreq' => 'weekly'],
+        'precios'               => ['priority' => '0.92', 'changefreq' => 'weekly'],
+        'equipo'                => ['priority' => '0.85', 'changefreq' => 'monthly'],
+        'reservar'              => ['priority' => '0.95', 'changefreq' => 'weekly'],
+        'contacto'              => ['priority' => '0.8',  'changefreq' => 'monthly'],
+        'politica-privacidad'   => ['priority' => '0.3',  'changefreq' => 'yearly'],
+        'terminos-condiciones'  => ['priority' => '0.3',  'changefreq' => 'yearly'],
     ];
 }

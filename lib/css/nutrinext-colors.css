@@ -109,9 +109,18 @@ a.text-primary {
   color: var(--brand-green-primary) !important;
 }
 
+/* Menú principal: mismo verde en todos los ítems (evita azul de :visited de Bootstrap) */
+.nav-menu-modern .nav-link-modern:not(.active),
+.nav-menu-modern .nav-link-modern:not(.active):visited,
+.nav-menu-modern .nav-link-modern:not(.active) i,
+.nav-menu-modern .nav-link-modern:not(.active) span {
+  color: var(--brand-green-dark) !important;
+}
+
 .nav-link-modern.active,
 .nav-link-modern.active span,
-.nav-link-modern.active i {
+.nav-link-modern.active i,
+.nav-link-modern.active:visited {
   color: #fff !important;
 }
 

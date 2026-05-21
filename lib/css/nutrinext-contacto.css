@@ -1,0 +1,189 @@
+/* Página de contacto — sitio público NutriNext */
+
+.contacto-page-section {
+    background: var(--bg-light);
+    padding: 3rem 0 4rem !important;
+}
+
+.contacto-layout {
+    align-items: stretch;
+}
+
+.contacto-form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 2rem 2rem 2.25rem;
+    box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+    height: 100%;
+}
+
+.contacto-form-card .section-title-ns {
+    font-size: 1.65rem;
+    margin-bottom: 0.35rem;
+}
+
+.contacto-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+.contacto-info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.35rem 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.contacto-info-card:hover {
+    border-color: rgba(34, 197, 94, 0.35);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.08);
+}
+
+.contacto-info-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--surface-green-soft);
+    color: var(--brand-green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.contacto-info-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+    color: var(--text-main);
+}
+
+.contacto-info-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.contacto-info-card small {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.contacto-benefits {
+    background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    color: #fff;
+    flex-grow: 1;
+}
+
+.contacto-benefits h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.contacto-benefits ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.contacto-benefits li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 0.65rem;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.contacto-benefits li i {
+    margin-top: 0.15rem;
+    opacity: 0.95;
+}
+
+.contacto-field label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+}
+
+.contacto-field label i {
+    color: var(--brand-green-dark);
+    margin-right: 0.35rem;
+    width: 1rem;
+}
+
+.contacto-field .form-control,
+.contacto-field .form-select {
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contacto-field .form-control:focus,
+.contacto-field .form-select:focus {
+    border-color: var(--brand-green-primary);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.contacto-field .form-help {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+}
+
+.contacto-alert {
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+}
+
+.contacto-alert-success {
+    background: var(--surface-green-soft);
+    color: var(--brand-green-dark);
+    border-left: 4px solid var(--brand-green-primary);
+}
+
+.contacto-alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left: 4px solid #ef4444;
+}
+
+.contacto-plan-option {
+    font-weight: 500;
+}
+
+.contacto-plan-precio {
+    color: var(--text-muted);
+    font-size: 0.88em;
+}
+
+@media (max-width: 991px) {
+    .contacto-aside {
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .contacto-form-card {
+        padding: 1.35rem 1.15rem;
+    }
+}
