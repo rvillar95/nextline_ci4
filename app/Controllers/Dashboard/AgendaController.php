@@ -47,6 +47,12 @@ class AgendaController extends BaseController
         }
         $data['data'] = $menuTotal;
 
+        $db = \Config\Database::connect();
+        $data['modalidades'] = $db->table('modalidad_agenda')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResult();
+
         return view('Modulos/agenda/gestionar', $data);
     }
 
@@ -1299,6 +1305,247 @@ class AgendaController extends BaseController
         return $this->response->setJSON($output);
     }
 
+    /**
+     * Listado enriquecido de días (agenda) del nutricionista en sesión.
+     */
+    public function listarAgendasDias()
+    {
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $fechaDesde = $this->request->getGet('fecha_desde');
+        $fechaHasta = $this->request->getGet('fecha_hasta');
+        $soloFuturos = $this->request->getGet('solo_futuros') === '1' || $this->request->getGet('solo_futuros') === 'true';
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('agenda a')
+            ->select("a.id AS agenda_id, a.fecha, a.hora_inicio, a.hora_fin, a.almuerzo_inicio, a.almuerzo_fin,
+                COUNT(DISTINCT da.id) AS total_bloques,
+                COUNT(DISTINCT CASE WHEN da.estado = 1 AND da.paciente_id IS NULL THEN da.id END) AS disponibles,
+                COUNT(DISTINCT CASE WHEN da.paciente_id IS NOT NULL
+                    AND (da.estado_cita IS NULL OR da.estado_cita NOT IN ('cancelada','completada')) THEN da.id END) AS ocupados,
+                MIN(TIMESTAMPDIFF(MINUTE, da.hora_inicio, da.hora_fin)) AS duracion_minutos", false)
+            ->join('detalle_agenda da', 'da.agenda_id = a.id AND da.usuario_id = ' . $usuarioId, 'inner')
+            ->groupBy('a.id, a.fecha, a.hora_inicio, a.hora_fin, a.almuerzo_inicio, a.almuerzo_fin');
+
+        if ($fechaDesde) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $fechaDesde);
+        }
+        if ($fechaHasta) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $fechaHasta);
+        }
+        if ($soloFuturos) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= CURDATE()", null, false);
+        }
+
+        $rows = $builder
+            ->orderBy("STR_TO_DATE(a.fecha, '%d-%m-%Y')", 'ASC', false)
+            ->orderBy('a.hora_inicio', 'ASC')
+            ->get()
+            ->getResult();
+
+        $dias = [];
+        foreach ($rows as $r) {
+            $duracion = (int) ($r->duracion_minutos ?? 30);
+            if ($duracion <= 0) {
+                $duracion = 30;
+            }
+            $totalBloques = (int) ($r->total_bloques ?? 0);
+            $ocupados = (int) ($r->ocupados ?? 0);
+            $horasEst = round(($totalBloques * $duracion) / 60, 1);
+
+            $almuerzoTexto = 'Sin almuerzo';
+            if ($r->almuerzo_inicio && $r->almuerzo_fin) {
+                $almuerzoTexto = date('H:i', strtotime($r->almuerzo_inicio)) . ' - ' . date('H:i', strtotime($r->almuerzo_fin));
+            }
+
+            $dias[] = [
+                'agenda_id' => (int) $r->agenda_id,
+                'fecha' => $r->fecha,
+                'hora_inicio' => date('H:i', strtotime($r->hora_inicio)),
+                'hora_fin' => date('H:i', strtotime($r->hora_fin)),
+                'almuerzo' => $almuerzoTexto,
+                'duracion_minutos' => $duracion,
+                'total_bloques' => $totalBloques,
+                'disponibles' => (int) ($r->disponibles ?? 0),
+                'ocupados' => $ocupados,
+                'horas_estimadas' => $horasEst,
+                'tiene_citas' => $ocupados > 0,
+                'resumen' => $totalBloques . ' bloques × ' . $duracion . ' min ≈ ' . $horasEst . ' h',
+                'url_cancelar' => base_url('dashboard/agenda/cancelar-horas?desde=' . urlencode($r->fecha) . '&hasta=' . urlencode($r->fecha)),
+                'fecha_ymd' => $this->fechaAgendaDdMmYyyyAEntero($r->fecha ?? ''),
+            ];
+        }
+
+        if (count($dias) > 1) {
+            $fechasYmd = array_column($dias, 'fecha_ymd');
+            $horasInicio = array_column($dias, 'hora_inicio');
+            array_multisort($fechasYmd, SORT_NUMERIC, $horasInicio, SORT_STRING, $dias);
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'dias' => $dias,
+        ]);
+    }
+
+    /**
+     * Valida si los días seleccionados pueden editarse o eliminarse (sin citas activas con paciente).
+     */
+    public function validarAgendasSeleccionadas()
+    {
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'Seleccione al menos un día de agenda.',
+            ], 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $resultado = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'validas' => $resultado['validas'],
+            'bloqueadas' => $resultado['bloqueadas'],
+            'puede_proceder' => count($resultado['bloqueadas']) === 0,
+        ]);
+    }
+
+    /**
+     * Actualiza horarios de días seleccionados y regenera bloques disponibles.
+     */
+    public function actualizarAgendas()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        if (!$this->request->isAJAX()) {
+            return $this->agendaJsonResponse(['error' => 'Solicitud inválida'], 400);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse(['success' => false, 'message' => 'Seleccione al menos un día.'], 400);
+        }
+
+        $config = $this->validarConfigHorariosPost();
+        if (isset($config['error'])) {
+            return $this->agendaJsonResponse($config, 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $clasificacion = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+        if (!empty($clasificacion['bloqueadas'])) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'Algunos días tienen citas con paciente. Cancélelas primero en Cancelar horas.',
+                'bloqueadas' => $clasificacion['bloqueadas'],
+            ], 400);
+        }
+
+        $db = \Config\Database::connect();
+        $actualizados = 0;
+        $bloquesCreados = 0;
+
+        foreach ($clasificacion['validas'] as $dia) {
+            $agendaId = (int) $dia['agenda_id'];
+            $fecha = $dia['fecha'];
+
+            $db->table('agenda')->where('id', $agendaId)->where('usuario_id', $usuarioId)->update([
+                'hora_inicio' => $config['hora_inicio'] . ':00',
+                'hora_fin' => $config['hora_fin'] . ':00',
+                'almuerzo_inicio' => $config['incluir_almuerzo'] ? ($config['almuerzo_inicio'] . ':00') : null,
+                'almuerzo_fin' => $config['incluir_almuerzo'] ? ($config['almuerzo_fin'] . ':00') : null,
+            ]);
+
+            $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('paciente_id IS NULL')
+                ->delete();
+
+            $bloquesCreados += $this->generarSlotsDelDia($db, $agendaId, $fecha, $usuarioId, $config);
+            $actualizados++;
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'message' => "Se actualizaron {$actualizados} día(s) y se generaron {$bloquesCreados} bloques disponibles.",
+            'actualizados' => $actualizados,
+            'bloques_creados' => $bloquesCreados,
+        ]);
+    }
+
+    /**
+     * Elimina días de agenda seleccionados (solo sin citas activas con paciente).
+     */
+    public function eliminarAgendasDias()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse(['success' => false, 'message' => 'Seleccione al menos un día.'], 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $clasificacion = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+        if (!empty($clasificacion['bloqueadas'])) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'No se pueden eliminar días con citas activas. Use Cancelar horas primero.',
+                'bloqueadas' => $clasificacion['bloqueadas'],
+            ], 400);
+        }
+
+        $db = \Config\Database::connect();
+        $eliminados = 0;
+        $bloquesEliminados = 0;
+
+        foreach ($clasificacion['validas'] as $dia) {
+            $agendaId = (int) $dia['agenda_id'];
+
+            $bloquesEliminados += (int) $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->countAllResults();
+
+            $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->delete();
+
+            $quedan = $db->table('detalle_agenda')->where('agenda_id', $agendaId)->countAllResults();
+            if ($quedan === 0) {
+                $db->table('agenda')->where('id', $agendaId)->delete();
+            }
+
+            $eliminados++;
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'message' => "Se eliminaron {$eliminados} día(s) ({$bloquesEliminados} bloques).",
+            'dias_eliminados' => $eliminados,
+            'bloques_eliminados' => $bloquesEliminados,
+        ]);
+    }
+
     public function actualizarModalidad()
     {
         // Forzar respuesta JSON desde el inicio para evitar redirecciones
@@ -1468,9 +1715,10 @@ class AgendaController extends BaseController
                 if (in_array($diaSemana, $diasSemanaInt)) {
                     $fecha = $fechaActual->format('d-m-Y'); // Guardar en formato día-mes-año
                     
-                    // Verificar si ya existe agenda para esta fecha
+                    // Verificar si ya existe agenda para esta fecha y nutricionista
                     $agenda = $db->table('agenda')
                         ->where('fecha', $fecha)
+                        ->where('usuario_id', $usuario_id)
                         ->get()
                         ->getRow();
                     
@@ -1527,60 +1775,16 @@ class AgendaController extends BaseController
                     } else {
                         $agendaId = $agenda->id;
                     }
-                    
-                    // Crear horarios según la duración especificada
-                    $horaInicioObj = new \DateTime($fecha . ' ' . $horaInicio . ':00');
-                    $horaFinObj = new \DateTime($fecha . ' ' . $horaFin . ':00');
-                    $almuerzoInicioObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoInicio . ':00') : null;
-                    $almuerzoFinObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoFin . ':00') : null;
-                    
-                    $orden = 1;
-                    $horaActual = clone $horaInicioObj;
-                    
-                    while ($horaActual < $horaFinObj) {
-                        $horaFinCita = clone $horaActual;
-                        $horaFinCita->modify("+{$duracion} minutes");
-                        
-                        // Si hay horario de almuerzo, saltarlo
-                        if ($incluirAlmuerzo && $almuerzoInicioObj && $almuerzoFinObj) {
-                            if ($horaActual >= $almuerzoInicioObj && $horaActual < $almuerzoFinObj) {
-                                $horaActual = clone $almuerzoFinObj;
-                                continue;
-                            }
-                            // Si el horario se solapa con el almuerzo, ajustarlo
-                            if ($horaActual < $almuerzoFinObj && $horaFinCita > $almuerzoInicioObj) {
-                                $horaActual = clone $almuerzoFinObj;
-                                continue;
-                            }
-                        }
-                        
-                        // Verificar si ya existe este horario
-                        $existe = $db->table('detalle_agenda')
-                            ->where('agenda_id', $agendaId)
-                            ->where('usuario_id', $usuario_id)
-                            ->where('hora_inicio', $horaActual->format('H:i:s'))
-                            ->get()
-                            ->getRow();
-                        
-                        if (!$existe) {
-                            $db->table('detalle_agenda')->insert([
-                                'agenda_id' => $agendaId,
-                                'fecha' => $fecha, // Agregar fecha
-                                'usuario_id' => $usuario_id,
-                                'orden' => $orden++,
-                                'hora_inicio' => $horaActual->format('H:i:s'),
-                                'hora_fin' => $horaFinCita->format('H:i:s'),
-                                'estado' => 1, // Disponible
-                                'estado_solicitud_id' => 1,
-                                'modalidad_id' => $modalidadId, // Usar la modalidad seleccionada
-                                'forma_asignacion' => 'Manual',
-                                'estado_cita' => NULL // NULL = Disponible (sin paciente asignado)
-                            ]);
-                            $horariosCreados++;
-                        }
-                        
-                        $horaActual = $horaFinCita;
-                    }
+
+                    $horariosCreados += $this->generarSlotsDelDia($db, (int) $agendaId, $fecha, $usuario_id, [
+                        'hora_inicio' => $horaInicio,
+                        'hora_fin' => $horaFin,
+                        'duracion' => $duracion,
+                        'incluir_almuerzo' => $incluirAlmuerzo,
+                        'almuerzo_inicio' => $almuerzoInicio,
+                        'almuerzo_fin' => $almuerzoFin,
+                        'modalidad_id' => (int) $modalidadId,
+                    ]);
                     
                     // Incrementar contador solo si se procesó un día seleccionado
                     $diasCreados++;
@@ -4373,6 +4577,207 @@ class AgendaController extends BaseController
             log_message('error', 'Error al eliminar evento del calendario: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Convierte fecha agenda DD-MM-YYYY a entero YYYYMMDD para ordenar.
+     */
+    private function fechaAgendaDdMmYyyyAEntero(?string $fecha): int
+    {
+        $fecha = trim((string) $fecha);
+        if ($fecha === '') {
+            return 0;
+        }
+        // DD-MM-YYYY (formato agenda en BD)
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $fecha, $m)) {
+            return (int) sprintf('%04d%02d%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        }
+        // YYYY-MM-DD por si hubiera registros legacy
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $fecha, $m)) {
+            return (int) sprintf('%04d%02d%02d', (int) $m[1], (int) $m[2], (int) $m[3]);
+        }
+        return 0;
+    }
+
+    /**
+     * Genera bloques disponibles en detalle_agenda para un día.
+     */
+    private function generarSlotsDelDia($db, int $agendaId, string $fecha, int $usuarioId, array $config): int
+    {
+        $horaInicio = $config['hora_inicio'];
+        $horaFin = $config['hora_fin'];
+        $duracion = (int) $config['duracion'];
+        $incluirAlmuerzo = !empty($config['incluir_almuerzo']);
+        $almuerzoInicio = $config['almuerzo_inicio'] ?? '13:00';
+        $almuerzoFin = $config['almuerzo_fin'] ?? '14:00';
+        $modalidadId = (int) ($config['modalidad_id'] ?? 3);
+
+        $horaInicioObj = new \DateTime($fecha . ' ' . $horaInicio . ':00');
+        $horaFinObj = new \DateTime($fecha . ' ' . $horaFin . ':00');
+        $almuerzoInicioObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoInicio . ':00') : null;
+        $almuerzoFinObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoFin . ':00') : null;
+
+        $ordenRow = $db->table('detalle_agenda')
+            ->selectMax('orden', 'max_orden')
+            ->where('agenda_id', $agendaId)
+            ->where('usuario_id', $usuarioId)
+            ->get()
+            ->getRow();
+        $orden = (int) ($ordenRow->max_orden ?? 0) + 1;
+
+        $creados = 0;
+        $horaActual = clone $horaInicioObj;
+
+        while ($horaActual < $horaFinObj) {
+            $horaFinCita = clone $horaActual;
+            $horaFinCita->modify("+{$duracion} minutes");
+
+            if ($incluirAlmuerzo && $almuerzoInicioObj && $almuerzoFinObj) {
+                if ($horaActual >= $almuerzoInicioObj && $horaActual < $almuerzoFinObj) {
+                    $horaActual = clone $almuerzoFinObj;
+                    continue;
+                }
+                if ($horaActual < $almuerzoFinObj && $horaFinCita > $almuerzoInicioObj) {
+                    $horaActual = clone $almuerzoFinObj;
+                    continue;
+                }
+            }
+
+            $existe = $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('hora_inicio', $horaActual->format('H:i:s'))
+                ->get()
+                ->getRow();
+
+            if (!$existe) {
+                $db->table('detalle_agenda')->insert([
+                    'agenda_id' => $agendaId,
+                    'fecha' => $fecha,
+                    'usuario_id' => $usuarioId,
+                    'orden' => $orden++,
+                    'hora_inicio' => $horaActual->format('H:i:s'),
+                    'hora_fin' => $horaFinCita->format('H:i:s'),
+                    'estado' => 1,
+                    'estado_solicitud_id' => 1,
+                    'modalidad_id' => $modalidadId,
+                    'forma_asignacion' => 'Manual',
+                    'estado_cita' => null,
+                ]);
+                $creados++;
+            }
+
+            $horaActual = $horaFinCita;
+        }
+
+        return $creados;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return int[]
+     */
+    private function normalizarAgendaIds($raw): array
+    {
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $raw = $decoded;
+            } else {
+                $raw = array_filter(array_map('trim', explode(',', $raw)));
+            }
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+        $ids = array_map('intval', $raw);
+        return array_values(array_filter($ids, static fn ($id) => $id > 0));
+    }
+
+    /**
+     * @param int[] $agendaIds
+     * @return array{validas: array<int, array>, bloqueadas: array<int, array>}
+     */
+    private function clasificarAgendasPorCitas(array $agendaIds, int $usuarioId): array
+    {
+        $db = \Config\Database::connect();
+        $validas = [];
+        $bloqueadas = [];
+
+        foreach ($agendaIds as $agendaId) {
+            $agenda = $db->table('agenda a')
+                ->select('a.id, a.fecha')
+                ->join('detalle_agenda da', 'da.agenda_id = a.id AND da.usuario_id = ' . $usuarioId, 'inner')
+                ->where('a.id', $agendaId)
+                ->groupBy('a.id, a.fecha')
+                ->get()
+                ->getRow();
+
+            if (!$agenda) {
+                continue;
+            }
+
+            $ocupados = (int) $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('paciente_id IS NOT NULL')
+                ->groupStart()
+                    ->where('estado_cita IS NULL')
+                    ->orWhereNotIn('estado_cita', ['cancelada', 'completada'])
+                ->groupEnd()
+                ->countAllResults();
+
+            $item = [
+                'agenda_id' => (int) $agenda->id,
+                'fecha' => $agenda->fecha,
+                'ocupados' => $ocupados,
+                'url_cancelar' => base_url('dashboard/agenda/cancelar-horas?desde=' . urlencode($agenda->fecha) . '&hasta=' . urlencode($agenda->fecha)),
+            ];
+
+            if ($ocupados > 0) {
+                $item['mensaje'] = "El día {$agenda->fecha} tiene {$ocupados} cita(s). Cancélelas primero en Cancelar horas.";
+                $bloqueadas[] = $item;
+            } else {
+                $validas[] = $item;
+            }
+        }
+
+        return ['validas' => $validas, 'bloqueadas' => $bloqueadas];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validarConfigHorariosPost(): array
+    {
+        $horaInicio = $this->request->getPost('hora_inicio');
+        $horaFin = $this->request->getPost('hora_fin');
+        $duracion = (int) $this->request->getPost('duracion');
+        $incluirAlmuerzo = $this->request->getPost('incluir_almuerzo') == 'true'
+            || $this->request->getPost('incluir_almuerzo') == 'on';
+        $almuerzoInicio = $this->request->getPost('almuerzo_inicio') ?: '13:00';
+        $almuerzoFin = $this->request->getPost('almuerzo_fin') ?: '14:00';
+        $modalidadId = (int) ($this->request->getPost('modalidad_id') ?: 3);
+
+        if (empty($horaInicio) || empty($horaFin)) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'Hora de inicio y fin son requeridas.'];
+        }
+        if ($duracion < 5 || $duracion > 480) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'La duración debe estar entre 5 y 480 minutos.'];
+        }
+        if (strtotime($horaFin . ':00') <= strtotime($horaInicio . ':00')) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'La hora de fin debe ser mayor que la de inicio.'];
+        }
+
+        return [
+            'hora_inicio' => $horaInicio,
+            'hora_fin' => $horaFin,
+            'duracion' => $duracion,
+            'incluir_almuerzo' => $incluirAlmuerzo,
+            'almuerzo_inicio' => $almuerzoInicio,
+            'almuerzo_fin' => $almuerzoFin,
+            'modalidad_id' => $modalidadId,
+        ];
     }
 
     /**

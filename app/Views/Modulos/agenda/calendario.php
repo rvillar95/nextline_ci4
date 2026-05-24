@@ -370,6 +370,9 @@
                         <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-agenda-ghost" title="Ver lista de citas">
                             <i class="fas fa-list me-2"></i> Vista Lista
                         </a>
+                        <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
+                            <i class="fas fa-edit me-2"></i> Editar agenda
+                        </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
                             <i class="fas fa-clock me-2"></i> Crear Horarios
                         </button>
@@ -501,135 +504,7 @@
             </div>
             <form id="formCrearHorarios">
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Fecha de inicio <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>" required>
-                                <small class="form-text text-muted">Fecha desde la cual crear horarios</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Días a crear <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="dias_crear" name="dias" value="30" min="1" max="365" required>
-                                <small class="form-text text-muted">Número de días laborables</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Duración de cada cita (minutos) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="duracion_cita" name="duracion" value="30" min="5" max="480" step="1" required>
-                                <small class="form-text text-muted">Duración de cada horario disponible (mínimo 5 minutos)</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6 class="mb-3"><i class="fas fa-calendar me-2"></i> Días de la Semana</h6>
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_lunes" name="dias_semana[]" value="1" checked>
-                                    <label class="form-check-label" for="dia_lunes">Lunes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_martes" name="dias_semana[]" value="2" checked>
-                                    <label class="form-check-label" for="dia_martes">Martes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_miercoles" name="dias_semana[]" value="3" checked>
-                                    <label class="form-check-label" for="dia_miercoles">Miércoles</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_jueves" name="dias_semana[]" value="4" checked>
-                                    <label class="form-check-label" for="dia_jueves">Jueves</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_viernes" name="dias_semana[]" value="5" checked>
-                                    <label class="form-check-label" for="dia_viernes">Viernes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_sabado" name="dias_semana[]" value="6">
-                                    <label class="form-check-label" for="dia_sabado">Sábado</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_domingo" name="dias_semana[]" value="0">
-                                    <label class="form-check-label" for="dia_domingo">Domingo</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6 class="mb-3"><i class="fas fa-clock me-2"></i> Horarios</h6>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Nota:</strong> Puedes configurar horarios diferentes para cada día o usar el mismo horario para todos los días seleccionados.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Hora de Inicio <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" value="09:00" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Hora de Fin <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="hora_fin" name="hora_fin" value="18:00" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="incluir_almuerzo" name="incluir_almuerzo">
-                            <label class="form-check-label" for="incluir_almuerzo">
-                                Excluir horario de almuerzo
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div id="horario_almuerzo" style="display: none;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Inicio Almuerzo</label>
-                                    <input type="time" class="form-control" id="almuerzo_inicio" name="almuerzo_inicio" value="13:00">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Fin Almuerzo</label>
-                                    <input type="time" class="form-control" id="almuerzo_fin" name="almuerzo_fin" value="14:00">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="form-group">
-                        <label>Modalidad por Defecto <span class="text-danger">*</span></label>
-                        <select class="form-control" id="modalidad_id" name="modalidad_id" required>
-                            <option value="">-- Seleccione una modalidad --</option>
-                            <?php foreach ($modalidades as $modalidad) : ?>
-                                <option value="<?= $modalidad->id ?>" <?= $modalidad->id == 3 ? 'selected' : '' ?>>
-                                    <?= esc($modalidad->nombre) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <small class="form-text text-muted">
-                            Esta será la modalidad para la mayoría de los horarios creados. Podrás editarla individualmente después.
-                        </small>
-                    </div>
+                    <?= view('Modulos/agenda/_form_configurar_horarios', ['modalidades' => $modalidades, 'modoFormHorarios' => 'crear']) ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -661,10 +536,16 @@
                     <input type="hidden" id="hora_seleccionada" name="hora_seleccionada">
                     
                     <div class="form-group position-relative">
-                        <label>Paciente <span class="text-danger">*</span></label>
+                        <label class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                            <span>Paciente <span class="text-danger">*</span></span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAbrirCrearPacienteRapido">
+                                <i class="fas fa-user-plus me-1"></i> Crear paciente
+                            </button>
+                        </label>
                         <input type="hidden" name="paciente_id" id="paciente_id" value="">
-                        <input type="text" id="inputPacienteAgendar" class="form-control" placeholder="Escriba para buscar por nombre..." autocomplete="off">
+                        <input type="text" id="inputPacienteAgendar" class="form-control" placeholder="Escriba para buscar por nombre o RUT..." autocomplete="off">
                         <div id="listaPacientesAgendar" class="list-group position-absolute shadow-sm" style="left: 0; right: 0; top: 100%; margin-top: 2px; z-index: 1050; max-height: 220px; overflow-y: auto; display: none;"></div>
+                        <small class="text-muted">Si no aparece en la lista, créelo sin salir del calendario.</small>
                     </div>
                     
                     <div class="form-group">
@@ -718,8 +599,69 @@
     </div>
 </div>
 <script>
-var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre]; }, $pacientes)) ?>;
+var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre, 'rut' => $p->rut_dni ?? '']; }, $pacientes)) ?>;
 </script>
+
+<!-- Modal crear paciente rápido (desde Agendar Cita) -->
+<div class="modal fade" id="modalCrearPacienteRapido" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i> Nuevo paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <form id="formCrearPacienteRapido">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        El paciente quedará asociado a su consulta. El mismo RUT puede existir con otro nutricionista, pero no se repite en su lista.
+                    </p>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_nombre" name="nombre" required maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_apellido" name="apellido" required maxlength="100">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">RUT / documento <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_rut_dni" name="rut_dni" required maxlength="20" placeholder="12.345.678-9">
+                            <div id="rapido_rut_feedback" class="form-text"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de paciente <span class="text-danger">*</span></label>
+                            <select class="form-control" id="rapido_tipo_paciente" name="tipo_paciente" required>
+                                <option value="particular">Particular</option>
+                                <option value="convenio">Convenio</option>
+                                <option value="seguro">Seguro</option>
+                                <option value="fonasa">Fonasa</option>
+                                <option value="isapre">Isapre</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="rapido_telefono" name="telefono" maxlength="50">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Correo</label>
+                            <input type="email" class="form-control" id="rapido_email" name="email" maxlength="150" placeholder="Recomendado para confirmación y botón de pago">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarPacienteRapido">
+                        <i class="fas fa-save me-1"></i> Guardar y seleccionar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Modal para elegir acción (Agendar o Editar Modalidad) -->
 <div class="modal fade" id="modalElegirAccion" tabindex="-1">
@@ -1232,11 +1174,14 @@ $(function() {
     function mostrarLista(termino) {
         var t = (termino || '').toLowerCase().trim();
         var filtrados = !t ? pacientesAgendarOpciones : pacientesAgendarOpciones.filter(function(o) {
-            return o.text.toLowerCase().indexOf(t) !== -1;
+            var texto = (o.text || '').toLowerCase();
+            var rut = (o.rut || '').toLowerCase().replace(/[^0-9k]/g, '');
+            var termRut = t.replace(/[^0-9k]/g, '');
+            return texto.indexOf(t) !== -1 || (termRut.length >= 3 && rut.indexOf(termRut) !== -1);
         });
         $lista.empty();
         if (filtrados.length === 0) {
-            $lista.append('<div class="list-group-item text-muted">Sin coincidencias</div>');
+            $lista.append('<div class="list-group-item text-muted">Sin coincidencias. Use «Crear paciente».</div>');
         } else {
             filtrados.forEach(function(o) {
                 var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').attr('data-id', o.value).text(o.text);
@@ -1275,7 +1220,160 @@ $(function() {
         $hidden.val('');
         $lista.hide();
     });
+
+    window.elegirPacienteAgendar = elegirPaciente;
 });
+
+/** Validador RUT chileno (módulo 11) */
+function validarRutChilenoAgenda(rut) {
+    var s = (rut || '').trim().replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    if (s.length < 2) return false;
+    var dv = s.slice(-1);
+    var body = s.slice(0, -1);
+    if (!/^\d+$/.test(body)) return false;
+    if (!/^[\dK]$/.test(dv)) return false;
+    var sum = 0, serie = [2, 3, 4, 5, 6, 7];
+    for (var i = 0; i < body.length; i++) {
+        sum += parseInt(body.charAt(body.length - 1 - i), 10) * serie[i % 6];
+    }
+    var rest = sum % 11;
+    var expected = 11 - rest;
+    if (expected === 11) expected = '0';
+    else if (expected === 10) expected = 'K';
+    else expected = String(expected);
+    return expected === dv;
+}
+
+function agregarPacienteAgendarOpcion(paciente) {
+    if (!paciente || !paciente.id) return;
+    var existe = pacientesAgendarOpciones.some(function(o) { return o.value === paciente.id; });
+    if (!existe) {
+        pacientesAgendarOpciones.push({
+            value: paciente.id,
+            text: paciente.text,
+            rut: paciente.rut_dni || ''
+        });
+        pacientesAgendarOpciones.sort(function(a, b) {
+            return String(a.text).localeCompare(String(b.text), 'es');
+        });
+    }
+}
+
+$('#btnAbrirCrearPacienteRapido').on('click', function() {
+    var $form = $('#formCrearPacienteRapido');
+    $form[0].reset();
+    $('#rapido_tipo_paciente').val('particular');
+    $('#rapido_rut_feedback').text('').removeClass('text-danger text-success');
+    var busqueda = $('#inputPacienteAgendar').val().trim();
+    if (busqueda && busqueda.indexOf(' ') === -1 && busqueda.length < 20) {
+        $('#rapido_rut_dni').val(busqueda);
+    }
+    var modalCrear = new bootstrap.Modal(document.getElementById('modalCrearPacienteRapido'));
+    modalCrear.show();
+});
+
+var verificarRutTimer = null;
+$('#rapido_rut_dni').on('input blur', function() {
+    var $fb = $('#rapido_rut_feedback');
+    var rut = $(this).val().trim();
+    clearTimeout(verificarRutTimer);
+    if (rut.length < 3) {
+        $fb.text('').removeClass('text-danger text-success');
+        return;
+    }
+    if (/^\d{7,8}[\dKk-]?$/.test(rut.replace(/\./g, '').replace(/-/g, '')) && !validarRutChilenoAgenda(rut)) {
+        $fb.text('RUT con dígito verificador incorrecto.').addClass('text-danger').removeClass('text-success');
+        return;
+    }
+    verificarRutTimer = setTimeout(function() {
+        $.get('<?= base_url('dashboard/paciente/verificarRutNutricionista') ?>', { rut: rut }, function(res) {
+            if (res.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', res.csrf_token);
+            }
+            if (!res.valido) {
+                $fb.text(res.message || 'RUT no válido').addClass('text-danger').removeClass('text-success');
+            } else if (!res.disponible) {
+                $fb.text(res.message || 'RUT ya registrado').addClass('text-danger').removeClass('text-success');
+            } else {
+                $fb.text(res.message || 'RUT disponible').addClass('text-success').removeClass('text-danger');
+            }
+        }, 'json');
+    }, 400);
+});
+
+$('#formCrearPacienteRapido').on('submit', function(e) {
+    e.preventDefault();
+    var rut = $('#rapido_rut_dni').val().trim();
+    var rutLimpio = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    var pareceRutChileno = /^\d{7,8}[\dK]$/.test(rutLimpio);
+    if (pareceRutChileno && !validarRutChilenoAgenda(rut)) {
+        toastr.error('El RUT chileno no es válido (revise el dígito verificador).');
+        return;
+    }
+    if (!pareceRutChileno && rut.replace(/[^0-9a-zA-Z]/gi, '').length < 3) {
+        toastr.error('Ingrese un RUT o documento de identidad válido.');
+        return;
+    }
+    var csrfToken = obtenerTokenCSRF() || '<?= csrf_hash() ?>';
+    var $btn = $('#btnGuardarPacienteRapido');
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: '<?= base_url('dashboard/paciente/crearRapido') ?>',
+        type: 'POST',
+        dataType: 'json',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: {
+            csrf_test_name: csrfToken,
+            nombre: $('#rapido_nombre').val(),
+            apellido: $('#rapido_apellido').val(),
+            rut_dni: rut,
+            tipo_paciente: $('#rapido_tipo_paciente').val(),
+            telefono: $('#rapido_telefono').val(),
+            email: $('#rapido_email').val()
+        },
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            if (res.success && res.paciente) {
+                agregarPacienteAgendarOpcion({
+                    id: res.paciente.id,
+                    text: res.paciente.text,
+                    rut_dni: res.paciente.rut_dni
+                });
+                if (typeof window.elegirPacienteAgendar === 'function') {
+                    window.elegirPacienteAgendar(res.paciente.id, res.paciente.text);
+                } else {
+                    $('#paciente_id').val(res.paciente.id);
+                    $('#inputPacienteAgendar').val(res.paciente.text);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalCrearPacienteRapido')).hide();
+                toastr.success(res.message || 'Paciente creado');
+            } else {
+                var msg = res.message || 'No se pudo crear el paciente';
+                if (res.errors) {
+                    Object.keys(res.errors).forEach(function(k) {
+                        toastr.warning(res.errors[k]);
+                    });
+                }
+                toastr.error(msg);
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            actualizarTokenCSRF(xhr);
+            var res = xhr.responseJSON || {};
+            var msg = res.message || 'Error al crear el paciente';
+            if (xhr.status === 409) {
+                toastr.warning(msg, 'RUT duplicado', { timeOut: 6000 });
+            } else if (xhr.status === 403) {
+                toastr.error('Sesión expirada. Recargue la página.');
+            } else {
+                toastr.error(msg);
+            }
+        }
+    });
+});
+
 function abrirModalAgendar() {
     $('#formAgendar')[0].reset();
     $('#detalle_agenda_id').val('');

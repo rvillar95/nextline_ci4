@@ -165,6 +165,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPacientes', 'Dashboard\PacienteController::getPacientes');
         $routes2->get('getPacientesSelect', 'Dashboard\PacienteController::getPacientesSelect');
         $routes2->post('registrar', 'Dashboard\PacienteController::registrar');
+        $routes2->post('crearRapido', 'Dashboard\PacienteController::crearRapido');
+        $routes2->get('verificarRutNutricionista', 'Dashboard\PacienteController::verificarRutNutricionista');
         $routes2->post('update', 'Dashboard\PacienteController::update');
         $routes2->post('eliminar', 'Dashboard\PacienteController::eliminar');
     });
@@ -333,6 +335,10 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('gestionar', 'Dashboard\AgendaController::gestionar');
         $routes2->get('calendario', 'Dashboard\AgendaController::calendario');
         $routes2->get('getAgendas', 'Dashboard\AgendaController::getAgendas');
+        $routes2->get('listarAgendasDias', 'Dashboard\AgendaController::listarAgendasDias');
+        $routes2->post('validarAgendasSeleccionadas', 'Dashboard\AgendaController::validarAgendasSeleccionadas');
+        $routes2->post('actualizarAgendas', 'Dashboard\AgendaController::actualizarAgendas');
+        $routes2->post('eliminarAgendasDias', 'Dashboard\AgendaController::eliminarAgendasDias');
         $routes2->get('getEventos', 'Dashboard\AgendaController::getEventos');
         $routes2->get('getDetalleCita', 'Dashboard\AgendaController::getDetalleCita');
         $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');

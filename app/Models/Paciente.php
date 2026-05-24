@@ -160,6 +160,83 @@ class Paciente extends Model
     }
 
     /**
+     * Normaliza RUT/DNI para comparación (solo alfanumérico, DV en mayúscula).
+     */
+    public static function normalizarRutDni(?string $rut): string
+    {
+        if ($rut === null || $rut === '') {
+            return '';
+        }
+
+        return strtoupper(preg_replace('/[^0-9kK]/', '', trim($rut)));
+    }
+
+    /**
+     * Valida RUT chileno (módulo 11). Para DNI extranjero corto devuelve true si tiene al menos 3 caracteres alfanuméricos.
+     */
+    public static function esRutDniValido(?string $rut): bool
+    {
+        $norm = self::normalizarRutDni($rut);
+        if ($norm === '') {
+            return false;
+        }
+
+        if (strlen($norm) < 3) {
+            return false;
+        }
+
+        // Formato chileno: cuerpo numérico + dígito verificador
+        if (preg_match('/^(\d{7,8})([\dK])$/', $norm, $m)) {
+            $dv = $m[2];
+            $body = $m[1];
+            $sum = 0;
+            $serie = [2, 3, 4, 5, 6, 7];
+            $len = strlen($body);
+            for ($i = 0; $i < $len; $i++) {
+                $sum += (int) $body[$len - 1 - $i] * $serie[$i % 6];
+            }
+            $rest = $sum % 11;
+            $expected = 11 - $rest;
+            if ($expected === 11) {
+                $expected = '0';
+            } elseif ($expected === 10) {
+                $expected = 'K';
+            } else {
+                $expected = (string) $expected;
+            }
+
+            return $expected === $dv;
+        }
+
+        // DNI / documento extranjero (sin algoritmo chileno)
+        return strlen($norm) >= 3;
+    }
+
+    /**
+     * ¿Ya existe un paciente activo con el mismo RUT/DNI para este nutricionista?
+     * Otro nutricionista puede tener el mismo RUT (misma persona, otra ficha).
+     */
+    public function existeRutParaNutricionista(string $rutNormalizado, int $nutricionistaId, ?int $excluirPacienteId = null): bool
+    {
+        if ($rutNormalizado === '' || strlen($rutNormalizado) < 3) {
+            return false;
+        }
+
+        $builder = $this->where('estado', 'A')
+            ->where('nutricionista_id', $nutricionistaId)
+            ->where(
+                "REPLACE(REPLACE(REPLACE(IFNULL(rut_dni,''),'.',''),'-',''),' ','') = ",
+                $rutNormalizado
+            );
+
+        if ($excluirPacienteId) {
+            $builder->where('id !=', $excluirPacienteId);
+        }
+
+        return $builder->countAllResults() > 0;
+    }
+
+    /**
      * Buscar pacientes por término
      */
     public function buscarPacientes($termino, $nutricionistaId = null)

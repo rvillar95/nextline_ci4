@@ -63,6 +63,9 @@
                         <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="btn btn-agenda-ghost" title="Ver agenda en calendario">
                             <i class="fas fa-calendar-alt me-2"></i> Vista Calendario
                         </a>
+                        <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
+                            <i class="fas fa-edit me-2"></i> Editar agenda
+                        </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles">
                             <i class="fas fa-clock me-2"></i> Crear Horarios
                         </button>

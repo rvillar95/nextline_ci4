@@ -48,7 +48,7 @@ class CancelarHorasController extends BaseController
         $data['configuracion'] = $configuracion;
         $data['csrf_token'] = csrf_hash();
 
-        return view('modulos/agenda/cancelar_horas', $data);
+        return view('Modulos/agenda/cancelar_horas', $data);
     }
 
     /**
