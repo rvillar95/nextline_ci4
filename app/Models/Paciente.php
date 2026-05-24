@@ -237,6 +237,59 @@ class Paciente extends Model
     }
 
     /**
+     * Buscar paciente activo por teléfono (variantes +56, sin +, últimos 9 dígitos).
+     */
+    public function buscarPorTelefono(string $telefono, ?int $nutricionistaId = null): ?object
+    {
+        $telefono = trim($telefono);
+        if ($telefono === '') {
+            return null;
+        }
+
+        $variantes = array_unique(array_filter([
+            $telefono,
+            ltrim($telefono, '+'),
+            '+' . ltrim($telefono, '+'),
+            preg_replace('/[\s\-\(\)]/', '', $telefono),
+        ]));
+
+        $soloDigitos = preg_replace('/\D/', '', $telefono);
+        if (strlen($soloDigitos) >= 9) {
+            $ultimos9 = substr($soloDigitos, -9);
+            $variantes[] = $ultimos9;
+            $variantes[] = '56' . $ultimos9;
+            $variantes[] = '+56' . $ultimos9;
+        }
+
+        foreach ($variantes as $v) {
+            $builder = $this->where('estado', 'A')->groupStart();
+            $builder->where('telefono', $v)
+                ->orWhere('telefono', '+' . ltrim($v, '+'))
+                ->orWhere('telefono', ltrim($v, '+'));
+            $builder->groupEnd();
+            if ($nutricionistaId) {
+                $builder->where('nutricionista_id', $nutricionistaId);
+            }
+            $row = $builder->first();
+            if ($row) {
+                return $row;
+            }
+        }
+
+        if (strlen($soloDigitos) >= 9) {
+            $ultimos9 = substr($soloDigitos, -9);
+            $builder = $this->where('estado', 'A')
+                ->like('telefono', $ultimos9, 'both');
+            if ($nutricionistaId) {
+                $builder->where('nutricionista_id', $nutricionistaId);
+            }
+            return $builder->first();
+        }
+
+        return null;
+    }
+
+    /**
      * Buscar pacientes por término
      */
     public function buscarPacientes($termino, $nutricionistaId = null)

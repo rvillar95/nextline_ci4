@@ -330,6 +330,12 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('marcar-todas-leidas', 'Dashboard\NotificacionController::marcarTodasLeidas');
     });
 
+    $routes->group('mensajes', function ($routes2) {
+        $routes2->get('/', 'Dashboard\MensajesController::index');
+        $routes2->get('hilo/(:num)', 'Dashboard\MensajesController::hilo/$1');
+        $routes2->post('enviar', 'Dashboard\MensajesController::enviar');
+    });
+
     $routes->group('agenda', function ($routes2) {
         $routes2->get('lista', 'Dashboard\AgendaController::lista');
         $routes2->get('gestionar', 'Dashboard\AgendaController::gestionar');

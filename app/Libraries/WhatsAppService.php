@@ -708,24 +708,18 @@ class WhatsAppService
      */
     public function procesarMensajeEntrante($numeroOrigen, $mensajeTexto, $mensajeId = null)
     {
-        // Registrar mensaje recibido
-        $this->whatsappModel->insert([
-            'direccion' => 'recibido',
+        $pacienteModel = new Paciente();
+        $paciente = $pacienteModel->buscarPorTelefono($numeroOrigen);
+
+        $this->whatsappModel->registrarRecibido([
+            'paciente_id' => $paciente->id ?? null,
+            'nutricionista_id' => $paciente->nutricionista_id ?? null,
             'numero_origen' => $numeroOrigen,
             'numero_destino' => $this->getNumeroOrigen(),
             'mensaje' => $mensajeTexto,
             'mensaje_id_api' => $mensajeId,
-            'estado_envio' => 'recibido',
-            'tipo_mensaje' => 'agendamiento',
-            'fecha_envio' => date('Y-m-d H:i:s'),
-            'fcreacion' => date('Y-m-d H:i:s') // Agregar manualmente el timestamp de creación
+            'tipo_mensaje' => 'otro',
         ]);
-        
-        // Buscar paciente por teléfono
-        $pacienteModel = new Paciente();
-        $paciente = $pacienteModel->where('telefono', $numeroOrigen)
-            ->orWhere('telefono', $this->normalizarNumero($numeroOrigen))
-            ->first();
         
         if (!$paciente) {
             // Responder que no está registrado

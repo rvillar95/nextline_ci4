@@ -41,6 +41,8 @@ final class SessionFilter implements FilterInterface
         '/cancelar-cita',
         // Callback público de OAuth2 para calendario (Google/Microsoft llama esta URL directamente)
         '/dashboard/agenda/calendario/callback',
+        // Webhook WhatsApp (Meta, sin sesión)
+        '/whatsapp/webhook',
     ];
 
     /**
