@@ -5,6 +5,7 @@ namespace App\Libraries;
 use App\Models\WhatsAppMensaje;
 use App\Models\Paciente;
 use App\Models\EmpresaConfiguracion;
+use App\Services\ReservaPublicaService;
 use Config\Services;
 
 /**
@@ -765,58 +766,29 @@ class WhatsAppService
             . ' texto=' . mb_substr($mensajeTexto, 0, 80)
             . ' historial_id=' . ($historialId ?: 'NO'));
 
-        if (!$paciente) {
-            log_message('warning', 'WhatsApp entrante sin paciente en BD para tel=' . $numeroOrigen);
+        $empresaId = (new ReservaPublicaService())->resolverEmpresaId(null);
+        $bot = new WhatsAppAgendaBot($this, $empresaId);
+        $resultadoBot = $bot->procesar($numeroOrigen, $mensajeTexto, $paciente);
+        if (!empty($resultadoBot['bot'])) {
+            return array_merge($resultadoBot, [
+                'paciente_id' => $paciente->id ?? ($resultadoBot['paciente_id'] ?? null),
+            ]);
+        }
 
-            return [
-                'success' => true,
-                'message' => 'Mensaje recibido sin paciente vinculado',
-                'paciente_id' => null,
-            ];
-        }
-        
-        // Procesar respuestas de botones (Confirm/Cancel)
-        $mensajeNormalizado = strtolower(trim($mensajeTexto));
-        if ($mensajeNormalizado === 'confirm' || $mensajeNormalizado === 'confirmar') {
-            return $this->procesarConfirmacionCita($numeroOrigen, $paciente->id);
-        } elseif ($mensajeNormalizado === 'cancel' || $mensajeNormalizado === 'cancelar') {
-            return $this->procesarCancelacionCita($numeroOrigen, $paciente->id);
-        }
-        
-        // Intentar extraer información de la cita del mensaje
-        $infoCita = $this->extraerInfoCitaDelMensaje($mensajeTexto);
-        
-        if ($infoCita) {
-            // Buscar horario disponible
-            $detalleAgendaId = $this->buscarHorarioDisponible($infoCita, $paciente->id);
-            
-            if ($detalleAgendaId) {
-                // Crear cita
-                $this->crearCitaDesdeWhatsApp($detalleAgendaId, $paciente->id, $infoCita);
-                
-                // Enviar confirmación
-                $this->enviarConfirmacionCita($detalleAgendaId, $paciente->id);
-                
-                return [
-                    'success' => true,
-                    'message' => 'Cita creada y confirmación enviada',
-                    'detalle_agenda_id' => $detalleAgendaId
-                ];
-            } else {
-                // No hay horario disponible
-                return $this->enviarMensaje(
-                    $numeroOrigen,
-                    "Hola {$paciente->nombre}, no encontramos un horario disponible para la fecha y hora que solicitas. Por favor, contacta directamente con tu nutricionista.",
-                    $paciente->id
-                );
+        if ($paciente) {
+            $mensajeNormalizado = strtolower(trim($mensajeTexto));
+            if ($mensajeNormalizado === 'confirm' || $mensajeNormalizado === 'confirmar') {
+                return $this->procesarConfirmacionCita($numeroOrigen, $paciente->id);
+            }
+            if ($mensajeNormalizado === 'cancel' || $mensajeNormalizado === 'cancelar') {
+                return $this->procesarCancelacionCita($numeroOrigen, $paciente->id);
             }
         }
 
-        // Solo queda registrado en historial; el nutricionista responde desde la bandeja (ventana 24 h).
         return [
             'success' => true,
             'message' => 'Mensaje recibido',
-            'paciente_id' => $paciente->id,
+            'paciente_id' => $paciente->id ?? null,
         ];
     }
 
