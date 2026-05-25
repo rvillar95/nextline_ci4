@@ -114,10 +114,13 @@ class EnviarRecordatoriosWhatsApp extends BaseCommand
                         'recordatorio_enviado' => 1,
                         'fecha_recordatorio'   => date('Y-m-d H:i:s'),
                     ]);
-                    CLI::write("  ✓ [{$tipo}] ID {$cita->id} - {$cita->nombre} {$cita->apellido}", 'green');
+                    $hist = $resultado[0]['historial_id'] ?? null;
+                    $sufijo = $hist ? " (historial #{$hist})" : '';
+                    CLI::write("  ✓ [{$tipo}] ID {$cita->id} - {$cita->nombre} {$cita->apellido}{$sufijo}", 'green');
                     $enviados++;
                 } else {
-                    CLI::write("  ✗ Error ID {$cita->id}", 'red');
+                    $detalle = is_array($resultado[0] ?? null) ? ($resultado[0]['error'] ?? '') : '';
+                    CLI::write("  ✗ Error ID {$cita->id}" . ($detalle ? ": {$detalle}" : ''), 'red');
                     $errores++;
                 }
             } catch (\Exception $e) {

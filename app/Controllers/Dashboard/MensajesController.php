@@ -55,8 +55,19 @@ class MensajesController extends BaseController
         }
 
         $whatsappModel = new WhatsAppMensaje();
-        $mensajes = $whatsappModel->getHiloPorPaciente($pacienteId, $nutricionistaId);
+        $limit = (int) ($this->request->getGet('limit') ?? WhatsAppMensaje::MENSAJES_POR_LOTE);
+        $beforeId = (int) ($this->request->getGet('before_id') ?? 0);
+        $hilo = $whatsappModel->getHiloPaginado(
+            $pacienteId,
+            $nutricionistaId,
+            $limit,
+            $beforeId > 0 ? $beforeId : null
+        );
         $puedeResponderLibre = $whatsappModel->tieneVentana24Horas($pacienteId);
+
+        if ($this->request->getGet('marcar_leido') !== '0') {
+            $whatsappModel->marcarConversacionLeida($pacienteId, $nutricionistaId);
+        }
 
         return $this->response->setJSON([
             'success' => true,
@@ -66,10 +77,49 @@ class MensajesController extends BaseController
                 'telefono' => $paciente->telefono ?? '',
                 'email' => $paciente->email ?? '',
             ],
-            'mensajes' => $mensajes,
+            'mensajes' => $hilo['mensajes'],
+            'has_more_older' => $hilo['has_more_older'],
+            'oldest_id' => $hilo['oldest_id'],
             'puede_responder_libre' => $puedeResponderLibre,
+            'ultimo_id' => $whatsappModel->getUltimoIdHilo($pacienteId, $nutricionistaId),
             'csrf_token' => csrf_hash(),
         ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+    }
+
+    /**
+     * JSON: sincronizar lista y mensajes nuevos (polling).
+     */
+    public function sync()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $nutricionistaId = (int) session()->get('usuario')['id'];
+        $pacienteId = (int) ($this->request->getGet('paciente_id') ?? 0);
+        $afterId = (int) ($this->request->getGet('after_id') ?? 0);
+
+        $whatsappModel = new WhatsAppMensaje();
+        $payload = [
+            'success' => true,
+            'conversaciones' => $whatsappModel->getConversacionesResumen($nutricionistaId),
+            'csrf_token' => csrf_hash(),
+        ];
+
+        if ($pacienteId > 0) {
+            $paciente = $this->obtenerPacienteDelNutricionista($pacienteId, $nutricionistaId);
+            if ($paciente) {
+                $nuevos = $whatsappModel->getMensajesDespuesDe($pacienteId, $nutricionistaId, $afterId);
+                if (!empty($nuevos)) {
+                    $whatsappModel->marcarConversacionLeida($pacienteId, $nutricionistaId);
+                }
+                $payload['nuevos_mensajes'] = $nuevos;
+                $payload['puede_responder_libre'] = $whatsappModel->tieneVentana24Horas($pacienteId);
+                $payload['ultimo_id'] = $whatsappModel->getUltimoIdHilo($pacienteId, $nutricionistaId);
+            }
+        }
+
+        return $this->response->setJSON($payload)->setHeader('X-CSRF-TOKEN', csrf_hash());
     }
 
     /**
@@ -114,13 +164,22 @@ class MensajesController extends BaseController
 
         $empresaId = session()->get('usuario')['empresa_id'] ?? null;
         $whatsappService = new WhatsAppService($empresaId);
+        $usuarioSesion = session()->get('usuario') ?? [];
+        $nombreNutri = trim(($usuarioSesion['nombre'] ?? '') . ' ' . ($usuarioSesion['apellido'] ?? ''));
+        $mensajeEnviar = $whatsappService->mensajeConFirmaNutricionista($mensaje, $nutricionistaId, $nombreNutri !== '' ? $nombreNutri : null);
+
         $resultado = $whatsappService->enviarMensaje(
             $paciente->telefono,
-            $mensaje,
+            $mensajeEnviar,
             $pacienteId,
             null,
-            $nutricionistaId
+            $nutricionistaId,
+            false
         );
+
+        if (($resultado['success'] ?? false) && empty($resultado['historial_id'])) {
+            log_message('warning', 'Mensajes enviar: API OK sin fila en whatsapp_mensajes. paciente_id=' . $pacienteId);
+        }
 
         if (!($resultado['success'] ?? false)) {
             return $this->response->setJSON([

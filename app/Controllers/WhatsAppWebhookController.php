@@ -143,14 +143,19 @@ class WhatsAppWebhookController extends BaseController
 
         log_message('info', 'Mensaje recibido de WhatsApp Business: ' . $numeroOrigen . ' - ' . $mensajeTexto);
 
-        if (substr((string) $numeroOrigen, 0, 1) !== '+') {
-            $numeroOrigen = '+' . $numeroOrigen;
+        $soloDigitos = preg_replace('/\D+/', '', (string) $numeroOrigen);
+        if ($soloDigitos !== '') {
+            $numeroOrigen = '+' . $soloDigitos;
         }
+
+        $metadata = $value['metadata'] ?? [];
+        $lineaEmpresa = $metadata['display_phone_number'] ?? null;
 
         $this->whatsappService->procesarMensajeEntrante(
             $numeroOrigen,
             $mensajeTexto,
-            $mensajeId
+            $mensajeId,
+            $lineaEmpresa
         );
     }
 

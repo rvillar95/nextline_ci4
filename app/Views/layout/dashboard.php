@@ -482,6 +482,10 @@ exit(); */
                     <?php echo $this->renderSection("agenda/consulta"); ?>
                     <?php echo $this->renderSection("agenda/estadisticas"); ?>
                     <!-- END Section Agenda -->
+
+                    <!-- Secciones de Mensajes WhatsApp -->
+                    <?php echo $this->renderSection("mensajes/index"); ?>
+                    <!-- END Section Mensajes -->
                     
                     <!-- Secciones de Documentos -->
                     <?php echo $this->renderSection("documento/lista"); ?>

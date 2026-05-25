@@ -65,11 +65,16 @@ class WhatsAppService
      * @param int|null $pacienteId ID del paciente
      * @param int|null $agendaId ID de la agenda
      * @param int|null $nutricionistaId ID del nutricionista
+     * @param bool $firmarComoNutricionista Prefijo con nombre (bandeja NutriNext)
      */
-    public function enviarMensaje($numeroDestino, $mensaje = null, $pacienteId = null, $agendaId = null, $nutricionistaId = null)
+    public function enviarMensaje($numeroDestino, $mensaje = null, $pacienteId = null, $agendaId = null, $nutricionistaId = null, bool $firmarComoNutricionista = false)
     {
         // Normalizar número (eliminar espacios, guiones, etc.)
         $numeroDestino = $this->normalizarNumero($numeroDestino);
+
+        if ($firmarComoNutricionista && trim((string) $mensaje) !== '') {
+            $mensaje = $this->mensajeConFirmaNutricionista((string) $mensaje, $nutricionistaId);
+        }
         
         try {
             $mensajeId = null;
@@ -79,27 +84,33 @@ class WhatsAppService
             $mensajeId = $resultado['message_id'] ?? null;
             $estado = $resultado['status'] ?? 'sent';
             
-            // Obtener el mensaje real que se envió (puede ser diferente si se usó plantilla)
-            $mensajeReal = $resultado['body'] ?? $mensaje ?? 'Mensaje desde plantilla';
-            
-            // Registrar en base de datos
-            $this->whatsappModel->registrarEnvio([
+            $textoHistorial = trim((string) $mensaje);
+            if ($textoHistorial === '' && !empty($resultado['body'])) {
+                $textoHistorial = (string) $resultado['body'];
+            }
+
+            $historialId = $this->whatsappModel->registrarEnvio([
                 'paciente_id' => $pacienteId,
                 'nutricionista_id' => $nutricionistaId,
                 'agenda_id' => $agendaId,
-                'tipo_mensaje' => $this->determinarTipoMensaje($mensajeReal),
+                'tipo_mensaje' => 'otro',
                 'numero_destino' => $numeroDestino,
                 'numero_origen' => $this->getNumeroOrigen(),
-                'mensaje' => $mensajeReal,
+                'mensaje' => $textoHistorial,
                 'mensaje_id_api' => $mensajeId,
                 'estado_envio' => $estado,
-                'metadata' => json_encode($resultado)
+                'metadata' => json_encode($resultado),
             ]);
+
+            if ($historialId === false) {
+                log_message('error', 'WhatsApp enviarMensaje: enviado a API pero historial no guardado. paciente_id=' . ($pacienteId ?? ''));
+            }
             
             return [
                 'success' => true,
+                'historial_id' => $historialId ?: null,
                 'message_id' => $mensajeId,
-                'status' => $estado
+                'status' => $estado,
             ];
             
         } catch (\Exception $e) {
@@ -419,19 +430,23 @@ class WhatsAppService
             log_message('error', 'WHATSAPP SERVICE: Usando plantilla ' . $templateName . ' (idioma=' . $languageCode . ', header=1, body=' . count($bodyParams) . ', named params)');
             try {
                 $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla($cita->telefono, $templateName, $languageCode, $bodyParams, $headerParams, $headerParamNames, $bodyParamNames);
-                $this->whatsappModel->registrarEnvio([
+                $nutricionistaConfirm = $cita->usuario_id ?? $cita->agenda_usuario_id ?? null;
+                $historialId = $this->whatsappModel->registrarEnvio([
                     'paciente_id' => $pacienteId ?? $cita->paciente_id,
-                    'nutricionista_id' => $cita->usuario_id ?? null,
+                    'nutricionista_id' => $nutricionistaConfirm,
                     'agenda_id' => $cita->agenda_id ?? null,
                     'tipo_mensaje' => 'confirmacion',
-                    'numero_destino' => $cita->telefono,
+                    'numero_destino' => $this->normalizarNumero($cita->telefono),
                     'numero_origen' => $this->getNumeroOrigen(),
-                    'mensaje' => 'Confirmación (plantilla ' . $templateName . ')',
+                    'mensaje' => $mensaje,
                     'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
                     'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
-                    'metadata' => json_encode($resultadoPlantilla)
+                    'metadata' => json_encode($resultadoPlantilla),
                 ]);
-                log_message('error', 'WHATSAPP SERVICE: Resultado plantilla ' . $templateName . ': success=1');
+                if ($historialId === false) {
+                    log_message('error', 'WhatsApp Confirmación: plantilla enviada sin historial. detalle=' . $detalleAgendaId);
+                }
+                log_message('error', 'WHATSAPP SERVICE: Resultado plantilla ' . $templateName . ': success=1 historial=' . ($historialId ?: 'NO'));
                 log_message('error', 'WHATSAPP SERVICE - enviarConfirmacionCita: FIN');
                 return ['success' => true, 'message_id' => $resultadoPlantilla['message_id'] ?? null];
             } catch (\Exception $e) {
@@ -539,6 +554,18 @@ class WhatsAppService
             return $s === '' ? '-' : $s;
         };
 
+        $mensaje = "Hola {$nombrePaciente}\n\n";
+        $mensaje .= "Te informamos que tu cita con {$nutricionista} ha sido cancelada:\n\n";
+        if ($fecha) {
+            $mensaje .= "📅 Fecha: {$fecha}\n";
+        }
+        $mensaje .= "🕐 Hora: {$horaInicio}\n";
+        if (!empty(trim((string) $motivo))) {
+            $mensaje .= "\nMotivo: " . trim($motivo) . "\n";
+        }
+        $mensaje .= "\nSi necesitas reagendar, por favor contacta con tu nutricionista.\n\n";
+        $mensaje .= "¡Gracias por tu comprensión!";
+
         // Plantilla cancelacion_cita (WhatsApp Business): header paciente, body nutricionista, fecha, hora, motivo. Idioma Spanish (CHL) = es o es_CL
         $plantillaCancelacion = env('WHATSAPP_PLANTILLA_CANCELACION', 'cancelacion_cita');
         $usarPlantillaCancelacion = ($plantillaCancelacion !== '' && $plantillaCancelacion !== '0');
@@ -567,7 +594,7 @@ class WhatsAppService
                     'tipo_mensaje' => 'cancelacion',
                     'numero_destino' => $cita->telefono,
                     'numero_origen' => $this->getNumeroOrigen(),
-                    'mensaje' => 'Cancelación (plantilla ' . $plantillaCancelacion . ')',
+                    'mensaje' => $mensaje,
                     'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
                     'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
                     'metadata' => json_encode($resultadoPlantilla)
@@ -579,20 +606,7 @@ class WhatsAppService
                 // Fallback a mensaje de texto
             }
         }
-        
-        // Mensaje de cancelación (incluir motivo si se ingresó, como en el correo)
-        $mensaje = "Hola {$nombrePaciente}\n\n";
-        $mensaje .= "Te informamos que tu cita con {$nutricionista} ha sido cancelada:\n\n";
-        if ($fecha) {
-            $mensaje .= "📅 Fecha: {$fecha}\n";
-        }
-        $mensaje .= "🕐 Hora: {$horaInicio}\n";
-        if (!empty(trim((string) $motivo))) {
-            $mensaje .= "\nMotivo: " . trim($motivo) . "\n";
-        }
-        $mensaje .= "\nSi necesitas reagendar, por favor contacta con tu nutricionista.\n\n";
-        $mensaje .= "¡Gracias por tu comprensión!";
-        
+
         log_message('info', 'WhatsApp Cancelación: Enviando mensaje. Telefono=' . $cita->telefono . ', pacienteId=' . ($pacienteId ?? 'N/A') . ', usuarioId=' . ($usuarioId ?? 'N/A'));
         
         return $this->enviarMensaje(
@@ -613,10 +627,10 @@ class WhatsAppService
         
         // Obtener citas que están en las próximas X horas
         $citas = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha, p.nombre, p.apellido, p.telefono, u.nombre as nutricionista_nombre')
+            ->select('da.*, a.fecha, a.usuario_id AS agenda_usuario_id, p.nombre, p.apellido, p.telefono, p.nutricionista_id, u.nombre AS nutricionista_nombre')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('pacientes p', 'p.id = da.paciente_id', 'left')
-            ->join('usuario u', 'u.id = da.usuario_id', 'left')
+            ->join('usuario u', 'u.id = COALESCE(da.usuario_id, a.usuario_id)', 'left', false)
             ->where('da.id', $detalleAgendaId)
             ->where('da.estado_cita', 'confirmada')
             ->where('da.paciente_id IS NOT NULL')
@@ -648,9 +662,19 @@ class WhatsAppService
             $bodyParams = [$safe($nutricionista), $safe($fecha), $safe($horaInicio)];
             $bodyParamNames = ['nutricionista', 'fecha', 'hora'];
 
+            $mensajeRecordatorio = "🔔 Recordatorio de Cita\n\n";
+            $mensajeRecordatorio .= "Hola {$nombrePaciente},\n\n";
+            $mensajeRecordatorio .= "Te recordamos tu cita con {$nutricionista}:\n\n";
+            $mensajeRecordatorio .= "📅 Fecha: {$fecha}\n";
+            $mensajeRecordatorio .= "🕐 Hora: {$horaInicio}\n";
+            $mensajeRecordatorio .= "\n¡Nos vemos pronto!";
+
+            $nutricionistaId = $cita->usuario_id ?? $cita->agenda_usuario_id ?? $cita->nutricionista_id ?? null;
+            $telefonoDestino = $this->normalizarNumero($cita->telefono);
+
             try {
                 $resultadoPlantilla = $this->enviarPorWhatsAppBusinessPlantilla(
-                    $cita->telefono,
+                    $telefonoDestino,
                     $plantillaRecordatorio,
                     $languageCode,
                     $bodyParams,
@@ -659,22 +683,26 @@ class WhatsAppService
                     $bodyParamNames
                 );
 
-                // Registrar en base de datos
-                $this->whatsappModel->registrarEnvio([
+                $historialId = $this->whatsappModel->registrarEnvio([
                     'paciente_id' => $cita->paciente_id ?? null,
-                    'nutricionista_id' => $cita->usuario_id ?? null,
+                    'nutricionista_id' => $nutricionistaId,
                     'agenda_id' => $cita->agenda_id ?? null,
                     'tipo_mensaje' => 'recordatorio',
-                    'numero_destino' => $cita->telefono,
+                    'numero_destino' => $telefonoDestino,
                     'numero_origen' => $this->getNumeroOrigen(),
-                    'mensaje' => 'Recordatorio (plantilla ' . $plantillaRecordatorio . ', ' . (int) $horasAntes . 'h antes)',
+                    'mensaje' => $mensajeRecordatorio,
                     'mensaje_id_api' => $resultadoPlantilla['message_id'] ?? null,
                     'estado_envio' => $resultadoPlantilla['status'] ?? 'sent',
                     'metadata' => json_encode($resultadoPlantilla),
                 ]);
 
+                if ($historialId === false) {
+                    log_message('error', 'WhatsApp Recordatorio: plantilla enviada pero historial no guardado. detalle_agenda_id=' . $detalleAgendaId);
+                }
+
                 $enviados[] = [
                     'success' => true,
+                    'historial_id' => $historialId ?: null,
                     'message_id' => $resultadoPlantilla['message_id'] ?? null,
                     'status' => $resultadoPlantilla['status'] ?? 'sent',
                     'provider' => 'whatsapp_business',
@@ -690,11 +718,11 @@ class WhatsAppService
                 $mensaje .= "🕐 Hora: {$horaInicio}\n";
                 $mensaje .= "\n¡Nos vemos pronto!";
                 $resultado = $this->enviarMensaje(
-                    $cita->telefono,
+                    $telefonoDestino,
                     $mensaje,
                     $cita->paciente_id,
                     $cita->agenda_id ?? null,
-                    $cita->usuario_id ?? null
+                    $nutricionistaId
                 );
                 $enviados[] = $resultado;
             }
@@ -706,27 +734,45 @@ class WhatsAppService
     /**
      * Procesar mensaje entrante y crear cita automáticamente
      */
-    public function procesarMensajeEntrante($numeroOrigen, $mensajeTexto, $mensajeId = null)
+    public function procesarMensajeEntrante($numeroOrigen, $mensajeTexto, $mensajeId = null, ?string $numeroLineaEmpresa = null)
     {
+        $numeroOrigen = $this->normalizarNumero($numeroOrigen);
+        $numeroDestino = $this->resolverNumeroLineaEmpresa($numeroLineaEmpresa);
+        $mensajeTexto = trim((string) $mensajeTexto);
+
+        if ($mensajeId) {
+            $yaRegistrado = $this->whatsappModel->where('mensaje_id_api', $mensajeId)->first();
+            if ($yaRegistrado) {
+                return ['success' => true, 'message' => 'Mensaje ya registrado', 'duplicado' => true];
+            }
+        }
+
         $pacienteModel = new Paciente();
         $paciente = $pacienteModel->buscarPorTelefono($numeroOrigen);
 
-        $this->whatsappModel->registrarRecibido([
+        $historialId = $this->whatsappModel->registrarRecibido([
             'paciente_id' => $paciente->id ?? null,
             'nutricionista_id' => $paciente->nutricionista_id ?? null,
             'numero_origen' => $numeroOrigen,
-            'numero_destino' => $this->getNumeroOrigen(),
+            'numero_destino' => $numeroDestino,
             'mensaje' => $mensajeTexto,
             'mensaje_id_api' => $mensajeId,
             'tipo_mensaje' => 'otro',
         ]);
-        
+
+        log_message('info', 'WhatsApp entrante: tel=' . $numeroOrigen
+            . ' paciente_id=' . ($paciente->id ?? 'NO')
+            . ' texto=' . mb_substr($mensajeTexto, 0, 80)
+            . ' historial_id=' . ($historialId ?: 'NO'));
+
         if (!$paciente) {
-            // Responder que no está registrado
-            return $this->enviarMensaje(
-                $numeroOrigen,
-                "Hola, no encontramos tu número en nuestro sistema. Por favor, contacta directamente con tu nutricionista para agendar una cita."
-            );
+            log_message('warning', 'WhatsApp entrante sin paciente en BD para tel=' . $numeroOrigen);
+
+            return [
+                'success' => true,
+                'message' => 'Mensaje recibido sin paciente vinculado',
+                'paciente_id' => null,
+            ];
         }
         
         // Procesar respuestas de botones (Confirm/Cancel)
@@ -764,14 +810,14 @@ class WhatsAppService
                     $paciente->id
                 );
             }
-        } else {
-            // Mensaje no reconocido, ofrecer ayuda
-            return $this->enviarMensaje(
-                $numeroOrigen,
-                "Hola {$paciente->nombre}, para agendar una cita, envía un mensaje con la fecha y hora deseada. Ejemplo: 'Quiero agendar para el 15 de enero a las 10:00'",
-                $paciente->id
-            );
         }
+
+        // Solo queda registrado en historial; el nutricionista responde desde la bandeja (ventana 24 h).
+        return [
+            'success' => true,
+            'message' => 'Mensaje recibido',
+            'paciente_id' => $paciente->id,
+        ];
     }
 
     /**
@@ -902,11 +948,73 @@ class WhatsAppService
     }
 
     /**
-     * Obtener número de origen
+     * Mensaje manual desde bandeja: identifica al nutricionista que escribe.
+     */
+    public function mensajeConFirmaNutricionista(string $mensaje, ?int $nutricionistaId = null, ?string $nombreNutricionista = null): string
+    {
+        $mensaje = trim($mensaje);
+        if ($mensaje === '') {
+            return $mensaje;
+        }
+
+        $activo = env('WHATSAPP_FIRMA_NUTRICIONISTA', '1');
+        if ($activo === '' || $activo === '0' || strtolower((string) $activo) === 'false') {
+            return $mensaje;
+        }
+
+        $nombre = trim((string) ($nombreNutricionista ?? ''));
+        if ($nombre === '' && $nutricionistaId) {
+            $row = \Config\Database::connect()->table('usuario')
+                ->select('nombre, apellido')
+                ->where('id', $nutricionistaId)
+                ->get()
+                ->getRow();
+            if ($row) {
+                $nombre = trim(($row->nombre ?? '') . ' ' . ($row->apellido ?? ''));
+            }
+        }
+
+        if ($nombre === '') {
+            return $mensaje;
+        }
+
+        $prefijo = $nombre . ' (Nutricionista)';
+        if (preg_match('/^' . preg_quote($prefijo, '/') . '\s*:\s*/iu', $mensaje)) {
+            return $mensaje;
+        }
+
+        return $prefijo . ":\n\n" . $mensaje;
+    }
+
+    /**
+     * ID de teléfono Meta (API). No es un número E.164.
      */
     protected function getNumeroOrigen()
     {
         return $this->config['whatsapp_business']['phone_number_id'] ?? null;
+    }
+
+    /**
+     * Línea WhatsApp de la empresa (paciente escribe a este número).
+     * Prioridad: metadata del webhook → .env → id Meta como referencia.
+     */
+    protected function resolverNumeroLineaEmpresa(?string $displayPhoneWebhook = null): string
+    {
+        if ($displayPhoneWebhook !== null && trim($displayPhoneWebhook) !== '') {
+            return $this->normalizarNumero($displayPhoneWebhook);
+        }
+
+        $envLinea = env('WHATSAPP_DISPLAY_PHONE_NUMBER');
+        if ($envLinea !== null && $envLinea !== false && trim((string) $envLinea) !== '') {
+            return $this->normalizarNumero((string) $envLinea);
+        }
+
+        $phoneId = $this->config['whatsapp_business']['phone_number_id'] ?? '';
+        if ($phoneId !== '') {
+            return 'wa:' . $phoneId;
+        }
+
+        return 'nutrinext';
     }
 
     /**

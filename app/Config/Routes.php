@@ -332,6 +332,7 @@ $routes->group('dashboard', function ($routes) {
 
     $routes->group('mensajes', function ($routes2) {
         $routes2->get('/', 'Dashboard\MensajesController::index');
+        $routes2->get('sync', 'Dashboard\MensajesController::sync');
         $routes2->get('hilo/(:num)', 'Dashboard\MensajesController::hilo/$1');
         $routes2->post('enviar', 'Dashboard\MensajesController::enviar');
     });

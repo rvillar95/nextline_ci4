@@ -241,6 +241,19 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Mensajes WhatsApp: hilo/{id} y enviar si tiene acceso al módulo mensajes
+        $esMensajesAjax = (bool) preg_match('#^/dashboard/mensajes/hilo/[0-9]+/?$#', $this->sanitizePath($path))
+            || $this->isDirectMatch($path, '/dashboard/mensajes/enviar')
+            || $this->isDirectMatch($path, '/dashboard/mensajes/sync');
+        if ($esMensajesAjax) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/mensajes') === 0) {
+                    log_message('info', 'SessionFilter: Ruta mensajes permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
         // Rutas AJAX/acciones del módulo Empresa (getEmpresas, eliminar, activar) permitidas si tiene acceso a empresa
         $empresaExcepcionPrefijo = '/dashboard/empresa/eliminar/';
         $empresaExcepcionPrefijo2 = '/dashboard/empresa/activar/';
