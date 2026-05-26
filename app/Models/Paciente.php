@@ -290,6 +290,64 @@ class Paciente extends Model
     }
 
     /**
+     * Todos los pacientes activos cuyo teléfono coincide (mismas variantes que buscarPorTelefono).
+     *
+     * @return list<object>
+     */
+    public function listarPorTelefono(string $telefono, ?int $nutricionistaId = null): array
+    {
+        $telefono = trim($telefono);
+        if ($telefono === '') {
+            return [];
+        }
+
+        $soloDigitos = preg_replace('/\D/', '', $telefono);
+        if (strlen($soloDigitos) < 9) {
+            return [];
+        }
+
+        $ultimos9 = substr($soloDigitos, -9);
+        $builder = $this->where('estado', 'A')
+            ->groupStart()
+            ->like('telefono', $ultimos9, 'both')
+            ->groupEnd();
+
+        if ($nutricionistaId) {
+            $builder->where('nutricionista_id', $nutricionistaId);
+        }
+
+        $rows = $builder->findAll();
+        $vistos = [];
+        $out = [];
+        foreach ($rows as $row) {
+            if (!self::telefonosCoinciden($row->telefono ?? '', $telefono)) {
+                continue;
+            }
+            $id = (int) ($row->id ?? 0);
+            if ($id > 0 && !isset($vistos[$id])) {
+                $vistos[$id] = true;
+                $out[] = $row;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Comparar dos teléfonos (últimos 9 dígitos en Chile).
+     */
+    public static function telefonosCoinciden(?string $a, ?string $b): bool
+    {
+        $da = preg_replace('/\D/', '', (string) $a);
+        $db = preg_replace('/\D/', '', (string) $b);
+        if (strlen($da) < 9 || strlen($db) < 9) {
+            return false;
+        }
+
+        return substr($da, -9) === substr($db, -9);
+    }
+
+    /**
      * Buscar pacientes por término
      */
     public function buscarPacientes($termino, $nutricionistaId = null)

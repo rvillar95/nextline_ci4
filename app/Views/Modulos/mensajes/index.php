@@ -146,16 +146,36 @@ var SYNC_INTERVAL_MS = 5000;
 var MENSAJES_POR_LOTE = <?= (int) \App\Models\WhatsAppMensaje::MENSAJES_POR_LOTE ?>;
 var URL_SYNC = '<?= base_url('dashboard/mensajes/sync') ?>';
 
+function aplicarTokenCSRF(token) {
+    if (!token) return;
+    $('meta[name="csrf-token"]').attr('content', token);
+    $('input[name="csrf_test_name"]').val(token);
+}
+
 function obtenerTokenCSRF() {
-    var cookies = document.cookie.split(';');
-    for (var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i].trim();
-        if (cookie.indexOf('csrf_cookie_name=') !== -1) {
-            var parts = cookie.split('=');
-            if (parts.length >= 2) return decodeURIComponent(parts.slice(1).join('='));
-        }
+    var metaToken = $('meta[name="csrf-token"]').attr('content');
+    if (metaToken) return metaToken;
+    var inputToken = $('input[name="csrf_test_name"]').val();
+    if (inputToken) return inputToken;
+    return '<?= csrf_hash() ?>';
+}
+
+function actualizarTokenCSRFFromJson(res) {
+    if (res && res.csrf_token) {
+        aplicarTokenCSRF(res.csrf_token);
     }
-    return $('meta[name="csrf-token"]').attr('content') || $('input[name="csrf_test_name"]').val() || '';
+}
+
+function actualizarTokenCSRFFromAjax(xhr) {
+    if (!xhr) return;
+    var headerToken = xhr.getResponseHeader && xhr.getResponseHeader('X-CSRF-TOKEN');
+    if (headerToken) {
+        aplicarTokenCSRF(headerToken);
+        return;
+    }
+    if (xhr.responseJSON && xhr.responseJSON.csrf_token) {
+        aplicarTokenCSRF(xhr.responseJSON.csrf_token);
+    }
 }
 
 function escapeHtml(t) {
@@ -247,6 +267,10 @@ function formatearFecha(f) {
 function etiquetaEstado(m) {
     if (m.direccion !== 'enviado' || !m.estado_envio) return '';
     var e = m.estado_envio;
+    if (e === 'error' && m.error_mensaje) {
+        var corto = m.error_mensaje.length > 80 ? m.error_mensaje.substring(0, 80) + '…' : m.error_mensaje;
+        return ' · error: ' + corto;
+    }
     if (e === 'enviado' || e === 'sent') return ' · enviado';
     if (e === 'pendiente') return ' · enviado';
     return ' · ' + e;
@@ -314,6 +338,7 @@ function sincronizarMensajes() {
     }
     $.get(URL_SYNC, params, function(res) {
         if (!res.success) return;
+        actualizarTokenCSRFFromJson(res);
         if (res.conversaciones) renderListaConversaciones(res.conversaciones);
         if (pacienteActivoId && res.nuevos_mensajes && res.nuevos_mensajes.length) {
             var vacio = $('#hiloBody .empty-hilo').length;
@@ -346,6 +371,7 @@ function cargarHilo(pacienteId) {
             toastr.error(res.message || 'Error al cargar');
             return;
         }
+        actualizarTokenCSRFFromJson(res);
         $('#hiloHeader').html(htmlHeaderContacto(res.paciente));
         renderHiloInicial(res);
         aplicarEstadoVentana(res);
@@ -371,6 +397,7 @@ function cargarMensajesAnteriores() {
         before_id: hiloOldestId
     }, function(res) {
         hiloCargandoAnteriores = false;
+        actualizarTokenCSRFFromJson(res);
         if (!res.success || !res.mensajes.length) {
             if ($loader.length) $loader.remove();
             hiloHasMoreOlder = false;
@@ -429,19 +456,28 @@ $('#formEnviarMensaje').on('submit', function(e) {
         headers: { 'X-CSRF-TOKEN': csrf },
         data: { csrf_test_name: csrf, paciente_id: pacienteActivoId, mensaje: texto },
         success: function(res) {
-            $('#btnEnviarMensaje').prop('disabled', false);
+            actualizarTokenCSRFFromJson(res);
             if (res.success) {
                 $('#textoMensaje').val('');
                 toastr.success(res.message);
-                cargarHilo(pacienteActivoId);
+                sincronizarMensajes();
             } else {
                 toastr.error(res.message || 'Error');
             }
         },
         error: function(xhr) {
-            $('#btnEnviarMensaje').prop('disabled', false);
+            actualizarTokenCSRFFromAjax(xhr);
             var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error al enviar';
+            if (xhr.status === 403) {
+                msg = 'Sesión de seguridad expirada. Recargue la página e intente de nuevo.';
+            }
             toastr.error(msg);
+        },
+        complete: function() {
+            $('#btnEnviarMensaje').prop('disabled', false);
+            if ($('#textoMensaje').prop('disabled') === false) {
+                $('#textoMensaje').focus();
+            }
         }
     });
 });

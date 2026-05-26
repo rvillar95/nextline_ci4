@@ -242,4 +242,30 @@ class EmpresaConfiguracion extends Model
         }
         return null;
     }
+
+    /**
+     * Primera empresa con token y phone_number_id de WhatsApp Business en BD.
+     */
+    public function primeraEmpresaConWhatsAppConfigurado(): ?int
+    {
+        $db = \Config\Database::connect();
+        $row = $db->table($this->table)
+            ->select('empresa_id')
+            ->where('whatsapp_provider', 'whatsapp_business')
+            ->where('whatsapp_access_token IS NOT NULL', null, false)
+            ->where('whatsapp_access_token !=', '')
+            ->where('whatsapp_phone_number_id IS NOT NULL', null, false)
+            ->where('whatsapp_phone_number_id !=', '')
+            ->orderBy('empresa_id', 'ASC')
+            ->limit(1)
+            ->get()
+            ->getRow();
+
+        return $row ? (int) $row->empresa_id : null;
+    }
+
+    public function empresaTieneWhatsAppConfigurado(int $empresaId): bool
+    {
+        return $this->obtenerCredencialesWhatsApp($empresaId) !== null;
+    }
 }

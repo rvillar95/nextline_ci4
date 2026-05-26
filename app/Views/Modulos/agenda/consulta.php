@@ -302,6 +302,29 @@
             </div>
             <?php endif; ?>
 
+            <!-- Modal cancelar cita (consulta) -->
+            <div class="modal fade" id="modalCancelarCitaConsulta" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title"><i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">¿Cancelar esta cita? El horario quedará libre. Se notificará al paciente si tiene correo o WhatsApp configurado.</p>
+                            <label class="form-label small text-muted">Motivo (opcional)</label>
+                            <textarea class="form-control" id="motivoCancelarCitaConsulta" rows="2" placeholder="Ej.: Paciente no puede asistir"></textarea>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCitaConsulta">
+                                <i class="fas fa-times me-1"></i> Sí, cancelar cita
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Notas y Recordatorios del Nutricionista (Destacado) -->
             <?php if (!empty($cita->notas_nutricionista)): ?>
             <div class="section-card" style="border-left: 4px solid #FFA726 !important; background: linear-gradient(135deg, #FFF8E1 0%, #FFFFFF 100%);">
@@ -366,6 +389,14 @@
                                 <strong>Reservada por el paciente.</strong> Use el formulario "Aprobar reserva" más arriba para asignar tipo de consulta y tipo de pago; luego podrá iniciar la consulta cuando el paciente confirme.
                             </div>
                         <?php elseif ($estadoConsulta === 'pendiente'): ?>
+                            <?php
+                            $puedeCancelarConsulta = in_array($estadoCitaConsulta, ['pendiente', 'agendada', 'confirmada', 'en_proceso'], true);
+                            ?>
+                            <?php if ($puedeCancelarConsulta): ?>
+                            <button type="button" class="btn btn-outline-danger btn-action-large" id="btnCancelarCitaConsulta">
+                                <i class="fas fa-calendar-times me-2"></i> Cancelar cita
+                            </button>
+                            <?php endif; ?>
                             <button class="btn btn-success btn-action-large" onclick="iniciarConsulta(<?= $cita->id ?>)">
                                 <i class="fas fa-play-circle me-2"></i> Iniciar Consulta
                             </button>
@@ -1812,6 +1843,48 @@ $(document).ready(function() {
                     $form.find('input[name="csrf_test_name"]').val(r.csrf_token);
                 }
                 toastr.error((r.message || r.error || 'Error al aprobar la reserva'), 'Error');
+            }
+        });
+    });
+
+    $('#btnCancelarCitaConsulta').on('click', function() {
+        $('#motivoCancelarCitaConsulta').val('');
+        new bootstrap.Modal(document.getElementById('modalCancelarCitaConsulta')).show();
+    });
+
+    $('#btnConfirmarCancelarCitaConsulta').on('click', function() {
+        var $btn = $(this);
+        var detalleId = <?= (int)($cita->id ?? 0) ?>;
+        var motivo = $('#motivoCancelarCitaConsulta').val().trim();
+        var csrfToken = $('input[name="csrf_test_name"]').val() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+        var csrfName = 'csrf_test_name';
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cancelando...');
+        $.ajax({
+            url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+            type: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+            data: { [csrfName]: csrfToken, id: detalleId, motivo: motivo },
+            dataType: 'json',
+            success: function(response, textStatus, xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                else if (response && response.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                    $('input[name="csrf_test_name"]').val(response.csrf_token);
+                }
+                if (response && (response.success || response.message)) {
+                    toastr.success(response.message || 'Cita cancelada', 'Éxito', { timeOut: 4000 });
+                    setTimeout(function() {
+                        window.location.href = '<?= base_url('dashboard/agenda/lista') ?>';
+                    }, 1500);
+                } else {
+                    $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+                    toastr.error(response.message || response.error || 'Error al cancelar', 'Error');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+                var r = (xhr && xhr.responseJSON) || {};
+                toastr.error((r.message || r.error || 'Error al cancelar la cita'), 'Error');
             }
         });
     });

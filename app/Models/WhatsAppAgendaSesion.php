@@ -19,12 +19,19 @@ class WhatsAppAgendaSesion extends Model
         return $row ?: null;
     }
 
+    /**
+     * @param int $empresaId 0 hasta que el paciente elige nutricionista (entonces viene de usuario.empresa_id)
+     */
     public function guardarSesion(string $telefono, int $empresaId, string $paso, array $datos = []): void
     {
+        if (!empty($datos['empresa_id'])) {
+            $empresaId = (int) $datos['empresa_id'];
+        }
+
         $existente = $this->obtenerPorTelefono($telefono);
         $payload = [
             'telefono'         => $telefono,
-            'empresa_id'       => $empresaId,
+            'empresa_id'       => max(0, $empresaId),
             'paso'             => $paso,
             'datos'            => json_encode($datos, JSON_UNESCAPED_UNICODE),
             'factualizacion'   => date('Y-m-d H:i:s'),

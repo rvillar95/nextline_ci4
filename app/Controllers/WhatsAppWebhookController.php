@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\WhatsAppService;
+use App\Models\Paciente;
+use App\Models\WhatsAppAgendaSesion;
 use App\Models\WhatsAppMensaje;
 
 /**
@@ -12,12 +14,6 @@ use App\Models\WhatsAppMensaje;
  */
 class WhatsAppWebhookController extends BaseController
 {
-    protected $whatsappService;
-
-    public function __construct()
-    {
-        $this->whatsappService = new WhatsAppService();
-    }
 
     /**
      * Webhook para verificación (WhatsApp Business API)
@@ -133,15 +129,17 @@ class WhatsAppWebhookController extends BaseController
         $mensajeId = $message['id'] ?? null;
         $numeroOrigen = $message['from'] ?? null;
 
-        if ($tipo !== 'text') {
-            log_message('info', 'Mensaje no texto recibido: ' . $tipo);
+        $entrada = WhatsAppService::entradaDesdeWebhook($message);
+        if ($entrada === null) {
+            log_message('info', 'Mensaje WhatsApp no procesable: tipo=' . $tipo);
 
             return;
         }
 
-        $mensajeTexto = $message['text']['body'] ?? '';
+        $mensajeTexto = $entrada['comando'];
+        $mensajeMostrar = $entrada['texto_historial'];
 
-        log_message('info', 'Mensaje recibido de WhatsApp Business: ' . $numeroOrigen . ' - ' . $mensajeTexto);
+        log_message('info', 'Mensaje recibido de WhatsApp Business: ' . $numeroOrigen . ' - ' . $mensajeMostrar);
 
         $soloDigitos = preg_replace('/\D+/', '', (string) $numeroOrigen);
         if ($soloDigitos !== '') {
@@ -151,11 +149,16 @@ class WhatsAppWebhookController extends BaseController
         $metadata = $value['metadata'] ?? [];
         $lineaEmpresa = $metadata['display_phone_number'] ?? null;
 
-        $this->whatsappService->procesarMensajeEntrante(
+        $paciente = (new Paciente())->buscarPorTelefono($numeroOrigen);
+        $sesionAgenda = (new WhatsAppAgendaSesion())->obtenerPorTelefono($numeroOrigen);
+        $whatsappService = WhatsAppService::paraMensajeEntrante($paciente, $sesionAgenda);
+
+        $whatsappService->procesarMensajeEntrante(
             $numeroOrigen,
             $mensajeTexto,
             $mensajeId,
-            $lineaEmpresa
+            $lineaEmpresa,
+            $mensajeMostrar
         );
     }
 

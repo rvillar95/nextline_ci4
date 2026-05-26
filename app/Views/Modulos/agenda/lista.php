@@ -48,26 +48,59 @@
 #tablaAgenda tr.cita-destacada td {
     animation: citaDestacadaPulse 1.2s ease-in-out 4;
 }
+.agenda-page-header .agenda-header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.agenda-page-header .agenda-header-titles h2 {
+    font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+    margin-bottom: 0.25rem;
+}
+.agenda-page-header .agenda-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+@media (max-width: 767.98px) {
+    .agenda-page-header .agenda-header-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .agenda-page-header .agenda-header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+    .agenda-page-header .agenda-header-actions .btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.78rem;
+        padding: 0.6rem 0.45rem;
+    }
+}
 </style>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="main-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+            <div class="main-header agenda-page-header">
+                <div class="agenda-header-inner">
+                    <div class="agenda-header-titles">
                         <h2 style="color: white;"><i class="fas fa-calendar-check me-2"></i> Lista de Citas</h2>
                         <p style="color: white;">Gestione las citas agendadas de sus pacientes</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                    <div class="agenda-header-actions">
                         <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="btn btn-agenda-ghost" title="Ver agenda en calendario">
-                            <i class="fas fa-calendar-alt me-2"></i> Vista Calendario
+                            <i class="fas fa-calendar-alt me-2"></i><span class="d-none d-sm-inline">Vista </span>Calendario
                         </a>
                         <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
-                            <i class="fas fa-edit me-2"></i> Editar agenda
+                            <i class="fas fa-edit me-2"></i><span class="d-none d-sm-inline">Editar </span>Agenda
                         </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles">
-                            <i class="fas fa-clock me-2"></i> Crear Horarios
+                            <i class="fas fa-clock me-2"></i><span class="d-none d-sm-inline">Crear </span>Horarios
                         </button>
                     </div>
                 </div>

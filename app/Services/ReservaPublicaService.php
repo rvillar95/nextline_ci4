@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Libraries\RutChile;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Paciente;
 use App\Models\Usuario;
@@ -62,10 +63,28 @@ class ReservaPublicaService
         return $builder->get()->getResultArray();
     }
 
+    public function empresaIdDelNutricionista(int $nutricionistaId): int
+    {
+        if ($nutricionistaId <= 0) {
+            return 0;
+        }
+        $db = Database::connect();
+        $row = $db->table('usuario')
+            ->select('empresa_id')
+            ->where('id', $nutricionistaId)
+            ->where('perfil_id', Usuario::PERFIL_NUTRICIONISTA)
+            ->where('estado', 'A')
+            ->get()
+            ->getRow();
+
+        return $row && !empty($row->empresa_id) ? (int) $row->empresa_id : 0;
+    }
+
     /**
      * Nutricionistas con slots libres en una fecha concreta (Y-m-d).
+     * Si $empresaId es null o 0, lista todos los que tengan cupo (sin filtrar empresa).
      */
-    public function nutricionistasConSlotsEnFecha(int $empresaId, string $fecha): array
+    public function nutricionistasConSlotsEnFecha(?int $empresaId, string $fecha): array
     {
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
             return [];
@@ -77,17 +96,20 @@ class ReservaPublicaService
 
         $db = Database::connect();
         $builder = $db->table('usuario u')
-            ->select('u.id, u.nombre, u.apellido')
+            ->select('u.id, u.nombre, u.apellido, u.empresa_id')
             ->join('detalle_agenda da', 'da.usuario_id = u.id')
             ->join('agenda a', 'a.id = da.agenda_id')
             ->where('u.perfil_id', Usuario::PERFIL_NUTRICIONISTA)
             ->where('u.estado', 'A')
-            ->where('u.empresa_id', $empresaId)
             ->where('da.paciente_id', null)
             ->where('da.estado', 1)
             ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') = ", $fecha)
             ->groupBy('u.id')
             ->orderBy('u.nombre', 'ASC');
+
+        if ($empresaId !== null && $empresaId > 0) {
+            $builder->where('u.empresa_id', $empresaId);
+        }
 
         $rows = $builder->get()->getResultArray();
         if ($fecha !== $hoy) {
@@ -173,6 +195,58 @@ class ReservaPublicaService
     }
 
     /**
+     * Valida que el WhatsApp no agende con un RUT distinto al ya vinculado a ese número.
+     *
+     * @return array{tipo: string, rut_vinculado?: string, rut_vinculado_fmt?: string, nombre_vinculado?: string, telefono_rut?: string}|null
+     */
+    public function evaluarConflictoTelefonoRut(string $telefonoWa, string $rutIngresado): ?array
+    {
+        $rutNorm = Paciente::normalizarRutDni($rutIngresado);
+        if ($rutNorm === '' || strlen($rutNorm) < 8) {
+            return null;
+        }
+
+        $pacienteModel = new Paciente();
+        $vinculados = $pacienteModel->listarPorTelefono($telefonoWa);
+
+        $rutVinculado = '';
+        $nombreVinculado = '';
+        foreach ($vinculados as $p) {
+            $rutP = Paciente::normalizarRutDni($p->rut_dni ?? '');
+            if ($rutP === '') {
+                continue;
+            }
+            if ($rutP === $rutNorm) {
+                return null;
+            }
+            if ($rutVinculado === '') {
+                $rutVinculado = $rutP;
+                $nombreVinculado = trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''));
+            }
+        }
+
+        if ($rutVinculado !== '') {
+            return [
+                'tipo'              => 'preguntar',
+                'rut_vinculado'     => $rutVinculado,
+                'rut_vinculado_fmt' => RutChile::formatear($rutVinculado) ?: ($vinculados[0]->rut_dni ?? $rutVinculado),
+                'nombre_vinculado'  => $nombreVinculado,
+            ];
+        }
+
+        $existente = $this->pacientePorRut($rutIngresado);
+        if ($existente && !Paciente::telefonosCoinciden($existente['telefono'] ?? '', $telefonoWa)) {
+            return [
+                'tipo'          => 'bloquear',
+                'telefono_rut'  => trim((string) ($existente['telefono'] ?? '')),
+                'nombre_rut'    => trim(($existente['nombre'] ?? '') . ' ' . ($existente['apellido'] ?? '')),
+            ];
+        }
+
+        return null;
+    }
+
+    /**
      * Crear reserva (estado reservada, origen paciente). Retorna ['success' => bool, ...].
      */
     public function crearReserva(
@@ -195,6 +269,26 @@ class ReservaPublicaService
                 'success' => false,
                 'error'   => 'Faltan datos requeridos: RUT, nombre, apellido y correo.',
             ];
+        }
+
+        if ($telefono) {
+            $conflicto = $this->evaluarConflictoTelefonoRut($telefono, $rutDni);
+            if ($conflicto !== null) {
+                if (($conflicto['tipo'] ?? '') === 'bloquear' && !empty($conflicto['telefono_rut'])) {
+                    $tel = $conflicto['telefono_rut'];
+                    return [
+                        'success' => false,
+                        'error'   => 'Este RUT tiene otro teléfono registrado (' . $tel . '). '
+                            . 'Agende escribiendo desde ese número de WhatsApp.',
+                    ];
+                }
+
+                return [
+                    'success' => false,
+                    'error'   => 'Este WhatsApp ya está vinculado a otro RUT en la agenda. '
+                        . 'Use el teléfono registrado para el RUT que desea agendar.',
+                ];
+            }
         }
 
         $db = Database::connect();
@@ -232,7 +326,7 @@ class ReservaPublicaService
         if ($existente) {
             $pacienteId = (int) $existente->id;
             $update = ['email' => $email];
-            if ($telefono) {
+            if ($telefono && Paciente::telefonosCoinciden($existente->telefono ?? '', $telefono)) {
                 $update['telefono'] = $telefono;
             }
             $pacienteModel->update($pacienteId, $update);

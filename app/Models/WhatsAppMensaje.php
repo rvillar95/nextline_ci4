@@ -295,6 +295,7 @@ class WhatsAppMensaje extends Model
             'mensaje' => self::textoVisible($r->mensaje ?? '', $r->tipo_mensaje ?? null, $r),
             'tipo_mensaje' => $r->tipo_mensaje,
             'estado_envio' => $estado,
+            'error_mensaje' => $r->error_mensaje ?? null,
             'fecha' => $r->fecha_envio ?? $r->fcreacion ?? null,
         ];
     }

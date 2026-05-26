@@ -1206,14 +1206,17 @@ class AgendaController extends BaseController
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
-            // Confirmar/Cancelar solo en estados que el nutricionista puede gestionar desde la lista.
+            // Confirmar: pendiente/agendada/en_proceso. Cancelar: también confirmadas (el nutricionista puede liberar el horario).
             $estadoCitaLower = strtolower(trim((string)($r->estado_cita ?? '')));
             $esReservada = ($estadoCitaLower === 'reservada');
-            $puedeConfirmarOCancelar = in_array($estadoCitaLower, ['pendiente', 'en_proceso', 'agendada'], true);
+            $estadosConfirmar = ['pendiente', 'en_proceso', 'agendada'];
+            $estadosCancelar = ['pendiente', 'en_proceso', 'agendada', 'confirmada'];
             $botones = '';
-            if ($puedeConfirmarOCancelar) {
-                $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
-                          '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
+            if (in_array($estadoCitaLower, $estadosConfirmar, true)) {
+                $botones .= '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ';
+            }
+            if (in_array($estadoCitaLower, $estadosCancelar, true)) {
+                $botones .= '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
             }
             if ($esReservada) {
                 $botones .= '<a href="' . base_url('dashboard/agenda/consulta?id=' . $r->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-check-circle me-1"></i> Aprobar</a> ';

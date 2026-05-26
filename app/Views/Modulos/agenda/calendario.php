@@ -355,29 +355,129 @@
         border-color: rgba(255,255,255,0.9);
         color: #fff;
     }
+
+    .agenda-page-header .agenda-header-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    .agenda-page-header .agenda-header-titles {
+        flex: 1 1 220px;
+        min-width: 0;
+    }
+    .agenda-page-header .agenda-header-titles h2 {
+        font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+        margin-bottom: 0.25rem;
+    }
+    .agenda-page-header .agenda-header-titles p {
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+    .agenda-page-header .agenda-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .agenda-page-header .agenda-header-actions .btn {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 767.98px) {
+        .agenda-page-header .agenda-header-inner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .agenda-page-header .agenda-header-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+        }
+        .agenda-page-header .agenda-header-actions .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 0.6rem 0.45rem;
+            font-size: 0.78rem;
+        }
+        .agenda-page-header .agenda-header-actions .btn-agenda-cancelar {
+            grid-column: 1 / -1;
+        }
+        .agenda-page-header .agenda-header-actions .btn .me-2 {
+            margin-right: 0.35rem !important;
+        }
+        .section-card {
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        #calendar {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .fc .fc-toolbar.fc-header-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem !important;
+        }
+        .fc .fc-toolbar.fc-footer-toolbar {
+            margin-top: 0.5rem !important;
+        }
+        .fc .fc-toolbar-chunk {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 0.35rem;
+            width: 100%;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1rem !important;
+            line-height: 1.3 !important;
+            white-space: normal !important;
+            text-align: center;
+            padding: 0.15rem 0.25rem;
+            max-width: 100%;
+        }
+        .fc .fc-button {
+            padding: 0.4rem 0.55rem;
+            font-size: 0.78rem;
+        }
+        .fc .fc-button-group > .fc-button {
+            padding: 0.4rem 0.5rem;
+        }
+        .fc .fc-col-header-cell-cushion,
+        .fc .fc-timegrid-axis-cushion {
+            font-size: 0.72rem;
+        }
+        .fc .fc-timegrid-slot-label-cushion {
+            font-size: 0.7rem;
+        }
+    }
 </style>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="main-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+            <div class="main-header agenda-page-header">
+                <div class="agenda-header-inner">
+                    <div class="agenda-header-titles">
                         <h2 style="color: white;"><i class="fas fa-calendar-alt me-2"></i> Agenda de Citas</h2>
                         <p style="color: white;">Gestione las citas y horarios de sus pacientes</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                    <div class="agenda-header-actions">
                         <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-agenda-ghost" title="Ver lista de citas">
-                            <i class="fas fa-list me-2"></i> Vista Lista
+                            <i class="fas fa-list me-2"></i><span class="d-none d-sm-inline">Vista </span>Lista
                         </a>
                         <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
-                            <i class="fas fa-edit me-2"></i> Editar agenda
+                            <i class="fas fa-edit me-2"></i><span class="d-none d-sm-inline">Editar </span>Agenda
                         </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
-                            <i class="fas fa-clock me-2"></i> Crear Horarios
+                            <i class="fas fa-clock me-2"></i><span class="d-none d-sm-inline">Crear </span>Horarios
                         </button>
                         <a href="<?= base_url('dashboard/agenda/cancelar-horas') ?>" class="btn btn-agenda-cancelar" title="Cancelar horas masivamente por emergencia o enfermedad">
-                            <i class="fas fa-calendar-times me-2"></i> Cancelar Horas
+                            <i class="fas fa-calendar-times me-2"></i>Cancelar horas
                         </a>
                     </div>
                 </div>
@@ -724,6 +824,29 @@ var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre 
     </div>
 </div>
 
+<!-- Modal cancelar cita (desde vista calendario) -->
+<div class="modal fade" id="modalCancelarCitaCalendario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title"><i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.</p>
+                <label class="form-label small text-muted">Motivo de cancelación (opcional)</label>
+                <textarea class="form-control" id="motivoCancelarCitaCalendario" rows="2" placeholder="Ej.: Paciente reprogramó"></textarea>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCitaCalendario">
+                    <i class="fas fa-times me-1"></i> Sí, cancelar cita
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para editar modalidad de un horario -->
 <div class="modal fade" id="modalEditarModalidad" tabindex="-1">
     <div class="modal-dialog">
@@ -844,6 +967,46 @@ function actualizarTokenCSRF(xhr) {
 var calendar;
 var selectedEvent = null;
 
+function agendaEsVistaMovil() {
+    return window.matchMedia('(max-width: 767.98px)').matches;
+}
+
+function toolbarCalendarioPorPantalla() {
+    if (agendaEsVistaMovil()) {
+        return {
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: 'today'
+            },
+            footerToolbar: {
+                center: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }
+        };
+    }
+    return {
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        footerToolbar: false
+    };
+}
+
+function aplicarToolbarResponsiveCalendario() {
+    if (!calendar) return;
+    var cfg = toolbarCalendarioPorPantalla();
+    calendar.setOption('headerToolbar', cfg.headerToolbar);
+    calendar.setOption('footerToolbar', cfg.footerToolbar);
+}
+
+var resizeToolbarTimer;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeToolbarTimer);
+    resizeToolbarTimer = setTimeout(aplicarToolbarResponsiveCalendario, 150);
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar si debemos abrir el modal de crear horarios
     if (sessionStorage.getItem('abrirModalCrearHorarios') === 'true') {
@@ -854,10 +1017,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     var calendarEl = document.getElementById('calendar');
-    
+    var toolbarCfg = toolbarCalendarioPorPantalla();
+
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
+        initialView: agendaEsVistaMovil() ? 'timeGridDay' : 'timeGridWeek',
         locale: 'es',
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día'
+        },
         slotMinTime: '09:00:00', // Hora mínima por defecto, se actualizará dinámicamente
         slotDuration: '00:30:00',
         height: 'auto', // Altura automática
@@ -870,11 +1040,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 displayEventTime: false
             }
         },
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
+        headerToolbar: toolbarCfg.headerToolbar,
+        footerToolbar: toolbarCfg.footerToolbar,
         events: function(fetchInfo, successCallback, failureCallback) {
             $.ajax({
                 url: '<?= base_url('dashboard/agenda/getEventos') ?>',
@@ -1909,10 +2076,22 @@ function cargarInformacionCita(detalleAgendaId) {
             // Botón para iniciar consulta (solo si está confirmada y no iniciada)
             if (response.paciente && response.estado_cita === 'confirmada' && !response.fecha_inicio_real) {
                 html += '<div class="row mt-3">';
-                html += '<div class="col-12 text-center">';
+                html += '<div class="col-12 text-center d-flex flex-wrap justify-content-center gap-2">';
                 html += '<a href="<?= base_url('dashboard/agenda/consulta?id=') ?>' + response.id + '" class="btn btn-success btn-lg">';
                 html += '<i class="fas fa-play-circle me-2"></i>Iniciar Consulta';
                 html += '</a>';
+                html += '<button type="button" class="btn btn-outline-danger btn-lg" onclick="cancelarCitaCalendario(' + response.id + ')">';
+                html += '<i class="fas fa-calendar-times me-2"></i>Cancelar cita';
+                html += '</button>';
+                html += '</div></div>';
+            }
+
+            // Cancelar citas pendientes/agendadas/en proceso (sin duplicar si ya se mostró arriba)
+            var estadosCancelablesCal = ['pendiente', 'agendada', 'en_proceso'];
+            if (response.paciente && estadosCancelablesCal.indexOf(estadoCitaRaw) !== -1 && !response.fecha_fin_real) {
+                html += '<div class="row mt-3"><div class="col-12 text-center">';
+                html += '<button type="button" class="btn btn-outline-danger" onclick="cancelarCitaCalendario(' + response.id + ')">';
+                html += '<i class="fas fa-calendar-times me-2"></i>Cancelar cita</button>';
                 html += '</div></div>';
             }
             
@@ -1968,6 +2147,49 @@ function cargarInformacionCita(detalleAgendaId) {
         }
     });
 }
+
+var citaIdCancelarCalendario = null;
+
+function cancelarCitaCalendario(detalleAgendaId) {
+    citaIdCancelarCalendario = detalleAgendaId;
+    $('#motivoCancelarCitaCalendario').val('');
+    new bootstrap.Modal(document.getElementById('modalCancelarCitaCalendario')).show();
+}
+
+$('#btnConfirmarCancelarCitaCalendario').on('click', function() {
+    if (!citaIdCancelarCalendario) return;
+    var id = citaIdCancelarCalendario;
+    var motivo = $('#motivoCancelarCitaCalendario').val().trim();
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: { csrf_test_name: csrfToken, id: id, motivo: motivo },
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            if (response && (response.success || response.message)) {
+                bootstrap.Modal.getInstance(document.getElementById('modalCancelarCitaCalendario')).hide();
+                $('#modalVerCita').modal('hide');
+                citaIdCancelarCalendario = null;
+                toastr.success(response.message || 'Cita cancelada', 'Éxito');
+                if (typeof calendar !== 'undefined' && calendar) calendar.refetchEvents();
+            } else {
+                toastr.error((response && (response.message || response.error)) || 'Error al cancelar', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            var r = xhr.responseJSON || {};
+            toastr.error(r.message || r.error || 'Error al cancelar la cita', 'Error');
+        }
+    });
+});
 
 // Función para guardar las notas del nutricionista
 function guardarNotasNutricionista(event, detalleAgendaId) {
