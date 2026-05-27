@@ -512,7 +512,7 @@ exit(); */
                     <?php echo $this->renderSection("pago/editar"); ?>
                     <!-- END Section Pagos -->
                     
-                    <!-- Secciones de Botones de Pago (Mercado Pago) -->
+                    <!-- Tarifas de consulta / Mercado Pago -->
                     <?php echo $this->renderSection("boton_pago/lista"); ?>
                     <?php echo $this->renderSection("boton_pago/crear"); ?>
                     <?php echo $this->renderSection("boton_pago/ver"); ?>

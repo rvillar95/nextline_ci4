@@ -658,21 +658,28 @@
                         </select>
                     </div>
                     
-                    <?php if (!empty($plantillas_pago)): ?>
+                    <?php if (!empty($mercado_pago_habilitado)): ?>
                     <div class="form-group">
-                        <label>Tipo de Pago <small class="text-muted">(Opcional)</small></label>
+                        <label>Cobro de la consulta <small class="text-muted">(opcional)</small></label>
+                        <?php if (!empty($plantillas_pago)): ?>
                         <select name="boton_pago_plantilla_id" id="boton_pago_plantilla_id" class="form-control">
-                            <option value="">-- Sin pago --</option>
+                            <option value="">— Sin cobro —</option>
                             <?php foreach ($plantillas_pago as $plantilla) : ?>
                                 <option value="<?= esc($plantilla->id) ?>">
-                                    <?= esc($plantilla->titulo) ?> - 
-                                    <?= number_format($plantilla->monto, 0, ',', '.') ?> <?= esc($plantilla->moneda) ?>
+                                    <?= esc($plantilla->titulo) ?> —
+                                    $<?= number_format($plantilla->monto, 0, ',', '.') ?> <?= esc($plantilla->moneda) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                         <small class="form-text text-muted">
-                            Si selecciona un tipo de pago, se enviará automáticamente el botón de pago al correo del paciente.
+                            Si elige una tarifa, el paciente recibirá primero un correo para <strong>confirmar la cita</strong>; después, otro con el <strong>link de pago</strong> (Mercado Pago).
                         </small>
+                        <?php else: ?>
+                        <p class="form-text text-muted mb-0">
+                            No hay tarifas definidas.
+                            <a href="<?= base_url('dashboard/boton-pago/lista') ?>">Crear tarifas de consulta</a>
+                        </p>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                     
@@ -1978,6 +1985,27 @@ function cargarInformacionCita(detalleAgendaId) {
                 }
                 html += '</div></div></div>';
             }
+
+            if (response.cobro && response.cobro.tiene) {
+                var cobro = response.cobro;
+                var estadoCobroBadge = '<span class="badge bg-secondary">' + (cobro.estado_label || cobro.estado) + '</span>';
+                if (cobro.estado === 'pendiente') {
+                    estadoCobroBadge = '<span class="badge bg-warning text-dark">Pendiente de pago</span>';
+                } else if (cobro.estado === 'completado' || cobro.estado === 'aprobado') {
+                    estadoCobroBadge = '<span class="badge bg-success">Pagado</span>';
+                }
+                html += '<div class="row mt-2"><div class="col-12"><div class="card border-0 shadow-sm" style="border-left:4px solid #30cfd0!important">';
+                html += '<div class="card-body"><h6 class="card-title text-primary"><i class="fas fa-receipt me-2"></i>Cobro de la cita</h6><hr>';
+                html += '<p class="mb-1"><strong>Concepto:</strong> ' + (cobro.concepto || 'Consulta') + '</p>';
+                html += '<p class="mb-1"><strong>Monto:</strong> $' + (cobro.monto_formateado || cobro.monto) + ' ' + (cobro.moneda || 'CLP') + ' · ' + (cobro.medio || 'Mercado Pago') + '</p>';
+                html += '<p class="mb-2"><strong>Estado:</strong> ' + estadoCobroBadge;
+                if (cobro.fecha_pago) html += ' <small class="text-muted ms-1">' + cobro.fecha_pago + '</small>';
+                html += '</p>';
+                if (cobro.puede_reenviar) {
+                    html += '<button type="button" class="btn btn-sm btn-outline-primary btn-reenviar-pago-cita" data-detalle-id="' + response.id + '"><i class="fas fa-paper-plane me-1"></i> Reenviar link de pago</button>';
+                }
+                html += '</div></div></div></div>';
+            }
             
             html += '</div>';
             
@@ -2283,6 +2311,35 @@ function verificarConsultasProximas() {
         }
     });
 }
+
+$(document).on('click', '.btn-reenviar-pago-cita', function() {
+    var detalleId = $(this).data('detalle-id');
+    if (!detalleId) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    var csrfToken = obtenerTokenCSRF() || $('input[name="csrf_test_name"]').val() || '<?= csrf_hash() ?>';
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/reenviarLinkPagoCita') ?>',
+        type: 'POST',
+        data: { detalle_agenda_id: detalleId, csrf_test_name: csrfToken },
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        dataType: 'json',
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (res.success) {
+                toastr.success(res.message || 'Link de pago reenviado al paciente.', 'Cobro');
+            } else {
+                toastr.error(res.error || 'No se pudo reenviar.', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Error al reenviar.';
+            toastr.error(msg, 'Error');
+        },
+        complete: function() { $btn.prop('disabled', false); }
+    });
+});
 
 // Verificar consultas próximas cada 5 minutos
 setInterval(verificarConsultasProximas, 300000); // 5 minutos

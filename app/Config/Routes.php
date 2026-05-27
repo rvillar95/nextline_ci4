@@ -371,6 +371,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('guardarMediciones', 'Dashboard\AgendaController::guardarMediciones');
         $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
+        $routes2->post('reenviarLinkPagoCita', 'Dashboard\AgendaController::reenviarLinkPagoCita');
     });
 
     $routes->group('agenda/cancelar-horas', function ($routes2) {
@@ -407,6 +408,7 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('pago', function ($routes2) {
+        $routes2->get('cobros', 'Dashboard\PagoController::cobrosPacientes');
         $routes2->get('lista', 'Dashboard\PagoController::lista');
         $routes2->get('registro', 'Dashboard\PagoController::registro');
         $routes2->get('editar/(:num)', 'Dashboard\PagoController::editar/$1');

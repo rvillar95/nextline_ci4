@@ -187,7 +187,7 @@
                             </div>
                         </div>
 
-                        <!-- Sección: Mercado Pago (Solo si tiene acceso al módulo Botones de Pago) -->
+                        <!-- Sección: Mercado Pago (cobros a pacientes) -->
                         <?php if (isset($tieneAccesoBotonesPago) && $tieneAccesoBotonesPago): ?>
                         <div class="card mb-4">
                             <div class="card-header bg-info text-white">
@@ -199,7 +199,7 @@
                             <div class="card-body">
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle mr-2"></i>
-                                    <strong>Nota:</strong> Configura tus credenciales de Mercado Pago para usar el módulo de Botones de Pago. 
+                                    <strong>Nota:</strong> Configura Mercado Pago para cobrar consultas con las tarifas que definas en el menú «Tarifas de consulta». 
                                     Puedes obtener tus credenciales desde tu <a href="https://www.mercadopago.com.mx/developers/panel" target="_blank" class="alert-link">panel de desarrolladores</a>.
                                 </div>
 

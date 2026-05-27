@@ -254,6 +254,15 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Tarifas de consulta: /editar/{id} si tiene acceso al módulo boton-pago
+        if (preg_match('#^/dashboard/boton-pago/editar/[0-9]+/?$#', $this->sanitizePath($path))) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/boton-pago') === 0) {
+                    return;
+                }
+            }
+        }
+
         // Rutas AJAX/acciones del módulo Empresa (getEmpresas, eliminar, activar) permitidas si tiene acceso a empresa
         $empresaExcepcionPrefijo = '/dashboard/empresa/eliminar/';
         $empresaExcepcionPrefijo2 = '/dashboard/empresa/activar/';

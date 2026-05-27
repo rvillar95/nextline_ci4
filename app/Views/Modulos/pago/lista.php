@@ -2,18 +2,52 @@
 
 <?= $this->section('pago/lista') ?>
 
+<?php
+$scope = $scope ?? 'cita';
+$esSuperAdmin = !empty($es_super_admin);
+$tituloLista = match ($scope) {
+    'cita' => 'Cobros a pacientes',
+    'plataforma' => 'Pagos de plataforma',
+    default => 'Gestión de pagos',
+};
+$subtituloLista = match ($scope) {
+    'cita' => 'Pagos de consultas cobrados con Mercado Pago',
+    'plataforma' => 'Suscripciones y pagos del sistema NutriNext',
+    default => 'Todos los pagos registrados',
+};
+?>
+
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="main-header">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <h2 style="color: white;"><i class="fas fa-credit-card me-2"></i> Gestión de Pagos</h2>
-                        <p style="color: white;">Administre los pagos y suscripciones del sistema</p>
+                        <h2 style="color: white;"><i class="fas fa-hand-holding-usd me-2"></i> <?= esc($tituloLista) ?></h2>
+                        <p style="color: white;" class="mb-0"><?= esc($subtituloLista) ?></p>
                     </div>
-                    <a href="<?= base_url('dashboard/pago/registro') ?>" class="btn btn-light">
-                        <i class="fas fa-plus me-2"></i> Registrar Pago
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <?php if ($esSuperAdmin): ?>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="<?= base_url('dashboard/pago/cobros') ?>" class="btn <?= $scope === 'cita' ? 'btn-light' : 'btn-outline-light' ?>">Pacientes</a>
+                            <a href="<?= base_url('dashboard/pago/lista?scope=plataforma') ?>" class="btn <?= $scope === 'plataforma' ? 'btn-light' : 'btn-outline-light' ?>">Plataforma</a>
+                            <a href="<?= base_url('dashboard/pago/lista?scope=todos') ?>" class="btn <?= $scope === 'todos' ? 'btn-light' : 'btn-outline-light' ?>">Todos</a>
+                        </div>
+                        <?php if ($scope !== 'cita'): ?>
+                        <a href="<?= base_url('dashboard/pago/registro') ?>" class="btn btn-light">
+                            <i class="fas fa-plus me-2"></i> Registrar pago
+                        </a>
+                        <?php else: ?>
+                        <a href="<?= base_url('dashboard/boton-pago/lista') ?>" class="btn btn-light">
+                            <i class="fas fa-tags me-2"></i> Tarifas de consulta
+                        </a>
+                        <?php endif; ?>
+                        <?php elseif ($scope === 'cita'): ?>
+                        <a href="<?= base_url('dashboard/boton-pago/lista') ?>" class="btn btn-light">
+                            <i class="fas fa-tags me-2"></i> Tarifas de consulta
+                        </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
 
@@ -22,11 +56,11 @@
                     <table id="tablaPagos" class="table table-bordered table-striped nowrap" style="width:100%">
                         <thead>
                             <tr>
-                                <th>Empresa</th>
+                                <?php if ($scope === 'todos' || $scope === 'plataforma'): ?><th>Empresa</th><?php endif; ?>
                                 <th>Monto</th>
                                 <th>Tipo</th>
                                 <th>Estado</th>
-                                <th>Fecha Pago</th>
+                                <th>Fecha pago</th>
                                 <th>Referencia</th>
                                 <th>Acciones</th>
                             </tr>
@@ -42,79 +76,53 @@
 
 <script>
 $(document).ready(function() {
-    var table = $('#tablaPagos').DataTable({
-        "processing": true,
-        "serverSide": true,
-        "ajax": {
-            "url": "<?= base_url('dashboard/pago/getPagos') ?>",
-            "type": "GET"
+    var scopePago = <?= json_encode($scope) ?>;
+    var mostrarEmpresa = (scopePago === 'todos' || scopePago === 'plataforma');
+    var columnas = [];
+    if (mostrarEmpresa) {
+        columnas.push({ data: 0 });
+    }
+    var baseIdx = mostrarEmpresa ? 1 : 0;
+    columnas.push(
+        { data: baseIdx },
+        { data: baseIdx + 1 },
+        { data: baseIdx + 2 },
+        { data: baseIdx + 3 },
+        { data: baseIdx + 4 },
+        { data: baseIdx + 5, orderable: false }
+    );
+
+    $('#tablaPagos').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "<?= base_url('dashboard/pago/getPagos') ?>",
+            type: "GET",
+            data: function(d) {
+                d.scope = scopePago;
+                if (scopePago === 'cita') {
+                    d.tipo_pago = 'cita';
+                } else if (scopePago === 'plataforma') {
+                    d.tipo_pago = '__plataforma__';
+                }
+            }
         },
-        "columns": [
-            { "data": 0 },
-            { "data": 1 },
-            { "data": 2 },
-            { "data": 3 },
-            { "data": 4 },
-            { "data": 5 },
-            { "data": 6, "orderable": false }
-        ],
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        columns: columnas,
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
         },
-        "responsive": true,
-        "pageLength": 25,
-        "order": [[4, "desc"]]
+        responsive: true,
+        pageLength: 25,
+        order: [[mostrarEmpresa ? 4 : 3, "desc"]]
     });
 });
 
-// Función para ver detalles de un pago
 function verPago(pagoId) {
     if (!pagoId) {
         alert('Error: ID de pago no válido');
         return;
     }
-    
-    // Redirigir a la vista de detalles del pago
-    // Si el pago tiene detalle_agenda_id, mostrar en botones de pago
-    // Si no, mostrar en el módulo de pagos
     window.location.href = '<?= base_url('dashboard/pago/editar/') ?>' + pagoId;
-}
-
-// Función para procesar un pago pendiente
-function procesarPago(pagoId) {
-    if (!pagoId) {
-        alert('Error: ID de pago no válido');
-        return;
-    }
-    
-    if (!confirm('¿Está seguro de que desea procesar este pago?')) {
-        return;
-    }
-    
-    var referencia = prompt('Ingrese la referencia del pago (opcional):', '');
-    
-    $.ajax({
-        url: '<?= base_url('dashboard/pago/procesar') ?>',
-        type: 'POST',
-        data: {
-            id: pagoId,
-            referencia: referencia || '',
-            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                alert('Pago procesado exitosamente');
-                $('#tablaPagos').DataTable().ajax.reload();
-            } else {
-                alert('Error: ' + (response.error || 'No se pudo procesar el pago'));
-            }
-        },
-        error: function(xhr) {
-            console.error('Error:', xhr);
-            alert('Error al procesar el pago. Por favor, intente nuevamente.');
-        }
-    });
 }
 </script>
 

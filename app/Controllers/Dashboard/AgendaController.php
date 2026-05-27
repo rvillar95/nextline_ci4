@@ -84,10 +84,12 @@ class AgendaController extends BaseController
         $usuario = session()->get('usuario');
         $empresaId = $usuario['empresa_id'] ?? null;
         $data['plantillas_pago'] = [];
+        $data['mercado_pago_habilitado'] = false;
         
         if ($empresaId) {
             $empresaConfigModel = new EmpresaConfiguracion();
-            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+            $data['mercado_pago_habilitado'] = $empresaConfigModel->mercadoPagoHabilitado($empresaId);
+            if ($data['mercado_pago_habilitado']) {
                 $plantillaModel = new BotonPagoPlantilla();
                 $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
             }
@@ -370,6 +372,8 @@ class AgendaController extends BaseController
                 'rut_dni' => $cita->rut_dni ?? null
             ];
         }
+
+        $data['cobro'] = $this->obtenerResumenCobroCita((int) $detalleAgendaId);
 
         return $this->response->setJSON($data);
     }
@@ -1983,6 +1987,129 @@ class AgendaController extends BaseController
     }
 
     /**
+     * Resumen de cobro asociado a una cita (para API y vistas).
+     */
+    private function obtenerResumenCobroCita(int $detalleAgendaId): array
+    {
+        $pagoModel = new \App\Models\Pago();
+        $pago = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$pago) {
+            return ['tiene' => false];
+        }
+
+        $estado = strtolower(trim((string) ($pago->estado_pago ?? '')));
+        $puedeReenviar = ($estado === 'pendiente' && !empty($pago->mp_preference_id));
+
+        return [
+            'tiene' => true,
+            'pago_id' => (int) $pago->id,
+            'estado' => $estado,
+            'estado_label' => match ($estado) {
+                'pendiente' => 'Pendiente de pago',
+                'completado', 'aprobado' => 'Pagado',
+                'procesando' => 'Procesando',
+                'fallido' => 'Fallido',
+                'reembolsado' => 'Reembolsado',
+                default => ucfirst($estado ?: 'Desconocido'),
+            },
+            'monto' => (float) ($pago->monto ?? 0),
+            'monto_formateado' => number_format((float) ($pago->monto ?? 0), 0, ',', '.'),
+            'moneda' => $pago->moneda ?? 'CLP',
+            'concepto' => $this->extraerConceptoPagoDesdeObservaciones($pago->observaciones ?? ''),
+            'medio' => 'Mercado Pago',
+            'puede_reenviar' => $puedeReenviar,
+            'fecha_pago' => !empty($pago->fecha_pago) ? date('d/m/Y H:i', strtotime($pago->fecha_pago)) : null,
+        ];
+    }
+
+    private function extraerConceptoPagoDesdeObservaciones(string $observaciones): string
+    {
+        if (preg_match('/Plantilla:\s*(.+)$/i', $observaciones, $m)) {
+            return trim($m[1]);
+        }
+        return 'Consulta nutricional';
+    }
+
+    /**
+     * Envía el correo con link MP para el pago pendiente de una cita.
+     */
+    private function enviarLinkPagoPendienteCita(int $detalleAgendaId, int $pacienteId): void
+    {
+        $db = \Config\Database::connect();
+        $pagoModel = new \App\Models\Pago();
+        $pago = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->where('estado_pago', 'pendiente')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$pago || empty($pago->mp_preference_id)) {
+            throw new \Exception('No hay un cobro pendiente con link de pago para esta cita.');
+        }
+
+        $empresaId = $pago->empresa_id ?? null;
+        if (!$empresaId) {
+            throw new \Exception('No se pudo determinar la empresa del cobro.');
+        }
+
+        $pacienteModel = new \App\Models\Paciente();
+        $paciente = $pacienteModel->find($pacienteId);
+        if (!$paciente || empty($paciente->email)) {
+            throw new \Exception('El paciente no tiene correo registrado.');
+        }
+
+        $citaCompleta = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha, da.hora_inicio, da.hora_fin')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+        if (!$citaCompleta) {
+            throw new \Exception('Cita no encontrada.');
+        }
+
+        $empresaConfigModel = new \App\Models\EmpresaConfiguracion();
+        $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+        if (!$credenciales || empty($credenciales['habilitado'])) {
+            throw new \Exception('Mercado Pago no está configurado para esta empresa.');
+        }
+
+        $mercadoPagoService = new \App\Services\MercadoPagoService(
+            $credenciales['access_token'],
+            $credenciales['public_key'],
+            $credenciales['mode'],
+            rtrim(base_url(), '/')
+        );
+
+        $preferencia = $mercadoPagoService->obtenerPreferencia($pago->mp_preference_id);
+        if (!$preferencia) {
+            throw new \Exception('No se pudo obtener el link de pago desde Mercado Pago.');
+        }
+
+        $initPoint = ($credenciales['mode'] === 'sandbox')
+            ? ($preferencia->sandbox_init_point ?? null)
+            : ($preferencia->init_point ?? null);
+        if (empty($initPoint)) {
+            throw new \Exception('El link de pago no está disponible. Intente nuevamente más tarde.');
+        }
+
+        $plantillaTemporal = (object) [
+            'titulo' => $this->extraerConceptoPagoDesdeObservaciones($pago->observaciones ?? ''),
+            'descripcion' => $pago->observaciones ?? 'Pago de consulta nutricional',
+            'monto' => $pago->monto,
+            'moneda' => $pago->moneda ?? 'CLP',
+        ];
+
+        if (!$this->enviarEmailBotonPago($paciente, $citaCompleta, $plantillaTemporal, $initPoint)) {
+            throw new \Exception('No se pudo enviar el correo con el link de pago.');
+        }
+    }
+
+    /**
      * Crear pago desde plantilla SIN enviar email (el email se enviará cuando el paciente confirme)
      */
     private function crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $plantillaId)
@@ -3351,15 +3478,69 @@ class AgendaController extends BaseController
         // Para citas reservadas: cargar modalidades y plantillas de pago (formulario Aprobar reserva)
         $data['modalidades'] = $db->table('modalidad_agenda')->orderBy('id', 'ASC')->get()->getResult();
         $data['plantillas_pago'] = [];
+        $data['mercado_pago_habilitado'] = false;
+        $data['pago_cita'] = null;
         if ($empresaId) {
             $empresaConfigModel = new EmpresaConfiguracion();
-            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+            $data['mercado_pago_habilitado'] = $empresaConfigModel->mercadoPagoHabilitado($empresaId);
+            if ($data['mercado_pago_habilitado']) {
                 $plantillaModel = new BotonPagoPlantilla();
                 $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
             }
         }
+        $pagoModel = new \App\Models\Pago();
+        $data['pago_cita'] = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->orderBy('id', 'DESC')
+            ->first();
 
         return view('Modulos/agenda/consulta', $data);
+    }
+
+    /**
+     * Reenviar por correo el link de pago Mercado Pago de una cita (pago pendiente).
+     */
+    public function reenviarLinkPagoCita()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'csrf_hash' => csrf_hash()])
+                ->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(401);
+        }
+
+        $detalleAgendaId = (int) ($this->request->getPost('detalle_agenda_id') ?? 0);
+        if ($detalleAgendaId <= 0) {
+            return $this->response->setJSON([
+                'error' => 'ID de cita inválido',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $db = \Config\Database::connect();
+        $cita = $db->table('detalle_agenda')->where('id', $detalleAgendaId)->where('usuario_id', $usuarioId)->get()->getRow();
+        if (!$cita || empty($cita->paciente_id)) {
+            return $this->response->setJSON([
+                'error' => 'Cita no encontrada',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(404);
+        }
+
+        try {
+            $this->enviarLinkPagoPendienteCita($detalleAgendaId, (int) $cita->paciente_id);
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Link de pago reenviado al correo del paciente.',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        } catch (\Throwable $e) {
+            log_message('error', 'reenviarLinkPagoCita: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => $e->getMessage(),
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
     }
 
     /**

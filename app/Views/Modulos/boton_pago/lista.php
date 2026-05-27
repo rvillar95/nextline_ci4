@@ -35,11 +35,11 @@
             <div class="main-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h2 style="color: white;"><i class="fas fa-credit-card me-2"></i> Botones de Pago</h2>
-                        <p style="color: white;">Gestiona los botones de pago creados con Mercado Pago</p>
+                        <h2 style="color: white;"><i class="fas fa-tags me-2"></i> Tarifas de consulta</h2>
+                        <p style="color: white;">Define los montos que puedes cobrar al agendar citas (vía Mercado Pago)</p>
                     </div>
                     <a href="<?= base_url('dashboard/boton-pago/crear') ?>" class="btn btn-light">
-                        <i class="fas fa-plus me-2"></i> Crear Botón de Pago
+                        <i class="fas fa-plus me-2"></i> Nueva tarifa
                     </a>
                 </div>
             </div>
@@ -62,9 +62,9 @@
                 <?php if (empty($plantillas)): ?>
                     <div class="text-center py-5">
                         <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">No hay plantillas de botones de pago creadas aún</p>
+                        <p class="text-muted">Aún no has definido tarifas. Créalas aquí y elígelas al agendar una cita.</p>
                         <a href="<?= base_url('dashboard/boton-pago/crear') ?>" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i> Crear Primera Plantilla
+                            <i class="fas fa-plus me-2"></i> Crear primera tarifa
                         </a>
                     </div>
                 <?php else: ?>
@@ -103,13 +103,13 @@
                                         <td><?= date('d/m/Y H:i', strtotime($plantilla['fcreacion'] ?? $plantilla->fcreacion ?? 'now')) ?></td>
                                         <td>
                                             <div class="btn-group" role="group">
-                                                <a href="<?= base_url('dashboard/boton-pago/editar/' . ($plantilla['id'] ?? $plantilla->id ?? '')) ?>" 
-                                                   class="btn btn-sm btn-info" title="Editar plantilla">
+                                                <a href="<?= base_url('dashboard/boton-pago/crear?plantilla_id=' . (int)($plantilla['id'] ?? $plantilla->id ?? 0)) ?>" 
+                                                   class="btn btn-sm btn-info" title="Editar tarifa">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 <a href="<?= base_url('dashboard/boton-pago/crear') ?>" 
-                                                   class="btn btn-sm btn-primary" title="Crear nueva plantilla">
-                                                    <i class="fas fa-plus"></i>
+                                                   class="btn btn-sm btn-outline-secondary" title="Duplicar como nueva tarifa">
+                                                    <i class="fas fa-copy"></i>
                                                 </a>
                                             </div>
                                         </td>

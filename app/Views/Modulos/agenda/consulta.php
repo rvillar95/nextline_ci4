@@ -231,6 +231,54 @@
                 </div>
             </div>
 
+            <?php if (!empty($mercado_pago_habilitado)): ?>
+            <?php
+            $pagoCita = $pago_cita ?? null;
+            $estadoPagoCita = $pagoCita ? strtolower(trim((string)($pagoCita->estado_pago ?? ''))) : '';
+            $conceptoPago = 'Consulta nutricional';
+            if ($pagoCita && !empty($pagoCita->observaciones) && preg_match('/Plantilla:\s*(.+)$/i', (string)$pagoCita->observaciones, $mConcepto)) {
+                $conceptoPago = trim($mConcepto[1]);
+            }
+            ?>
+            <div class="section-card" style="border-left-color: #30cfd0 !important;">
+                <h5 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i> Cobro de esta cita</h5>
+                <?php if ($pagoCita): ?>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-8">
+                        <p class="mb-1"><strong>Concepto:</strong> <?= esc($conceptoPago) ?></p>
+                        <p class="mb-1"><strong>Monto:</strong> $<?= number_format((float)($pagoCita->monto ?? 0), 0, ',', '.') ?> <?= esc($pagoCita->moneda ?? 'CLP') ?> <span class="text-muted">· Mercado Pago</span></p>
+                        <p class="mb-0"><strong>Estado:</strong>
+                            <?php if (in_array($estadoPagoCita, ['completado', 'aprobado'], true)): ?>
+                                <span class="badge bg-success">Pagado</span>
+                                <?php if (!empty($pagoCita->fecha_pago)): ?>
+                                    <small class="text-muted ms-1"><?= date('d/m/Y H:i', strtotime($pagoCita->fecha_pago)) ?></small>
+                                <?php endif; ?>
+                            <?php elseif ($estadoPagoCita === 'pendiente'): ?>
+                                <span class="badge bg-warning text-dark">Pendiente de pago</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary"><?= esc(ucfirst($estadoPagoCita ?: 'N/A')) ?></span>
+                            <?php endif; ?>
+                        </p>
+                        <?php if ($estadoPagoCita === 'pendiente'): ?>
+                        <p class="small text-muted mt-2 mb-0">El link de pago se envía cuando el paciente confirma la cita por correo. Puede reenviarlo si no lo recibió.</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <?php if ($estadoPagoCita === 'pendiente' && !empty($pagoCita->mp_preference_id)): ?>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnReenviarLinkPagoCita" data-detalle-id="<?= (int)$cita->id ?>">
+                            <i class="fas fa-paper-plane me-1"></i> Reenviar link de pago
+                        </button>
+                        <?php endif; ?>
+                        <a href="<?= base_url('dashboard/pago/cobros') ?>" class="btn btn-link btn-sm">Ver todos los cobros</a>
+                    </div>
+                </div>
+                <?php else: ?>
+                <p class="text-muted mb-2">Esta cita no tiene un cobro asociado.</p>
+                <p class="small text-muted mb-0">Al agendar o aprobar reservas puede elegir una tarifa. <a href="<?= base_url('dashboard/boton-pago/lista') ?>">Gestionar tarifas</a></p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <?php 
             $estadoCitaConsulta = strtolower(trim((string)($cita->estado_cita ?? ''))); 
             if ($estadoCitaConsulta === 'reservada'): 
@@ -260,9 +308,9 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="aprobar_boton_pago_plantilla_id" class="form-label">Tipo de pago (opcional)</label>
+                        <label for="aprobar_boton_pago_plantilla_id" class="form-label">Tarifa de cobro (opcional)</label>
                         <select name="boton_pago_plantilla_id" id="aprobar_boton_pago_plantilla_id" class="form-select">
-                            <option value="">-- Sin pago --</option>
+                            <option value="">— Sin cobro —</option>
                             <?php foreach ($plantillas_pago ?? [] as $pp): ?>
                             <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> - <?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
                             <?php endforeach; ?>
@@ -1259,14 +1307,14 @@
                         </div>
                         <?php if (!empty($plantillas_pago)): ?>
                         <div class="col-12">
-                            <label class="form-label small">Tipo de pago (opcional)</label>
+                            <label class="form-label small">Tarifa de cobro (opcional)</label>
                             <select id="agendar_boton_pago_plantilla_id" class="form-select">
-                                <option value="">-- Sin pago --</option>
+                                <option value="">— Sin cobro —</option>
                                 <?php foreach ($plantillas_pago as $pp): ?>
-                                <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> - <?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
+                                <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> — $<?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <small class="text-muted">Si selecciona pago, la cita quedará En proceso hasta que el paciente confirme desde el correo.</small>
+                            <small class="text-muted">Con tarifa: el paciente confirma la cita por correo y luego recibe el link de pago (Mercado Pago).</small>
                         </div>
                         <?php endif; ?>
                         <div class="col-12">
@@ -1450,6 +1498,37 @@ function actualizarTokenCSRF(xhr) {
         $('input[name="csrf_test_name"]').val(xhr.responseJSON.csrf_token);
     }
 }
+
+$(document).on('click', '#btnReenviarLinkPagoCita, .btn-reenviar-pago-cita', function() {
+    var detalleId = $(this).data('detalle-id');
+    if (!detalleId) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || '<?= csrf_hash() ?>';
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/reenviarLinkPagoCita') ?>',
+        type: 'POST',
+        data: { detalle_agenda_id: detalleId, csrf_test_name: csrfToken },
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        dataType: 'json',
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (res.success) {
+                toastr.success(res.message || 'Link reenviado.', 'Cobro');
+            } else {
+                toastr.error(res.error || 'No se pudo reenviar.', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Error al reenviar el link de pago.';
+            toastr.error(msg, 'Error');
+        },
+        complete: function() {
+            $btn.prop('disabled', false);
+        }
+    });
+});
 
 // Timer para consulta en curso
 function iniciarTimer() {
