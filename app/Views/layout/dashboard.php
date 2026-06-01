@@ -178,143 +178,98 @@ exit(); */
             </div>
             <div class="shadow-bottom"></div>
             
-            <!-- CSS personalizado para el menú -->
             <style>
-                /* Solución simple: permitir que el texto se envuelva en los botones del menú */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle {
-                    white-space: normal !important;     /* Permite que el texto se envuelva */
-                    word-wrap: break-word !important;   /* Permite que se divida si es necesario */
-                    height: auto !important;            /* Altura automática para acomodar múltiples líneas */
-                    min-height: 40px !important;       /* Altura mínima para mantener consistencia */
-                    padding: 10px 16px !important;      /* Padding adecuado para múltiples líneas */
+                /* Anular nowrap global del tema (#sidebar * { white-space: nowrap }) */
+                #sidebar ul.nutrinext-sidebar-menu,
+                #sidebar ul.nutrinext-sidebar-menu li,
+                #sidebar ul.nutrinext-sidebar-menu a,
+                #sidebar ul.nutrinext-sidebar-menu .dropdown-toggle,
+                #sidebar ul.nutrinext-sidebar-menu .dropdown-toggle span {
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-overflow: unset !important;
                 }
 
-                /* Ajustar el contenedor del texto para que se expanda */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div {
-                    flex: 1 !important;                 /* Permitir que se expanda */
-                    min-width: 0 !important;            /* Permitir que se contraiga si es necesario */
+                #sidebar ul.nutrinext-sidebar-menu .menu-section-heading {
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    color: #94a3b8;
+                    padding: 14px 16px 6px;
+                    margin: 0;
                 }
 
-                /* Ajustar el texto para que se envuelva correctamente */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div span {
-                    white-space: normal !important;     /* Permitir envoltura del texto */
-                    word-wrap: break-word !important;   /* Permitir división de palabras */
-                    line-height: 1.3 !important;       /* Altura de línea cómoda para múltiples líneas */
-                    display: block !important;          /* Mostrar como bloque para mejor control */
+                #sidebar ul.nutrinext-sidebar-menu li.menu-section-heading-item {
+                    margin-bottom: 0 !important;
                 }
 
-                /* Asegurar que el último elemento del menú se vea bien */
-                #sidebar ul.menu-categories li.menu:last-child {
-                    margin-bottom: 80px !important;     /* Espacio al final del menú */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    flex: 1;
+                    min-width: 0;
                 }
 
-                /* Asegurar que todos los elementos del menú tengan el mismo estilo */
-                #sidebar ul.menu-categories li.menu {
-                    margin-bottom: 5px !important;     /* Espacio consistente entre elementos */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner svg {
+                    flex-shrink: 0;
+                    margin-top: 2px;
                 }
 
-                /* SOLUCIÓN PARA EL SCROLL EN MÓVILES */
-                /* Permitir que el sidebar tenga scroll en todas las resoluciones */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner span {
+                    line-height: 1.35;
+                    word-break: break-word;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu > .dropdown-toggle.sidebar-menu-link {
+                    display: flex !important;
+                    align-items: flex-start;
+                    height: auto !important;
+                    min-height: 42px;
+                    padding: 10px 14px !important;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu ul.submenu > li a {
+                    display: block;
+                    line-height: 1.35 !important;
+                    word-break: break-word;
+                    padding: 8px 12px 8px 18px !important;
+                    margin-left: 28px !important;
+                    font-size: 13px;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu:last-child {
+                    margin-bottom: 72px !important;
+                }
+
                 #sidebar {
-                    overflow-y: auto !important;        /* Permitir scroll vertical */
-                    overflow-x: hidden !important;      /* Ocultar scroll horizontal */
-                    -webkit-overflow-scrolling: touch;  /* Scroll suave en iOS */
-                    max-height: 100vh !important;       /* Altura máxima de la ventana */
-                }
-
-                /* Permitir que el contenedor del menú tenga scroll */
-                #sidebar ul.menu-categories {
-                    overflow-y: visible !important;     /* Permitir que el contenido sea visible */
+                    overflow-y: auto !important;
                     overflow-x: hidden !important;
+                    -webkit-overflow-scrolling: touch;
+                    max-height: 100vh !important;
                 }
 
-                /* En móviles, asegurar que el sidebar tenga altura correcta */
                 @media (max-width: 991px) {
-                    .sidebar-wrapper {
-                        overflow-y: auto !important;
-                        -webkit-overflow-scrolling: touch;
-                    }
-                    
+                    .sidebar-wrapper { overflow-y: auto !important; }
                     #sidebar {
                         height: 100vh !important;
-                        overflow-y: auto !important;
-                        padding-bottom: 50px !important;
+                        padding-bottom: 48px !important;
                     }
                 }
             </style>
-            
-            <ul class="list-unstyled menu-categories" id="accordionExample">
-                <?php
-                $contador = 1;
-                // Soporte para $data['data'] (módulos) o $data como lista de ítems (dashboard/menu)
-                if (isset($data['data']) && is_array($data['data'])) {
-                    $menuItems = $data['data'];
-                } elseif (isset($data[0]['menu']) && isset($data[0]['submenu'])) {
-                    $menuItems = $data;
-                } else {
-                    $menuItems = [];
-                }
-                foreach ($menuItems as $menu) : ?>
-                    <?php //if ($modulo['mostrar'] == 'S') { 
-                    if (count($menu['submenu']) > 0) { ?>
-                        <li class="menu active">
-                            <a href="#modulo_<?= $contador ?>" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed">
-                                <div class="">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-layers">
-                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                        <polyline points="2 17 12 22 22 17"></polyline>
-                                        <polyline points="2 12 12 17 22 12"></polyline>
-                                    </svg>
-                                    <span><?= $menu['menu']['nombre'] ?></span>
-                                </div>
-                            </a>
-                            <ul class="submenu list-unstyled collapse" id="modulo_<?= $contador ?>" data-bs-parent="#accordionExample" style="">
-                                <?php foreach ($menu['submenu'] as $submenu) :
-                                    // Verificar si el permiso correspondiente en el menú principal está habilitado
-                                    $acciones = explode(',', $submenu['accion']);
-                                    $mostrar = false;
-                                    foreach ($acciones as $accion) {
-                                        if (isset($menu['menu'][$accion]) && $menu['menu'][$accion] == 1) {
-                                            $mostrar = true;
-                                            break;
-                                        }
-                                    }
-                                    if ($mostrar && $submenu['mostrar'] == 'S') : 
-                                        // Si la ruta del submódulo empieza con /dashboard/ o dashboard/, usarla directamente (ruta absoluta)
-                                        // Si no, concatenarla con la ruta del módulo padre (ruta relativa)
-                                        $ruta_submenu = trim($submenu['ruta']);
-                                        $ruta_completa = (strpos($ruta_submenu, '/dashboard/') === 0 || strpos($ruta_submenu, 'dashboard/') === 0) 
-                                            ? (strpos($ruta_submenu, '/') === 0 ? $ruta_submenu : '/' . $ruta_submenu)
-                                            : $menu['menu']['ruta'] . $ruta_submenu;
-                                    ?>
-                                        <li>
-                                            <a href="<?= base_url($ruta_completa) ?>"> <?= $submenu['descripcion'] ?></a>
-                                        </li>
-                                <?php endif;
-                                endforeach; ?>
-                            </ul>
-                        </li>
-                    <?php
-                        $contador++;
-                    } else {
-                    ?>
-                        <li class="menu active">
 
-                            <a href="<?= base_url($menu['menu']['ruta']) ?>" aria-expanded="false" class="dropdown-toggle">
-                                <div class="aaa">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                    </svg>
-                                    <span><?= $menu['menu']['nombre'] ?></span>
-                                </div>
-                            </a>
-                        </li>
-                    <?php
-                    }
-                    ?>
-                <?php endforeach; ?>
-            </ul>
+            <?php
+            if (isset($data['data']) && is_array($data['data'])) {
+                $menuItemsRaw = $data['data'];
+            } elseif (isset($data[0]['menu']) && isset($data[0]['submenu'])) {
+                $menuItemsRaw = $data;
+            } else {
+                $menuItemsRaw = [];
+            }
+            $sidebarMenu = \App\Libraries\DashboardMenuBuilder::build($menuItemsRaw, $usuario ?? null);
+            echo view('layout/partials/sidebar_menu', ['sidebarMenu' => $sidebarMenu]);
+            ?>
         </nav>
     </div>
     <!--  END SIDEBAR  -->
@@ -383,6 +338,10 @@ exit(); */
                     <?php echo $this->renderSection("modulo_detalle/registro"); ?>
                     <?php echo $this->renderSection("modulo_detalle/lista"); ?>
                     <?php echo $this->renderSection("modulo_detalle/detalle"); ?>
+
+                    <?php echo $this->renderSection("menu_grupo/lista"); ?>
+                    <?php echo $this->renderSection("menu_grupo/registro"); ?>
+                    <?php echo $this->renderSection("menu_grupo/detalle"); ?>
                     <!-- END Section Modulo Detalle-->
 
                     <!-- Star Section Modulo Servicio-->

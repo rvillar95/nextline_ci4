@@ -5,9 +5,38 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\BaseController;
 use App\Models\ModuloDetalle;
 use App\Models\Modulo;
+use App\Models\MenuGrupo;
 
 class ModuloController extends BaseController
 {
+    private function menuSidebarPostData(): array
+    {
+        $post = $this->request->getPost([
+            'menu_grupo_id', 'menu_icono', 'menu_etiqueta', 'menu_aplanar',
+            'menu_ruta_alterna', 'menu_etiqueta_alterna', 'menu_solo_sa',
+        ]);
+
+        $grupoId = trim((string) ($post['menu_grupo_id'] ?? ''));
+
+        return [
+            'menu_grupo_id' => $grupoId === '' ? null : (int) $grupoId,
+            'menu_icono' => trim((string) ($post['menu_icono'] ?? 'circle')) ?: 'circle',
+            'menu_etiqueta' => trim((string) ($post['menu_etiqueta'] ?? '')) ?: null,
+            'menu_aplanar' => ($post['menu_aplanar'] ?? 'S') === 'N' ? 'N' : 'S',
+            'menu_ruta_alterna' => trim((string) ($post['menu_ruta_alterna'] ?? '')) ?: null,
+            'menu_etiqueta_alterna' => trim((string) ($post['menu_etiqueta_alterna'] ?? '')) ?: null,
+            'menu_solo_sa' => ($post['menu_solo_sa'] ?? 'N') === 'S' ? 'S' : 'N',
+        ];
+    }
+
+    private function cargarOpcionesMenu(array &$data): void
+    {
+        $grupoModel = new MenuGrupo();
+        $data['menuGrupos'] = $grupoModel->db->tableExists('menu_grupo')
+            ? $grupoModel->getTodosOrdenados()
+            : [];
+        $data['iconosMenu'] = config('MenuSidebar')->iconos;
+    }
 
     public function registro()
     {
@@ -20,6 +49,7 @@ class ModuloController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
+        $this->cargarOpcionesMenu($data);
         echo view('Base/modulo/registro', $data);
     }
 
@@ -40,6 +70,7 @@ class ModuloController extends BaseController
             'estado' => $post['estado'],
             'mostrar' => $post['mostrar'],
         ];
+        $data = array_merge($data, $this->menuSidebarPostData());
 
       
         if ($modulo->insert($data)) {
@@ -92,6 +123,7 @@ class ModuloController extends BaseController
 
         $data['modulo'] = $moduloPerfil->select('modulo.*')
             ->where('modulo.id', $id)->first();
+        $this->cargarOpcionesMenu($data);
 
         echo view("Base/modulo/editar", $data);
     }
@@ -125,14 +157,14 @@ class ModuloController extends BaseController
         $mostrar = $this->request->getPost('mostrar');
         $estado = $this->request->getPost('estado');
 
-        if ($modulo->update($id, [
+        if ($modulo->update($id, array_merge([
             'nombre' => $nombre,
             'descripcion' => $descripcion,
             'ruta' => $ruta,
             'sa' => $sa,
             'mostrar' => $mostrar,
             'estado' => $estado
-        ])) {
+        ], $this->menuSidebarPostData()))) {
             return redirect()->to(base_url('dashboard/modulo/editar/' . $id))->with('success', 'Modulo editado con éxito');
         } else {
             return redirect()->back()->withInput()->with('errors', 'Error al editar el modulo');

@@ -84,6 +84,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('eliminar', 'Dashboard\ModuloDetalleController::eliminar');
     });
 
+    $routes->group('menu-grupo', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\MenuGrupoController::lista');
+        $routes2->get('registro', 'Dashboard\MenuGrupoController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\MenuGrupoController::editar/$1');
+        $routes2->get('getMenuGrupos', 'Dashboard\MenuGrupoController::getMenuGrupos');
+        $routes2->post('registrar', 'Dashboard\MenuGrupoController::registrar');
+        $routes2->post('update', 'Dashboard\MenuGrupoController::update');
+        $routes2->post('eliminar', 'Dashboard\MenuGrupoController::eliminar');
+    });
+
     $routes->group('servicio', function ($routes2) {
         $routes2->get('registro', 'Dashboard\ServicioController::registro'); //vista
         $routes2->get('editar/(:num)', 'Dashboard\ServicioController::editar/$1'); //vista

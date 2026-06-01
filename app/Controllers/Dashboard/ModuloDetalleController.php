@@ -36,10 +36,11 @@ class ModuloDetalleController extends BaseController
         }
         $moduloModel = new ModuloDetalle();
 
-        $post = $this->request->getPost(['modulo', 'descripcion', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
+        $post = $this->request->getPost(['modulo', 'descripcion', 'menu_etiqueta', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
         $data = [
             'modulo_id' => $post['modulo'],
             'descripcion' => $post['descripcion'],
+            'menu_etiqueta' => trim((string) ($post['menu_etiqueta'] ?? '')) ?: null,
             'ruta' => $post['ruta'],
             'accion' => $post['accion'],
             'estado' => $post['estado'],
@@ -165,10 +166,11 @@ class ModuloDetalleController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
         $moduloDetalle = new ModuloDetalle();
-        $post = $this->request->getPost(['id', 'modulo', 'descripcion', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
+        $post = $this->request->getPost(['id', 'modulo', 'descripcion', 'menu_etiqueta', 'ruta', 'accion', 'estado', 'mostrar', 'orden']);
         $data = [
             'modulo_id' => $post['modulo'],
             'descripcion' => $post['descripcion'],
+            'menu_etiqueta' => trim((string) ($post['menu_etiqueta'] ?? '')) ?: null,
             'ruta' => $post['ruta'],
             'accion' => $post['accion'],
             'estado' => $post['estado'],

@@ -271,7 +271,54 @@ class Validation extends BaseConfig
                 'required' => 'El campo {field} es obligatorio.',
                 'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
             ],
-        ]
+        ],
+        'menu_grupo_id' => [
+            'label' => 'Sección menú',
+            'rules' => 'permit_empty|integer',
+        ],
+        'menu_icono' => [
+            'label' => 'Icono menú',
+            'rules' => 'permit_empty|max_length[50]',
+        ],
+        'menu_etiqueta' => [
+            'label' => 'Etiqueta menú',
+            'rules' => 'permit_empty|max_length[100]',
+        ],
+        'menu_aplanar' => [
+            'label' => 'Aplanar menú',
+            'rules' => 'permit_empty|in_list[S,N]',
+        ],
+        'menu_ruta_alterna' => [
+            'label' => 'Ruta alterna menú',
+            'rules' => 'permit_empty|max_length[150]',
+        ],
+        'menu_etiqueta_alterna' => [
+            'label' => 'Etiqueta alterna menú',
+            'rules' => 'permit_empty|max_length[100]',
+        ],
+        'menu_solo_sa' => [
+            'label' => 'Menú solo SA',
+            'rules' => 'permit_empty|in_list[S,N]',
+        ],
+    ];
+
+    public array $formMenuGrupo = [
+        'slug' => [
+            'label' => 'Slug',
+            'rules' => 'required|alpha_dash|max_length[50]',
+        ],
+        'etiqueta' => [
+            'label' => 'Etiqueta',
+            'rules' => 'required|max_length[100]',
+        ],
+        'orden' => [
+            'label' => 'Orden',
+            'rules' => 'required|integer',
+        ],
+        'estado' => [
+            'label' => 'Estado',
+            'rules' => 'required|in_list[A,I]',
+        ],
     ];
 
     public array $formModuloEdit = [
@@ -325,7 +372,35 @@ class Validation extends BaseConfig
                 'required' => 'El campo {field} es obligatorio.',
                 'in_list' => 'El campo {field} tiene que ser un carácter entre S ó N.'
             ],
-        ]
+        ],
+        'menu_grupo_id' => [
+            'label' => 'Sección menú',
+            'rules' => 'permit_empty|integer',
+        ],
+        'menu_icono' => [
+            'label' => 'Icono menú',
+            'rules' => 'permit_empty|max_length[50]',
+        ],
+        'menu_etiqueta' => [
+            'label' => 'Etiqueta menú',
+            'rules' => 'permit_empty|max_length[100]',
+        ],
+        'menu_aplanar' => [
+            'label' => 'Aplanar menú',
+            'rules' => 'permit_empty|in_list[S,N]',
+        ],
+        'menu_ruta_alterna' => [
+            'label' => 'Ruta alterna menú',
+            'rules' => 'permit_empty|max_length[150]',
+        ],
+        'menu_etiqueta_alterna' => [
+            'label' => 'Etiqueta alterna menú',
+            'rules' => 'permit_empty|max_length[100]',
+        ],
+        'menu_solo_sa' => [
+            'label' => 'Menú solo SA',
+            'rules' => 'permit_empty|in_list[S,N]',
+        ],
     ];
 
     public array $formPerfilDetalleRegister = [
@@ -401,6 +476,10 @@ class Validation extends BaseConfig
                 'required' => 'El campo {field} es obligatorio.',
                 'max_length' => 'El campo {field} no puede exceder de 500 caracteres de longitud.',
             ],
+        ],
+        'menu_etiqueta' => [
+            'label' => 'Etiqueta menú',
+            'rules' => 'permit_empty|max_length[100]',
         ],
         'ruta' => [
             'label' => 'Ruta',

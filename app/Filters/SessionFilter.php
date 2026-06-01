@@ -263,6 +263,15 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Cobros a pacientes: /pago/cobros si tiene acceso al módulo pago
+        if ($this->isDirectMatch($path, '/dashboard/pago/cobros')) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/pago') === 0) {
+                    return;
+                }
+            }
+        }
+
         // Rutas AJAX/acciones del módulo Empresa (getEmpresas, eliminar, activar) permitidas si tiene acceso a empresa
         $empresaExcepcionPrefijo = '/dashboard/empresa/eliminar/';
         $empresaExcepcionPrefijo2 = '/dashboard/empresa/activar/';
@@ -273,6 +282,15 @@ final class SessionFilter implements FilterInterface
             foreach ($allowed as $rule) {
                 if (strpos($rule['pattern'], '/dashboard/empresa') === 0) {
                     log_message('info', 'SessionFilter: Ruta empresa permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
+        // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos
+        if (strpos($this->sanitizePath($path), '/dashboard/menu-grupo') === 0) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/modulo') === 0) {
                     return;
                 }
             }

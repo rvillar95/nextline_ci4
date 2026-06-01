@@ -238,6 +238,12 @@
                         </div>
                     </div>
 
+                    <?= view('Base/partials/modulo_campos_menu', [
+                        'modulo' => old() ?: [],
+                        'menuGrupos' => $menuGrupos ?? [],
+                        'iconosMenu' => $iconosMenu ?? config('MenuSidebar')->iconos,
+                    ]) ?>
+
                     <!-- Botones -->
                     <div class="row mt-4">
                         <div class="col-12">

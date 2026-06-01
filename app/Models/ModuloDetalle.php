@@ -14,7 +14,7 @@ class ModuloDetalle extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id', 'modulo_id', 'descripcion', 'ruta', 'accion', 'estado', 'mostrar', 'orden'];
+    protected $allowedFields = ['id', 'modulo_id', 'descripcion', 'menu_etiqueta', 'ruta', 'accion', 'estado', 'mostrar', 'orden'];
 
     protected bool $allowEmptyInserts = false;
 
@@ -61,6 +61,38 @@ class ModuloDetalle extends Model
      * @param int|null $empresaId ID de la empresa del usuario (opcional, se obtiene de la sesión si no se proporciona)
      * @return array Array de módulos con sus permisos
      */
+    private function hasMenuSidebarConfig(): bool
+    {
+        return $this->db->tableExists('menu_grupo')
+            && $this->db->fieldExists('menu_grupo_id', 'modulo');
+    }
+
+    private function sqlMenuExtraFields(): string
+    {
+        if (! $this->hasMenuSidebarConfig()) {
+            return '';
+        }
+
+        return ",
+                    mo.menu_grupo_id,
+                    mg.slug AS menu_grupo_slug,
+                    mo.menu_icono,
+                    mo.menu_etiqueta,
+                    mo.menu_aplanar,
+                    mo.menu_ruta_alterna,
+                    mo.menu_etiqueta_alterna,
+                    mo.menu_solo_sa";
+    }
+
+    private function sqlMenuExtraJoin(): string
+    {
+        if (! $this->hasMenuSidebarConfig()) {
+            return '';
+        }
+
+        return "\n                    LEFT JOIN menu_grupo mg ON mg.id = mo.menu_grupo_id AND mg.estado = 'A'";
+    }
+
     public function getMenu($perfil, $empresaId = null)
     {
         $db = \Config\Database::connect();
@@ -74,6 +106,8 @@ class ModuloDetalle extends Model
         // Si es Super Admin (poder=3) o no tiene empresa, mostrar todos los módulos del perfil
         $usuario = session()->get('usuario');
         $poder = $usuario['poder'] ?? 0;
+        $extraFields = $this->sqlMenuExtraFields();
+        $extraJoin = $this->sqlMenuExtraJoin();
         
         if ($poder == 3 || $empresaId === null) {
             // Super Admin o sin empresa: mostrar todos los módulos del perfil
@@ -84,10 +118,11 @@ class ModuloDetalle extends Model
                         pe.ver, 
                         pe.registrar, 
                         pe.editar, 
-                        pe.eliminar 
+                        pe.eliminar
+                        {$extraFields}
                     FROM perfil_modulo pe
                     INNER JOIN perfil per ON pe.perfil_id = per.id
-                    INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                    INNER JOIN modulo mo ON pe.modulo_id = mo.id{$extraJoin}
                     WHERE pe.perfil_id = :perfil:
                       AND mo.estado = 'A'
                       AND mo.mostrar = 'S'
@@ -119,10 +154,11 @@ class ModuloDetalle extends Model
                     pe.ver, 
                     pe.registrar, 
                     pe.editar, 
-                    pe.eliminar 
+                    pe.eliminar
+                    {$extraFields}
                 FROM perfil_modulo pe
                 INNER JOIN perfil per ON pe.perfil_id = per.id
-                INNER JOIN modulo mo ON pe.modulo_id = mo.id
+                INNER JOIN modulo mo ON pe.modulo_id = mo.id{$extraJoin}
                 INNER JOIN paquete_modulo pm ON pm.modulo_id = pe.modulo_id 
                     AND pm.paquete_id = :paquete_id:
                     AND pm.incluido = 'S'
@@ -379,6 +415,7 @@ class ModuloDetalle extends Model
                 'm.id   AS modulo_id',
                 'm.nombre AS modulo_nombre',
                 'md.descripcion',
+                'md.menu_etiqueta',
                 'md.ruta',
                 'md.accion',
                 'md.estado',
