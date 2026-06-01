@@ -1,0 +1,100 @@
+name: 'Build and Deploy to GKE'
+
+on:
+  push:
+    branches:
+      - feature/gcp
+
+env:
+  PROJECT_ID: 'nutrinext-dev'
+  GAR_LOCATION: 'southamerica-west1'
+  GKE_CLUSTER: 'cluster-1'
+  GKE_ZONE: 'southamerica-west1'
+  DEPLOYMENT_NAME: 'nutrinext-api'
+  REPOSITORY: 'nutrinext-repository'
+  IMAGE: 'nutrinext-app'
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/1051604885159/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+
+jobs:
+  setup-build-publish-deploy:
+    name: 'Setup, Build, Publish, and Deploy'
+    runs-on: 'ubuntu-latest'
+    environment: 'production'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+          project_id: '${{ env.PROJECT_ID }}'
+          token_format: 'access_token'
+
+      - name: 'Docker Auth'
+        uses: 'docker/login-action@v3'
+        with:
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+          registry: '${{ env.GAR_LOCATION }}-docker.pkg.dev'
+
+      - name: 'Set up GKE credentials'
+        uses: 'google-github-actions/get-gke-credentials@v2'
+        with:
+          cluster_name: '${{ env.GKE_CLUSTER }}'
+          location: '${{ env.GKE_ZONE }}'
+          project_id: '${{ env.PROJECT_ID }}'
+
+      - name: 'Build and push Docker container'
+        run: |
+          DOCKER_TAG="${GAR_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE}:${GITHUB_SHA}"
+
+          docker build \
+            --tag "${DOCKER_TAG}" \
+            --build-arg GITHUB_SHA="${GITHUB_SHA}" \
+            --build-arg GITHUB_REF="${GITHUB_REF}" \
+            .
+
+          docker push "${DOCKER_TAG}"
+
+      - name: 'Set up Kustomize'
+        run: |
+          curl -sfLo kustomize.tar.gz https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz
+          tar -xzf kustomize.tar.gz
+          chmod u+x ./kustomize
+
+      # Requiere secret del repo: DATABASE_PASSWORD (contraseña Cloud SQL)
+      - name: 'Create or update DB secret in GKE'
+        run: |
+          kubectl create secret generic nutrinext-db \
+            --from-literal=password="${{ secrets.DATABASE_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # Calendario Google: crea secret nutrinext-calendar (usa GOOGLE_CALENDAR_* del repo; si no están, queda vacío)
+      - name: 'Create or update Calendar secret in GKE'
+        run: |
+          kubectl create secret generic nutrinext-calendar \
+            --from-literal=google-client-id="${{ secrets.GOOGLE_CALENDAR_CLIENT_ID }}" \
+            --from-literal=google-client-secret="${{ secrets.GOOGLE_CALENDAR_CLIENT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # Email SMTP: sin EMAIL_SMTP_PASSWORD en GitHub el secret queda con password vacía y el servidor devolverá "550 SMTP AUTH is required"
+      - name: 'Create or update Email secret in GKE'
+        run: |
+          kubectl create secret generic nutrinext-email \
+            --from-literal=smtp-password="${{ secrets.EMAIL_SMTP_PASSWORD }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: 'Deploy to GKE'
+        run: |
+          ./kustomize edit set image LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG=$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_SHA
+          ./kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment/$DEPLOYMENT_NAME
+          kubectl get services -o wide
+

@@ -198,6 +198,40 @@ class Database extends Config
             $this->defaultGroup = 'tests';
         }
 
+        // En GKE/Cloud Run/etc. la conexión viene de variables de entorno (ej. Cloud SQL).
+        // BaseConfig sobrescribe desde .env; aquí priorizamos DATABASE_* y además sincronizamos
+        // $_ENV/$_SERVER para que env('database.default.*') devuelva estos valores.
+        $hostname = getenv('DATABASE_HOSTNAME') ?: ($_SERVER['DATABASE_HOSTNAME'] ?? null);
+        if ($hostname !== null && $hostname !== '') {
+            $this->default['hostname'] = $hostname;
+            $_ENV['database.default.hostname']    = $hostname;
+            $_SERVER['database.default.hostname'] = $hostname;
+        }
+        $port = getenv('DATABASE_PORT') ?: ($_SERVER['DATABASE_PORT'] ?? null);
+        if ($port !== null && $port !== '') {
+            $this->default['port'] = (int) $port;
+            $_ENV['database.default.port']    = (string) $this->default['port'];
+            $_SERVER['database.default.port'] = (string) $this->default['port'];
+        }
+        $username = getenv('DATABASE_USERNAME') ?: ($_SERVER['DATABASE_USERNAME'] ?? null);
+        if ($username !== null && $username !== '') {
+            $this->default['username'] = $username;
+            $_ENV['database.default.username']    = $username;
+            $_SERVER['database.default.username'] = $username;
+        }
+        $password = getenv('DATABASE_PASSWORD') ?: ($_SERVER['DATABASE_PASSWORD'] ?? null);
+        if ($password !== null) {
+            $this->default['password'] = $password;
+            $_ENV['database.default.password']    = $password;
+            $_SERVER['database.default.password'] = $password;
+        }
+        $database = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null);
+        if ($database !== null && $database !== '') {
+            $this->default['database'] = $database;
+            $_ENV['database.default.database']    = $database;
+            $_SERVER['database.default.database'] = $database;
+        }
+
         // Azure Database for MySQL exige conexión SSL (require_secure_transport=ON)
         $host = $this->default['hostname'] ?? '';
         if (is_string($host) && str_contains($host, 'database.azure.com')) {
@@ -211,10 +245,10 @@ class Database extends Config
                     'ssl_verify' => true,
                 ];
             }
-            // Nunca usar la BD del sistema 'mysql' en Azure; la app usa 'vitasync'
+            // Nunca usar la BD del sistema 'mysql' en Azure; la app usa 'nutrinext'
             $dbName = $this->default['database'] ?? '';
             if ($dbName === 'mysql') {
-                $this->default['database'] = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'vitasync';
+                $this->default['database'] = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'nutrinext';
             }
         }
     }

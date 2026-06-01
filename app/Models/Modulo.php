@@ -14,7 +14,11 @@ class Modulo extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id','nombre','descripcion','sa','ruta','estado','mostrar'];
+    protected $allowedFields = [
+        'id', 'nombre', 'descripcion', 'sa', 'ruta', 'estado', 'mostrar',
+        'menu_grupo_id', 'menu_icono', 'menu_etiqueta', 'menu_aplanar',
+        'menu_ruta_alterna', 'menu_etiqueta_alterna', 'menu_solo_sa',
+    ];
 
     protected bool $allowEmptyInserts = false;
 

@@ -5,6 +5,9 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
+$routes->get('sitemap.xml', 'Web\SeoController::sitemap');
+$routes->get('robots.txt', 'Web\SeoController::robots');
+
 $routes->get('/', 'Web\HomeController::index');
 $routes->get('/gym', 'Web\\GymHomeController::index');
 
@@ -152,6 +155,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('eliminar', 'Dashboard\ModuloDetalleController::eliminar');
     });
 
+    $routes->group('menu-grupo', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\MenuGrupoController::lista');
+        $routes2->get('registro', 'Dashboard\MenuGrupoController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\MenuGrupoController::editar/$1');
+        $routes2->get('getMenuGrupos', 'Dashboard\MenuGrupoController::getMenuGrupos');
+        $routes2->post('registrar', 'Dashboard\MenuGrupoController::registrar');
+        $routes2->post('update', 'Dashboard\MenuGrupoController::update');
+        $routes2->post('eliminar', 'Dashboard\MenuGrupoController::eliminar');
+    });
+
     $routes->group('servicio', function ($routes2) {
         $routes2->get('registro', 'Dashboard\ServicioController::registro'); //vista
         $routes2->get('editar/(:num)', 'Dashboard\ServicioController::editar/$1'); //vista
@@ -233,6 +246,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getPacientes', 'Dashboard\PacienteController::getPacientes');
         $routes2->get('getPacientesSelect', 'Dashboard\PacienteController::getPacientesSelect');
         $routes2->post('registrar', 'Dashboard\PacienteController::registrar');
+        $routes2->post('crearRapido', 'Dashboard\PacienteController::crearRapido');
+        $routes2->get('verificarRutNutricionista', 'Dashboard\PacienteController::verificarRutNutricionista');
         $routes2->post('update', 'Dashboard\PacienteController::update');
         $routes2->post('eliminar', 'Dashboard\PacienteController::eliminar');
     });
@@ -317,6 +332,16 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('activar/(:num)', 'Dashboard\EmpresaController::activar/$1'); //accion activar
     });
 
+    $routes->group('servicio-nutrinext', function ($routes2) {
+        $routes2->get('lista', 'Dashboard\ServicioNutrinextController::lista');
+        $routes2->get('registro', 'Dashboard\ServicioNutrinextController::registro');
+        $routes2->get('editar/(:num)', 'Dashboard\ServicioNutrinextController::editar/$1');
+        $routes2->get('getServicios', 'Dashboard\ServicioNutrinextController::getServicios');
+        $routes2->post('registrar', 'Dashboard\ServicioNutrinextController::registrar');
+        $routes2->post('update', 'Dashboard\ServicioNutrinextController::update');
+        $routes2->post('eliminar', 'Dashboard\ServicioNutrinextController::eliminar');
+    });
+
     $routes->group('paquete', function ($routes2) {
         $routes2->get('', 'Dashboard\PaqueteController::lista'); //vista lista por defecto (solo SA)
         $routes2->get('lista', 'Dashboard\PaqueteController::lista'); //vista lista (solo SA)
@@ -325,9 +350,11 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'Dashboard\PaqueteController::editar/$1'); //vista editar
         $routes2->get('detalle/(:num)', 'Dashboard\PaqueteController::detalle/$1'); //vista detalle
         $routes2->get('gestionar-modulos/(:num)', 'Dashboard\PaqueteController::gestionarModulos/$1'); //vista gestionar módulos
+        $routes2->get('gestionar-metodos/(:num)', 'Dashboard\PaqueteController::gestionarMetodos/$1'); //vista métodos composición
         $routes2->post('registrar', 'Dashboard\PaqueteController::registrar'); //accion crear
         $routes2->post('update', 'Dashboard\PaqueteController::update'); //accion actualizar
         $routes2->post('guardar-modulos', 'Dashboard\PaqueteController::guardarModulos'); //accion guardar módulos
+        $routes2->post('guardar-metodos', 'Dashboard\PaqueteController::guardarMetodos'); //accion guardar métodos cálculo
         $routes2->post('eliminar/(:num)', 'Dashboard\PaqueteController::eliminar/$1'); //accion eliminar
         $routes2->post('activar/(:num)', 'Dashboard\PaqueteController::activar/$1'); //accion activar
     });
@@ -378,15 +405,33 @@ $routes->group('dashboard', function ($routes) {
     // MÓDULOS DE NUTRICIONISTAS
     // ============================================
     
+    $routes->group('notificaciones', function ($routes2) {
+        $routes2->get('listar', 'Dashboard\NotificacionController::listar');
+        $routes2->post('marcar-leida', 'Dashboard\NotificacionController::marcarLeida');
+        $routes2->post('marcar-todas-leidas', 'Dashboard\NotificacionController::marcarTodasLeidas');
+    });
+
+    $routes->group('mensajes', function ($routes2) {
+        $routes2->get('/', 'Dashboard\MensajesController::index');
+        $routes2->get('sync', 'Dashboard\MensajesController::sync');
+        $routes2->get('hilo/(:num)', 'Dashboard\MensajesController::hilo/$1');
+        $routes2->post('enviar', 'Dashboard\MensajesController::enviar');
+    });
+
     $routes->group('agenda', function ($routes2) {
         $routes2->get('lista', 'Dashboard\AgendaController::lista');
         $routes2->get('gestionar', 'Dashboard\AgendaController::gestionar');
         $routes2->get('calendario', 'Dashboard\AgendaController::calendario');
         $routes2->get('getAgendas', 'Dashboard\AgendaController::getAgendas');
+        $routes2->get('listarAgendasDias', 'Dashboard\AgendaController::listarAgendasDias');
+        $routes2->post('validarAgendasSeleccionadas', 'Dashboard\AgendaController::validarAgendasSeleccionadas');
+        $routes2->post('actualizarAgendas', 'Dashboard\AgendaController::actualizarAgendas');
+        $routes2->post('eliminarAgendasDias', 'Dashboard\AgendaController::eliminarAgendasDias');
         $routes2->get('getEventos', 'Dashboard\AgendaController::getEventos');
         $routes2->get('getDetalleCita', 'Dashboard\AgendaController::getDetalleCita');
         $routes2->get('getAgenda', 'Dashboard\AgendaController::getAgenda');
         $routes2->post('agendar', 'Dashboard\AgendaController::agendar');
+        $routes2->post('agendarDesdeConsulta', 'Dashboard\AgendaController::agendarDesdeConsulta');
         // Rutas para integración con calendario
         $routes2->get('calendario/connect', 'Dashboard\AgendaController::conectarCalendario');
         $routes2->get('calendario/verificar-token', 'Dashboard\AgendaController::verificarTokenCalendario');
@@ -405,10 +450,9 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('getConsultasProximas', 'Dashboard\AgendaController::getConsultasProximas');
         $routes2->get('getEstadisticas', 'Dashboard\AgendaController::getEstadisticas');
         $routes2->post('guardarMediciones', 'Dashboard\AgendaController::guardarMediciones');
-        $routes2->get('getConsultasAnteriores', 'Dashboard\AgendaController::getConsultasAnteriores');
-        $routes2->get('getDatosConsultaAnterior', 'Dashboard\AgendaController::getDatosConsultaAnterior');
         $routes2->post('confirmarCita', 'Dashboard\AgendaController::confirmarCita');
         $routes2->post('cancelarCita', 'Dashboard\AgendaController::cancelarCita');
+        $routes2->post('reenviarLinkPagoCita', 'Dashboard\AgendaController::reenviarLinkPagoCita');
     });
 
     $routes->group('agenda/cancelar-horas', function ($routes2) {
@@ -445,6 +489,7 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('pago', function ($routes2) {
+        $routes2->get('cobros', 'Dashboard\PagoController::cobrosPacientes');
         $routes2->get('lista', 'Dashboard\PagoController::lista');
         $routes2->get('registro', 'Dashboard\PagoController::registro');
         $routes2->get('editar/(:num)', 'Dashboard\PagoController::editar/$1');
@@ -472,9 +517,13 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('mi-perfil', function ($routes2) {
+        $routes2->get('', 'Dashboard\MiPerfilController::index');
         $routes2->get('ver', 'Dashboard\MiPerfilController::index');
         $routes2->post('guardar', 'Dashboard\MiPerfilController::guardar');
         $routes2->post('subir-foto', 'Dashboard\MiPerfilController::subirFoto');
+        $routes2->post('perfil-publico', 'Dashboard\MiPerfilController::guardarPerfilPublico');
+        $routes2->post('credencial', 'Dashboard\MiPerfilController::guardarCredencial');
+        $routes2->post('credencial/eliminar', 'Dashboard\MiPerfilController::eliminarCredencial');
     });
 });
 
@@ -489,6 +538,9 @@ $routes->group('api', function ($routes) {
 $routes->group('', ['filter' => 'isLoggedIn'], function ($routes) {});
 
 // Rutas públicas del sitio web
+$routes->get('funcionalidades', 'Web\ServicioNutrinextController::index');
+$routes->get('funcionalidades/(:segment)', 'Web\ServicioNutrinextController::detalle/$1');
+
 $routes->get('servicios', 'Web\ServicioController::index');
 $routes->get('servicios/(:segment)', 'Web\ServicioController::detalle/$1');
 $routes->get('servicios-categorias', 'Web\ServicioCategoriaController::index');
@@ -505,6 +557,12 @@ $routes->get('contacto', 'Web\ContactoController::index');
 $routes->post('contacto/enviar', 'Web\ContactoController::enviar');
 $routes->get('gracias', 'Web\ContactoController::gracias');
 $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
+
+$routes->get('precios', 'Web\PreciosController::index');
+
+// Equipo de nutricionistas (web pública)
+$routes->get('equipo', 'Web\EquipoController::index');
+$routes->get('equipo/(:num)', 'Web\EquipoController::detalle/$1');
 
 // Reserva pública (paciente reserva hora sin login)
 $routes->get('reservar', 'Web\ReservarController::index');

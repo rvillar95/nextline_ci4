@@ -13,14 +13,12 @@ class PoliticasController extends BaseController
         $empresaModel = new Empresa();
         $empresaData = $empresaModel->getDatosParaPDF();
         
-        $data = [
-            'title' => 'Política de Privacidad - MANSANCHEZ',
-            'description' => 'Política de privacidad y protección de datos personales de MANSANCHEZ Constructor',
-            'keywords' => 'privacidad, protección de datos, mansanchez',
-            'empresa' => $empresaData
-        ];
-        
-        return view('Web/politica_privacidad', $data);
+        return view('Web/politica_privacidad', array_merge(seo_page([
+            'title'       => 'Política de privacidad | NutriNext',
+            'description' => 'Política de privacidad y tratamiento de datos personales de pacientes y usuarios en la plataforma NutriNext.',
+            'keywords'    => 'privacidad, protección de datos, nutrinext, pacientes',
+            'canonical'   => seo_canonical_url('politica-privacidad'),
+        ]), ['empresa' => $empresaData]));
     }
     
     public function terminos()
@@ -29,14 +27,12 @@ class PoliticasController extends BaseController
         $empresaModel = new Empresa();
         $empresaData = $empresaModel->getDatosParaPDF();
         
-        $data = [
-            'title' => 'Términos y Condiciones - MANSANCHEZ',
-            'description' => 'Términos y condiciones de uso del sitio web y servicios de MANSANCHEZ Constructor',
-            'keywords' => 'términos, condiciones, mansanchez',
-            'empresa' => $empresaData
-        ];
-        
-        return view('Web/terminos_condiciones', $data);
+        return view('Web/terminos_condiciones', array_merge(seo_page([
+            'title'       => 'Términos y condiciones | NutriNext',
+            'description' => 'Términos y condiciones de uso del sitio web y de la plataforma NutriNext para profesionales y pacientes.',
+            'keywords'    => 'términos, condiciones, nutrinext, uso plataforma',
+            'canonical'   => seo_canonical_url('terminos-condiciones'),
+        ]), ['empresa' => $empresaData]));
     }
 }
 

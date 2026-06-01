@@ -56,20 +56,17 @@
     }
     
     /* Estilos específicos para vista semanal (timeGridWeek) */
-    .fc-timeGridWeek-view .fc-event-title {
-        font-size: 0.95em !important;
-        line-height: 1.4 !important;
-        padding: 2px 4px !important;
-        white-space: normal !important;
+    .fc-timeGridWeek-view .fc-event-title,
+    .fc-timeGridDay-view .fc-event-title {
+        font-size: 0.8em !important;
+        line-height: 1.25 !important;
+        padding: 1px 3px !important;
+        white-space: pre-wrap !important;
         word-wrap: break-word !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
+        overflow: visible !important;
+        display: block !important;
     }
     
-    /* Evitar que el evento desborde y tape la fila de abajo */
     .fc-timeGridWeek-view .fc-timegrid-event,
     .fc-timeGridDay-view .fc-timegrid-event {
         overflow: hidden !important;
@@ -79,6 +76,8 @@
     .fc-timeGridDay-view .fc-timegrid-event .fc-event-main {
         overflow: hidden !important;
         height: 100% !important;
+        display: flex !important;
+        align-items: flex-start !important;
     }
     
     .fc-timeGridWeek-view .fc-event {
@@ -130,13 +129,23 @@
     }
     
     .fc-timeGridWeek-view .fc-timegrid-slot-minor {
-        height: 30px !important;
-        min-height: 30px !important;
+        height: 52px !important;
+        min-height: 52px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-timegrid-slot-minor {
+        height: 52px !important;
+        min-height: 52px !important;
     }
     
     .fc-timeGridWeek-view .fc-timegrid-slot-major {
-        height: 60px !important;
-        min-height: 60px !important;
+        height: 104px !important;
+        min-height: 104px !important;
+    }
+    
+    .fc-timeGridDay-view .fc-timegrid-slot-major {
+        height: 104px !important;
+        min-height: 104px !important;
     }
     
     /* Solo las filas de contenido (slots de hora) tienen 60px; la fila del divider no */
@@ -203,7 +212,9 @@
         font-size: 0.85em;
         z-index: 10000;
         pointer-events: none;
-        white-space: nowrap;
+        white-space: normal;
+        max-width: 320px;
+        line-height: 1.4;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         opacity: 0;
         transition: opacity 0.2s ease;
@@ -344,26 +355,129 @@
         border-color: rgba(255,255,255,0.9);
         color: #fff;
     }
+
+    .agenda-page-header .agenda-header-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+    .agenda-page-header .agenda-header-titles {
+        flex: 1 1 220px;
+        min-width: 0;
+    }
+    .agenda-page-header .agenda-header-titles h2 {
+        font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+        margin-bottom: 0.25rem;
+    }
+    .agenda-page-header .agenda-header-titles p {
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+    .agenda-page-header .agenda-header-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .agenda-page-header .agenda-header-actions .btn {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 767.98px) {
+        .agenda-page-header .agenda-header-inner {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .agenda-page-header .agenda-header-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
+        }
+        .agenda-page-header .agenda-header-actions .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 0.6rem 0.45rem;
+            font-size: 0.78rem;
+        }
+        .agenda-page-header .agenda-header-actions .btn-agenda-cancelar {
+            grid-column: 1 / -1;
+        }
+        .agenda-page-header .agenda-header-actions .btn .me-2 {
+            margin-right: 0.35rem !important;
+        }
+        .section-card {
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        #calendar {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .fc .fc-toolbar.fc-header-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem !important;
+        }
+        .fc .fc-toolbar.fc-footer-toolbar {
+            margin-top: 0.5rem !important;
+        }
+        .fc .fc-toolbar-chunk {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 0.35rem;
+            width: 100%;
+        }
+        .fc .fc-toolbar-title {
+            font-size: 1rem !important;
+            line-height: 1.3 !important;
+            white-space: normal !important;
+            text-align: center;
+            padding: 0.15rem 0.25rem;
+            max-width: 100%;
+        }
+        .fc .fc-button {
+            padding: 0.4rem 0.55rem;
+            font-size: 0.78rem;
+        }
+        .fc .fc-button-group > .fc-button {
+            padding: 0.4rem 0.5rem;
+        }
+        .fc .fc-col-header-cell-cushion,
+        .fc .fc-timegrid-axis-cushion {
+            font-size: 0.72rem;
+        }
+        .fc .fc-timegrid-slot-label-cushion {
+            font-size: 0.7rem;
+        }
+    }
 </style>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="main-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+            <div class="main-header agenda-page-header">
+                <div class="agenda-header-inner">
+                    <div class="agenda-header-titles">
                         <h2 style="color: white;"><i class="fas fa-calendar-alt me-2"></i> Agenda de Citas</h2>
                         <p style="color: white;">Gestione las citas y horarios de sus pacientes</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                    <div class="agenda-header-actions">
                         <a href="<?= base_url('dashboard/agenda/lista') ?>" class="btn btn-agenda-ghost" title="Ver lista de citas">
-                            <i class="fas fa-list me-2"></i> Vista Lista
+                            <i class="fas fa-list me-2"></i><span class="d-none d-sm-inline">Vista </span>Lista
+                        </a>
+                        <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
+                            <i class="fas fa-edit me-2"></i><span class="d-none d-sm-inline">Editar </span>Agenda
                         </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles para los próximos días">
-                            <i class="fas fa-clock me-2"></i> Crear Horarios
+                            <i class="fas fa-clock me-2"></i><span class="d-none d-sm-inline">Crear </span>Horarios
                         </button>
                         <a href="<?= base_url('dashboard/agenda/cancelar-horas') ?>" class="btn btn-agenda-cancelar" title="Cancelar horas masivamente por emergencia o enfermedad">
-                            <i class="fas fa-calendar-times me-2"></i> Cancelar Horas
+                            <i class="fas fa-calendar-times me-2"></i>Cancelar horas
                         </a>
                     </div>
                 </div>
@@ -490,135 +604,7 @@
             </div>
             <form id="formCrearHorarios">
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Fecha de inicio <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>" required>
-                                <small class="form-text text-muted">Fecha desde la cual crear horarios</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Días a crear <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="dias_crear" name="dias" value="30" min="1" max="365" required>
-                                <small class="form-text text-muted">Número de días laborables</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Duración de cada cita (minutos) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="duracion_cita" name="duracion" value="30" min="5" max="480" step="1" required>
-                                <small class="form-text text-muted">Duración de cada horario disponible (mínimo 5 minutos)</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6 class="mb-3"><i class="fas fa-calendar me-2"></i> Días de la Semana</h6>
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_lunes" name="dias_semana[]" value="1" checked>
-                                    <label class="form-check-label" for="dia_lunes">Lunes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_martes" name="dias_semana[]" value="2" checked>
-                                    <label class="form-check-label" for="dia_martes">Martes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_miercoles" name="dias_semana[]" value="3" checked>
-                                    <label class="form-check-label" for="dia_miercoles">Miércoles</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_jueves" name="dias_semana[]" value="4" checked>
-                                    <label class="form-check-label" for="dia_jueves">Jueves</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_viernes" name="dias_semana[]" value="5" checked>
-                                    <label class="form-check-label" for="dia_viernes">Viernes</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_sabado" name="dias_semana[]" value="6">
-                                    <label class="form-check-label" for="dia_sabado">Sábado</label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="dia_domingo" name="dias_semana[]" value="0">
-                                    <label class="form-check-label" for="dia_domingo">Domingo</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <h6 class="mb-3"><i class="fas fa-clock me-2"></i> Horarios</h6>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Nota:</strong> Puedes configurar horarios diferentes para cada día o usar el mismo horario para todos los días seleccionados.
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Hora de Inicio <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="hora_inicio" name="hora_inicio" value="09:00" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Hora de Fin <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" id="hora_fin" name="hora_fin" value="18:00" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="incluir_almuerzo" name="incluir_almuerzo">
-                            <label class="form-check-label" for="incluir_almuerzo">
-                                Excluir horario de almuerzo
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div id="horario_almuerzo" style="display: none;">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Inicio Almuerzo</label>
-                                    <input type="time" class="form-control" id="almuerzo_inicio" name="almuerzo_inicio" value="13:00">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Fin Almuerzo</label>
-                                    <input type="time" class="form-control" id="almuerzo_fin" name="almuerzo_fin" value="14:00">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="form-group">
-                        <label>Modalidad por Defecto <span class="text-danger">*</span></label>
-                        <select class="form-control" id="modalidad_id" name="modalidad_id" required>
-                            <option value="">-- Seleccione una modalidad --</option>
-                            <?php foreach ($modalidades as $modalidad) : ?>
-                                <option value="<?= $modalidad->id ?>" <?= $modalidad->id == 3 ? 'selected' : '' ?>>
-                                    <?= esc($modalidad->nombre) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <small class="form-text text-muted">
-                            Esta será la modalidad para la mayoría de los horarios creados. Podrás editarla individualmente después.
-                        </small>
-                    </div>
+                    <?= view('Modulos/agenda/_form_configurar_horarios', ['modalidades' => $modalidades, 'modoFormHorarios' => 'crear']) ?>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -650,10 +636,16 @@
                     <input type="hidden" id="hora_seleccionada" name="hora_seleccionada">
                     
                     <div class="form-group position-relative">
-                        <label>Paciente <span class="text-danger">*</span></label>
+                        <label class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                            <span>Paciente <span class="text-danger">*</span></span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAbrirCrearPacienteRapido">
+                                <i class="fas fa-user-plus me-1"></i> Crear paciente
+                            </button>
+                        </label>
                         <input type="hidden" name="paciente_id" id="paciente_id" value="">
-                        <input type="text" id="inputPacienteAgendar" class="form-control" placeholder="Escriba para buscar por nombre..." autocomplete="off">
+                        <input type="text" id="inputPacienteAgendar" class="form-control" placeholder="Escriba para buscar por nombre o RUT..." autocomplete="off">
                         <div id="listaPacientesAgendar" class="list-group position-absolute shadow-sm" style="left: 0; right: 0; top: 100%; margin-top: 2px; z-index: 1050; max-height: 220px; overflow-y: auto; display: none;"></div>
+                        <small class="text-muted">Si no aparece en la lista, créelo sin salir del calendario.</small>
                     </div>
                     
                     <div class="form-group">
@@ -666,21 +658,28 @@
                         </select>
                     </div>
                     
-                    <?php if (!empty($plantillas_pago)): ?>
+                    <?php if (!empty($mercado_pago_habilitado)): ?>
                     <div class="form-group">
-                        <label>Tipo de Pago <small class="text-muted">(Opcional)</small></label>
+                        <label>Cobro de la consulta <small class="text-muted">(opcional)</small></label>
+                        <?php if (!empty($plantillas_pago)): ?>
                         <select name="boton_pago_plantilla_id" id="boton_pago_plantilla_id" class="form-control">
-                            <option value="">-- Sin pago --</option>
+                            <option value="">— Sin cobro —</option>
                             <?php foreach ($plantillas_pago as $plantilla) : ?>
                                 <option value="<?= esc($plantilla->id) ?>">
-                                    <?= esc($plantilla->titulo) ?> - 
-                                    <?= number_format($plantilla->monto, 0, ',', '.') ?> <?= esc($plantilla->moneda) ?>
+                                    <?= esc($plantilla->titulo) ?> —
+                                    $<?= number_format($plantilla->monto, 0, ',', '.') ?> <?= esc($plantilla->moneda) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                         <small class="form-text text-muted">
-                            Si selecciona un tipo de pago, se enviará automáticamente el botón de pago al correo del paciente.
+                            Si elige una tarifa, el paciente recibirá primero un correo para <strong>confirmar la cita</strong>; después, otro con el <strong>link de pago</strong> (Mercado Pago).
                         </small>
+                        <?php else: ?>
+                        <p class="form-text text-muted mb-0">
+                            No hay tarifas definidas.
+                            <a href="<?= base_url('dashboard/boton-pago/lista') ?>">Crear tarifas de consulta</a>
+                        </p>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                     
@@ -707,8 +706,69 @@
     </div>
 </div>
 <script>
-var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre]; }, $pacientes)) ?>;
+var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre, 'rut' => $p->rut_dni ?? '']; }, $pacientes)) ?>;
 </script>
+
+<!-- Modal crear paciente rápido (desde Agendar Cita) -->
+<div class="modal fade" id="modalCrearPacienteRapido" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i> Nuevo paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
+                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
+                </button>
+            </div>
+            <form id="formCrearPacienteRapido">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        El paciente quedará asociado a su consulta. El mismo RUT puede existir con otro nutricionista, pero no se repite en su lista.
+                    </p>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_nombre" name="nombre" required maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_apellido" name="apellido" required maxlength="100">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">RUT / documento <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_rut_dni" name="rut_dni" required maxlength="20" placeholder="12.345.678-9">
+                            <div id="rapido_rut_feedback" class="form-text"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de paciente <span class="text-danger">*</span></label>
+                            <select class="form-control" id="rapido_tipo_paciente" name="tipo_paciente" required>
+                                <option value="particular">Particular</option>
+                                <option value="convenio">Convenio</option>
+                                <option value="seguro">Seguro</option>
+                                <option value="fonasa">Fonasa</option>
+                                <option value="isapre">Isapre</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" id="rapido_telefono" name="telefono" maxlength="50">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Correo</label>
+                            <input type="email" class="form-control" id="rapido_email" name="email" maxlength="150" placeholder="Recomendado para confirmación y botón de pago">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarPacienteRapido">
+                        <i class="fas fa-save me-1"></i> Guardar y seleccionar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Modal para elegir acción (Agendar o Editar Modalidad) -->
 <div class="modal fade" id="modalElegirAccion" tabindex="-1">
@@ -765,6 +825,29 @@ var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre 
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal cancelar cita (desde vista calendario) -->
+<div class="modal fade" id="modalCancelarCitaCalendario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title"><i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.</p>
+                <label class="form-label small text-muted">Motivo de cancelación (opcional)</label>
+                <textarea class="form-control" id="motivoCancelarCitaCalendario" rows="2" placeholder="Ej.: Paciente reprogramó"></textarea>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCitaCalendario">
+                    <i class="fas fa-times me-1"></i> Sí, cancelar cita
                 </button>
             </div>
         </div>
@@ -891,6 +974,46 @@ function actualizarTokenCSRF(xhr) {
 var calendar;
 var selectedEvent = null;
 
+function agendaEsVistaMovil() {
+    return window.matchMedia('(max-width: 767.98px)').matches;
+}
+
+function toolbarCalendarioPorPantalla() {
+    if (agendaEsVistaMovil()) {
+        return {
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: 'today'
+            },
+            footerToolbar: {
+                center: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }
+        };
+    }
+    return {
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        footerToolbar: false
+    };
+}
+
+function aplicarToolbarResponsiveCalendario() {
+    if (!calendar) return;
+    var cfg = toolbarCalendarioPorPantalla();
+    calendar.setOption('headerToolbar', cfg.headerToolbar);
+    calendar.setOption('footerToolbar', cfg.footerToolbar);
+}
+
+var resizeToolbarTimer;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeToolbarTimer);
+    resizeToolbarTimer = setTimeout(aplicarToolbarResponsiveCalendario, 150);
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar si debemos abrir el modal de crear horarios
     if (sessionStorage.getItem('abrirModalCrearHorarios') === 'true') {
@@ -901,18 +1024,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     var calendarEl = document.getElementById('calendar');
-    
+    var toolbarCfg = toolbarCalendarioPorPantalla();
+
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek',
+        initialView: agendaEsVistaMovil() ? 'timeGridDay' : 'timeGridWeek',
         locale: 'es',
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            week: 'Semana',
+            day: 'Día'
+        },
         slotMinTime: '09:00:00', // Hora mínima por defecto, se actualizará dinámicamente
+        slotDuration: '00:30:00',
         height: 'auto', // Altura automática
         contentHeight: 'auto', // Altura de contenido automática
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        views: {
+            timeGridWeek: {
+                displayEventTime: false
+            },
+            timeGridDay: {
+                displayEventTime: false
+            }
         },
+        headerToolbar: toolbarCfg.headerToolbar,
+        footerToolbar: toolbarCfg.footerToolbar,
         events: function(fetchInfo, successCallback, failureCallback) {
             $.ajax({
                 url: '<?= base_url('dashboard/agenda/getEventos') ?>',
@@ -1056,58 +1192,76 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
         eventMouseEnter: function(info) {
-            // Solo mostrar tooltip para bloques disponibles
-            var estado = info.event.extendedProps.estado_cita || 'disponible';
-            var pacienteId = info.event.extendedProps.paciente_id;
-            
+            var props = info.event.extendedProps;
+            var estado = props.estado_cita || 'disponible';
+            var pacienteId = props.paciente_id;
+            var modalidadId = props.modalidad_id || 3;
+            var inicio = new Date(info.event.start);
+            var fin = new Date(info.event.end);
+            var duracionMinutos = Math.round((fin - inicio) / (1000 * 60));
+            var horaInicio = props.hora_inicio || (info.event.startStr.split('T')[1] || '').substring(0, 5);
+            var horaFin = props.hora_fin || (info.event.endStr.split('T')[1] || '').substring(0, 5);
+
+            var iconoModalidad = '❔';
+            var nombreModalidad = 'No definido';
+            if (modalidadId == 1) {
+                iconoModalidad = '🏥';
+                nombreModalidad = 'Presencial';
+            } else if (modalidadId == 2) {
+                iconoModalidad = '💻';
+                nombreModalidad = 'Online';
+            }
+
+            var etiquetasEstado = {
+                disponible: 'Disponible',
+                reservada: 'Reservada',
+                confirmada: 'Confirmada',
+                agendada: 'Agendada',
+                pendiente: 'Pendiente',
+                en_proceso: 'En proceso',
+                completada: 'Completada',
+                cancelada: 'Cancelada',
+                no_asistio: 'No asistió',
+                bloqueado: 'Bloqueado',
+                no_disponible: 'No disponible'
+            };
+            var etiquetaEstado = etiquetasEstado[estado] || estado;
+
+            var tooltip = document.createElement('div');
+            tooltip.className = 'fc-event-tooltip';
+
             if (!pacienteId && (estado === 'disponible' || !estado || estado === null)) {
-                var modalidadId = info.event.extendedProps.modalidad_id || 3;
-                var inicio = new Date(info.event.start);
-                var fin = new Date(info.event.end);
-                var duracionMinutos = Math.round((fin - inicio) / (1000 * 60));
-                
-                // Iconos de modalidad
-                var iconoModalidad = '';
-                var nombreModalidad = '';
-                if (modalidadId == 1) {
-                    iconoModalidad = '🏥';
-                    nombreModalidad = 'Presencial';
-                } else if (modalidadId == 2) {
-                    iconoModalidad = '💻';
-                    nombreModalidad = 'Online';
-                } else {
-                    iconoModalidad = '❔';
-                    nombreModalidad = 'No Definido';
-                }
-                
-                // Crear tooltip
-                var tooltip = document.createElement('div');
-                tooltip.className = 'fc-event-tooltip';
-                tooltip.innerHTML = '<span class="tooltip-estado">Disponible</span>' +
+                tooltip.innerHTML = '<span class="tooltip-estado">' + etiquetaEstado + '</span>' +
                     '<span class="tooltip-separator">|</span>' +
                     '<span class="tooltip-modalidad">' + iconoModalidad + ' ' + nombreModalidad + '</span>' +
                     '<span class="tooltip-separator">•</span>' +
                     '<span class="tooltip-duracion">' + duracionMinutos + ' min</span>';
-                
-                // Posicionar tooltip
-                var rect = info.el.getBoundingClientRect();
-                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-                
-                tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
-                tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2)) + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                
-                document.body.appendChild(tooltip);
-                
-                // Mostrar tooltip con animación
-                setTimeout(function() {
-                    tooltip.classList.add('show');
-                }, 10);
-                
-                // Guardar referencia para limpiar
-                info.el._tooltip = tooltip;
+            } else {
+                var tituloCompleto = props.titulo_completo || info.event.title;
+                var lineas = [
+                    '<strong>' + (horaInicio && horaFin ? horaInicio + ' – ' + horaFin : '') + '</strong>',
+                    tituloCompleto,
+                    iconoModalidad + ' ' + nombreModalidad + ' · ' + duracionMinutos + ' min'
+                ];
+                if (props.motivo) {
+                    lineas.push('Motivo: ' + props.motivo);
+                }
+                tooltip.innerHTML = lineas.filter(Boolean).join('<br>');
             }
+
+            var rect = info.el.getBoundingClientRect();
+            var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            var scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+            tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
+            tooltip.style.left = (rect.left + scrollLeft + (rect.width / 2)) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+
+            document.body.appendChild(tooltip);
+            setTimeout(function() {
+                tooltip.classList.add('show');
+            }, 10);
+            info.el._tooltip = tooltip;
         },
         eventMouseLeave: function(info) {
             // Remover tooltip si existe
@@ -1127,20 +1281,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Función para ajustar altura de los slots
     function ajustarAlturaSlots() {
-        // Forzar altura mínima de 60px en cada slot
+        var alturaSlot = 52;
         var slots = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot, .fc-timeGridDay-view .fc-timegrid-slot');
         slots.forEach(function(slot) {
-            if (slot.offsetHeight < 60) {
-                slot.style.height = '60px';
-                slot.style.minHeight = '60px';
+            if (slot.classList.contains('fc-timegrid-slot-minor') || slot.offsetHeight < alturaSlot) {
+                slot.style.height = alturaSlot + 'px';
+                slot.style.minHeight = alturaSlot + 'px';
             }
         });
         
         var slotLanes = document.querySelectorAll('.fc-timeGridWeek-view .fc-timegrid-slot-lane, .fc-timeGridDay-view .fc-timegrid-slot-lane');
         slotLanes.forEach(function(lane) {
-            if (lane.offsetHeight < 60) {
-                lane.style.height = '60px';
-                lane.style.minHeight = '60px';
+            if (lane.offsetHeight < alturaSlot) {
+                lane.style.height = alturaSlot + 'px';
+                lane.style.minHeight = alturaSlot + 'px';
             }
         });
         
@@ -1194,11 +1348,14 @@ $(function() {
     function mostrarLista(termino) {
         var t = (termino || '').toLowerCase().trim();
         var filtrados = !t ? pacientesAgendarOpciones : pacientesAgendarOpciones.filter(function(o) {
-            return o.text.toLowerCase().indexOf(t) !== -1;
+            var texto = (o.text || '').toLowerCase();
+            var rut = (o.rut || '').toLowerCase().replace(/[^0-9k]/g, '');
+            var termRut = t.replace(/[^0-9k]/g, '');
+            return texto.indexOf(t) !== -1 || (termRut.length >= 3 && rut.indexOf(termRut) !== -1);
         });
         $lista.empty();
         if (filtrados.length === 0) {
-            $lista.append('<div class="list-group-item text-muted">Sin coincidencias</div>');
+            $lista.append('<div class="list-group-item text-muted">Sin coincidencias. Use «Crear paciente».</div>');
         } else {
             filtrados.forEach(function(o) {
                 var $a = $('<a href="#" class="list-group-item list-group-item-action"></a>').attr('data-id', o.value).text(o.text);
@@ -1237,7 +1394,160 @@ $(function() {
         $hidden.val('');
         $lista.hide();
     });
+
+    window.elegirPacienteAgendar = elegirPaciente;
 });
+
+/** Validador RUT chileno (módulo 11) */
+function validarRutChilenoAgenda(rut) {
+    var s = (rut || '').trim().replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    if (s.length < 2) return false;
+    var dv = s.slice(-1);
+    var body = s.slice(0, -1);
+    if (!/^\d+$/.test(body)) return false;
+    if (!/^[\dK]$/.test(dv)) return false;
+    var sum = 0, serie = [2, 3, 4, 5, 6, 7];
+    for (var i = 0; i < body.length; i++) {
+        sum += parseInt(body.charAt(body.length - 1 - i), 10) * serie[i % 6];
+    }
+    var rest = sum % 11;
+    var expected = 11 - rest;
+    if (expected === 11) expected = '0';
+    else if (expected === 10) expected = 'K';
+    else expected = String(expected);
+    return expected === dv;
+}
+
+function agregarPacienteAgendarOpcion(paciente) {
+    if (!paciente || !paciente.id) return;
+    var existe = pacientesAgendarOpciones.some(function(o) { return o.value === paciente.id; });
+    if (!existe) {
+        pacientesAgendarOpciones.push({
+            value: paciente.id,
+            text: paciente.text,
+            rut: paciente.rut_dni || ''
+        });
+        pacientesAgendarOpciones.sort(function(a, b) {
+            return String(a.text).localeCompare(String(b.text), 'es');
+        });
+    }
+}
+
+$('#btnAbrirCrearPacienteRapido').on('click', function() {
+    var $form = $('#formCrearPacienteRapido');
+    $form[0].reset();
+    $('#rapido_tipo_paciente').val('particular');
+    $('#rapido_rut_feedback').text('').removeClass('text-danger text-success');
+    var busqueda = $('#inputPacienteAgendar').val().trim();
+    if (busqueda && busqueda.indexOf(' ') === -1 && busqueda.length < 20) {
+        $('#rapido_rut_dni').val(busqueda);
+    }
+    var modalCrear = new bootstrap.Modal(document.getElementById('modalCrearPacienteRapido'));
+    modalCrear.show();
+});
+
+var verificarRutTimer = null;
+$('#rapido_rut_dni').on('input blur', function() {
+    var $fb = $('#rapido_rut_feedback');
+    var rut = $(this).val().trim();
+    clearTimeout(verificarRutTimer);
+    if (rut.length < 3) {
+        $fb.text('').removeClass('text-danger text-success');
+        return;
+    }
+    if (/^\d{7,8}[\dKk-]?$/.test(rut.replace(/\./g, '').replace(/-/g, '')) && !validarRutChilenoAgenda(rut)) {
+        $fb.text('RUT con dígito verificador incorrecto.').addClass('text-danger').removeClass('text-success');
+        return;
+    }
+    verificarRutTimer = setTimeout(function() {
+        $.get('<?= base_url('dashboard/paciente/verificarRutNutricionista') ?>', { rut: rut }, function(res) {
+            if (res.csrf_token) {
+                $('meta[name="csrf-token"]').attr('content', res.csrf_token);
+            }
+            if (!res.valido) {
+                $fb.text(res.message || 'RUT no válido').addClass('text-danger').removeClass('text-success');
+            } else if (!res.disponible) {
+                $fb.text(res.message || 'RUT ya registrado').addClass('text-danger').removeClass('text-success');
+            } else {
+                $fb.text(res.message || 'RUT disponible').addClass('text-success').removeClass('text-danger');
+            }
+        }, 'json');
+    }, 400);
+});
+
+$('#formCrearPacienteRapido').on('submit', function(e) {
+    e.preventDefault();
+    var rut = $('#rapido_rut_dni').val().trim();
+    var rutLimpio = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    var pareceRutChileno = /^\d{7,8}[\dK]$/.test(rutLimpio);
+    if (pareceRutChileno && !validarRutChilenoAgenda(rut)) {
+        toastr.error('El RUT chileno no es válido (revise el dígito verificador).');
+        return;
+    }
+    if (!pareceRutChileno && rut.replace(/[^0-9a-zA-Z]/gi, '').length < 3) {
+        toastr.error('Ingrese un RUT o documento de identidad válido.');
+        return;
+    }
+    var csrfToken = obtenerTokenCSRF() || '<?= csrf_hash() ?>';
+    var $btn = $('#btnGuardarPacienteRapido');
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: '<?= base_url('dashboard/paciente/crearRapido') ?>',
+        type: 'POST',
+        dataType: 'json',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: {
+            csrf_test_name: csrfToken,
+            nombre: $('#rapido_nombre').val(),
+            apellido: $('#rapido_apellido').val(),
+            rut_dni: rut,
+            tipo_paciente: $('#rapido_tipo_paciente').val(),
+            telefono: $('#rapido_telefono').val(),
+            email: $('#rapido_email').val()
+        },
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            if (res.success && res.paciente) {
+                agregarPacienteAgendarOpcion({
+                    id: res.paciente.id,
+                    text: res.paciente.text,
+                    rut_dni: res.paciente.rut_dni
+                });
+                if (typeof window.elegirPacienteAgendar === 'function') {
+                    window.elegirPacienteAgendar(res.paciente.id, res.paciente.text);
+                } else {
+                    $('#paciente_id').val(res.paciente.id);
+                    $('#inputPacienteAgendar').val(res.paciente.text);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalCrearPacienteRapido')).hide();
+                toastr.success(res.message || 'Paciente creado');
+            } else {
+                var msg = res.message || 'No se pudo crear el paciente';
+                if (res.errors) {
+                    Object.keys(res.errors).forEach(function(k) {
+                        toastr.warning(res.errors[k]);
+                    });
+                }
+                toastr.error(msg);
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false);
+            actualizarTokenCSRF(xhr);
+            var res = xhr.responseJSON || {};
+            var msg = res.message || 'Error al crear el paciente';
+            if (xhr.status === 409) {
+                toastr.warning(msg, 'RUT duplicado', { timeOut: 6000 });
+            } else if (xhr.status === 403) {
+                toastr.error('Sesión expirada. Recargue la página.');
+            } else {
+                toastr.error(msg);
+            }
+        }
+    });
+});
+
 function abrirModalAgendar() {
     $('#formAgendar')[0].reset();
     $('#detalle_agenda_id').val('');
@@ -1675,6 +1985,27 @@ function cargarInformacionCita(detalleAgendaId) {
                 }
                 html += '</div></div></div>';
             }
+
+            if (response.cobro && response.cobro.tiene) {
+                var cobro = response.cobro;
+                var estadoCobroBadge = '<span class="badge bg-secondary">' + (cobro.estado_label || cobro.estado) + '</span>';
+                if (cobro.estado === 'pendiente') {
+                    estadoCobroBadge = '<span class="badge bg-warning text-dark">Pendiente de pago</span>';
+                } else if (cobro.estado === 'completado' || cobro.estado === 'aprobado') {
+                    estadoCobroBadge = '<span class="badge bg-success">Pagado</span>';
+                }
+                html += '<div class="row mt-2"><div class="col-12"><div class="card border-0 shadow-sm" style="border-left:4px solid #30cfd0!important">';
+                html += '<div class="card-body"><h6 class="card-title text-primary"><i class="fas fa-receipt me-2"></i>Cobro de la cita</h6><hr>';
+                html += '<p class="mb-1"><strong>Concepto:</strong> ' + (cobro.concepto || 'Consulta') + '</p>';
+                html += '<p class="mb-1"><strong>Monto:</strong> $' + (cobro.monto_formateado || cobro.monto) + ' ' + (cobro.moneda || 'CLP') + ' · ' + (cobro.medio || 'Mercado Pago') + '</p>';
+                html += '<p class="mb-2"><strong>Estado:</strong> ' + estadoCobroBadge;
+                if (cobro.fecha_pago) html += ' <small class="text-muted ms-1">' + cobro.fecha_pago + '</small>';
+                html += '</p>';
+                if (cobro.puede_reenviar) {
+                    html += '<button type="button" class="btn btn-sm btn-outline-primary btn-reenviar-pago-cita" data-detalle-id="' + response.id + '"><i class="fas fa-paper-plane me-1"></i> Reenviar link de pago</button>';
+                }
+                html += '</div></div></div></div>';
+            }
             
             html += '</div>';
             
@@ -1773,10 +2104,22 @@ function cargarInformacionCita(detalleAgendaId) {
             // Botón para iniciar consulta (solo si está confirmada y no iniciada)
             if (response.paciente && response.estado_cita === 'confirmada' && !response.fecha_inicio_real) {
                 html += '<div class="row mt-3">';
-                html += '<div class="col-12 text-center">';
+                html += '<div class="col-12 text-center d-flex flex-wrap justify-content-center gap-2">';
                 html += '<a href="<?= base_url('dashboard/agenda/consulta?id=') ?>' + response.id + '" class="btn btn-success btn-lg">';
                 html += '<i class="fas fa-play-circle me-2"></i>Iniciar Consulta';
                 html += '</a>';
+                html += '<button type="button" class="btn btn-outline-danger btn-lg" onclick="cancelarCitaCalendario(' + response.id + ')">';
+                html += '<i class="fas fa-calendar-times me-2"></i>Cancelar cita';
+                html += '</button>';
+                html += '</div></div>';
+            }
+
+            // Cancelar citas pendientes/agendadas/en proceso (sin duplicar si ya se mostró arriba)
+            var estadosCancelablesCal = ['pendiente', 'agendada', 'en_proceso'];
+            if (response.paciente && estadosCancelablesCal.indexOf(estadoCitaRaw) !== -1 && !response.fecha_fin_real) {
+                html += '<div class="row mt-3"><div class="col-12 text-center">';
+                html += '<button type="button" class="btn btn-outline-danger" onclick="cancelarCitaCalendario(' + response.id + ')">';
+                html += '<i class="fas fa-calendar-times me-2"></i>Cancelar cita</button>';
                 html += '</div></div>';
             }
             
@@ -1832,6 +2175,49 @@ function cargarInformacionCita(detalleAgendaId) {
         }
     });
 }
+
+var citaIdCancelarCalendario = null;
+
+function cancelarCitaCalendario(detalleAgendaId) {
+    citaIdCancelarCalendario = detalleAgendaId;
+    $('#motivoCancelarCitaCalendario').val('');
+    new bootstrap.Modal(document.getElementById('modalCancelarCitaCalendario')).show();
+}
+
+$('#btnConfirmarCancelarCitaCalendario').on('click', function() {
+    if (!citaIdCancelarCalendario) return;
+    var id = citaIdCancelarCalendario;
+    var motivo = $('#motivoCancelarCitaCalendario').val().trim();
+    var csrfToken = obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+        type: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+        data: { csrf_test_name: csrfToken, id: id, motivo: motivo },
+        dataType: 'json',
+        success: function(response, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            if (response && (response.success || response.message)) {
+                bootstrap.Modal.getInstance(document.getElementById('modalCancelarCitaCalendario')).hide();
+                $('#modalVerCita').modal('hide');
+                citaIdCancelarCalendario = null;
+                toastr.success(response.message || 'Cita cancelada', 'Éxito');
+                if (typeof calendar !== 'undefined' && calendar) calendar.refetchEvents();
+            } else {
+                toastr.error((response && (response.message || response.error)) || 'Error al cancelar', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            $btn.prop('disabled', false);
+            var r = xhr.responseJSON || {};
+            toastr.error(r.message || r.error || 'Error al cancelar la cita', 'Error');
+        }
+    });
+});
 
 // Función para guardar las notas del nutricionista
 function guardarNotasNutricionista(event, detalleAgendaId) {
@@ -1925,6 +2311,35 @@ function verificarConsultasProximas() {
         }
     });
 }
+
+$(document).on('click', '.btn-reenviar-pago-cita', function() {
+    var detalleId = $(this).data('detalle-id');
+    if (!detalleId) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    var csrfToken = obtenerTokenCSRF() || $('input[name="csrf_test_name"]').val() || '<?= csrf_hash() ?>';
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/reenviarLinkPagoCita') ?>',
+        type: 'POST',
+        data: { detalle_agenda_id: detalleId, csrf_test_name: csrfToken },
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        dataType: 'json',
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (res.success) {
+                toastr.success(res.message || 'Link de pago reenviado al paciente.', 'Cobro');
+            } else {
+                toastr.error(res.error || 'No se pudo reenviar.', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Error al reenviar.';
+            toastr.error(msg, 'Error');
+        },
+        complete: function() { $btn.prop('disabled', false); }
+    });
+});
 
 // Verificar consultas próximas cada 5 minutos
 setInterval(verificarConsultasProximas, 300000); // 5 minutos

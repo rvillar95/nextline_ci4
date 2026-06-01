@@ -77,21 +77,11 @@
         color: white;
     }
     
-    /* Consultas anteriores: se pega debajo del header al hacer scroll */
-    .consultas-anteriores-sticky {
-        position: sticky;
-        top: 100px;
-        z-index: 1020;
-        transition: box-shadow 0.2s ease;
+    .ultima-consulta-ref {
+        font-size: 0.8rem;
+        line-height: 1.3;
     }
-    .consultas-anteriores-sticky.is-stuck {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    }
-    #consultasAnterioresHojas {
-        flex: 1;
-        min-width: 0;
-    }
-    
+
     /* Estilos para campos según método de cálculo */
     .metodo-4 {
         border-left: 4px solid #dc3545 !important;
@@ -133,6 +123,57 @@
     .metodo-5:focus,
     .metodo-2:focus {
         box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* Tabs de secciones de consulta: responsive (móvil + PC) */
+    .consulta-secciones-tabs .nav-tabs {
+        border-bottom: 2px solid #dee2e6;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    .consulta-secciones-tabs .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-weight: 500;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+    .consulta-secciones-tabs .nav-tabs .nav-link:hover {
+        color: #0d6efd;
+        border-color: transparent;
+    }
+    .consulta-secciones-tabs .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background: #fff;
+        border-bottom-color: #0d6efd;
+    }
+    .consulta-secciones-tabs .nav-tabs .nav-link .tab-badge {
+        font-size: 0.7rem;
+        margin-left: 0.35rem;
+        font-weight: 500;
+    }
+    .consulta-secciones-tabs .tab-content {
+        padding: 1.25rem 0 0;
+    }
+    /* Solo el tab activo ocupa espacio; el form se oculta cuando no es Mediciones/Registro */
+    .consulta-secciones-tabs .tab-content .tab-pane { display: none !important; }
+    .consulta-secciones-tabs .tab-content .tab-pane.active { display: block !important; }
+    .consulta-secciones-tabs .tab-content > form#formMediciones[data-tab-visible="false"] { display: none !important; }
+    @media (max-width: 768px) {
+        .consulta-secciones-tabs .nav-tabs .nav-link {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        .consulta-secciones-tabs .nav-tabs .nav-link .tab-badge {
+            display: block;
+            margin-left: 0;
+            margin-top: 0.2rem;
+        }
     }
 </style>
 
@@ -190,14 +231,62 @@
                 </div>
             </div>
 
+            <?php if (!empty($mercado_pago_habilitado)): ?>
+            <?php
+            $pagoCita = $pago_cita ?? null;
+            $estadoPagoCita = $pagoCita ? strtolower(trim((string)($pagoCita->estado_pago ?? ''))) : '';
+            $conceptoPago = 'Consulta nutricional';
+            if ($pagoCita && !empty($pagoCita->observaciones) && preg_match('/Plantilla:\s*(.+)$/i', (string)$pagoCita->observaciones, $mConcepto)) {
+                $conceptoPago = trim($mConcepto[1]);
+            }
+            ?>
+            <div class="section-card" style="border-left-color: #30cfd0 !important;">
+                <h5 class="text-primary mb-3"><i class="fas fa-receipt me-2"></i> Cobro de esta cita</h5>
+                <?php if ($pagoCita): ?>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-8">
+                        <p class="mb-1"><strong>Concepto:</strong> <?= esc($conceptoPago) ?></p>
+                        <p class="mb-1"><strong>Monto:</strong> $<?= number_format((float)($pagoCita->monto ?? 0), 0, ',', '.') ?> <?= esc($pagoCita->moneda ?? 'CLP') ?> <span class="text-muted">· Mercado Pago</span></p>
+                        <p class="mb-0"><strong>Estado:</strong>
+                            <?php if (in_array($estadoPagoCita, ['completado', 'aprobado'], true)): ?>
+                                <span class="badge bg-success">Pagado</span>
+                                <?php if (!empty($pagoCita->fecha_pago)): ?>
+                                    <small class="text-muted ms-1"><?= date('d/m/Y H:i', strtotime($pagoCita->fecha_pago)) ?></small>
+                                <?php endif; ?>
+                            <?php elseif ($estadoPagoCita === 'pendiente'): ?>
+                                <span class="badge bg-warning text-dark">Pendiente de pago</span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary"><?= esc(ucfirst($estadoPagoCita ?: 'N/A')) ?></span>
+                            <?php endif; ?>
+                        </p>
+                        <?php if ($estadoPagoCita === 'pendiente'): ?>
+                        <p class="small text-muted mt-2 mb-0">El link de pago se envía cuando el paciente confirma la cita por correo. Puede reenviarlo si no lo recibió.</p>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <?php if ($estadoPagoCita === 'pendiente' && !empty($pagoCita->mp_preference_id)): ?>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnReenviarLinkPagoCita" data-detalle-id="<?= (int)$cita->id ?>">
+                            <i class="fas fa-paper-plane me-1"></i> Reenviar link de pago
+                        </button>
+                        <?php endif; ?>
+                        <a href="<?= base_url('dashboard/pago/cobros') ?>" class="btn btn-link btn-sm">Ver todos los cobros</a>
+                    </div>
+                </div>
+                <?php else: ?>
+                <p class="text-muted mb-2">Esta cita no tiene un cobro asociado.</p>
+                <p class="small text-muted mb-0">Al agendar o aprobar reservas puede elegir una tarifa. <a href="<?= base_url('dashboard/boton-pago/lista') ?>">Gestionar tarifas</a></p>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <?php 
             $estadoCitaConsulta = strtolower(trim((string)($cita->estado_cita ?? ''))); 
             if ($estadoCitaConsulta === 'reservada'): 
             ?>
             <!-- Aprobar reserva (cita reservada por paciente desde link público) -->
             <div class="section-card" style="border-left: 4px solid #7986CB !important; background: linear-gradient(135deg, rgba(121,134,203,0.08) 0%, #fff 100%);">
-                <h5 class="text-primary mb-3"><i class="fas fa-user-clock me-2"></i> Reservada por el paciente</h5>
-                <p class="text-muted mb-4">Esta cita fue reservada desde el link público. Asigne tipo de consulta, modalidad y opcionalmente tipo de pago; luego apruebe para que la cita pase a <strong>Pendiente</strong> y se envíe el correo de confirmación al paciente.</p>
+                <h5 class="text-primary mb-3"><i class="fas fa-user-clock me-2"></i> Reserva pendiente de aprobación</h5>
+                <p class="text-muted mb-4">Esta cita está en estado <strong>Reservada</strong> (solicitud web o agendada desde otra consulta). Revise modalidad y pago si aplica; al aprobar pasará a <strong>Pendiente</strong> y el paciente recibirá el correo para confirmar la cita.</p>
                 <form id="formAprobarReserva" class="row g-3">
                     <?= csrf_field() ?>
                     <input type="hidden" name="detalle_agenda_id" value="<?= (int)$cita->id ?>">
@@ -219,22 +308,70 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="aprobar_boton_pago_plantilla_id" class="form-label">Tipo de pago (opcional)</label>
+                        <label for="aprobar_boton_pago_plantilla_id" class="form-label">Tarifa de cobro (opcional)</label>
                         <select name="boton_pago_plantilla_id" id="aprobar_boton_pago_plantilla_id" class="form-select">
-                            <option value="">-- Sin pago --</option>
+                            <option value="">— Sin cobro —</option>
                             <?php foreach ($plantillas_pago ?? [] as $pp): ?>
                             <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> - <?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-12">
+                    <div class="col-12 d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary" id="btnAprobarReserva">
                             <i class="fas fa-check-circle me-2"></i> Aprobar reserva y enviar confirmación al paciente
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="btnRechazarReservaConsulta">
+                            <i class="fas fa-ban me-2"></i> Rechazar solicitud
                         </button>
                     </div>
                 </form>
             </div>
+            <!-- Modal rechazar reserva (consulta) -->
+            <div class="modal fade" id="modalRechazarReservaConsulta" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title"><i class="fas fa-ban me-2 text-danger"></i>Rechazar solicitud de hora</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">El horario volverá a estar disponible. Si el paciente tiene correo, recibirá la notificación de cancelación.</p>
+                            <label class="form-label small text-muted">Motivo del rechazo (opcional)</label>
+                            <textarea class="form-control" id="motivoRechazarReservaConsulta" rows="2" placeholder="Ej.: Sin cupo en ese horario"></textarea>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-danger" id="btnConfirmarRechazarReservaConsulta">
+                                <i class="fas fa-ban me-1"></i> Sí, rechazar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <?php endif; ?>
+
+            <!-- Modal cancelar cita (consulta) -->
+            <div class="modal fade" id="modalCancelarCitaConsulta" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title"><i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">¿Cancelar esta cita? El horario quedará libre. Se notificará al paciente si tiene correo o WhatsApp configurado.</p>
+                            <label class="form-label small text-muted">Motivo (opcional)</label>
+                            <textarea class="form-control" id="motivoCancelarCitaConsulta" rows="2" placeholder="Ej.: Paciente no puede asistir"></textarea>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                            <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCitaConsulta">
+                                <i class="fas fa-times me-1"></i> Sí, cancelar cita
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Notas y Recordatorios del Nutricionista (Destacado) -->
             <?php if (!empty($cita->notas_nutricionista)): ?>
@@ -258,34 +395,6 @@
             </div>
             <?php endif; ?>
 
-            <!-- Consultas anteriores: colapsable, hojas + paginación en una línea (sticky al hacer scroll) -->
-            <div id="consultasAnterioresSticky" class="section-card consultas-anteriores-sticky" style="border-left: 4px solid #90A4AE !important;">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <h5 class="text-secondary mb-0 d-flex align-items-center flex-wrap">
-                        <span><i class="fas fa-copy me-2"></i> Consultas anteriores</span>
-                        <span class="badge bg-secondary ms-2" id="consultasAnterioresBadge" style="display: none;">0</span>
-                        <span id="consultasAnterioresSeleccionada" class="text-muted small ms-2 fw-normal" style="display: none;" title="Consulta cargada como referencia">— <span id="consultasAnterioresSeleccionadaFecha"></span></span>
-                    </h5>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleConsultasAnteriores" data-bs-toggle="collapse" data-bs-target="#consultasAnterioresCollapse" aria-expanded="false" aria-controls="consultasAnterioresCollapse" title="Expandir / Contraer">
-                        <i class="fas fa-chevron-up me-1"></i> <span id="consultasAnterioresToggleLabel">Expandir</span>
-                    </button>
-                </div>
-                <div class="collapse" id="consultasAnterioresCollapse">
-                    <p class="text-muted small mt-2 mb-2">
-                        <i class="fas fa-info-circle me-1"></i> Seleccioná una consulta para cargar sus datos en el formulario actual. Solo se rellenan los campos como referencia; la consulta anterior no se modifica. La fecha y hora se muestran al pasar el mouse.
-                    </p>
-                    <div id="consultasAnterioresContainer" class="d-flex flex-wrap align-items-center gap-2">
-                        <div id="consultasAnterioresHojas" class="d-flex flex-wrap gap-2 align-items-center">
-                            <span class="text-muted small" id="consultasAnterioresMensaje">Cargando consultas anteriores...</span>
-                        </div>
-                        <nav id="consultasAnterioresPaginacion" class="d-flex align-items-center gap-2 flex-wrap ms-auto" aria-label="Paginación consultas anteriores" style="display: none;">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresPrev" disabled><i class="fas fa-chevron-left me-1"></i> Anterior</button>
-                            <span class="small text-muted" id="consultasAnterioresPageInfo"></span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnConsultasAnterioresNext" disabled><i class="fas fa-chevron-right ms-1"></i> Siguiente</button>
-                        </nav>
-                    </div>
-                </div>
-            </div>
 
             <!-- Control de Consulta -->
             <div class="section-card">
@@ -328,6 +437,14 @@
                                 <strong>Reservada por el paciente.</strong> Use el formulario "Aprobar reserva" más arriba para asignar tipo de consulta y tipo de pago; luego podrá iniciar la consulta cuando el paciente confirme.
                             </div>
                         <?php elseif ($estadoConsulta === 'pendiente'): ?>
+                            <?php
+                            $puedeCancelarConsulta = in_array($estadoCitaConsulta, ['pendiente', 'agendada', 'confirmada', 'en_proceso'], true);
+                            ?>
+                            <?php if ($puedeCancelarConsulta): ?>
+                            <button type="button" class="btn btn-outline-danger btn-action-large" id="btnCancelarCitaConsulta">
+                                <i class="fas fa-calendar-times me-2"></i> Cancelar cita
+                            </button>
+                            <?php endif; ?>
                             <button class="btn btn-success btn-action-large" onclick="iniciarConsulta(<?= $cita->id ?>)">
                                 <i class="fas fa-play-circle me-2"></i> Iniciar Consulta
                             </button>
@@ -348,56 +465,108 @@
                 </div>
             </div>
 
-            <!-- 2) Información Clínica: Motivo, Plan de Tratamiento, Recomendaciones (orden: después de Consultas/Control, antes de Mediciones) -->
-            <div class="section-card" style="border-left: 4px solid #28a745 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h5 class="text-success mb-0">
-                        <i class="fas fa-file-medical me-2"></i> Información Clínica
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <span id="infoClinicaEstado" class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Últimos cambios guardados correctamente">
-                            <i class="fas fa-check me-1"></i> Guardado
-                        </span>
-                        <button 
-                            type="button" 
-                            class="btn btn-outline-success btn-sm" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#informacionClinicaCollapse"
-                            aria-expanded="false"
-                            aria-controls="informacionClinicaCollapse"
-                        >
-                            <i class="fas fa-chevron-down me-2"></i> <span id="informacionClinicaToggleLabel">Expandir</span>
+            <?php
+            $referencia_ultima_consulta = $referencia_ultima_consulta ?? [];
+            $referencia_ultima_fecha = $referencia_ultima_fecha ?? '';
+            $mostrar_ref_ultima = function ($campo, $unidad = '') use ($referencia_ultima_consulta) {
+                if (!array_key_exists($campo, $referencia_ultima_consulta)) {
+                    return '';
+                }
+                $v = $referencia_ultima_consulta[$campo];
+                if ($v === null || $v === '') {
+                    return '';
+                }
+                if (is_numeric($v)) {
+                    $n = round((float) $v, 2);
+                    $v = fmod($n, 1.0) == 0.0
+                        ? (string) (int) $n
+                        : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
+                }
+                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc((string) $v) . esc($unidad) . '</small>';
+            };
+            $mostrar_ref_ultima_texto = function ($campo, $maxLen = 100) use ($referencia_ultima_consulta) {
+                if (empty($referencia_ultima_consulta[$campo])) {
+                    return '';
+                }
+                $v = trim(strip_tags((string) $referencia_ultima_consulta[$campo]));
+                if ($v === '') {
+                    return '';
+                }
+                if (mb_strlen($v) > $maxLen) {
+                    $v = mb_substr($v, 0, $maxLen) . '…';
+                }
+                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc($v) . '</small>';
+            };
+            ?>
+            <?php if ($referencia_ultima_fecha !== ''): ?>
+            <div class="alert alert-light border small mb-3 py-2">
+                <i class="fas fa-history me-1 text-secondary"></i>
+                Datos de la última consulta (<strong><?= esc($referencia_ultima_fecha) ?></strong>): campos vacíos se completan automáticamente; en mediciones se muestra referencia debajo de cada valor.
+            </div>
+            <?php endif; ?>
+            <?php if (!empty($referencia_detalle_agenda_id) || !empty($referencia_ultima_consulta)): ?>
+            <script>
+            window.referenciaDetalleAgendaId = <?= json_encode($referencia_detalle_agenda_id ?? null) ?>;
+            window.referenciaUltimaConsulta = <?= json_encode($referencia_ultima_consulta ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+            </script>
+            <?php endif; ?>
+
+            <!-- Secciones de consulta en tabs: Información Clínica, Mediciones, Registro Clínico, Calorimetría -->
+            <div class="section-card consulta-secciones-tabs" style="border-left: 4px solid #28a745 !important;">
+                <ul class="nav nav-tabs" id="consultaSeccionesTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-info-clinica-btn" data-bs-toggle="tab" data-bs-target="#pane-info-clinica" type="button" role="tab" aria-controls="pane-info-clinica" aria-selected="true">
+                            <i class="fas fa-file-medical me-1"></i> Información Clínica <span id="infoClinicaEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;" title="Últimos cambios guardados">Guardado</span>
                         </button>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones. Se guarda en el historial clínico del paciente.
-                </p>
-                <div class="collapse" id="informacionClinicaCollapse">
-                    <div class="mb-4">
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-mediciones-btn" data-bs-toggle="tab" data-bs-target="#pane-mediciones" type="button" role="tab" aria-controls="pane-mediciones" aria-selected="false">
+                            <i class="fas fa-ruler-combined me-1"></i> Mediciones <span id="medicionesEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-registro-btn" data-bs-toggle="tab" data-bs-target="#pane-registro" type="button" role="tab" aria-controls="pane-registro" aria-selected="false">
+                            <i class="fas fa-file-medical me-1"></i> Registro Clínico <span id="registroClinicoEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-calorimetria-btn" data-bs-toggle="tab" data-bs-target="#pane-calorimetria" type="button" role="tab" aria-controls="pane-calorimetria" aria-selected="false">
+                            <i class="fas fa-calculator me-1"></i> Calorimetría y Plan <span id="calorimetriaPlanEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="consultaSeccionesTabContent">
+                    <div class="tab-pane fade show active" id="pane-info-clinica" role="tabpanel" aria-labelledby="tab-info-clinica-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones. Se guarda en el historial clínico del paciente.
+                        </p>
+                        <div class="mb-4">
                         <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
+                        <?= $mostrar_ref_ultima_texto('motivo_consulta') ?>
                         <p class="text-muted small mb-2">Indique el motivo de la consulta o el objetivo principal acordado con el paciente. Puede usar formato de texto.</p>
                         <textarea name="motivo_consulta" id="motivo_consulta" class="form-control" rows="4" placeholder="Ej: Control de peso, Mejorar hábitos alimentarios, Seguimiento diabetes..."><?= esc($historial['motivo_consulta'] ?? $cita->motivo ?? '') ?></textarea>
                     </div>
                     <div class="mb-4">
                         <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
+                        <?= $mostrar_ref_ultima_texto('plan_tratamiento') ?>
                         <p class="text-muted small mb-2">Describe el plan de tratamiento y alimentación acordado. Puedes usar formato de texto (negrita, cursiva, listas, etc.).</p>
                         <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="6" placeholder="Ej: Dieta mediterránea, 5 comidas al día, Eliminar azúcares refinados, Aumentar consumo de vegetales..."><?= esc($historial['plan_tratamiento'] ?? $cita->plan_alimentacion ?? '') ?></textarea>
                     </div>
                     <div class="mb-3">
                         <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
+                        <?= $mostrar_ref_ultima_texto('recomendaciones') ?>
                         <p class="text-muted small mb-2">Agrega recomendaciones y observaciones para el paciente. Puedes usar formato de texto.</p>
                         <textarea name="recomendaciones" id="recomendaciones" class="form-control" rows="5" placeholder="Ej: Realizar ejercicio cardiovascular 30 min 3 veces por semana, Tomar suplemento de vitamina D, Agendar próxima cita en 1 mes..."><?= esc(trim(($historial['recomendaciones'] ?? '') . (isset($historial['observaciones']) && (string)($historial['observaciones'] ?? '') !== '' ? "\n\n" . ($historial['observaciones'] ?? '') : '')) ?: ($cita->recomendaciones ?? '')) ?></textarea>
                     </div>
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="button" class="btn btn-success" onclick="guardarInformacionClinica()">
-                            <i class="fas fa-save me-2"></i> Guardar
-                        </button>
+                        <div class="d-flex justify-content-end mt-3">
+                            <button type="button" class="btn btn-success" onclick="guardarInformacionClinica()">
+                                <i class="fas fa-save me-2"></i> Guardar
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </div>
+                    <!-- /pane-info-clinica -->
 
-            <form id="formMediciones" onsubmit="guardarMediciones(event)">
+                    <form id="formMediciones" onsubmit="guardarMediciones(event)" data-tab-visible="false">
                 <?= csrf_field() ?>
                 <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
                 <input type="hidden" name="paciente_id" value="<?= $cita->paciente_id ?>">
@@ -405,43 +574,67 @@
                 <?php
                 $ac = [];
                 $aa = [];
+                $refUltima = $referencia_ultima_consulta ?? [];
+                $jsonAnamnesisVacio = static function (array $arr): bool {
+                    foreach ($arr as $v) {
+                        if (trim((string) $v) !== '') {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
                 if (!empty($historial['anamnesis_clinica'])) {
                     $dec = is_string($historial['anamnesis_clinica']) ? json_decode($historial['anamnesis_clinica'], true) : $historial['anamnesis_clinica'];
-                    if (is_array($dec)) $ac = $dec;
+                    if (is_array($dec)) {
+                        $ac = $dec;
+                    }
+                }
+                if ($jsonAnamnesisVacio($ac) && !empty($refUltima['anamnesis_clinica'])) {
+                    $dec = is_string($refUltima['anamnesis_clinica']) ? json_decode($refUltima['anamnesis_clinica'], true) : $refUltima['anamnesis_clinica'];
+                    if (is_array($dec)) {
+                        $ac = $dec;
+                    }
                 }
                 if (!empty($historial['anamnesis_alimentaria'])) {
                     $dec = is_string($historial['anamnesis_alimentaria']) ? json_decode($historial['anamnesis_alimentaria'], true) : $historial['anamnesis_alimentaria'];
-                    if (is_array($dec)) $aa = $dec;
+                    if (is_array($dec)) {
+                        $aa = $dec;
+                    }
                 }
+                if ($jsonAnamnesisVacio($aa) && !empty($refUltima['anamnesis_alimentaria'])) {
+                    $dec = is_string($refUltima['anamnesis_alimentaria']) ? json_decode($refUltima['anamnesis_alimentaria'], true) : $refUltima['anamnesis_alimentaria'];
+                    if (is_array($dec)) {
+                        $aa = $dec;
+                    }
+                }
+                $tendenciaVacia = static function ($tendencia) {
+                    if (empty($tendencia) || !is_array($tendencia)) {
+                        return true;
+                    }
+                    foreach ($tendencia as $tc) {
+                        $pref = is_object($tc) ? ($tc->preferencia ?? '') : ($tc['preferencia'] ?? '');
+                        $alerg = is_object($tc) ? ($tc->alergia_intolerancia ?? '') : ($tc['alergia_intolerancia'] ?? '');
+                        if (trim((string) $pref) !== '' || trim((string) $alerg) !== '') {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                if ($tendenciaVacia($tendencia_consumo ?? []) && !empty($referencia_tendencia_consumo)) {
+                    $tendencia_consumo = $referencia_tendencia_consumo;
+                }
+                if (empty($examenes_bioquimicos) && !empty($referencia_examenes_bioquimicos)) {
+                    $examenes_bioquimicos = $referencia_examenes_bioquimicos;
+                }
+                $recordatorioActual = trim((string) ($historial['recordatorio_24h'] ?? ''));
+                $recordatorioPrefill = $recordatorioActual !== ''
+                    ? $recordatorioActual
+                    : trim((string) ($refUltima['recordatorio_24h'] ?? ''));
                 ?>
-            <!-- 3) Mediciones Corporales: medidas básicas, pliegues, circunferencias, diámetros, composición -->
-            <div class="section-card" style="border-left: 4px solid #4A90E2 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h5 class="text-primary mb-0">
-                        <i class="fas fa-ruler-combined me-2"></i> Mediciones Corporales
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <span id="medicionesEstado" class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Últimos cambios guardados correctamente">
-                            <i class="fas fa-check me-1"></i> Guardado
-                        </span>
-                        <button 
-                            type="button" 
-                            class="btn btn-outline-primary btn-sm" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#medicionesCollapse"
-                            aria-expanded="false"
-                            aria-controls="medicionesCollapse"
-                            id="btnToggleMediciones"
-                        >
-                            <i class="fas fa-chevron-down me-2"></i> <span id="medicionesToggleLabel">Expandir</span>
-                        </button>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal. Se guardan en el historial clínico del paciente.
-                </p>
-                
-                <div class="collapse" id="medicionesCollapse">
+                    <div class="tab-pane fade" id="pane-mediciones" role="tabpanel" aria-labelledby="tab-mediciones-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal. Se guardan en el historial clínico del paciente.
+                        </p>
                         <!-- Leyenda de Métodos de Cálculo (visible solo al expandir) -->
                         <div class="alert alert-light border mb-3" style="background-color: #f8f9fa;">
                             <div class="d-flex align-items-center mb-2">
@@ -719,41 +912,18 @@
                         </div>
                         <?php endif; ?>
 
-                    <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i> Guardar
-                        </button>
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i> Guardar
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <!-- /Mediciones Corporales -->
+                    <!-- /pane-mediciones -->
 
-            <!-- 4) Registro Clínico: anamnesis, diagnóstico, plan, ficha de ingreso, exámenes, tendencia, recordatorio 24h -->
-            <div class="section-card" style="border-left: 4px solid #28a745 !important;">
-                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <h5 class="text-success mb-0">
-                        <i class="fas fa-file-medical me-2"></i> Registro Clínico
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <span id="registroClinicoEstado" class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Últimos cambios guardados correctamente">
-                            <i class="fas fa-check me-1"></i> Guardado
-                        </span>
-                        <button 
-                            type="button" 
-                            class="btn btn-outline-success btn-sm" 
-                            data-bs-toggle="collapse" 
-                            data-bs-target="#registroClinicoCollapse"
-                            aria-expanded="false"
-                            aria-controls="registroClinicoCollapse"
-                        >
-                            <i class="fas fa-chevron-down me-2"></i> <span id="registroClinicoToggleLabel">Expandir</span>
-                        </button>
-                    </div>
-                </div>
-                <p class="text-muted small mb-3">
-                    <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h. Se guarda en el mismo historial clínico de la consulta.
-                </p>
-                <div class="collapse" id="registroClinicoCollapse">
+                    <div class="tab-pane fade" id="pane-registro" role="tabpanel" aria-labelledby="tab-registro-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h. Se guarda en el mismo historial clínico de la consulta.
+                        </p>
                         <!-- Ficha de Ingreso: Anamnesis clínica (estructurada) -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -945,7 +1115,7 @@
                                 <p class="text-muted small">Desayuno, colación, almuerzo, once, cena: horarios y contenido.</p>
                             </div>
                             <div class="col-12 mb-3">
-                                <textarea name="recordatorio_24h" id="recordatorio_24h" class="form-control" rows="5" placeholder="Ej: Desayuno 08:00: café con leche, pan integral, palta. Colación 11:00: fruta. Almuerzo 14:00: ensalada, pollo, arroz. Once 18:00: té, galleta. Cena 21:00: sopa, huevo..."><?= isset($historial['recordatorio_24h']) ? esc($historial['recordatorio_24h']) : '' ?></textarea>
+                                <textarea name="recordatorio_24h" id="recordatorio_24h" class="form-control" rows="5" placeholder="Ej: Desayuno 08:00: café con leche, pan integral, palta. Colación 11:00: fruta. Almuerzo 14:00: ensalada, pollo, arroz. Once 18:00: té, galleta. Cena 21:00: sopa, huevo..."><?= esc($recordatorioPrefill ?? '') ?></textarea>
                             </div>
                         </div>
 
@@ -958,34 +1128,14 @@
                                 <i class="fas fa-save me-2"></i> Guardar Mediciones
                             </button>
                         </div>
-                </div>
-            </div>
-            </form>
-
-            <!-- Formulario: Tags, Guardar, Calorimetría, Próxima cita, botones (Información Clínica está más arriba en el flujo) -->
-            <form id="formConsulta">
-                <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
-
-                <!-- 5) Calorimetría y Plan Alimentario (justo debajo de Registro Clínico) -->
-                <div class="section-card" style="border-left: 4px solid #9C27B0 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                        <h5 class="text-purple mb-0" style="color: #9C27B0;">
-                            <i class="fas fa-calculator me-2"></i> Calorimetría y Plan Alimentario
-                        </h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span id="calorimetriaPlanEstado" class="badge bg-success small" style="font-size: 0.75rem; font-weight: 500;" title="Últimos cambios guardados correctamente">
-                                <i class="fas fa-check me-1"></i> Guardado
-                            </span>
-                            <button type="button" class="btn btn-sm btn-outline-purple" data-bs-toggle="collapse" data-bs-target="#calorimetriaPlanCollapse" aria-expanded="false" aria-controls="calorimetriaPlanCollapse" style="border-color: #9C27B0; color: #9C27B0;">
-                                <i class="fas fa-chevron-down me-2"></i> <span id="calorimetriaPlanToggleLabel">Expandir</span>
-                            </button>
-                        </div>
                     </div>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Calcula el gasto calórico y crea un plan alimentario estructurado con porciones e intercambios.
-                    </p>
-                    
-                    <div class="collapse" id="calorimetriaPlanCollapse">
+                    <!-- /pane-registro -->
+                    </form>
+
+                    <div class="tab-pane fade" id="pane-calorimetria" role="tabpanel" aria-labelledby="tab-calorimetria-btn">
+                        <p class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Calcula el gasto calórico y crea un plan alimentario estructurado con porciones e intercambios.
+                        </p>
                         <!-- Pestañas para Calorimetría, Plan y Distribución -->
                         <ul class="nav nav-tabs mb-3" id="planAlimentarioTabs" role="tablist">
                             <li class="nav-item" role="presentation">
@@ -1022,7 +1172,15 @@
                             </div>
                         </div>
                     </div>
+                    <!-- /pane-calorimetria -->
                 </div>
+                <!-- /tab-content -->
+            </div>
+            <!-- /consulta-secciones-tabs -->
+
+            <!-- Formulario: Tags, Guardar, Calorimetría, Próxima cita, botones -->
+            <form id="formConsulta">
+                <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
 
                 <!-- 6) Tags -->
                 <div class="section-card" style="border-left: 4px solid #6c757d !important;">
@@ -1087,12 +1245,13 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="modalAgendarHoraRealLabel">
-                    <i class="fas fa-calendar-plus me-2"></i> Agendar hora real en agenda
+                    <i class="fas fa-calendar-plus me-2"></i> Agendar próxima cita
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3">Elegí una fecha y buscá horarios disponibles. Luego reservá el slot para <strong id="nombrePacienteAgendar"><?= esc($cita->nombre . ' ' . $cita->apellido) ?></strong>.</p>
+                <p class="text-muted small mb-3">Elegí fecha y horario, modalidad, tipo de consulta y pago si aplica. La cita quedará en <strong>Pendiente</strong> y al paciente le llegará el <strong>correo de confirmación de cita</strong> (para que confirme o cancele).</p>
+                <div id="pasoAgendarBuscar">
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label small">Fecha para buscar horarios</label>
@@ -1111,6 +1270,66 @@
                 <div id="slotsAgendarLista" class="mb-0" style="display: none;"></div>
                 <div id="slotsAgendarVacio" class="alert alert-warning mb-0" style="display: none;">
                     <i class="fas fa-info-circle me-2"></i> No hay horarios disponibles en la fecha elegida. Probá otra fecha o creá horarios desde el calendario.
+                </div>
+                </div>
+                <div id="pasoAgendarConfirmar" style="display: none;">
+                    <div class="alert alert-info py-2 small mb-3">
+                        <i class="fas fa-user me-1"></i> Paciente: <strong id="nombrePacienteAgendar"><?= esc($cita->nombre . ' ' . $cita->apellido) ?></strong>
+                        <span class="d-block mt-1"><i class="fas fa-clock me-1"></i> Horario: <strong id="agendarHorarioLabel"></strong></span>
+                    </div>
+                    <input type="hidden" id="agendar_detalle_agenda_id" value="">
+                    <input type="hidden" id="agendar_fecha_label" value="">
+                    <input type="hidden" id="agendar_hora_label" value="">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Modalidad <span class="text-danger">*</span></label>
+                            <select id="agendar_modalidad_id" class="form-select" required>
+                                <?php
+                                $modsAgendar = array_values(array_filter($modalidades ?? [], static function ($m) {
+                                    return (int) ($m->id ?? 0) !== 3;
+                                }));
+                                if (empty($modsAgendar)): ?>
+                                <option value="1">Presencial</option>
+                                <option value="2">Online</option>
+                                <?php else: foreach ($modsAgendar as $m): ?>
+                                <option value="<?= (int)$m->id ?>"><?= esc($m->nombre ?? '') ?></option>
+                                <?php endforeach; endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Tipo de consulta</label>
+                            <select id="agendar_tipo_consulta" class="form-select">
+                                <option value="seguimiento" selected>Seguimiento</option>
+                                <option value="control">Control</option>
+                                <option value="primera_vez">Primera vez</option>
+                                <option value="emergencia">Emergencia</option>
+                            </select>
+                        </div>
+                        <?php if (!empty($plantillas_pago)): ?>
+                        <div class="col-12">
+                            <label class="form-label small">Tarifa de cobro (opcional)</label>
+                            <select id="agendar_boton_pago_plantilla_id" class="form-select">
+                                <option value="">— Sin cobro —</option>
+                                <?php foreach ($plantillas_pago as $pp): ?>
+                                <option value="<?= (int)$pp->id ?>"><?= esc($pp->titulo ?? '') ?> — $<?= isset($pp->monto) ? number_format((float)$pp->monto, 0, ',', '.') : '' ?> <?= esc($pp->moneda ?? 'CLP') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">Con tarifa: el paciente confirma la cita por correo y luego recibe el link de pago (Mercado Pago).</small>
+                        </div>
+                        <?php endif; ?>
+                        <div class="col-12">
+                            <label class="form-label small">Motivo</label>
+                            <textarea id="agendar_motivo" class="form-control" rows="2">Próxima cita recomendada desde consulta</textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVolverBuscarHorarios">
+                            <i class="fas fa-arrow-left me-1"></i> Elegir otro horario
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="btnConfirmarAgendarConsulta">
+                            <i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1279,6 +1498,37 @@ function actualizarTokenCSRF(xhr) {
         $('input[name="csrf_test_name"]').val(xhr.responseJSON.csrf_token);
     }
 }
+
+$(document).on('click', '#btnReenviarLinkPagoCita, .btn-reenviar-pago-cita', function() {
+    var detalleId = $(this).data('detalle-id');
+    if (!detalleId) return;
+    var $btn = $(this);
+    $btn.prop('disabled', true);
+    var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || '<?= csrf_hash() ?>';
+    $.ajax({
+        url: '<?= base_url('dashboard/agenda/reenviarLinkPagoCita') ?>',
+        type: 'POST',
+        data: { detalle_agenda_id: detalleId, csrf_test_name: csrfToken },
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        dataType: 'json',
+        success: function(res, textStatus, xhr) {
+            actualizarTokenCSRF(xhr);
+            if (res.success) {
+                toastr.success(res.message || 'Link reenviado.', 'Cobro');
+            } else {
+                toastr.error(res.error || 'No se pudo reenviar.', 'Error');
+            }
+        },
+        error: function(xhr) {
+            actualizarTokenCSRF(xhr);
+            var msg = (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error : 'Error al reenviar el link de pago.';
+            toastr.error(msg, 'Error');
+        },
+        complete: function() {
+            $btn.prop('disabled', false);
+        }
+    });
+});
 
 // Timer para consulta en curso
 function iniciarTimer() {
@@ -1675,6 +1925,92 @@ $(document).ready(function() {
             }
         });
     });
+
+    $('#btnCancelarCitaConsulta').on('click', function() {
+        $('#motivoCancelarCitaConsulta').val('');
+        new bootstrap.Modal(document.getElementById('modalCancelarCitaConsulta')).show();
+    });
+
+    $('#btnConfirmarCancelarCitaConsulta').on('click', function() {
+        var $btn = $(this);
+        var detalleId = <?= (int)($cita->id ?? 0) ?>;
+        var motivo = $('#motivoCancelarCitaConsulta').val().trim();
+        var csrfToken = $('input[name="csrf_test_name"]').val() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+        var csrfName = 'csrf_test_name';
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Cancelando...');
+        $.ajax({
+            url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+            type: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+            data: { [csrfName]: csrfToken, id: detalleId, motivo: motivo },
+            dataType: 'json',
+            success: function(response, textStatus, xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                else if (response && response.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                    $('input[name="csrf_test_name"]').val(response.csrf_token);
+                }
+                if (response && (response.success || response.message)) {
+                    toastr.success(response.message || 'Cita cancelada', 'Éxito', { timeOut: 4000 });
+                    setTimeout(function() {
+                        window.location.href = '<?= base_url('dashboard/agenda/lista') ?>';
+                    }, 1500);
+                } else {
+                    $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+                    toastr.error(response.message || response.error || 'Error al cancelar', 'Error');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
+                var r = (xhr && xhr.responseJSON) || {};
+                toastr.error((r.message || r.error || 'Error al cancelar la cita'), 'Error');
+            }
+        });
+    });
+
+    $('#btnRechazarReservaConsulta').on('click', function() {
+        $('#motivoRechazarReservaConsulta').val('');
+        new bootstrap.Modal(document.getElementById('modalRechazarReservaConsulta')).show();
+    });
+
+    $('#btnConfirmarRechazarReservaConsulta').on('click', function() {
+        var $btn = $(this);
+        var detalleId = <?= (int)($cita->id ?? 0) ?>;
+        var motivo = $('#motivoRechazarReservaConsulta').val().trim();
+        var csrfToken = $('input[name="csrf_test_name"]').val() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+        var csrfName = 'csrf_test_name';
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Rechazando...');
+        $.ajax({
+            url: '<?= base_url('dashboard/agenda/cancelarCita') ?>',
+            type: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+            data: { [csrfName]: csrfToken, id: detalleId, motivo: motivo },
+            dataType: 'json',
+            success: function(response, textStatus, xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                else if (response && response.csrf_token) {
+                    $('meta[name="csrf-token"]').attr('content', response.csrf_token);
+                    $('input[name="csrf_test_name"]').val(response.csrf_token);
+                }
+                $btn.prop('disabled', false).html('<i class="fas fa-ban me-1"></i> Sí, rechazar');
+                if (response && (response.error || !response.success)) {
+                    toastr.error(response.message || response.error || 'Error al rechazar', 'Error');
+                    return;
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalRechazarReservaConsulta')).hide();
+                toastr.success(response.message || 'Reserva rechazada.', 'Éxito', { timeOut: 4000 });
+                setTimeout(function() {
+                    window.location.href = '<?= base_url('dashboard/agenda/lista') ?>';
+                }, 1200);
+            },
+            error: function(xhr) {
+                if (typeof actualizarTokenCSRF === 'function') actualizarTokenCSRF(xhr);
+                $btn.prop('disabled', false).html('<i class="fas fa-ban me-1"></i> Sí, rechazar');
+                var r = (xhr && xhr.responseJSON) || {};
+                toastr.error(r.message || r.error || 'Error al rechazar la reserva', 'Error');
+            }
+        });
+    });
 });
 
 // ============================================
@@ -1963,7 +2299,12 @@ function calcularSumaPliegues() {
 
 // Event listeners para cálculos automáticos
 $(document).ready(function() {
-    $('#peso_actual, #altura_actual').on('input', calcularIMC);
+    $('#peso_actual, #altura_actual').on('input', function() {
+        calcularIMC();
+        if (typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
+            window.sincronizarCalorimetriaDesdeMediciones();
+        }
+    });
     
     // Agregar listeners a todos los campos de pliegues por ID
     $('#pliegue_tricipital, #pliegue_bicipital, #pliegue_subescapular, #pliegue_suprailíaco, #pliegue_supraespinal, #pliegue_abdominal, #pliegue_muslo_anterior, #pliegue_pantorrilla_medial, #pliegue_pectoral, #pliegue_axilar_medio, #pliegue_muslo_medial').on('input', function() {
@@ -1976,9 +2317,9 @@ $(document).ready(function() {
     });
 });
 
-// Guardar mediciones
-function guardarMediciones(event) {
-    event.preventDefault();
+// Guardar mediciones. Opcional: seccionGuardar = 'mediciones' | 'registro' | 'ambos' (solo guarda esa sección en el servidor)
+function guardarMediciones(event, seccionGuardar) {
+    if (event && typeof event.preventDefault === 'function') event.preventDefault();
     
     // Sincronizar token CSRF con la cookie (CI4 usa cookie; el token del form puede estar desactualizado)
     var tokenFromCookie = obtenerTokenCSRF();
@@ -2083,9 +2424,15 @@ function guardarMediciones(event) {
     // Asegurar que el token CSRF esté en el body (CI4 lo valida también por POST)
     formData = formData.replace(/&?csrf_test_name=[^&]*/g, '');
     formData += (formData ? '&' : '') + 'csrf_test_name=' + encodeURIComponent(csrfToken);
+    // Enviar solo la sección editada cuando es auto-guardado por tab
+    if (seccionGuardar && seccionGuardar !== 'ambos') {
+        formData += '&seccion_guardar=' + encodeURIComponent(seccionGuardar);
+    }
     
-    actualizarEstadoMediciones('guardando');
-    actualizarEstadoRegistroClinico('guardando');
+    var guardandoMed = (seccionGuardar === 'mediciones' || seccionGuardar === 'ambos' || !seccionGuardar);
+    var guardandoReg = (seccionGuardar === 'registro' || seccionGuardar === 'ambos' || !seccionGuardar);
+    if (guardandoMed) actualizarEstadoMediciones('guardando');
+    if (guardandoReg) actualizarEstadoRegistroClinico('guardando');
     $.ajax({
         url: '<?= base_url('dashboard/agenda/guardarMediciones') ?>',
         type: 'POST',
@@ -2098,8 +2445,8 @@ function guardarMediciones(event) {
         success: function(response, textStatus, xhr) {
             actualizarTokenCSRF(xhr);
             if (response.success) {
-                actualizarEstadoMediciones('guardado');
-                actualizarEstadoRegistroClinico('guardado');
+                if (guardandoMed) actualizarEstadoMediciones('guardado');
+                if (guardandoReg) actualizarEstadoRegistroClinico('guardado');
                 toastr.success(response.message || 'Mediciones guardadas correctamente', 'Éxito', {
                     timeOut: 3000
                 });
@@ -2107,16 +2454,19 @@ function guardarMediciones(event) {
                 if (response.historial_id && !$('#historial_id').val()) {
                     $('#historial_id').val(response.historial_id);
                 }
+                if (guardandoMed && typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
+                    window.sincronizarCalorimetriaDesdeMediciones();
+                }
             } else {
-                actualizarEstadoMediciones('cambios');
-                actualizarEstadoRegistroClinico('cambios');
+                if (guardandoMed) actualizarEstadoMediciones('cambios');
+                if (guardandoReg) actualizarEstadoRegistroClinico('cambios');
                 toastr.error(response.error || 'Error al guardar', 'Error');
             }
         },
         error: function(xhr) {
             actualizarTokenCSRF(xhr);
-            actualizarEstadoMediciones('cambios');
-            actualizarEstadoRegistroClinico('cambios');
+            if (guardandoMed) actualizarEstadoMediciones('cambios');
+            if (guardandoReg) actualizarEstadoRegistroClinico('cambios');
             var errorMsg = 'Error al guardar las mediciones';
             if (xhr.status === 403) {
                 errorMsg = 'Sesión o token de seguridad expirado. Actualizá el token e intentá guardar de nuevo.';
@@ -2133,21 +2483,34 @@ function guardarMediciones(event) {
     });
 }
 
-// Al cambiar cualquier campo de Mediciones/Registro Clínico, marcar badges como "Cambios sin guardar"
+// Al cambiar cualquier campo de Mediciones/Registro Clínico, marcar solo el badge del tab donde se editó y auto-guardar tras 2 s de inactividad
+var medicionesAutoSaveTimeout = null;
 $(document).ready(function() {
     $('#formMediciones').on('change input', 'input, select, textarea', function() {
-        var $m = $('#medicionesEstado'), $r = $('#registroClinicoEstado');
-        if ($m.length && $m.hasClass('bg-success')) {
-            actualizarEstadoMediciones('cambios');
+        var $el = $(this);
+        // Solo actualizar el badge del tab que contiene el campo editado
+        if ($el.closest('#pane-mediciones').length) {
+            if ($('#medicionesEstado').length && !$('#medicionesEstado').hasClass('bg-primary')) actualizarEstadoMediciones('cambios');
+        } else if ($el.closest('#pane-registro').length) {
+            if ($('#registroClinicoEstado').length && !$('#registroClinicoEstado').hasClass('bg-primary')) actualizarEstadoRegistroClinico('cambios');
         }
-        if ($r.length && $r.hasClass('bg-success')) {
-            actualizarEstadoRegistroClinico('cambios');
+        // Auto-guardar solo la sección que tiene cambios (mediciones o registro clínico)
+        if ($('#formMediciones input[name="detalle_agenda_id"]').val()) {
+            clearTimeout(medicionesAutoSaveTimeout);
+            medicionesAutoSaveTimeout = setTimeout(function() {
+                var soloMed = $('#medicionesEstado').hasClass('bg-warning') && !$('#registroClinicoEstado').hasClass('bg-warning');
+                var soloReg = $('#registroClinicoEstado').hasClass('bg-warning') && !$('#medicionesEstado').hasClass('bg-warning');
+                var ambos = $('#medicionesEstado').hasClass('bg-warning') && $('#registroClinicoEstado').hasClass('bg-warning');
+                if (soloMed) guardarMediciones({ preventDefault: function() {} }, 'mediciones');
+                else if (soloReg) guardarMediciones({ preventDefault: function() {} }, 'registro');
+                else if (ambos) guardarMediciones({ preventDefault: function() {} }, 'ambos');
+            }, 2000);
         }
     });
     // Calorimetría y Plan Alimentario: marcar "Cambios sin guardar" al editar dentro del bloque
-    $(document).on('change input', '#calorimetriaPlanCollapse input, #calorimetriaPlanCollapse select, #calorimetriaPlanCollapse textarea', function() {
+    $(document).on('change input', '#pane-calorimetria input, #pane-calorimetria select, #pane-calorimetria textarea', function() {
         var $b = $('#calorimetriaPlanEstado');
-        if ($b.length && $b.hasClass('bg-success')) {
+        if ($b.length && !$b.hasClass('bg-primary')) {
             actualizarEstadoCalorimetriaPlan('cambios');
         }
     });
@@ -2172,136 +2535,150 @@ $(document).on('click', '.btn-quitar-examen', function() {
     }
 });
 
-// Consultas anteriores: listar y rellenar formulario desde una consulta previa
-var consultasAnterioresPage = 1;
-var consultasAnterioresTotalPages = 0;
-
-function loadConsultasAnteriores(page) {
-    var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
-    if (!detalleId) { $('#consultasAnterioresMensaje').text('No hay cita actual.'); return; }
-    $('#consultasAnterioresMensaje').text('Cargando...');
-    $('#consultasAnterioresHojas').find('.hoja-consulta-anterior').remove();
-    $.get('<?= base_url("dashboard/agenda/getConsultasAnteriores") ?>', { detalle_agenda_id: detalleId, page: page || 1, per_page: 10 }, 'json')
-        .done(function(res) {
-            consultasAnterioresTotalPages = res.total_pages || 0;
-            consultasAnterioresPage = res.page || 1;
-            $('#consultasAnterioresMensaje').text('');
-            if (!res.consultas || res.consultas.length === 0) {
-                $('#consultasAnterioresMensaje').text('No hay consultas anteriores completadas para este paciente.');
-                $('#consultasAnterioresPaginacion').hide();
-                return;
+// Referencia de última consulta bajo labels (mediciones y registro)
+function initReferenciasUltimaConsulta() {
+    if (!window.referenciaUltimaConsulta) return;
+    var ref = window.referenciaUltimaConsulta;
+    function fmtVal(v) {
+        if (v === null || v === undefined || v === '') return null;
+        if (typeof v === 'number' || (!isNaN(parseFloat(v)) && isFinite(v) && String(v).trim() !== '')) {
+            var n = Math.round(parseFloat(v) * 100) / 100;
+            if (n % 1 === 0) {
+                return String(n);
             }
-            $.each(res.consultas, function(i, c) {
-                var label = c.label || (c.fecha + ' ' + (c.hora || ''));
-                var title = (c.fecha_fin_real || label) + ' — Clic para cargar en esta consulta';
-                var $btn = $('<button type="button" class="btn btn-sm btn-outline-secondary hoja-consulta-anterior" data-id="' + c.id + '" title="' + title + '">' + label + '</button>');
-                $('#consultasAnterioresHojas').append($btn);
-            });
-            $('#consultasAnterioresPaginacion').css('display', 'flex');
-            $('#consultasAnterioresPageInfo').text('Página ' + consultasAnterioresPage + ' de ' + (consultasAnterioresTotalPages || 1) + ' (' + (res.total || 0) + ' consultas)');
-            var totalConsultas = res.total || 0;
-            $('#consultasAnterioresBadge').text(totalConsultas).toggle(totalConsultas > 0);
-            $('#btnConsultasAnterioresPrev').prop('disabled', consultasAnterioresPage <= 1);
-            $('#btnConsultasAnterioresNext').prop('disabled', consultasAnterioresPage >= consultasAnterioresTotalPages);
-        })
-        .fail(function() {
-            $('#consultasAnterioresMensaje').text('Error al cargar consultas anteriores.');
-        });
-}
-
-function fillFormFromConsultaAnterior(data) {
-    var h = data.historial || {};
-    var d = data.detalle || {};
-    function val(v) { return (v !== undefined && v !== null && v !== '') ? v : ''; }
-    $('#peso_actual').val(val(h.peso_actual)); $('#altura_actual').val(val(h.altura_actual)); $('#altura_sentado').val(val(h.altura_sentado)); $('#imc_actual').val(val(h.imc_actual));
-    $('#circunferencia_cintura').val(val(h.circunferencia_cintura)); $('#circunferencia_cadera').val(val(h.circunferencia_cadera)); $('#circunferencia_brazo_relajado').val(val(h.circunferencia_brazo_relajado)); $('#circunferencia_brazo_contraido').val(val(h.circunferencia_brazo_contraido)); $('#circunferencia_muslo_medio').val(val(h.circunferencia_muslo_medio)); $('#circunferencia_pantorrilla').val(val(h.circunferencia_pantorrilla)); $('#circunferencia_cuello').val(val(h.circunferencia_cuello)); $('#circunferencia_torax').val(val(h.circunferencia_torax)); $('#circunferencia_cabeza').val(val(h.circunferencia_cabeza)); $('#circunferencia_antebrazo_maximo').val(val(h.circunferencia_antebrazo_maximo)); $('#circunferencia_muslo_maximo').val(val(h.circunferencia_muslo_maximo)); $('#circunferencia_muneca').val(val(h.circunferencia_muneca));
-    $('#pliegue_tricipital').val(val(h.pliegue_tricipital)); $('#pliegue_bicipital').val(val(h.pliegue_bicipital)); $('#pliegue_subescapular').val(val(h.pliegue_subescapular)); $('#pliegue_suprailíaco').val(val(h.pliegue_suprailíaco)); $('#pliegue_supraespinal').val(val(h.pliegue_supraespinal)); $('#pliegue_abdominal').val(val(h.pliegue_abdominal)); $('#pliegue_muslo_anterior').val(val(h.pliegue_muslo_anterior)); $('#pliegue_pantorrilla_medial').val(val(h.pliegue_pantorrilla_medial)); $('#pliegue_pectoral').val(val(h.pliegue_pectoral)); $('#pliegue_axilar_medio').val(val(h.pliegue_axilar_medio)); $('#pliegue_muslo_medial').val(val(h.pliegue_muslo_medial));
-    $('#suma_pliegues').val(val(h.suma_pliegues)); $('#grasa_corporal_calculada').val(val(h.grasa_corporal_calculada));
-    $('#diametro_biacromial').val(val(h.diametro_biacromial)); $('#diametro_bi_iliocristal').val(val(h.diametro_bi_iliocristal)); $('#diametro_torax_transverso').val(val(h.diametro_torax_transverso)); $('#diametro_torax_anteroposterior').val(val(h.diametro_torax_anteroposterior)); $('#diametro_humero').val(val(h.diametro_humero)); $('#diametro_femur').val(val(h.diametro_femur)); $('#diametro_muneca').val(val(h.diametro_muneca)); $('#diametro_tobillo').val(val(h.diametro_tobillo));
-    $('#grasa_corporal').val(val(h.grasa_corporal)); $('#masa_muscular').val(val(h.masa_muscular)); $('#masa_osea').val(val(h.masa_osea));
-    $('#recordatorio_24h').val(val(h.recordatorio_24h));
-    var ac = {}; try { ac = (typeof h.anamnesis_clinica === 'string' && h.anamnesis_clinica) ? JSON.parse(h.anamnesis_clinica) : (h.anamnesis_clinica || {}); } catch(e) {}
-    ['tabaco','alcohol','drogas','enfermedad_base','signos_sintomas','transito_bristol','medicamentos','suplementos','ingesta_hidrica','actividad_fisica','sueno','otros'].forEach(function(k) { var id = 'ac_' + k; if ($('#' + id).length) $('#' + id).val(val(ac[k])); });
-    $('#anamnesis_clinica').val(typeof h.anamnesis_clinica === 'string' ? h.anamnesis_clinica : JSON.stringify(ac));
-    var aa = {}; try { aa = (typeof h.anamnesis_alimentaria === 'string' && h.anamnesis_alimentaria) ? JSON.parse(h.anamnesis_alimentaria) : (h.anamnesis_alimentaria || {}); } catch(e) {}
-    ['relacion_familiar','quien_cocina','apetito','relacion_comida','dieta_restrictiva','historia_peso','ansiedad_comida','otros'].forEach(function(k) { var id = 'aa_' + k; if ($('#' + id).length) $('#' + id).val(val(aa[k])); });
-    $('#anamnesis_alimentaria').val(typeof h.anamnesis_alimentaria === 'string' ? h.anamnesis_alimentaria : JSON.stringify(aa));
-    var motivoVal = val(h.motivo_consulta) || val(d.motivo);
-    var planVal = val(h.plan_tratamiento) || val(d.plan_alimentacion);
-    var recVal = val(h.recomendaciones) || val(d.recomendaciones);
-    if (typeof tinymce !== 'undefined') {
-        if (tinymce.get('motivo_consulta')) tinymce.get('motivo_consulta').setContent(motivoVal); else $('#motivo_consulta').val(motivoVal);
-        if (tinymce.get('plan_tratamiento')) tinymce.get('plan_tratamiento').setContent(planVal); else $('#plan_tratamiento').val(planVal);
-        if (tinymce.get('recomendaciones')) tinymce.get('recomendaciones').setContent(recVal); else $('#recomendaciones').val(recVal);
-    } else {
-        $('#motivo_consulta').val(motivoVal); $('#plan_tratamiento').val(planVal); $('#recomendaciones').val(recVal);
-    }
-    $('#proxima_cita_recomendada').val(val(d.proxima_cita_recomendada)); $('#tags').val(val(d.tags_string));
-    if (typeof tagifyConsulta !== 'undefined' && tagifyConsulta && d.tags_string) { try { tagifyConsulta.loadOriginalValues(d.tags_string.split(/[\s,]+/).filter(Boolean)); } catch(e) { $('#tags').val(d.tags_string); } }
-    var examenes = data.examenes_bioquimicos || [];
-    var $tbody = $('#tbodyExamenesBioquimicos'); $tbody.find('tr.fila-examen').remove();
-    if (examenes.length === 0) { examenes = [{ nombre: '', valor: '', fecha_interpretacion: '' }]; }
-    $.each(examenes, function(i, ex) {
-        var nom = (ex.nombre !== undefined && ex.nombre !== null) ? ex.nombre : ''; var v = (ex.valor !== undefined && ex.valor !== null) ? ex.valor : ''; var f = (ex.fecha_interpretacion !== undefined && ex.fecha_interpretacion !== null) ? ex.fecha_interpretacion : '';
-        $tbody.append('<tr class="fila-examen"><td><input type="text" class="form-control form-control-sm" name="examen_nombre[]" placeholder="Ej: Glicemia" value="' + (nom.replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_valor[]" placeholder="Ej: 95" value="' + (String(v).replace(/"/g, '&quot;')) + '"></td><td><input type="text" class="form-control form-control-sm" name="examen_fecha[]" placeholder="Ej: 15-01-2026" value="' + (String(f).replace(/"/g, '&quot;')) + '"></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-quitar-examen" title="Quitar"><i class="fas fa-times"></i></button></td></tr>');
-    });
-    var filasExamenes = []; $tbody.find('tr.fila-examen').each(function() { var $tr = $(this); filasExamenes.push({ nombre: $tr.find('input[name="examen_nombre[]"]').val() || '', valor: $tr.find('input[name="examen_valor[]"]').val() || '', fecha_interpretacion: $tr.find('input[name="examen_fecha[]"]').val() || '' }); });
-    $('#examenes_bioquimicos_hidden').val(JSON.stringify(filasExamenes));
-    var tendencia = data.tendencia_consumo || [];
-    $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var grupo = $(this).data('grupo'); var row = tendencia.find(function(t) { return (t.grupo || '').toString() === (grupo || '').toString(); }); $(this).find('.tc-preferencia').val(row ? (row.preferencia || '') : ''); $(this).find('.tc-alergia').val(row ? (row.alergia_intolerancia || '') : ''); });
-    var tendenciaRows = []; $('#tbodyTendenciaConsumo tr[data-grupo]').each(function() { var g = $(this).data('grupo'); tendenciaRows.push({ grupo: g, preferencia: $(this).find('.tc-preferencia').val() || '', alergia_intolerancia: $(this).find('.tc-alergia').val() || '' }); });
-    $('#tendencia_consumo').val(JSON.stringify(tendenciaRows));
-    toastr.success('Datos de la consulta anterior cargados en el formulario. Revisá y guardá cuando quieras.');
-}
-
-$(document).on('click', '.hoja-consulta-anterior', function() {
-    var idAnterior = $(this).data('id'); var detalleId = $('#formMediciones input[name="detalle_agenda_id"]').val();
-    if (!idAnterior || !detalleId) return;
-    var labelSeleccionada = $(this).text().trim();
-    $(this).addClass('active').siblings('.hoja-consulta-anterior').removeClass('active');
-    $('#consultasAnterioresSeleccionadaFecha').text(labelSeleccionada);
-    $('#consultasAnterioresSeleccionada').show();
-    $.get('<?= base_url("dashboard/agenda/getDatosConsultaAnterior") ?>', { detalle_agenda_id: detalleId, id_anterior: idAnterior }, 'json')
-        .done(function(res) { fillFormFromConsultaAnterior(res); })
-        .fail(function(xhr) { toastr.error(xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error al cargar la consulta anterior.'); });
-});
-$(document).on('click', '#btnConsultasAnterioresPrev', function() { if (consultasAnterioresPage > 1) loadConsultasAnteriores(consultasAnterioresPage - 1); });
-$(document).on('click', '#btnConsultasAnterioresNext', function() { if (consultasAnterioresPage < consultasAnterioresTotalPages) loadConsultasAnteriores(consultasAnterioresPage + 1); });
-$(function() {
-    loadConsultasAnteriores(1);
-    // Sombra cuando "Consultas anteriores" queda fija al hacer scroll
-    var $sticky = $('#consultasAnterioresSticky');
-    if ($sticky.length) {
-        var stickyTop = 100;
-        function checkStuck() {
-            var rect = $sticky[0].getBoundingClientRect();
-            $sticky.toggleClass('is-stuck', rect.top <= stickyTop + 2);
+            return n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
         }
-        $(window).on('scroll.consultasSticky resize.consultasSticky', checkStuck);
-        checkStuck();
+        var s = String(v).trim();
+        return s === '' ? null : s;
     }
-    // Etiqueta e ícono del botón Contraer/Expandir (Consultas anteriores)
-    $('#consultasAnterioresCollapse').on('show.bs.collapse', function() {
-        $('#consultasAnterioresToggleLabel').text('Contraer');
-        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-    }).on('hide.bs.collapse', function() {
-        $('#consultasAnterioresToggleLabel').text('Expandir');
-        $('#btnToggleConsultasAnteriores i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    function addHintAfterLabel($label, text) {
+        if (!$label.length || !text) return;
+        if ($label.next('.ultima-consulta-ref').length) return;
+        $label.after('<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' + $('<span>').text(text).html() + '</small>');
+    }
+    Object.keys(ref).forEach(function(name) {
+        if (name.indexOf('[]') >= 0) return;
+        var v = fmtVal(ref[name]);
+        if (v === null) return;
+        var $input = $('#formMediciones, #pane-registro')
+            .find('[name="' + name.replace(/"/g, '\\"') + '"]')
+            .filter(':not([type="hidden"])')
+            .first();
+        if (!$input.length) return;
+        var $col = $input.closest('.col-md-3, .col-md-4, .col-md-6, .col-md-12');
+        if (!$col.length) return;
+        var $label = $col.children('label.form-label').first();
+        if (!$label.length) $label = $col.find('label.form-label').first();
+        addHintAfterLabel($label, v);
     });
-    // Mismo comportamiento Expandir/Contraer para los demás bloques colapsables
-    function bindExpandirContraer(collapseId, labelId) {
-        $('#' + collapseId).on('show.bs.collapse', function() {
-            $('#' + labelId).text('Contraer');
-            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-        }).on('hide.bs.collapse', function() {
-            $('#' + labelId).text('Expandir');
-            $('[data-bs-target="#' + collapseId + '"] i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
-        });
+    function hintsFromJson(jsonField, prefix) {
+        try {
+            var data = typeof ref[jsonField] === 'string' ? JSON.parse(ref[jsonField]) : ref[jsonField];
+            if (!data || typeof data !== 'object') return;
+            Object.keys(data).forEach(function(k) {
+                var v = fmtVal(data[k]);
+                if (v === null) return;
+                var id = prefix + k;
+                var $input = $('#' + id);
+                if (!$input.length) return;
+                var $col = $input.closest('[class*="col-"]');
+                addHintAfterLabel($col.find('label').first(), v.length > 80 ? v.substring(0, 80) + '…' : v);
+            });
+        } catch (e) {}
     }
-    bindExpandirContraer('informacionClinicaCollapse', 'informacionClinicaToggleLabel');
-    bindExpandirContraer('medicionesCollapse', 'medicionesToggleLabel');
-    bindExpandirContraer('registroClinicoCollapse', 'registroClinicoToggleLabel');
-    bindExpandirContraer('calorimetriaPlanCollapse', 'calorimetriaPlanToggleLabel');
+    hintsFromJson('anamnesis_clinica', 'ac_');
+    hintsFromJson('anamnesis_alimentaria', 'aa_');
+    sincronizarAnamnesisHidden();
+}
+
+function sincronizarAnamnesisHidden() {
+    if (!$('#anamnesis_clinica').length) return;
+    var acObj = {
+        tabaco: $('#ac_tabaco').val() || '',
+        alcohol: $('#ac_alcohol').val() || '',
+        drogas: $('#ac_drogas').val() || '',
+        enfermedad_base: $('#ac_enfermedad_base').val() || '',
+        signos_sintomas: $('#ac_signos_sintomas').val() || '',
+        transito_bristol: $('#ac_transito_bristol').val() || '',
+        medicamentos: $('#ac_medicamentos').val() || '',
+        suplementos: $('#ac_suplementos').val() || '',
+        ingesta_hidrica: $('#ac_ingesta_hidrica').val() || '',
+        actividad_fisica: $('#ac_actividad_fisica').val() || '',
+        sueno: $('#ac_sueno').val() || '',
+        otros: $('#ac_otros').val() || ''
+    };
+    $('#anamnesis_clinica').val(JSON.stringify(acObj));
+    var aaObj = {
+        relacion_familiar: $('#aa_relacion_familiar').val() || '',
+        quien_cocina: $('#aa_quien_cocina').val() || '',
+        apetito: $('#aa_apetito').val() || '',
+        relacion_comida: $('#aa_relacion_comida').val() || '',
+        dieta_restrictiva: $('#aa_dieta_restrictiva').val() || '',
+        historia_peso: $('#aa_historia_peso').val() || '',
+        ansiedad_comida: $('#aa_ansiedad_comida').val() || '',
+        otros: $('#aa_otros').val() || ''
+    };
+    $('#anamnesis_alimentaria').val(JSON.stringify(aaObj));
+}
+
+function consultaTieneCambiosSinGuardar() {
+    return $('#infoClinicaEstado, #medicionesEstado, #registroClinicoEstado, #calorimetriaPlanEstado').filter('.bg-warning').length > 0;
+}
+
+function nombreTabConsulta(paneId) {
+    var map = {
+        '#pane-info-clinica': 'Información Clínica',
+        '#pane-mediciones': 'Mediciones',
+        '#pane-registro': 'Registro Clínico',
+        '#pane-calorimetria': 'Calorimetría y Plan'
+    };
+    return map[paneId] || 'esta sección';
+}
+
+function badgeIdPorPane(paneId) {
+    var map = {
+        '#pane-info-clinica': '#infoClinicaEstado',
+        '#pane-mediciones': '#medicionesEstado',
+        '#pane-registro': '#registroClinicoEstado',
+        '#pane-calorimetria': '#calorimetriaPlanEstado'
+    };
+    return map[paneId] || null;
+}
+
+$(function() {
+    initReferenciasUltimaConsulta();
+    sincronizarAnamnesisHidden();
+    window.addEventListener('beforeunload', function(e) {
+        if (consultaTieneCambiosSinGuardar()) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+    var seccionesTabEl = document.getElementById('consultaSeccionesTabs');
+    if (seccionesTabEl) {
+        seccionesTabEl.addEventListener('hide.bs.tab', function(e) {
+            var paneId = e.target.getAttribute('data-bs-target');
+            var badgeId = badgeIdPorPane(paneId);
+            if (badgeId && $(badgeId).hasClass('bg-warning')) {
+                var nombre = nombreTabConsulta(paneId);
+                if (!confirm('Hay cambios sin guardar en ' + nombre + '. ¿Salir sin guardar?')) {
+                    e.preventDefault();
+                }
+            }
+        });
+        seccionesTabEl.addEventListener('shown.bs.tab', function(e) {
+            var target = e.target.getAttribute('data-bs-target');
+            if (target && typeof sessionStorage !== 'undefined') sessionStorage.setItem('consultaSeccionTab', target);
+            var formMed = document.getElementById('formMediciones');
+            if (formMed) formMed.setAttribute('data-tab-visible', (target === '#pane-mediciones' || target === '#pane-registro') ? 'true' : 'false');
+            if (e.target && e.target.blur) e.target.blur();
+        });
+        var lastTab = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('consultaSeccionTab');
+        if (lastTab) {
+            var btn = document.querySelector('#consultaSeccionesTabs button[data-bs-target="' + lastTab + '"]');
+            if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
+        }
+    }
 });
 
 // Limpiar formulario de mediciones
@@ -2411,7 +2788,7 @@ function mostrarModalDatosInsuficientes(response) {
 }
 
 function mostrarErrorUpgrade(response) {
-    var modalHtml = '<div class="modal fade" id="modalErrorUpgrade" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="fas fa-lock me-2"></i>Método No Disponible</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Este método de cálculo no está disponible en tu plan actual (<strong>' + (response.paquete_actual || '') + '</strong>).</p><p>Para acceder a este método, necesitas actualizar tu plan.</p><div class="alert alert-info"><i class="fas fa-info-circle me-2"></i><strong>¿Interesado en actualizar?</strong> Contacta con soporte para más información sobre nuestros planes.</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button><button type="button" class="btn btn-primary" onclick="window.location.href=\'<?= base_url('dashboard/paquetes') ?>\'">Ver Planes</button></div></div></div></div>';
+    var modalHtml = '<div class="modal fade" id="modalErrorUpgrade" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="fas fa-lock me-2"></i>Método No Disponible</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Este método de cálculo no está disponible en tu plan actual (<strong>' + (response.paquete_actual || '') + '</strong>).</p><p>Para acceder a este método, necesitas actualizar tu plan.</p><div class="alert alert-info"><i class="fas fa-info-circle me-2"></i><strong>¿Interesado en actualizar?</strong> Contacta con soporte para más información sobre nuestros planes.</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button><a href="<?= base_url('precios') ?>" class="btn btn-primary">Ver planes</a><a href="<?= base_url('contacto') ?>" class="btn btn-outline-success">Contactar</a></div></div></div></div>';
     $('#modalErrorUpgrade').remove();
     $('body').append(modalHtml);
     (new bootstrap.Modal(document.getElementById('modalErrorUpgrade'))).show();
@@ -2759,6 +3136,17 @@ setInterval(function() {
     }
 }, 120000);
 
+// Auto-guardar Mediciones/Registro Clínico cada 2 min solo la sección con cambios
+setInterval(function() {
+    if (!$('#formMediciones input[name="detalle_agenda_id"]').val()) return;
+    var soloMed = $('#medicionesEstado').hasClass('bg-warning') && !$('#registroClinicoEstado').hasClass('bg-warning');
+    var soloReg = $('#registroClinicoEstado').hasClass('bg-warning') && !$('#medicionesEstado').hasClass('bg-warning');
+    var ambos = $('#medicionesEstado').hasClass('bg-warning') && $('#registroClinicoEstado').hasClass('bg-warning');
+    if (soloMed) guardarMediciones({ preventDefault: function() {} }, 'mediciones');
+    else if (soloReg) guardarMediciones({ preventDefault: function() {} }, 'registro');
+    else if (ambos) guardarMediciones({ preventDefault: function() {} }, 'ambos');
+}, 120000);
+
 // Iniciar timer si la consulta ya está iniciada
 $(document).ready(function() {
     if (consultaIniciada && fechaInicio) {
@@ -2849,6 +3237,12 @@ $(document).ready(function() {
     var pacienteIdAgendar = <?= (int)($cita->paciente_id ?? 0) ?>;
     var flatpickrModalAgendar = null;
     
+    function mostrarPasoAgendarBuscar() {
+        $('#pasoAgendarConfirmar').hide();
+        $('#pasoAgendarBuscar').show();
+        $('#agendar_detalle_agenda_id').val('');
+    }
+
     window.abrirModalAgendarHoraReal = function() {
         var fechaRec = ($('#proxima_cita_recomendada').val() || '').split(' ')[0] || '';
         if (!fechaRec) {
@@ -2859,6 +3253,7 @@ $(document).ready(function() {
             fechaRec = dd + '-' + mm + '-' + yyyy;
         }
         $('#modalAgendarFechaBuscar').val(fechaRec);
+        mostrarPasoAgendarBuscar();
         $('#slotsAgendarLoading').hide();
         $('#slotsAgendarLista').hide().empty();
         $('#slotsAgendarVacio').hide();
@@ -2907,8 +3302,14 @@ $(document).ready(function() {
         $.get('<?= base_url('dashboard/agenda/getEventos') ?>', { start: start, end: end }, function(res) {
             $('#slotsAgendarLoading').hide();
             var events = (res && res.events) ? res.events : [];
+            var ahora = new Date();
             var disponibles = events.filter(function(ev) {
-                return (ev.extendedProps && ev.extendedProps.estado_cita === 'disponible') || (!ev.extendedProps || !ev.extendedProps.paciente_id);
+                var p = ev.extendedProps || {};
+                if (p.paciente_id) return false;
+                var estado = (p.estado_cita || 'disponible').toLowerCase();
+                if (estado === 'cancelada' || estado === 'no_disponible' || estado === 'bloqueado') return false;
+                if (ev.start && new Date(ev.start) < ahora) return false;
+                return true;
             });
             if (disponibles.length === 0) {
                 $('#slotsAgendarVacio').show();
@@ -2921,9 +3322,9 @@ $(document).ready(function() {
                 var fechaLabel = startDt ? (String(startDt.getDate()).padStart(2, '0') + '-' + String(startDt.getMonth() + 1).padStart(2, '0') + '-' + startDt.getFullYear()) : '';
                 var horaDisplay = (startDt && endDt) ? (startDt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) + ' - ' + endDt.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })) : '';
                 var horaParaGuardar = (startDt && endDt) ? (String(startDt.getHours()).padStart(2, '0') + ':' + String(startDt.getMinutes()).padStart(2, '0') + ' - ' + String(endDt.getHours()).padStart(2, '0') + ':' + String(endDt.getMinutes()).padStart(2, '0')) : '';
-                var modId = (ev.extendedProps && ev.extendedProps.modalidad_id) ? ev.extendedProps.modalidad_id : 3;
-                var modLabel = modId == 1 ? 'Presencial' : (modId == 2 ? 'Online' : 'Sin definir');
-                html += '<tr><td>' + fechaLabel + '</td><td>' + horaDisplay + '</td><td>' + modLabel + '</td><td><button type="button" class="btn btn-sm btn-success btn-reservar-slot" data-id="' + ev.id + '" data-fecha="' + fechaLabel + '" data-hora="' + horaParaGuardar + '"><i class="fas fa-check me-1"></i> Reservar</button></td></tr>';
+                var modId = (ev.extendedProps && ev.extendedProps.modalidad_id) ? parseInt(ev.extendedProps.modalidad_id, 10) : 3;
+                var modLabel = modId === 1 ? 'Presencial' : (modId === 2 ? 'Online' : 'Sin definir');
+                html += '<tr><td>' + fechaLabel + '</td><td>' + horaDisplay + '</td><td>' + modLabel + '</td><td><button type="button" class="btn btn-sm btn-success btn-elegir-slot-agendar" data-id="' + ev.id + '" data-fecha="' + fechaLabel + '" data-hora="' + horaParaGuardar + '" data-modalidad="' + modId + '"><i class="fas fa-arrow-right me-1"></i> Continuar</button></td></tr>';
             });
             html += '</tbody></table></div>';
             $('#slotsAgendarLista').html(html).show();
@@ -2934,50 +3335,75 @@ $(document).ready(function() {
         });
     });
     
-    $(document).on('click', '.btn-reservar-slot', function() {
+    $(document).on('click', '.btn-elegir-slot-agendar', function() {
         var detalleAgendaId = $(this).data('id');
         var fechaLabel = $(this).data('fecha');
         var horaLabel = $(this).data('hora');
+        var modId = parseInt($(this).data('modalidad'), 10) || 1;
+        if (!detalleAgendaId) return;
+        $('#agendar_detalle_agenda_id').val(detalleAgendaId);
+        $('#agendar_fecha_label').val(fechaLabel);
+        $('#agendar_hora_label').val(horaLabel);
+        $('#agendarHorarioLabel').text(fechaLabel + ' · ' + horaLabel);
+        var $selMod = $('#agendar_modalidad_id');
+        if ($selMod.length && (modId === 1 || modId === 2)) {
+            $selMod.val(String(modId));
+        }
+        $('#pasoAgendarBuscar').hide();
+        $('#pasoAgendarConfirmar').show();
+    });
+
+    $('#btnVolverBuscarHorarios').on('click', function() {
+        mostrarPasoAgendarBuscar();
+    });
+
+    $('#btnConfirmarAgendarConsulta').on('click', function() {
+        var detalleAgendaId = $('#agendar_detalle_agenda_id').val();
+        var fechaLabel = $('#agendar_fecha_label').val();
+        var horaLabel = $('#agendar_hora_label').val();
+        var modalidadId = $('#agendar_modalidad_id').val();
         if (!detalleAgendaId || !pacienteIdAgendar) {
             toastr.error('Faltan datos para reservar.', 'Error');
             return;
         }
+        if (!modalidadId) {
+            toastr.warning('Seleccioná modalidad Presencial u Online.', 'Modalidad requerida');
+            return;
+        }
         var $btn = $(this);
-        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Reservando...');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Agendando...');
         var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || '<?= csrf_hash() ?>';
         $.ajax({
-            url: '<?= base_url('dashboard/agenda/agendar') ?>',
+            url: '<?= base_url('dashboard/agenda/agendarDesdeConsulta') ?>',
             type: 'POST',
             data: {
                 detalle_agenda_id: detalleAgendaId,
                 paciente_id: pacienteIdAgendar,
-                tipo_consulta: 'seguimiento',
-                motivo: 'Próxima cita recomendada desde consulta',
+                modalidad_id: modalidadId,
+                tipo_consulta: $('#agendar_tipo_consulta').val() || 'seguimiento',
+                motivo: $('#agendar_motivo').val() || 'Próxima cita desde consulta',
+                boton_pago_plantilla_id: $('#agendar_boton_pago_plantilla_id').val() || '',
                 csrf_test_name: csrfToken
             },
             headers: { 'X-CSRF-TOKEN': csrfToken },
             dataType: 'json',
             success: function(response, textStatus, xhr) {
-                // Actualizar token CSRF (meta + input) para que Guardar todo / Finalizar sigan funcionando
                 actualizarTokenCSRF(xhr);
+                $btn.prop('disabled', false).html('<i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación');
                 if (response && response.success) {
                     bootstrap.Modal.getInstance(document.getElementById('modalAgendarHoraReal')).hide();
-                    toastr.success('Cita agendada: ' + fechaLabel + ' a las ' + horaLabel + '. Podés verla en el calendario.', 'Éxito', { timeOut: 5000 });
-                    // Guardar en formato 24h (ej. "30-01-2026 15:30 - 16:00") para que persista y se vea bien al actualizar
+                    toastr.success(response.message || 'Cita agendada.', 'Éxito', { timeOut: 7000 });
                     $('#proxima_cita_recomendada').val(fechaLabel + ' ' + horaLabel);
+                    setTimeout(function() { guardarNotasConsulta(); }, 400);
                     setTimeout(function() {
-                        guardarNotasConsulta();
-                    }, 400);
-                    setTimeout(function() {
-                        toastr.info('Podés ver la cita en <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="alert-link">Calendario</a>', 'Ver agenda', { timeOut: 6000 });
-                    }, 800);
+                        toastr.info('La cita quedó Pendiente hasta que el paciente confirme desde el correo. <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="alert-link">Ver calendario</a>', 'Agenda', { timeOut: 8000 });
+                    }, 900);
                 } else {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Reservar');
                     toastr.error(response.message || response.error || 'Error al agendar.', 'Error');
                 }
             },
             error: function(xhr) {
-                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> Reservar');
+                $btn.prop('disabled', false).html('<i class="fas fa-calendar-check me-1"></i> Agendar y enviar confirmación');
                 actualizarTokenCSRF(xhr);
                 var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)) ? (xhr.responseJSON.message || xhr.responseJSON.error) : 'Error al agendar la cita.';
                 toastr.error(msg, 'Error');
@@ -2990,11 +3416,13 @@ $(document).ready(function() {
         confirmarTerminarConsulta();
     });
 
-    // Al expandir "Calorimetría y plan alimentario", cargar/recargar calorimetría guardada
-    // (por si al cargar la página aún no existían los inputs de actividades)
-    $('#calorimetriaPlanCollapse').on('shown.bs.collapse', function() {
+    // Al abrir el tab "Calorimetría y Plan", cargar/recargar calorimetría guardada y pre-cargar distribución si ya hay plan (evita aviso "Primero debes crear un Plan")
+    $('#tab-calorimetria-btn').on('shown.bs.tab', function() {
         if (typeof cargarCalorimetriaExistente === 'function') {
             cargarCalorimetriaExistente();
+        }
+        if (typeof planGuardado !== 'undefined' && planGuardado && planGuardado.id && typeof cargarDistribucionComidas === 'function') {
+            cargarDistribucionComidas(planGuardado.id);
         }
     });
 });

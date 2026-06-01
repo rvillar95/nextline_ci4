@@ -47,6 +47,9 @@ class CSRFExceptWebhook extends BaseCSRF
         // Mi perfil: subir foto y guardar preferencias (AJAX; protegido por sesión)
         'dashboard/mi-perfil/subir-foto',
         'dashboard/mi-perfil/guardar',
+        'dashboard/mi-perfil/perfil-publico',
+        'dashboard/mi-perfil/credencial',
+        'dashboard/mi-perfil/credencial/eliminar',
         // Historial: cálculo de composición corporal (AJAX; protegido por sesión)
         'dashboard/historial/calcular-2-componentes',
         'dashboard/historial/calcular-4-componentes',

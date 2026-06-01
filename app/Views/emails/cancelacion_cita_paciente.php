@@ -38,13 +38,6 @@
             margin: 20px 0;
             border-radius: 4px;
         }
-        .mensaje-personalizado {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 15px;
-            margin: 20px 0;
-        }
         .footer {
             background-color: #f8f9fa;
             padding: 20px;
@@ -65,31 +58,28 @@
             <div class="icon">❌</div>
             <h1>Cancelación de Cita</h1>
         </div>
-        
+
         <div class="content">
             <p>Estimado/a <strong><?= esc($paciente_nombre) ?></strong>,</p>
-            
+
             <p>Lamentamos informarle que su cita ha sido cancelada:</p>
-            
+
             <div class="info-box">
-                <p><strong>📅 Fecha:</strong> <?= esc($fecha) ?></p>
-                <p><strong>🕐 Hora:</strong> <?= esc($hora) ?></p>
+                <p style="margin: 0 0 8px 0;"><strong>📅 Fecha:</strong> <?= esc($fecha) ?></p>
+                <p style="margin: 0;"><strong>🕐 Hora:</strong> <?= esc($hora) ?></p>
             </div>
-            
-            <?php if (!empty($mensaje)): ?>
-            <div class="mensaje-personalizado">
-                <?= $mensaje ?>
-            </div>
+
+            <?php if (!empty($motivo) && trim($motivo) !== ''): ?>
+            <p><strong>Motivo:</strong><br><?= nl2br(esc(trim($motivo))) ?></p>
             <?php endif; ?>
-            
+
             <p>Por favor, contáctenos para reagendar su consulta.</p>
-            
             <p style="color: #666; font-size: 14px; margin-top: 30px;">
                 Saludos cordiales,<br>
                 <strong><?= esc($nutricionista_nombre) ?></strong>
             </p>
         </div>
-        
+
         <div class="footer">
             <p>Este es un email automático del sistema de gestión de citas.</p>
         </div>

@@ -604,46 +604,105 @@ function guardarPlanAlimentario() {
     });
 }
 
-function cargarPlanExistente() {
-    const detalleAgendaId = $('#detalle_agenda_id_plan').val();
-    if (!detalleAgendaId) return;
-    
+function aplicarPlanEnFormulario(plan, esReferencia) {
+    if (!plan) return false;
+
+    if (plan.requerimiento_kcal != null) {
+        $('#plan_requerimiento_kcal').val(plan.requerimiento_kcal);
+    }
+    if (plan.prot_porcentaje != null) {
+        $('#plan_prot_porcentaje').val(plan.prot_porcentaje);
+    }
+    if (plan.grasa_porcentaje != null) {
+        $('#plan_grasa_porcentaje').val(plan.grasa_porcentaje);
+    }
+    if (plan.cho_porcentaje != null) {
+        $('#plan_cho_porcentaje').val(plan.cho_porcentaje);
+    }
+    $('#plan_observaciones').val(plan.observaciones || '');
+
+    var usarGramos = (parseFloat(plan.prot_gramos) || 0) > 0
+        || (parseFloat(plan.grasa_gramos) || 0) > 0
+        || (parseFloat(plan.cho_gramos) || 0) > 0;
+    if (usarGramos) {
+        $('#modo_gramos').prop('checked', true);
+        $('#modo_porcentaje').prop('checked', false);
+        $('#bloque_porcentaje').hide();
+        $('#bloque_gramos').show();
+        $('#plan_prot_gramos_input').val(plan.prot_gramos || '');
+        $('#plan_grasa_gramos_input').val(plan.grasa_gramos || '');
+        $('#plan_cho_gramos_input').val(plan.cho_gramos || '');
+    } else {
+        $('#modo_porcentaje').prop('checked', true);
+        $('#modo_gramos').prop('checked', false);
+        $('#bloque_porcentaje').show();
+        $('#bloque_gramos').hide();
+        $('#plan_prot_gramos_input, #plan_grasa_gramos_input, #plan_cho_gramos_input').val('');
+    }
+
+    calcularMacros();
+    validarDistribucion();
+
+    if (esReferencia) {
+        $('.porciones-input').val(0);
+        $('.calorias-porcion, .cho-porcion, .grasa-porcion, .prot-porcion').text('0');
+    }
+    if (plan.porciones && plan.porciones.length) {
+        plan.porciones.forEach(function(por) {
+            const $input = $('.porciones-input[data-intercambio-id="' + por.intercambio_porcion_id + '"]');
+            if (!$input.length) return;
+            $input.val(por.porciones);
+            calcularPorcion($input);
+        });
+        calcularTotalesPlan();
+    }
+
+    if (esReferencia) {
+        window.planReferenciaUltimaConsulta = plan;
+        $('#distribucion-tab').removeClass('disabled');
+        if (plan.id && typeof cargarDistribucionComidas === 'function') {
+            cargarDistribucionComidas(plan.id);
+        }
+    } else {
+        planGuardado = plan;
+        window.planReferenciaUltimaConsulta = null;
+        $('#distribucion-tab').removeClass('disabled');
+    }
+    return true;
+}
+
+function cargarPlanDesdeDetalle(detalleAgendaId, esReferencia, callback) {
+    if (!detalleAgendaId) {
+        if (callback) callback(false);
+        return;
+    }
     $.ajax({
         url: '<?= base_url("dashboard/plan-alimentario/plan") ?>/' + detalleAgendaId,
         method: 'GET',
         dataType: 'json',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
         success: function(response) {
-            if (response.plan) {
-                const plan = response.plan;
-                $('#plan_requerimiento_kcal').val(plan.requerimiento_kcal);
-                $('#plan_prot_porcentaje').val(plan.prot_porcentaje);
-                $('#plan_grasa_porcentaje').val(plan.grasa_porcentaje);
-                $('#plan_cho_porcentaje').val(plan.cho_porcentaje);
-                $('#plan_observaciones').val(plan.observaciones || '');
-                $('#modo_porcentaje').prop('checked', true);
-                $('#modo_gramos').prop('checked', false);
-                $('#bloque_porcentaje').show();
-                $('#bloque_gramos').hide();
-                $('#plan_prot_gramos_input, #plan_grasa_gramos_input, #plan_cho_gramos_input').val('');
-                
-                calcularMacros();
-                validarDistribucion();
-                
-                // Cargar porciones
-                if (plan.porciones) {
-                    plan.porciones.forEach(function(por) {
-                        const $input = $(`.porciones-input[data-intercambio-id="${por.intercambio_porcion_id}"]`);
-                        if ($input.length) {
-                            $input.val(por.porciones);
-                            calcularPorcion($input);
-                        }
-                    });
-                    calcularTotalesPlan();
-                }
-                
-                planGuardado = plan;
-                $('#distribucion-tab').removeClass('disabled');
+            if (!response.plan) {
+                if (callback) callback(false);
+                return;
             }
+            var ok = aplicarPlanEnFormulario(response.plan, esReferencia);
+            if (callback) callback(ok);
+        },
+        error: function() {
+            if (callback) callback(false);
+        }
+    });
+}
+
+function cargarPlanExistente() {
+    const detalleAgendaId = $('#detalle_agenda_id_plan').val();
+    if (!detalleAgendaId) return;
+
+    cargarPlanDesdeDetalle(detalleAgendaId, false, function(encontrado) {
+        if (!encontrado && window.referenciaDetalleAgendaId
+            && String(window.referenciaDetalleAgendaId) !== String(detalleAgendaId)) {
+            cargarPlanDesdeDetalle(window.referenciaDetalleAgendaId, true);
         }
     });
 }

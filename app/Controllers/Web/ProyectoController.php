@@ -66,18 +66,18 @@ class ProyectoController extends BaseController
             (object)['nombre' => 'Otro', 'icono' => 'fas fa-folder', 'slug' => 'otro']
         ];
         
-        $data = [
-            'title' => 'Nuestros Proyectos - NextLine Constructor',
-            'description' => 'Conoce nuestros proyectos de construcción residencial y comercial. Más de 15 años de experiencia construyendo sueños.',
-            'keywords' => 'proyectos construcción, obras terminadas, constructor Linares, proyectos residenciales, proyectos comerciales',
-            'proyectos' => $proyectos,
-            'estadisticas' => $estadisticas,
-            'categorias' => $categorias,
-            'tipo_actual' => $tipo ?? '',
-            'busqueda_actual' => $busqueda ?? ''
-        ];
-        
-        return view('Web/proyectos', $data);
+        return view('Web/proyectos', array_merge(seo_page([
+            'title'       => 'Proyectos y casos | NutriNext',
+            'description' => 'Casos de uso y proyectos destacados de profesionales que utilizan NutriNext en su consulta nutricional.',
+            'keywords'    => 'proyectos nutrinext, casos nutricionistas, plataforma nutrición',
+            'canonical'   => seo_canonical_url('proyectos'),
+        ]), [
+            'proyectos'       => $proyectos,
+            'estadisticas'    => $estadisticas,
+            'categorias'      => $categorias,
+            'tipo_actual'     => $tipo ?? '',
+            'busqueda_actual' => $busqueda ?? '',
+        ]));
     }
     
     public function detalle($slug)
@@ -117,15 +117,15 @@ class ProyectoController extends BaseController
             }
         }
         
-        $data = [
-            'title' => $proyecto->meta_titulo ?: $proyecto->nombre . ' - NextLine Constructor',
-            'description' => $proyecto->meta_descripcion ?: $proyecto->descripcion_corta,
-            'keywords' => $proyecto->meta_keywords ?: 'proyecto construcción, ' . $proyecto->tipo_proyecto . ', ' . $proyecto->ubicacion,
-            'proyecto' => $proyecto,
-            'imagenes' => $imagenes,
-            'proyectos_relacionados' => array_slice($proyectosRelacionados, 0, 3)
-        ];
-        
-        return view('Web/proyecto_detalle', $data);
+        return view('Web/proyecto_detalle', array_merge(seo_page([
+            'title'       => ($proyecto->meta_titulo ?: $proyecto->nombre) . ' | NutriNext',
+            'description' => mb_substr(strip_tags($proyecto->meta_descripcion ?: $proyecto->descripcion_corta ?: ''), 0, 160),
+            'keywords'    => $proyecto->meta_keywords ?: 'nutrinext, ' . $proyecto->nombre,
+            'canonical'   => seo_canonical_url('proyectos/' . $proyecto->slug),
+        ]), [
+            'proyecto'             => $proyecto,
+            'imagenes'             => $imagenes,
+            'proyectos_relacionados' => array_slice($proyectosRelacionados, 0, 3),
+        ]));
     }
 }

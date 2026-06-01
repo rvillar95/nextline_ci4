@@ -3,40 +3,20 @@
 $empresaModel = new \App\Models\Empresa();
 $empresaData = $empresaModel->getDatosParaPDF();
 $empresaContacto = [
-    'direccion' => $empresaData['direccion'] ?? 'Santiago, Chile',
+    'direccion' => $empresaData['direccion'] ?? 'Chile',
     'telefono' => $empresaData['telefono'] ?? '+56 9 1234 5678',
-    'email' => $empresaData['email'] ?? 'info@mansanchez.cl',
-    'sitio_web' => $empresaData['sitio_web'] ?? 'www.mansanchez.cl'
+    'email' => $empresaData['email'] ?? 'contacto@nutrinext.cl',
+    'sitio_web' => $empresaData['sitio_web'] ?? 'nutrinext.cl',
+    'nombre' => $empresaData['nombre'] ?? 'NutriNext',
 ];
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
-    <title><?= $title ?? 'VitaSync - Gestión nutricional' ?></title>
-    <link rel="icon" href="<?= base_url('lib/logo/icono-transparente.png') ?>" type="image/png" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta content="<?= $description ?? 'VitaSync - Plataforma de gestión para nutricionistas: agenda, pacientes, historiales y más' ?>" name="description" />
-    <meta content="<?= $keywords ?? 'vitasync, nutrición, nutricionista, agenda, consultas, pacientes, chile' ?>" name="keywords" />
-    <meta content="VitaSync" name="author" />
-    
-        <!-- Open Graph / Facebook / WhatsApp -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="<?= current_url() ?>" />
-    <meta property="og:title" content="<?= $title ?? 'VitaSync - Gestión nutricional' ?>" />
-    <meta property="og:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
-    <meta property="og:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="VitaSync" />
-    <meta property="og:locale" content="es_CL" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="<?= current_url() ?>" />
-    <meta name="twitter:title" content="<?= $title ?? 'VitaSync - Gestión nutricional' ?>" />
-    <meta name="twitter:description" content="<?= $description ?? 'Plataforma de gestión para nutricionistas' ?>" />
-    <meta name="twitter:image" content="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" />
+    <link rel="icon" href="<?= base_url('lib/logo/isotipo.png') ?>" type="image/png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <?= $this->include('seo/meta') ?>
     
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -49,7 +29,7 @@ $empresaContacto = [
     <link href="<?= base_url('lib/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/style.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/navigation.css') ?>" rel="stylesheet" type="text/css" />
-    <link href="<?= base_url('lib/css/vitasync-colors.css') ?>" rel="stylesheet" type="text/css" />
+    <link href="<?= base_url('lib/css/nutrinext-colors.css') ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url('lib/css/buttons-ripple-fix.css') ?>" rel="stylesheet" type="text/css" />
     
     <!-- Non-critical CSS - Deferred loading -->
@@ -88,22 +68,25 @@ $empresaContacto = [
             }
         }
         
-        /* ===== SCROLL SUAVE ===== */
-        html {
-            scroll-behavior: smooth;
+        /* Scroll: controlado por nutrinext-scroll.js (duración lenta, no scroll-behavior CSS) */
+        @media (prefers-reduced-motion: reduce) {
+            html, body { scroll-behavior: auto !important; }
         }
         
-        body {
-            scroll-behavior: smooth;
+        /* Sitio público: sin preloader bloqueante ni body oculto del template */
+        body.nutrinext-web {
+            display: block !important;
+            visibility: visible !important;
+            background-color: #ffffff;
         }
-        
+
+        body.nutrinext-web #preloader {
+            display: none !important;
+        }
+
         /* ===== WRAPPER Y BODY ===== */
         #wrapper {
             background: transparent !important;
-        }
-        
-        body {
-            background-color: #ffffff;
         }
         
         #content {
@@ -126,9 +109,9 @@ $empresaContacto = [
         
         /* ===== HEADER Y NAVBAR MODERNO ===== */
         
-        /* Topbar Moderno - VitaSync */
+        /* Topbar Moderno - NutriNext */
         .topbar-modern {
-            background: var(--vitasync-primary);
+            background: var(--nutrinext-primary);
             padding: 3px 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
             position: relative;
@@ -194,14 +177,14 @@ $empresaContacto = [
         
         .social-link-modern:hover {
             background: #fafeff;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(77, 203, 165, 0.4);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
         }
         
         .btn-topbar-modern {
             background: #fafeff;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             padding: 4px 12px;
             border-radius: 20px;
             text-decoration: none;
@@ -216,23 +199,41 @@ $empresaContacto = [
         
         .btn-topbar-modern:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
-            color: var(--vitasync-primary) !important;
-            background: var(--vitasync-muted) !important;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+            color: var(--nutrinext-primary) !important;
+            background: var(--nutrinext-muted) !important;
             text-decoration: none;
         }
         
-        /* Header Moderno - VitaSync */
-        .header-modern {
+        /* Header Moderno - NutriNext (sin clone/smaller de designesia) */
+        body.nutrinext-web header.header-modern,
+        body.nutrinext-web header.header-modern.clone,
+        body.nutrinext-web header.header-modern.smaller {
             background: #fff !important;
             backdrop-filter: blur(10px);
-            padding: 5px 0;
-            position: sticky;
-            top: 0;
+            padding: 8px 0 !important;
+            position: sticky !important;
+            top: 0 !important;
             z-index: 9999;
-            box-shadow: 0 4px 20px rgba(77, 203, 165, 0.15);
-            border-bottom: 1px solid var(--vitasync-muted);
-            transition: box-shadow 0.3s ease;
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.15);
+            border-bottom: 1px solid var(--nutrinext-muted);
+            transition: box-shadow 0.75s ease, padding 0.75s ease;
+        }
+
+        body.nutrinext-web header.header-modern.is-scrolled {
+            padding: 4px 0 !important;
+            box-shadow: 0 4px 24px rgba(34, 197, 94, 0.22);
+        }
+
+        body.nutrinext-web header.header-modern.is-scrolled .logo-img-modern {
+            height: 58px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            body.nutrinext-web header.header-modern,
+            body.nutrinext-web header.header-modern .logo-img-modern {
+                transition: none !important;
+            }
         }
         
         .header-content-modern {
@@ -253,9 +254,9 @@ $empresaContacto = [
         }
         
         .logo-img-modern {
-            height: 80px;
+            height: 72px;
             width: auto;
-            transition: all 0.3s ease;
+            transition: height 0.75s ease, transform 0.3s ease, opacity 0.3s ease;
         }
         
         .logo-link-modern:hover .logo-img-modern {
@@ -286,7 +287,7 @@ $empresaContacto = [
             flex-direction: column;
             align-items: center;
             padding: 8px 15px;
-            color: #2d3748;
+            color: var(--brand-green-dark);
             text-decoration: none;
             border-radius: 12px;
             transition: all 0.3s ease;
@@ -294,28 +295,34 @@ $empresaContacto = [
             position: relative;
             overflow: hidden;
         }
+
+        .nav-link-modern:visited:not(.active) {
+            color: var(--brand-green-dark);
+        }
         
         .nav-link-modern i {
             font-size: 1rem;
             margin-bottom: 3px;
             transition: all 0.3s ease;
+            color: inherit;
         }
         
         .nav-link-modern span {
             font-size: 0.85rem;
             font-weight: 600;
+            color: inherit;
         }
         
         .nav-link-modern:hover {
-            background: var(--vitasync-muted);
-            color: var(--vitasync-primary);
+            background: var(--nutrinext-muted);
+            color: var(--nutrinext-primary);
             transform: translateY(-2px);
         }
         
         .nav-link-modern.active {
-            background: var(--vitasync-primary);
+            background: var(--nutrinext-primary);
             color: white !important;
-            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.35);
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35);
         }
         
         .nav-link-modern.active i {
@@ -334,15 +341,15 @@ $empresaContacto = [
             align-items: center;
             gap: 10px;
             padding: 6px 12px;
-            background: var(--vitasync-muted);
+            background: var(--nutrinext-muted);
             border-radius: 25px;
-            border: 1px solid rgba(77, 203, 165, 0.3);
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
         
         .phone-icon-modern {
             width: 35px;
             height: 35px;
-            background: var(--vitasync-primary);
+            background: var(--nutrinext-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -357,42 +364,74 @@ $empresaContacto = [
         
         .phone-label-modern {
             font-size: 0.75rem;
-            color: #2d3748;
+            color: var(--text-main);
             font-weight: 500;
         }
         
         .phone-number-modern {
             font-size: 0.9rem;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             font-weight: 700;
         }
         
-        /* Mobile Menu Button - VitaSync */
+        /* Mobile Menu Button - NutriNext */
         .mobile-menu-btn-modern {
             display: none;
             flex-direction: column;
             justify-content: space-around;
-            width: 35px;
-            height: 35px;
-            background: var(--vitasync-muted);
-            border: 2px solid var(--vitasync-primary);
-            border-radius: 8px;
+            align-items: stretch;
+            width: 46px;
+            height: 46px;
+            background: var(--nutrinext-muted);
+            border: 2px solid var(--nutrinext-primary);
+            border-radius: 10px;
             cursor: pointer;
-            padding: 6px;
-            transition: all 0.3s ease;
+            padding: 10px 9px;
+            transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         
-        .mobile-menu-btn-modern:hover {
-            background: var(--vitasync-primary);
-            transform: scale(1.05);
+        @media (hover: hover) {
+            .mobile-menu-btn-modern:hover:not(.is-open) {
+                background: var(--nutrinext-primary);
+                transform: scale(1.05);
+            }
+
+            .mobile-menu-btn-modern:hover:not(.is-open) span {
+                background: #fff;
+            }
+        }
+
+        .mobile-menu-btn-modern.is-open {
+            background: var(--nutrinext-primary);
+            border-color: var(--nutrinext-primary);
+        }
+
+        .mobile-menu-btn-modern.is-open span {
+            background: #fff;
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn-modern.is-open span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
         }
         
         .mobile-menu-btn-modern span {
             width: 100%;
-            height: 3px;
-            background: var(--vitasync-primary);
+            height: 4px;
+            background: var(--nutrinext-primary);
             border-radius: 2px;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease;
+            display: block;
+            flex-shrink: 0;
         }
         
         /* Animación para menú móvil */
@@ -469,8 +508,8 @@ $empresaContacto = [
                 background: #fff !important;
                 backdrop-filter: blur(10px);
                 padding: 20px !important;
-                box-shadow: 0 8px 30px rgba(77, 203, 165, 0.2) !important;
-                border-top: 2px solid var(--vitasync-primary) !important;
+                box-shadow: 0 8px 30px rgba(34, 197, 94, 0.2) !important;
+                border-top: 2px solid var(--nutrinext-primary) !important;
                 z-index: 2147483647 !important;
                 max-height: calc(100vh - 120px) !important;
                 min-height: 450px !important;
@@ -500,12 +539,12 @@ $empresaContacto = [
                 width: 100%;
             }
             
-            .nav-link-modern {
+            .nav-link-modern:not(.active) {
                 padding: 16px 20px;
                 border-radius: 10px;
-                background: var(--vitasync-muted);
-                border: 1px solid rgba(77, 203, 165, 0.3);
-                color: #2d3748 !important;
+                background: var(--nutrinext-muted);
+                border: 1px solid rgba(34, 197, 94, 0.3);
+                color: var(--brand-green-dark) !important;
                 font-size: 0.95rem;
                 transition: all 0.3s ease;
                 display: flex;
@@ -513,22 +552,26 @@ $empresaContacto = [
                 align-items: center;
                 gap: 12px;
             }
+
+            .nav-link-modern:not(.active):visited {
+                color: var(--brand-green-dark) !important;
+            }
             
-            .nav-link-modern i {
+            .nav-link-modern:not(.active) i,
+            .nav-link-modern:not(.active) span {
+                color: inherit !important;
+                font-weight: 600;
+            }
+
+            .nav-link-modern:not(.active) i {
                 font-size: 1.2rem;
-                color: var(--vitasync-primary);
                 margin-bottom: 0;
             }
             
-            .nav-link-modern span {
-                color: #2d3748 !important;
-                font-weight: 600;
-            }
-            
             .nav-link-modern:hover {
-                background: var(--vitasync-primary);
+                background: var(--nutrinext-primary);
                 transform: translateX(5px);
-                border-color: var(--vitasync-primary);
+                border-color: var(--nutrinext-primary);
                 color: white !important;
             }
             
@@ -536,9 +579,15 @@ $empresaContacto = [
             .nav-link-modern:hover span { color: white !important; }
             
             .nav-link-modern.active {
-                background: var(--vitasync-primary);
+                padding: 16px 20px;
+                border-radius: 10px;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 12px;
+                background: var(--nutrinext-primary);
                 color: white !important;
-                box-shadow: 0 4px 15px rgba(77, 203, 165, 0.4);
+                box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
                 border-color: transparent;
             }
             
@@ -566,33 +615,36 @@ $empresaContacto = [
                 top: 100px !important;
                 max-height: calc(100vh - 100px) !important;
                 min-height: 400px !important;
-                z-index: 2147483647 !important;
+            }
+
+            .nav-modern.active {
+                min-height: 400px !important;
             }
         }
         
-        /* Botones VitaSync */
+        /* Botones NutriNext */
         .btn-custom {
-            background-color: var(--vitasync-primary) !important;
+            background-color: var(--nutrinext-primary) !important;
             color: #ffffff !important;
-            border: 2px solid var(--vitasync-primary) !important;
+            border: 2px solid var(--nutrinext-primary) !important;
             font-weight: 600 !important;
             text-transform: uppercase !important;
             letter-spacing: 1px !important;
-            box-shadow: 0 4px 15px rgba(77, 203, 165, 0.35) !important;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.35) !important;
             transition: all 0.3s ease !important;
         }
         
         .btn-custom:hover {
-            background-color: #3ab892 !important;
+            background-color: var(--brand-green-dark) !important;
             color: #ffffff !important;
-            border-color: #3ab892 !important;
-            box-shadow: 0 6px 20px rgba(77, 203, 165, 0.45) !important;
+            border-color: var(--brand-green-dark) !important;
+            box-shadow: 0 6px 20px rgba(21, 128, 61, 0.35) !important;
             transform: translateY(-2px) !important;
         }
         
         .btn-custom.btn-black.light {
             background-color: #ffffff !important;
-            color: var(--vitasync-primary) !important;
+            color: var(--nutrinext-primary) !important;
             border: 2px solid #ffffff !important;
             font-weight: 600 !important;
             box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
@@ -600,9 +652,9 @@ $empresaContacto = [
         }
         
         .btn-custom.btn-black.light:hover {
-            background-color: var(--vitasync-muted) !important;
-            color: var(--vitasync-primary) !important;
-            border-color: var(--vitasync-muted) !important;
+            background-color: var(--nutrinext-muted) !important;
+            color: var(--nutrinext-primary) !important;
+            border-color: var(--nutrinext-muted) !important;
             transform: translateY(-2px) !important;
         }
         
@@ -610,25 +662,25 @@ $empresaContacto = [
         .text-light h1, .text-light h2, .text-light h3, .text-light h4, .text-light h5, .text-light h6 { color: #ffffff !important; }
         .text-light p { color: rgba(255,255,255,0.9) !important; }
         .container { position: relative !important; z-index: 10 !important; }
-        .p-title { color: var(--vitasync-primary) !important; font-weight: 600 !important; }
-        h2 { color: #2d3748 !important; }
-        .small-border { background-color: var(--vitasync-primary) !important; }
+        .p-title { color: var(--nutrinext-primary) !important; font-weight: 600 !important; }
+        h2 { color: var(--text-main) !important; }
+        .small-border { background-color: var(--nutrinext-primary) !important; }
         .estrellas-calificacion { margin: 10px 0; text-align: center; }
-        .estrellas-calificacion i { font-size: 5px; margin: 0 2px; color: var(--vitasync-primary) !important; }
+        .estrellas-calificacion i { font-size: 5px; margin: 0 2px; color: var(--nutrinext-primary) !important; }
         .estrellas-calificacion .fa-star-o { color: #ccc !important; }
         .de_testi h3 { margin-bottom: 10px !important; }
         .de_testi .estrellas-calificacion { margin: 10px 0 15px 0 !important; }
-        #section-highlight { background: linear-gradient(135deg, var(--vitasync-primary), var(--vitasync-muted)) !important; }
+        #section-highlight { background: linear-gradient(135deg, var(--brand-green-primary), var(--brand-green-dark)) !important; }
         #section-highlight .p-title, #section-highlight h2 { color: #fff !important; }
         #section-highlight p { color: rgba(255,255,255,0.9) !important; }
-        .de_count { background: rgba(77, 203, 165, 0.2) !important; border-radius: 10px !important; padding: 20px !important; margin-bottom: 20px !important; }
-        .de_count h3 { color: var(--vitasync-primary) !important; font-size: 2.5rem !important; font-weight: bold !important; }
-        .de_count p { color: #2d3748 !important; font-size: 1rem !important; }
+        .de_count { background: rgba(34, 197, 94, 0.15) !important; border-radius: 10px !important; padding: 20px !important; margin-bottom: 20px !important; }
+        .de_count h3 { color: var(--nutrinext-primary) !important; font-size: 2.5rem !important; font-weight: bold !important; }
+        .de_count p { color: var(--text-main) !important; font-size: 1rem !important; }
         
-        /* ===== FOOTER MODERNO - VitaSync ===== */
+        /* ===== FOOTER MODERNO - NutriNext ===== */
         
         .footer-modern {
-            background: linear-gradient(to bottom, var(--vitasync-primary) 0%, #3ab892 100%);
+            background: linear-gradient(to bottom, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);
             color: white;
             padding: 80px 0 0;
             position: relative;
@@ -801,7 +853,7 @@ $empresaContacto = [
         
         .newsletter-btn-modern {
             background: #fafeff;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             border: none;
             padding: 15px 20px;
             cursor: pointer;
@@ -812,8 +864,8 @@ $empresaContacto = [
         }
         
         .newsletter-btn-modern:hover {
-            background: var(--vitasync-muted);
-            color: var(--vitasync-primary);
+            background: var(--nutrinext-muted);
+            color: var(--nutrinext-primary);
             transform: scale(1.05);
         }
         
@@ -904,7 +956,7 @@ $empresaContacto = [
             gap: 8px;
             padding: 12px 25px;
             background: #fafeff;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             text-decoration: none;
             border-radius: 25px;
             font-size: 0.9rem;
@@ -914,10 +966,10 @@ $empresaContacto = [
         }
         
         .btn-contact-footer-modern:hover {
-            background: var(--vitasync-muted);
+            background: var(--nutrinext-muted);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(77, 203, 165, 0.35);
-            color: var(--vitasync-primary) !important;
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.35);
+            color: var(--nutrinext-primary) !important;
             text-decoration: none;
         }
         
@@ -956,7 +1008,7 @@ $empresaContacto = [
         
         .social-icon-modern:hover {
             background: #fafeff;
-            color: var(--vitasync-primary);
+            color: var(--nutrinext-primary);
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.15);
         }
@@ -1041,7 +1093,7 @@ $empresaContacto = [
     </style>
 </head>
 
-<body>
+<body class="nutrinext-web">
     <div id="wrapper">
         <!-- Top Bar Moderno -->
         <div id="topbar-modern" class="topbar-modern">
@@ -1080,45 +1132,54 @@ $empresaContacto = [
                     <!-- Logo -->
                     <div class="logo-modern">
                         <a href="<?= base_url() ?>" class="logo-link-modern">
-                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" class="logo-img-modern" style="max-height: 75px; width: auto;" loading="eager">
+                            <img src="<?= base_url('lib/logo/logo-horizontal.png') ?>" alt="NutriNext" class="logo-img-modern" style="max-height: 72px; width: auto;" loading="eager">
                         </a>
                     </div>
                     
-                    <!-- Navigation --> 
+                    <!-- Navigation -->
+                    <?php
+                    $uriNav = uri_string();
+                    $navInicioActive = ($uriNav === '' || $uriNav === 'home');
+                    $navFuncActive = str_starts_with($uriNav, 'funcionalidades');
+                    $navPreciosActive = str_starts_with($uriNav, 'precios');
+                    $navEquipoActive = str_starts_with($uriNav, 'equipo');
+                    $navReservarActive = str_starts_with($uriNav, 'reservar');
+                    $navContactoActive = str_starts_with($uriNav, 'contacto');
+                    ?>
                     <nav class="nav-modern">
                         <ul class="nav-menu-modern">
                             <li class="nav-item-modern">
-                                <a href="<?= base_url() ?>" class="nav-link-modern <?= (uri_string() == '' || uri_string() == 'home') ? 'active' : '' ?>">
+                                <a href="<?= base_url() ?>" class="nav-link-modern <?= $navInicioActive ? 'active' : '' ?>">
                                     <i class="fas fa-home"></i>
                                     <span>Inicio</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
-                                <a href="<?= base_url('servicios') ?>" class="nav-link-modern <?= (uri_string() == 'servicios') ? 'active' : '' ?>">
-                                    <i class="fas fa-tools"></i>
-                                    <span>Servicios</span>
+                                <a href="<?= base_url('funcionalidades') ?>" class="nav-link-modern <?= $navFuncActive ? 'active' : '' ?>">
+                                    <i class="fas fa-th-large"></i>
+                                    <span>Funcionalidades</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
-                                <a href="<?= base_url('proyectos') ?>" class="nav-link-modern <?= (uri_string() == 'proyectos') ? 'active' : '' ?>">
-                                    <i class="fas fa-building"></i>
-                                    <span>Proyectos</span>
+                                <a href="<?= base_url('precios') ?>" class="nav-link-modern <?= $navPreciosActive ? 'active' : '' ?>">
+                                    <i class="fas fa-tags"></i>
+                                    <span>Precios</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
-                                <a href="<?= base_url('galeria') ?>" class="nav-link-modern <?= (strpos(uri_string(), 'galeria') === 0) ? 'active' : '' ?>">
-                                    <i class="fas fa-images"></i>
-                                    <span>Galería</span>
+                                <a href="<?= base_url('equipo') ?>" class="nav-link-modern <?= $navEquipoActive ? 'active' : '' ?>">
+                                    <i class="fas fa-user-md"></i>
+                                    <span>Equipo</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
-                                <a href="<?= base_url('nosotros') ?>" class="nav-link-modern <?= (uri_string() == 'nosotros') ? 'active' : '' ?>">
-                                    <i class="fas fa-users"></i>
-                                    <span>Nosotros</span>
+                                <a href="<?= base_url('reservar') ?>" class="nav-link-modern <?= $navReservarActive ? 'active' : '' ?>">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <span>Reservar</span>
                                 </a>
                             </li>
                             <li class="nav-item-modern">
-                                <a href="<?= base_url('contacto') ?>" class="nav-link-modern <?= (uri_string() == 'contacto') ? 'active' : '' ?>">
+                                <a href="<?= base_url('contacto') ?>" class="nav-link-modern <?= $navContactoActive ? 'active' : '' ?>">
                                     <i class="fas fa-envelope"></i>
                                     <span>Contacto</span>
                                 </a>
@@ -1164,9 +1225,9 @@ $empresaContacto = [
                         <div class="footer-widget-modern">
                             <div class="footer-logo-modern">
                                 <a href="<?= base_url() ?>">
-                                    <img alt="VitaSync" src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" style="max-height: 44px; width: auto;" loading="lazy" />
+                                    <img alt="NutriNext" src="<?= base_url('lib/logo/logo-horizontal.png') ?>" style="max-height: 48px; width: auto;" loading="lazy" />
                                 </a>
-                                <h3 class="company-name-modern">VitaSync</h3>
+                                <!--h3 class="company-name-modern">NutriNext</h3-->
                             </div>
                             <p class="company-description-modern">
                                 Plataforma de gestión para nutricionistas: agenda de citas, historiales clínicos, planes alimentarios y más.
@@ -1181,11 +1242,11 @@ $empresaContacto = [
                                 <i class="fas fa-th-large"></i> Sistema
                             </h4>
                             <ul class="footer-links-modern">
-                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-calendar-alt"></i> Agenda</a></li>
-                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-user-friends"></i> Pacientes</a></li>
-                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-file-medical"></i> Historial clínico</a></li>
-                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-utensils"></i> Plan alimentario</a></li>
-                                <li><a href="<?= base_url() ?>#funcionalidades"><i class="fas fa-credit-card"></i> Pagos</a></li>
+                                <li><a href="<?= base_url('funcionalidades') ?>"><i class="fas fa-th-large"></i> Todas las funcionalidades</a></li>
+                                <li><a href="<?= base_url('funcionalidades/agenda-citas') ?>"><i class="fas fa-calendar-alt"></i> Agenda</a></li>
+                                <li><a href="<?= base_url('funcionalidades/pacientes') ?>"><i class="fas fa-user-friends"></i> Pacientes</a></li>
+                                <li><a href="<?= base_url('funcionalidades/historial-clinico') ?>"><i class="fas fa-file-medical"></i> Historial clínico</a></li>
+                                <li><a href="<?= base_url('funcionalidades/plan-alimentario') ?>"><i class="fas fa-utensils"></i> Plan alimentario</a></li>
                             </ul>
                         </div>
                     </div>
@@ -1198,6 +1259,8 @@ $empresaContacto = [
                             </h4>
                             <ul class="footer-links-modern">
                                 <li><a href="<?= base_url() ?>"><i class="fas fa-home"></i> Inicio</a></li>
+                                <li><a href="<?= base_url('funcionalidades') ?>"><i class="fas fa-th-large"></i> Funcionalidades</a></li>
+                                <li><a href="<?= base_url('equipo') ?>"><i class="fas fa-user-md"></i> Equipo</a></li>
                                 <li><a href="<?= base_url('reservar') ?>"><i class="fas fa-calendar-check"></i> Reservar hora</a></li>
                                 <li><a href="<?= base_url('contacto') ?>"><i class="fas fa-envelope"></i> Contacto</a></li>
                                 <li><a href="<?= base_url('login') ?>"><i class="fas fa-sign-in-alt"></i> Iniciar sesión</a></li>
@@ -1252,8 +1315,8 @@ $empresaContacto = [
                                 </div>
                             </div>
                             <div class="contact-actions-modern">
-                                <a href="<?= base_url('contacto') ?>" class="btn-contact-footer-modern">
-                                    <i class="fas fa-envelope"></i> Enviar Mensaje
+                                <a href="mailto:<?= esc($empresaContacto['email']) ?>" class="btn-contact-footer-modern">
+                                    <i class="fas fa-envelope"></i> Enviar correo
                                 </a>
                             </div>
                         </div>
@@ -1267,20 +1330,15 @@ $empresaContacto = [
                     <div class="row align-items-center">
                         <div class="col-lg-6 col-md-6">
                             <p class="copyright-modern">
-                                &copy; <?= date('Y') ?> <strong>VitaSync</strong> | 
+                                &copy; <?= date('Y') ?> <strong>NutriNext</strong> | 
                                 <a href="<?= base_url('politica-privacidad') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Privacidad</a> | 
                                 <a href="<?= base_url('terminos-condiciones') ?>" style="color: rgba(255,255,255,0.7); text-decoration: none;">Términos</a>
                             </p>
                         </div>
                         <div class="col-lg-6 col-md-6 text-md-end">
-                        <div class="social-icons-modern">
-                            <a href="https://web.facebook.com/man.msanchez" target="_blank" class="social-icon-modern" title="Facebook">
-                                <i class="fab fa-facebook-f" style="color:white;"></i>
-                            </a>
-                            <a href="https://www.instagram.com/mansanchez45/" target="_blank" class="social-icon-modern" title="Instagram">
-                                <i class="fab fa-instagram" style="color:white;"></i>
-                            </a>
-                        </div>
+                            <p class="copyright-modern mb-0 text-md-end" style="opacity: 0.85;">
+                                <?= esc($empresaContacto['nombre']) ?> · Software para nutricionistas
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1297,24 +1355,10 @@ $empresaContacto = [
         </div>
     </div>
 
-    <!-- Javascript Files -->
+    <!-- Javascript (sitio público: sin designesia.js — bloqueaba la página con el preloader) -->
     <script src="<?= base_url('lib/js/jquery.min.js') ?>"></script>
     <script src="<?= base_url('lib/js/bootstrap.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/wow.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.isotope.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/easing.js') ?>"></script>
-    <script src="<?= base_url('lib/js/owl.carousel.js') ?>"></script>
-    <script src="<?= base_url('lib/js/validation.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.magnific-popup.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/enquire.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.stellar.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.plugin.js') ?>"></script>
-    <script src="<?= base_url('lib/js/typed.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jarallax.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.countTo.js') ?>"></script>
-    <script src="<?= base_url('lib/js/jquery.countdown.js') ?>"></script>
-    <script src="<?= base_url('lib/js/mdb.min.js') ?>"></script>
-    <script src="<?= base_url('lib/js/designesia.js') ?>"></script>
+    <script src="<?= base_url('lib/js/nutrinext-scroll.js') ?>"></script>
     
     <!-- JavaScript para Header Moderno -->
     <script>
@@ -1329,62 +1373,59 @@ $empresaContacto = [
             if (navModern && header) {
                 const headerHeight = header.offsetHeight;
                 const topbarHeight = document.querySelector('.topbar-modern')?.offsetHeight || 0;
-                navModern.style.top = (headerHeight) + 'px';
-                console.log('Menu posicionado en:', headerHeight + 'px');
+                navModern.style.top = headerHeight + 'px';
             }
         }
-        
+
+        if (header) {
+            let headerTicking = false;
+            function updateHeaderScroll() {
+                header.classList.toggle('is-scrolled', window.scrollY > 48);
+                positionMenu();
+                headerTicking = false;
+            }
+            window.addEventListener('scroll', function () {
+                if (!headerTicking) {
+                    requestAnimationFrame(updateHeaderScroll);
+                    headerTicking = true;
+                }
+            }, { passive: true });
+            updateHeaderScroll();
+        }
+
         if (mobileMenuBtn && navModern) {
-            console.log('Menu mobile inicializado correctamente');
-            
             // Posicionar menú al cargar
             positionMenu();
             
             // Toggle del menú móvil
+            function setMobileMenuOpen(open) {
+                navModern.classList.toggle('active', open);
+                mobileMenuBtn.classList.toggle('is-open', open);
+                mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                positionMenu();
+            }
+
+            mobileMenuBtn.setAttribute('aria-label', 'Abrir menú');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+
             mobileMenuBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                console.log('Click en hamburguesa');
-                navModern.classList.toggle('active');
-                console.log('Clase active:', navModern.classList.contains('active'));
-                
-                // Posicionar menú debajo del header
-                positionMenu();
-                
-                // Animate hamburger menu
-                const spans = this.querySelectorAll('span');
-                if (navModern.classList.contains('active')) {
-                    spans[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                    spans[1].style.opacity = '0';
-                    spans[2].style.transform = 'rotate(-45deg) translate(7px, -6px)';
-                } else {
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
-                }
+                setMobileMenuOpen(!navModern.classList.contains('active'));
             });
             
             // Close mobile menu when clicking on a link
             const navLinks = navModern.querySelectorAll('.nav-link-modern');
             navLinks.forEach(link => {
                 link.addEventListener('click', function() {
-                    navModern.classList.remove('active');
-                    const spans = mobileMenuBtn.querySelectorAll('span');
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
+                    setMobileMenuOpen(false);
                 });
             });
             
             // Close mobile menu when clicking outside
             document.addEventListener('click', function(e) {
                 if (!navModern.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
-                    navModern.classList.remove('active');
-                    const spans = mobileMenuBtn.querySelectorAll('span');
-                    spans[0].style.transform = 'none';
-                    spans[1].style.opacity = '1';
-                    spans[2].style.transform = 'none';
+                    setMobileMenuOpen(false);
                 }
             });
             
@@ -1394,48 +1435,6 @@ $empresaContacto = [
             });
         }
         
-        // Smooth scrolling for anchor links
-        const anchorLinks = document.querySelectorAll('a[href^="#"]');
-        anchorLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const targetElement = document.getElementById(targetId);
-                
-                if (targetElement) {
-                    targetElement.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-        
-        // Header scroll effect - Solo cambia la sombra, sin cambios de padding
-        if (header) {
-            let ticking = false;
-            
-            function updateHeader() {
-                console.log(window.scrollY);
-                if (window.scrollY > 50) {
-                    header.style.boxShadow = '0 4px 25px rgba(29, 40, 68, 0.4)';
-                    header.style.paddingTop = '5px';
-                    header.style.transition = '2s';
-                } else {
-                    header.style.boxShadow = '0 4px 20px rgba(29, 40, 68, 0.3)';
-                    header.style.paddingTop = '5px';
-                    header.style.transition = '2s';
-                }
-                ticking = false;
-            }
-            
-            window.addEventListener('scroll', function() {
-                if (!ticking) {
-                    requestAnimationFrame(updateHeader);
-                    ticking = true;
-                }
-            });
-        }
     });
     </script>
 </body>

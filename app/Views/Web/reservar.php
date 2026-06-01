@@ -13,7 +13,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     </div>
 </section>
 
-<section class="py-5" style="background: var(--vitasync-bg, #fafeff);">
+<section class="py-5" style="background: var(--bg-light);">
     <div class="container">
         <input type="hidden" id="empresa_id" value="<?= (int)($empresa_id ?? 0) ?>">
         <?= csrf_field() ?>
@@ -73,7 +73,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
                         <div class="row g-2 align-items-end">
                             <div class="col-md-6">
                                 <label class="form-label small mb-0">Día</label>
-                                <input type="date" id="fecha_dia" class="form-control" value="<?= date('Y-m-d') ?>">
+                                <input type="date" id="fecha_dia" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>">
                             </div>
                             <div class="col-md-6 d-flex align-items-end">
                                 <label class="form-label small mb-0 d-md-block d-none">&nbsp;</label>
@@ -149,19 +149,19 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
 
 <style>
 .reservar-hero {
-    background: linear-gradient(135deg, var(--vitasync-primary) 0%, var(--vitasync-muted) 100%);
+    background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);
     padding: 80px 0 60px !important;
 }
 .nutricionista-card { transition: all 0.2s ease; }
-.nutricionista-card:hover { border-color: var(--vitasync-primary) !important; box-shadow: 0 4px 12px rgba(77, 203, 165, 0.2); }
-.nutricionista-card.selected { border-color: var(--vitasync-primary) !important; background: rgba(77, 203, 165, 0.08); box-shadow: 0 0 0 2px var(--vitasync-primary); }
+.nutricionista-card:hover { border-color: var(--nutrinext-primary) !important; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2); }
+.nutricionista-card.selected { border-color: var(--nutrinext-primary) !important; background: rgba(34, 197, 94, 0.08); box-shadow: 0 0 0 2px var(--nutrinext-primary); }
 .cursor-pointer { cursor: pointer; }
 .nutricionista-foto-wrap {
     width: 72px;
     height: 72px;
     border-radius: 50%;
     overflow: hidden;
-    background: var(--vitasync-muted);
+    background: var(--nutrinext-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,9 +178,9 @@ a.btn-buscar-horarios {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.5rem 1.25rem;
     border-radius: 0.375rem;
     font-size: 1rem;
@@ -191,23 +191,23 @@ a.btn-buscar-horarios {
     transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 a.btn-buscar-horarios:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
     text-decoration: none;
 }
 a.btn-buscar-horarios:focus {
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(77, 203, 165, 0.35);
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.35);
 }
 a.btn-buscar-horarios .me-1 { margin-right: 0.35rem; }
 
 /* Botón “Reservar” de cada horario (enlace sin .btn para evitar ripple) */
 a.btn-reservar-slot {
     display: inline-block;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.35rem 0.75rem;
     border-radius: 0.375rem;
     font-size: 0.875rem;
@@ -217,8 +217,8 @@ a.btn-reservar-slot {
     transition: background 0.2s, border-color 0.2s;
 }
 a.btn-reservar-slot:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
     text-decoration: none;
 }
@@ -227,9 +227,9 @@ a.btn-reservar-slot:hover {
 button.btn-confirmar-reserva {
     display: inline-flex;
     align-items: center;
-    background: var(--vitasync-primary);
+    background: var(--nutrinext-primary);
     color: #fff;
-    border: 1px solid var(--vitasync-primary);
+    border: 1px solid var(--nutrinext-primary);
     padding: 0.5rem 1.25rem;
     border-radius: 0.375rem;
     font-size: 1rem;
@@ -238,8 +238,8 @@ button.btn-confirmar-reserva {
     transition: background 0.2s, border-color 0.2s;
 }
 button.btn-confirmar-reserva:hover {
-    background: #3ab892;
-    border-color: #3ab892;
+    background: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
     color: #fff;
 }
 button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
@@ -310,10 +310,31 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         card.addEventListener('click', function() { seleccionarNutricionista(this); });
     });
 
-    // Si solo hay un nutricionista (además de "Todos"), auto-seleccionar el primero
-    var cards = document.querySelectorAll('.nutricionista-card[data-id]');
-    if (cards.length === 1) {
-        seleccionarNutricionista(cards[0]);
+    // Preselección desde /equipo o enlace directo ?nutricionista_id=
+    var paramsUrl = new URLSearchParams(window.location.search);
+    var preNutricionistaId = paramsUrl.get('nutricionista_id');
+    if (preNutricionistaId) {
+        var cardPre = document.getElementById('card-' + preNutricionistaId);
+        if (cardPre) {
+            seleccionarNutricionista(cardPre);
+        }
+    } else {
+        // Si solo hay un nutricionista (además de "Todos"), auto-seleccionar el primero
+        var cards = document.querySelectorAll('.nutricionista-card[data-id]');
+        if (cards.length === 1) {
+            seleccionarNutricionista(cards[0]);
+        }
+    }
+
+    function fechaHoyYmd() {
+        var d = new Date();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return d.getFullYear() + '-' + m + '-' + day;
+    }
+
+    function esFechaPasada(fechaYmd) {
+        return fechaYmd && fechaYmd < fechaHoyYmd();
     }
 
     function buscarSlots() {
@@ -322,6 +343,10 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         var fechaDia = document.getElementById('fecha_dia').value;
         if (!fechaDia) {
             document.getElementById('slotsContainer').innerHTML = '<p class="text-muted mb-0">Seleccione un día.</p>';
+            return;
+        }
+        if (esFechaPasada(fechaDia)) {
+            document.getElementById('slotsContainer').innerHTML = '<p class="text-danger mb-0">No puede reservar en fechas pasadas. Elija hoy o una fecha futura.</p>';
             return;
         }
         var container = document.getElementById('slotsContainer');

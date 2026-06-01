@@ -67,9 +67,9 @@ if ($cs !== null && $cs !== '' && $cs !== false) {
     }
     $host = $pairs['Server'] ?? $pairs['Data Source'] ?? 'localhost';
     $db   = $pairs['Database'] ?? 'mysql';
-    // Si la cadena trae "mysql" (BD del sistema), usar DATABASE_NAME de App Settings o vitasync (BD en Azure)
+    // Si la cadena trae "mysql" (BD del sistema), usar DATABASE_NAME de App Settings o nutrinext (BD en Azure)
     if ($db === 'mysql') {
-        $db = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'vitasync';
+        $db = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'nutrinext';
     }
     $user = $pairs['User Id'] ?? $pairs['Uid'] ?? '';
     $pass = $pairs['Password'] ?? $pairs['Pwd'] ?? '';

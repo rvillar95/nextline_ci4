@@ -1,0 +1,339 @@
+/* Listado y detalle de funcionalidades — sitio público NutriNext */
+
+.func-page-section {
+    background: var(--nutrinext-bg);
+    padding: 3.5rem 0 4rem !important;
+}
+
+/* ——— Barra de filtros ——— */
+.func-toolbar {
+    margin-bottom: 2.5rem;
+}
+
+/* Móvil: selector nativo (UX claro, sin solapamientos) */
+.func-filter-mobile {
+    display: none;
+}
+
+.func-filter-mobile__label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.func-filter-mobile__select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.65rem 2.5rem 0.65rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2315803D' d='M1.4 0L6 4.6 10.6 0 12 1.4l-6 6-6-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px 8px;
+    cursor: pointer;
+}
+
+.func-filter-mobile__select:focus {
+    outline: none;
+    border-color: var(--brand-green-primary);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+/* Escritorio: pills */
+.func-filters--desktop {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.35rem;
+    background: var(--bg-card);
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.func-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.func-filter-pill:hover {
+    color: var(--brand-green-dark);
+    background: var(--surface-green-soft);
+    text-decoration: none;
+}
+
+.func-filter-pill.is-active {
+    color: #fff !important;
+    background: var(--brand-green-primary);
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+body.nutrinext-web #content a.func-filter-pill {
+    color: var(--text-muted);
+    text-decoration: none;
+}
+
+body.nutrinext-web #content a.func-filter-pill:hover {
+    color: var(--brand-green-dark);
+    text-decoration: none;
+}
+
+body.nutrinext-web #content a.func-filter-pill.is-active,
+body.nutrinext-web #content a.func-filter-pill.is-active:hover {
+    color: #fff !important;
+}
+
+/* Contenido bajo filtros */
+.func-list {
+    margin-top: 0;
+}
+
+/* Encabezado de categoría */
+.func-categoria-block {
+    margin-bottom: 2.5rem;
+}
+
+.func-categoria-block:last-child {
+    margin-bottom: 0;
+}
+
+.func-categoria-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.func-categoria-header__accent {
+    width: 4px;
+    height: 1.75rem;
+    border-radius: 4px;
+    background: var(--brand-green-primary);
+    flex-shrink: 0;
+}
+
+.func-categoria-header__title {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-main);
+}
+
+.func-categoria-header__count {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Grid de tarjetas */
+.func-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Tarjeta */
+a.card-func-ns {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    position: relative;
+}
+
+a.card-func-ns:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.25);
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-func-ns__top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem 0;
+}
+
+.card-func-ns__bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--func-accent, var(--brand-green-primary));
+}
+
+.card-func-ns__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+    background: var(--func-accent-soft, var(--surface-green-soft));
+    color: var(--func-accent, var(--brand-green-primary));
+}
+
+.card-func-ns__body {
+    padding: 1rem 1.25rem 0.5rem;
+    flex: 1;
+}
+
+.card-func-ns__title {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.card-func-ns__desc {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+
+.card-func-ns__footer {
+    padding: 0.75rem 1.25rem 1.25rem;
+    margin-top: auto;
+}
+
+.card-func-ns__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand-green-primary);
+    transition: gap 0.2s ease, color 0.2s ease;
+}
+
+a.card-func-ns:hover .card-func-ns__cta {
+    gap: 0.55rem;
+    color: var(--brand-green-dark);
+}
+
+.card-func-ns__cta i {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+a.card-func-ns:hover .card-func-ns__cta i {
+    transform: translateX(3px);
+}
+
+.func-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px dashed var(--border-light);
+}
+
+.func-empty i {
+    font-size: 2.5rem;
+    color: var(--brand-green-primary);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.func-detail-content h2,
+.func-detail-content h3 {
+    color: var(--text-main);
+}
+
+.func-detail-sidebar .card {
+    border-radius: 16px;
+}
+
+.func-detail-list li {
+    padding: 0.35rem 0;
+}
+
+/* ——— Móvil ——— */
+@media (max-width: 768px) {
+    .func-page-section {
+        padding-top: 1.75rem !important;
+        padding-bottom: 2.5rem !important;
+    }
+
+    .nutrinext-hero {
+        padding: 5.5rem 0 2rem !important;
+    }
+
+    .func-toolbar {
+        margin-bottom: 1.5rem;
+    }
+
+    .func-filter-mobile {
+        display: block;
+    }
+
+    .func-filters--desktop {
+        display: none !important;
+    }
+
+    .func-categoria-header {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .func-categoria-header__title {
+        flex: 1 1 60%;
+        min-width: 0;
+    }
+
+    .func-categoria-header__count {
+        margin-left: auto;
+    }
+
+    .func-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}

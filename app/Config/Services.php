@@ -3,6 +3,7 @@
 namespace Config;
 
 use CodeIgniter\Config\BaseService;
+use Config\Email as EmailConfig;
 
 /**
  * Services Configuration file.
@@ -19,14 +20,22 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
+    /**
+     * Email: usa App\Libraries\Email para aceptar 250 en QUIT (servidores como Exim/zglobalhost).
      *
-     *     return new \CodeIgniter\Example();
-     * }
+     * @param array|EmailConfig|null $config
+     * @return \App\Libraries\Email
      */
+    public static function email($config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('email', $config);
+        }
+
+        if (empty($config) || ! (is_array($config) || $config instanceof EmailConfig)) {
+            $config = config(EmailConfig::class);
+        }
+
+        return new \App\Libraries\Email($config);
+    }
 }

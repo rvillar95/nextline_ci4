@@ -1,10 +1,9 @@
-# robots.txt para MANSANCHEZ Constructor
-# https://mansanchez.cl
+# NutriNext - https://nutrinext.cl
+# Sitemap dinamico: /sitemap.xml (SeoController)
 
 User-agent: *
 Allow: /
 
-# Bloquear acceso a directorios del sistema
 Disallow: /writable/
 Disallow: /vendor/
 Disallow: /app/
@@ -12,22 +11,31 @@ Disallow: /system/
 Disallow: /tests/
 Disallow: /dashboard/
 Disallow: /login
+Disallow: /confirmar-cita
+Disallow: /cancelar-cita
+Disallow: /gracias
+Disallow: /nosotros
+Disallow: /servicios
+Disallow: /servicios-categorias
+Disallow: /proyectos
+Disallow: /galeria
+Disallow: /galeria-categorias
+Disallow: /reservar/disponibilidad
+Disallow: /reservar/paciente-por-rut
+Disallow: /whatsapp/
+Disallow: /test-email
 
-# Permitir acceso a recursos públicos
 Allow: /lib/
 Allow: /uploads/
 
-# Sitemap
-Sitemap: https://mansanchez.cl/sitemap.xml
+Sitemap: https://nutrinext.cl/sitemap.xml
 
-# Rastreadores específicos
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
-# Bloquear bots maliciosos comunes
 User-agent: AhrefsBot
 Disallow: /
 
@@ -39,4 +47,3 @@ Disallow: /
 
 User-agent: DotBot
 Disallow: /
-

@@ -1,0 +1,158 @@
+/**
+ * Paleta web NutriNext — solo sitio público (layout/web.php).
+ * El dashboard y el sistema interno usan su propia configuración de colores.
+ */
+:root {
+  /* Marca */
+  --brand-green-primary: #22C55E;
+  --brand-green-dark: #15803D;
+  --brand-blue-tech: #2563EB;
+
+  /* Textos */
+  --text-main: #1F2937;
+  --text-muted: #4B5563;
+
+  /* Fondos y superficies */
+  --bg-light: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --border-light: #E2E8F0;
+
+  /* Superficie verde suave (badges, iconos, footer claro) */
+  --surface-green-soft: #DCFCE7;
+
+  /* Alias usados en vistas Web existentes */
+  --nutrinext-primary: var(--brand-green-primary);
+  --nutrinext-primary-rgb: 34, 197, 94;
+  --nutrinext-secondary: var(--brand-blue-tech);
+  --nutrinext-secondary-rgb: 37, 99, 235;
+  --nutrinext-bg: var(--bg-light);
+  --nutrinext-muted: var(--surface-green-soft);
+  --nutrinext-muted-rgb: 220, 252, 231;
+}
+
+/* Base */
+body.nutrinext-web {
+  background-color: var(--bg-light) !important;
+  color: var(--text-main);
+}
+
+body.nutrinext-web h1,
+body.nutrinext-web h2,
+body.nutrinext-web h3,
+body.nutrinext-web h4,
+body.nutrinext-web h5,
+body.nutrinext-web h6 {
+  color: var(--text-main);
+}
+
+/* Hero con fondo verde: texto siempre claro */
+body.nutrinext-web .nutrinext-hero,
+body.nutrinext-web .nutrinext-hero h1,
+body.nutrinext-web .nutrinext-hero h2,
+body.nutrinext-web .nutrinext-hero h3,
+body.nutrinext-web .nutrinext-hero p,
+body.nutrinext-web .nutrinext-hero .section-eyebrow-ns {
+  color: #fff !important;
+}
+
+body.nutrinext-web .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Enlaces en contenido (acento tech) */
+body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):not(.social-link-modern):not(.social-icon-modern):not(.func-filter-pill):not(.card-func-ns) {
+  color: var(--brand-blue-tech);
+}
+
+body.nutrinext-web #content a:not(.btn):not([class*="btn-"]):not(.nav-link-modern):not(.func-filter-pill):not(.card-func-ns):hover {
+  color: #1D4ED8;
+}
+
+/* CTAs y botones principales */
+.bg-color,
+section.bg-color,
+.btn-primary,
+.btn-custom,
+.btn-id,
+.btn-more,
+.btn-rsvp,
+.btn-close,
+.btn-border:hover,
+.btn-line:hover,
+.btn-custom:hover,
+.btn-primary:hover,
+a.nav-link-modern.active,
+.nav-link-modern:hover,
+.btn-topbar-modern {
+  background-color: var(--brand-green-primary) !important;
+  border-color: var(--brand-green-primary) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-custom:hover,
+.btn-id:hover,
+.btn-more:hover,
+.btn-rsvp:hover,
+.btn-close:hover,
+.btn-border:hover,
+.btn-line:hover,
+a.btn-hero-primary:hover,
+a.btn-cta-ns:hover {
+  background-color: var(--brand-green-dark) !important;
+  border-color: var(--brand-green-dark) !important;
+  color: #fff !important;
+}
+
+.text-primary,
+a.text-primary {
+  color: var(--brand-green-primary) !important;
+}
+
+/* Menú principal: mismo verde en todos los ítems (evita azul de :visited de Bootstrap) */
+.nav-menu-modern .nav-link-modern:not(.active),
+.nav-menu-modern .nav-link-modern:not(.active):visited,
+.nav-menu-modern .nav-link-modern:not(.active) i,
+.nav-menu-modern .nav-link-modern:not(.active) span {
+  color: var(--brand-green-dark) !important;
+}
+
+.nav-link-modern.active,
+.nav-link-modern.active span,
+.nav-link-modern.active i,
+.nav-link-modern.active:visited {
+  color: #fff !important;
+}
+
+/* Header */
+.header-modern {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.logo-link-modern:hover .logo-img-modern {
+  opacity: 0.9;
+}
+
+/* Tarjetas */
+.card-feature-ns,
+body.nutrinext-web .card {
+  background: var(--bg-card);
+  border-color: var(--border-light);
+}
+
+.card-feature-ns:hover {
+  border-color: var(--border-light) !important;
+  box-shadow: 0 12px 40px rgba(34, 197, 94, 0.12) !important;
+}
+
+.feature-icon-ns {
+  background: var(--surface-green-soft);
+  color: var(--brand-green-primary);
+}
+
+/* Footer (verde marca, no el muted pastel del header de cards) */
+.footer-modern .footer-pattern,
+.footer-modern {
+  background: linear-gradient(180deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%) !important;
+}

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nutrinext-api
+  labels:
+    app: nutrinext-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nutrinext-api
+  template:
+    metadata:
+      labels:
+        app: nutrinext-api
+    spec:
+      containers:
+        - name: nutrinext-app
+          image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
+          ports:
+            - containerPort: 80
+          env:
+            - name: APP_BASE_URL
+              value: "https://nutrinext.cl"
+            - name: DATABASE_HOSTNAME
+              value: "10.79.240.3"
+            - name: DATABASE_PORT
+              value: "3306"
+            - name: DATABASE_NAME
+              value: "nextline_pyme"
+            - name: DATABASE_USERNAME
+              value: "root"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nutrinext-db
+                  key: password
+            # Calendario (Google): opcionales; si no existe el secret, la app arranca pero "Conectar calendario" fallará
+            - name: GOOGLE_CALENDAR_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: nutrinext-calendar
+                  key: google-client-id
+                  optional: true
+            - name: GOOGLE_CALENDAR_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nutrinext-calendar
+                  key: google-client-secret
+                  optional: true
+            - name: GOOGLE_CALENDAR_REDIRECT_URI
+              value: "https://nutrinext.cl/dashboard/agenda/calendario/callback"
+            - name: CALENDAR_PROVIDER
+              value: "google"
+            - name: MERCADOPAGO_WEBHOOK_BASE_URL
+              value: "https://nutrinext.cl/"
+            - name: WHATSAPP_PLANTILLA_IDIOMA
+              value: "es_CL"
+            # Email (SMTP): EMAIL_SMTP_PASS viene del Secret nutrinext-email (smtp-password). Si está vacío → "550 SMTP AUTH is required"
+            - name: EMAIL_FROM_EMAIL
+              value: "noreply@nutrinext.cl"
+            - name: EMAIL_FROM_NAME
+              value: "NutriNext"
+            - name: EMAIL_SMTP_HOST
+              value: "mail.nextline.cl"
+            - name: EMAIL_SMTP_USER
+              value: "contacto@nextline.cl"
+            - name: EMAIL_SMTP_PORT
+              value: "465"
+            - name: EMAIL_SMTP_CRYPTO
+              value: "ssl"
+            - name: EMAIL_SMTP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: nutrinext-email
+                  key: smtp-password
+                  optional: true
+

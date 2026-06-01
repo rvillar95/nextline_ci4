@@ -14,6 +14,26 @@ class PagoController extends BaseController
 
     public function lista()
     {
+        $usuario = session()->get('usuario');
+        $esSuperAdmin = isset($usuario['poder']) && (int) $usuario['poder'] === 3;
+        $scope = $this->request->getGet('scope');
+        if ($scope === null || $scope === '') {
+            $scope = $esSuperAdmin ? 'todos' : 'cita';
+        }
+
+        return $this->renderListaPagos($scope, $esSuperAdmin);
+    }
+
+    /**
+     * Listado de cobros a pacientes (consultas), separado de suscripciones de plataforma.
+     */
+    public function cobrosPacientes()
+    {
+        return $this->renderListaPagos('cita', false);
+    }
+
+    private function renderListaPagos(string $scope, bool $esSuperAdmin)
+    {
         $menuTotal = array();
         $modulo = new ModuloDetalle();
         $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
@@ -23,6 +43,8 @@ class PagoController extends BaseController
             array_push($menuTotal, array("menu" => $entity, "submenu" => $submenu));
         }
         $data['data'] = $menuTotal;
+        $data['scope'] = $scope;
+        $data['es_super_admin'] = $esSuperAdmin;
 
         return view('Modulos/pago/lista', $data);
     }
@@ -53,6 +75,14 @@ class PagoController extends BaseController
         log_message('debug', 'PagoController::getPagos() - Usuario empresa_id: ' . ($empresaIdUsuario ?? 'NULL') . ', Filtro empresa_id: ' . ($empresa_id ?? 'NULL') . ', Es Super Admin: ' . ($esSuperAdmin ? 'Sí' : 'No'));
         
         $tipo_pago = $this->request->getGet('tipo_pago');
+        $scope = $this->request->getGet('scope') ?? '';
+        if (empty($tipo_pago) && $scope === 'cita') {
+            $tipo_pago = 'cita';
+        }
+        if (empty($tipo_pago) && $scope === 'plataforma') {
+            $tipo_pago = '__plataforma__';
+        }
+        $incluirEmpresa = ($scope !== 'cita');
         $estado_pago = $this->request->getGet('estado_pago');
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
@@ -73,7 +103,11 @@ class PagoController extends BaseController
             // Si es Super Admin y no se especificó empresa_id, mostrar todos los pagos
 
             if (!empty($tipo_pago)) {
-                $builder->where('tipo_pago', $tipo_pago);
+                if ($tipo_pago === '__plataforma__') {
+                    $builder->where('tipo_pago !=', 'cita');
+                } else {
+                    $builder->where('tipo_pago', $tipo_pago);
+                }
             }
 
             if (!empty($estado_pago)) {
@@ -136,15 +170,21 @@ class PagoController extends BaseController
                 $botones = '<a href="' . base_url('dashboard/pago/editar/' . $r->id) . '" class="btn btn-sm btn-outline-info">Ver</a>';
             }
 
-            $data[] = array(
-                esc($nombreEmpresa),
-                $montoFormateado,
-                $tipoBadge,
-                $estadoBadge,
-                esc($r->fecha_pago ? date('d/m/Y', strtotime($r->fecha_pago)) : ($r->fcreacion ? date('d/m/Y', strtotime($r->fcreacion)) : '')),
-                esc($r->referencia ?? ''),
-                $botones
-            );
+            $fila = [];
+            if ($incluirEmpresa) {
+                $fila[] = esc($nombreEmpresa);
+            }
+            $refCita = '';
+            if ($r->tipo_pago === 'cita' && !empty($r->detalle_agenda_id)) {
+                $refCita = 'Cita #' . (int) $r->detalle_agenda_id;
+            }
+            $fila[] = $montoFormateado;
+            $fila[] = $tipoBadge;
+            $fila[] = $estadoBadge;
+            $fila[] = esc($r->fecha_pago ? date('d/m/Y', strtotime($r->fecha_pago)) : ($r->fcreacion ? date('d/m/Y', strtotime($r->fcreacion)) : ''));
+            $fila[] = esc($refCita ?: ($r->referencia ?? ''));
+            $fila[] = $botones;
+            $data[] = $fila;
         }
 
         $output = array(

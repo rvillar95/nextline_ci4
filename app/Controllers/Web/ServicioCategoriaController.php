@@ -28,15 +28,15 @@ class ServicioCategoriaController extends BaseController
             $serviciosPorCategoria[$categoria->id] = $servicios;
         }
         
-        $data = [
-            'title' => 'Categorías de Servicios - NextLine Constructor',
-            'description' => 'Explora nuestros servicios organizados por categorías. Construcción residencial, comercial e industrial.',
-            'keywords' => 'categorías servicios, construcción residencial, construcción comercial, servicios construcción',
-            'categorias' => $categorias,
-            'servicios_por_categoria' => $serviciosPorCategoria
-        ];
-        
-        return view('Web/servicio_categorias', $data);
+        return view('Web/servicio_categorias', array_merge(seo_page([
+            'title'       => 'Categorías de servicios | NutriNext',
+            'description' => 'Explora las funcionalidades de NutriNext organizadas por categoría para tu consulta nutricional.',
+            'keywords'    => 'categorías nutrinext, módulos nutricionista, software nutrición',
+            'canonical'   => seo_canonical_url('servicios-categorias'),
+        ]), [
+            'categorias'              => $categorias,
+            'servicios_por_categoria' => $serviciosPorCategoria,
+        ]));
     }
     
     public function detalle($slug)
@@ -67,15 +67,15 @@ class ServicioCategoriaController extends BaseController
                                         ->limit(6)
                                         ->findAll();
         
-        $data = [
-            'title' => $categoria->meta_titulo ?: $categoria->nombre . ' - NextLine Constructor',
-            'description' => $categoria->meta_descripcion ?: 'Servicios de ' . $categoria->nombre . ' en NextLine Constructor.',
-            'keywords' => $categoria->meta_keywords ?: 'servicios ' . strtolower($categoria->nombre) . ', construcción, NextLine',
-            'categoria' => $categoria,
-            'servicios' => $servicios,
-            'otras_categorias' => $otrasCategorias
-        ];
-        
-        return view('Web/servicio_categoria_detalle', $data);
+        return view('Web/servicio_categoria_detalle', array_merge(seo_page([
+            'title'       => ($categoria->meta_titulo ?: $categoria->nombre) . ' | NutriNext',
+            'description' => mb_substr(strip_tags($categoria->meta_descripcion ?: 'Servicios de ' . $categoria->nombre . ' en NutriNext.'), 0, 160),
+            'keywords'    => $categoria->meta_keywords ?: 'nutrinext, ' . strtolower($categoria->nombre),
+            'canonical'   => seo_canonical_url('servicios-categorias/' . $categoria->slug),
+        ]), [
+            'categoria'        => $categoria,
+            'servicios'        => $servicios,
+            'otras_categorias' => $otrasCategorias,
+        ]));
     }
 }

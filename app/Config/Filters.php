@@ -139,7 +139,10 @@ class Filters extends BaseFilters
 
         // Endurece sólo en producción
         if (ENVIRONMENT === 'production') {
-            $this->required['before'][] = 'forcehttps';
+            // Solo forzar HTTPS cuando FORCE_HTTPS=true (ej. cuando hay certificado). En GKE con HTTP o Cloudflare Flexible no activar.
+            if (getenv('FORCE_HTTPS') === 'true' || ($_SERVER['FORCE_HTTPS'] ?? '') === 'true') {
+                $this->required['before'][] = 'forcehttps';
+            }
             $this->required['before'][] = 'pagecache';
             $this->required['after'][]  = 'pagecache';
             $this->required['after'][]  = 'performance';

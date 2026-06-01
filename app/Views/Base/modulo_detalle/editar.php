@@ -181,11 +181,26 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label class="form-label">
+                                    <i class="fas fa-tag icon-label"></i>
+                                    Etiqueta en menú lateral
+                                </label>
+                                <input type="text" id="menu_etiqueta" name="menu_etiqueta"
+                                       value="<?= esc($perfil['menu_etiqueta'] ?? '') ?>"
+                                       class="form-control"
+                                       placeholder="Vacío = usar descripción">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
                                     <i class="fas fa-route icon-label"></i>
                                     Ruta
                                 </label>
-                                <input type="text" id="ruta" name="ruta" 
-                                       value="<?= esc($perfil['ruta'] ?? '') ?>" 
+                                <input type="text" id="ruta" name="ruta"
+                                       value="<?= esc($perfil['ruta'] ?? '') ?>"
                                        class="form-control">
                                 <?php if (isset(session()->getFlashdata('errors')['ruta'])) : ?>
                                     <small class="text-danger">

@@ -389,7 +389,7 @@ class PacienteController extends BaseController
 
         // Cargar historial clínico
         $historialModel = new \App\Models\HistorialClinico();
-        $data['historial'] = $historialModel->getHistorialPorPaciente($id, 20);
+        $data['historial'] = $historialModel->getHistorialPorPaciente($id);
 
         // Cargar documentos
         $documentoModel = new \App\Models\Documento();
@@ -441,5 +441,156 @@ class PacienteController extends BaseController
         }
 
         return $this->response->setJSON($data);
+    }
+
+    /**
+     * Verifica si el RUT/DNI ya está registrado para el nutricionista en sesión.
+     * GET ?rut=12.345.678-9
+     */
+    public function verificarRutNutricionista()
+    {
+        if (!session()->get('usuario')) {
+            return $this->jsonPaciente(['error' => 'No autorizado'], 401);
+        }
+
+        $rut = trim((string) $this->request->getGet('rut'));
+        $norm = Paciente::normalizarRutDni($rut);
+        if ($norm === '' || strlen($norm) < 3) {
+            return $this->jsonPaciente([
+                'valido' => false,
+                'disponible' => false,
+                'message' => 'Ingrese un RUT o documento válido.',
+            ]);
+        }
+
+        if (!Paciente::esRutDniValido($rut)) {
+            return $this->jsonPaciente([
+                'valido' => false,
+                'disponible' => false,
+                'message' => 'El RUT ingresado no es válido (revise el dígito verificador).',
+            ]);
+        }
+
+        $nutricionistaId = (int) session()->get('usuario')['id'];
+        $paciente = new Paciente();
+        $existe = $paciente->existeRutParaNutricionista($norm, $nutricionistaId);
+
+        return $this->jsonPaciente([
+            'valido' => true,
+            'disponible' => !$existe,
+            'message' => $existe
+                ? 'Ya tiene un paciente registrado con este RUT en su lista.'
+                : 'RUT disponible para registrar.',
+        ]);
+    }
+
+    /**
+     * Alta rápida de paciente desde el calendario (modal Agendar Cita).
+     */
+    public function crearRapido()
+    {
+        if (!session()->get('usuario')) {
+            return $this->jsonPaciente(['success' => false, 'message' => 'No autorizado'], 401);
+        }
+
+        if (!$this->request->is('post')) {
+            return $this->jsonPaciente(['success' => false, 'message' => 'Método no permitido'], 405);
+        }
+
+        $nutricionistaId = (int) session()->get('usuario')['id'];
+        $nombre = trim((string) $this->request->getPost('nombre'));
+        $apellido = trim((string) $this->request->getPost('apellido'));
+        $rutDni = trim((string) $this->request->getPost('rut_dni'));
+        $tipoPaciente = trim((string) $this->request->getPost('tipo_paciente'));
+        $telefono = trim((string) $this->request->getPost('telefono'));
+        $email = trim((string) $this->request->getPost('email'));
+
+        $errors = [];
+        if ($nombre === '') {
+            $errors['nombre'] = 'El nombre es obligatorio.';
+        }
+        if ($apellido === '') {
+            $errors['apellido'] = 'El apellido es obligatorio.';
+        }
+        if ($rutDni === '') {
+            $errors['rut_dni'] = 'El RUT o documento es obligatorio.';
+        } elseif (!Paciente::esRutDniValido($rutDni)) {
+            $errors['rut_dni'] = 'El RUT ingresado no es válido.';
+        }
+        if ($tipoPaciente === '') {
+            $errors['tipo_paciente'] = 'Seleccione el tipo de paciente.';
+        } elseif (!in_array($tipoPaciente, ['particular', 'convenio', 'seguro', 'fonasa', 'isapre', 'otro'], true)) {
+            $errors['tipo_paciente'] = 'Tipo de paciente no válido.';
+        }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'El correo no tiene un formato válido.';
+        }
+
+        if ($errors !== []) {
+            return $this->jsonPaciente([
+                'success' => false,
+                'message' => 'Revise los datos del formulario.',
+                'errors' => $errors,
+            ], 400);
+        }
+
+        $rutNorm = Paciente::normalizarRutDni($rutDni);
+        $pacienteModel = new Paciente();
+        if ($pacienteModel->existeRutParaNutricionista($rutNorm, $nutricionistaId)) {
+            return $this->jsonPaciente([
+                'success' => false,
+                'message' => 'Ya existe un paciente con este RUT en su lista. Búsquelo en el selector o edite la ficha existente.',
+                'errors' => ['rut_dni' => 'RUT duplicado para su consulta.'],
+            ], 409);
+        }
+
+        $data = [
+            'nutricionista_id' => $nutricionistaId,
+            'tipo_paciente' => $tipoPaciente,
+            'nombre' => $nombre,
+            'apellido' => $apellido,
+            'rut_dni' => $rutDni,
+            'telefono' => $telefono !== '' ? $telefono : null,
+            'email' => $email !== '' ? $email : null,
+            'estado' => 'A',
+        ];
+
+        $pacienteModel->skipValidation(true);
+        $newId = $pacienteModel->insert($data);
+        $pacienteModel->skipValidation(false);
+
+        if (!$newId) {
+            return $this->jsonPaciente([
+                'success' => false,
+                'message' => 'No se pudo guardar el paciente. Intente nuevamente.',
+                'errors' => $pacienteModel->errors(),
+            ], 500);
+        }
+
+        $nombreCompleto = trim($nombre . ' ' . $apellido);
+
+        return $this->jsonPaciente([
+            'success' => true,
+            'message' => 'Paciente registrado correctamente.',
+            'paciente' => [
+                'id' => (int) $newId,
+                'text' => $nombreCompleto,
+                'nombre' => $nombre,
+                'apellido' => $apellido,
+                'rut_dni' => $rutDni,
+                'telefono' => $telefono,
+                'email' => $email,
+            ],
+        ]);
+    }
+
+    private function jsonPaciente(array $payload, int $status = 200)
+    {
+        $payload['csrf_token'] = csrf_hash();
+
+        return $this->response
+            ->setJSON($payload)
+            ->setStatusCode($status)
+            ->setHeader('X-CSRF-TOKEN', csrf_hash());
     }
 }

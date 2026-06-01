@@ -48,7 +48,7 @@ class CancelarHorasController extends BaseController
         $data['configuracion'] = $configuracion;
         $data['csrf_token'] = csrf_hash();
 
-        return view('modulos/agenda/cancelar_horas', $data);
+        return view('Modulos/agenda/cancelar_horas', $data);
     }
 
     /**
@@ -207,23 +207,36 @@ class CancelarHorasController extends BaseController
                         $mensajeFinal .= "\n\n" . trim($mensajePersonalizado);
                     }
 
-                    // Reemplazar variables en el mensaje
+                    // Reemplazar variables en el mensaje (para email)
                     $mensajeFinal = $this->reemplazarVariablesMensaje($mensajeFinal, $cita);
 
-                    // Enviar WhatsApp
+                    // Motivo corto para plantilla WhatsApp: la API no permite newlines/tabs ni más de 4 espacios seguidos
+                    $motivoParaWhatsApp = $this->motivoCortoParaPlantilla(
+                        $mensajesPersonalizadosArray[$cita['id']] ?? ''
+                    );
+
+                    // Enviar WhatsApp con plantilla cancelacion_cita (igual que en Agenda → Cancelar)
                     if ($cita['paciente_telefono']) {
                         try {
-                            $this->enviarWhatsAppCancelacion($cita, $mensajeFinal);
+                            $resultado = $this->whatsappService->enviarCancelacionCita(
+                                (int) $cita['id'],
+                                (int) $cita['paciente_id'],
+                                $motivoParaWhatsApp
+                            );
+                            if (!($resultado['success'] ?? false)) {
+                                $errores[] = 'WhatsApp a ' . ($cita['paciente_nombre'] ?? '') . ': ' . ($resultado['error'] ?? 'Error');
+                            }
                         } catch (\Exception $e) {
                             log_message('error', 'Error al enviar WhatsApp: ' . $e->getMessage());
                             $errores[] = 'Error al enviar WhatsApp a ' . $cita['paciente_nombre'];
                         }
                     }
 
-                    // Enviar Email
+                    // Enviar Email (solo motivo opcional; el cuerpo del correo es fijo en la plantilla)
                     if ($cita['paciente_email']) {
                         try {
-                            $this->enviarEmailCancelacion($cita, $mensajeFinal);
+                            $motivoEmail = $mensajesPersonalizadosArray[$cita['id']] ?? '';
+                            $this->enviarEmailCancelacion($cita, $motivoEmail);
                         } catch (\Exception $e) {
                             log_message('error', 'Error al enviar Email: ' . $e->getMessage());
                             $errores[] = 'Error al enviar Email a ' . $cita['paciente_nombre'];
@@ -245,6 +258,27 @@ class CancelarHorasController extends BaseController
             'message' => "Se cancelaron {$canceladas} citas exitosamente" . (count($errores) > 0 ? '. Algunos errores: ' . implode(', ', $errores) : ''),
             'csrf_token' => csrf_hash()
         ]);
+    }
+
+    /**
+     * Motivo corto para la plantilla WhatsApp cancelacion_cita.
+     * La API no permite newlines, tabs ni más de 4 espacios consecutivos.
+     * Si no hay mensaje personalizado, se devuelve un espacio (no vacío).
+     */
+    private function motivoCortoParaPlantilla(string $mensajePersonalizado): string
+    {
+        $texto = trim($mensajePersonalizado);
+        if ($texto === '') {
+            return ' ';
+        }
+        $texto = strip_tags($texto);
+        $texto = preg_replace('/[\r\n\t]+/', ' ', $texto);
+        $texto = preg_replace('/ {2,}/', ' ', $texto);
+        $texto = trim($texto);
+        if (strlen($texto) > 500) {
+            $texto = substr($texto, 0, 497) . '...';
+        }
+        return $texto !== '' ? $texto : ' ';
     }
 
     /**
@@ -293,41 +327,24 @@ class CancelarHorasController extends BaseController
     }
 
     /**
-     * Enviar WhatsApp de cancelación
-     */
-    private function enviarWhatsAppCancelacion($cita, $mensaje)
-    {
-        if ($cita['paciente_telefono']) {
-            $usuarioId = session()->get('usuario')['id'];
-            $this->whatsappService->enviarMensaje(
-                $cita['paciente_telefono'],
-                $mensaje,
-                $cita['paciente_id'],
-                null, // agenda_id
-                $usuarioId
-            );
-        }
-    }
-
-    /**
      * Enviar Email de cancelación
      */
-    private function enviarEmailCancelacion($cita, $mensaje)
+    private function enviarEmailCancelacion($cita, $mensajePersonalizado = '')
     {
         $email = \Config\Services::email();
 
         $email->setTo($cita['paciente_email']);
         $email->setSubject('Cancelación de Cita - ' . ($cita['nutricionista_nombre'] ?? 'Nutricionista'));
 
-        // Convertir saltos de línea a HTML
-        $mensajeHtml = nl2br(htmlspecialchars($mensaje));
+        // Motivo opcional: solo texto corto, sin HTML ni saltos de línea crudos
+        $motivo = is_string($mensajePersonalizado) ? trim(strip_tags($mensajePersonalizado)) : '';
 
         $email->setMessage(view('emails/cancelacion_cita_paciente', [
-            'paciente_nombre' => ($cita['paciente_nombre'] ?? '') . ' ' . ($cita['paciente_apellido'] ?? ''),
+            'paciente_nombre' => trim(($cita['paciente_nombre'] ?? '') . ' ' . ($cita['paciente_apellido'] ?? '')),
             'fecha' => date('d/m/Y', strtotime(str_replace('/', '-', $cita['fecha']))),
             'hora' => date('H:i', strtotime($cita['hora_inicio'])),
-            'mensaje' => $mensajeHtml,
-            'nutricionista_nombre' => ($cita['nutricionista_nombre'] ?? '') . ' ' . ($cita['nutricionista_apellido'] ?? '')
+            'motivo' => $motivo,
+            'nutricionista_nombre' => trim(($cita['nutricionista_nombre'] ?? '') . ' ' . ($cita['nutricionista_apellido'] ?? ''))
         ]));
 
         $email->send();

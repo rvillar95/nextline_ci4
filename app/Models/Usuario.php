@@ -14,7 +14,10 @@ class Usuario extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = false;
 
-    protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'empresa_id', 'estado', 'foto', 'tema', 'color_primario', 'color_card_header_bg', 'color_card_header_text', 'card_header_por_defecto', 'card_header_es_gradiente', 'color_card_header_bg2', 'main_header_por_defecto', 'main_header_es_gradiente', 'color_main_header_bg', 'color_main_header_bg2', 'color_main_header_text', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
+    protected $allowedFields = ['id', 'nombre', 'apellido', 'correo', 'telefono', 'clave', 'perfil_id', 'empresa_id', 'estado', 'foto', 'titulo_profesional', 'especialidad', 'carrera', 'presentacion', 'descripcion_profesional', 'tema', 'color_primario', 'color_card_header_bg', 'color_card_header_text', 'card_header_por_defecto', 'card_header_es_gradiente', 'color_card_header_bg2', 'main_header_por_defecto', 'main_header_es_gradiente', 'color_main_header_bg', 'color_main_header_bg2', 'color_main_header_text', 'fcreacion', 'factualizacion', 'feliminacion', 'perfil_nombre'];
+
+    /** perfil_id de nutricionistas en la aplicación */
+    public const PERFIL_NUTRICIONISTA = 9;
 
     protected bool $allowEmptyInserts = false;
 

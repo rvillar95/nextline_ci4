@@ -123,14 +123,14 @@ class Empresa extends Model
         
         if (!$empresa) {
             return [
-                'nombre' => 'MANSANCHEZ',
-                'nombre_comercial' => 'MANSANCHEZ Construcciones',
-                'direccion' => 'Santiago, Chile',
+                'nombre' => 'NutriNext',
+                'nombre_comercial' => 'NutriNext',
+                'direccion' => 'Chile',
                 'telefono' => '+56 9 1234 5678',
-                'email' => 'info@mansanchez.cl',
-                'sitio_web' => 'www.mansanchez.cl',
-                'logo_path' => 'lib/images/logo-min.jpg',
-                'descripcion' => 'Construcciones y Remodelaciones'
+                'email' => 'contacto@nutrinext.cl',
+                'sitio_web' => 'nutrinext.cl',
+                'logo_path' => 'lib/logo/logo-horizontal.png',
+                'descripcion' => 'Plataforma de gestión para nutricionistas',
             ];
         }
 
@@ -143,7 +143,7 @@ class Empresa extends Model
             'email' => $empresa->email,
             'sitio_web' => $empresa->sitio_web,
             'logo_path' => $empresa->logo_path,
-            'descripcion' => $empresa->descripcion ?? 'Construcciones y Remodelaciones'
+            'descripcion' => $empresa->descripcion ?? 'Plataforma de gestión para nutricionistas'
         ];
     }
 

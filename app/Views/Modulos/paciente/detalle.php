@@ -367,7 +367,7 @@
                 
                 <?php if (!empty($historial)): ?>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table id="tablaHistorialPaciente" class="table table-hover table-striped w-100">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
@@ -380,8 +380,14 @@
                             </thead>
                             <tbody>
                                 <?php foreach ($historial as $h): ?>
+                                    <?php
+                                    $fechaOrder = '';
+                                    if (!empty($h->fecha_consulta)) {
+                                        $fechaOrder = $h->fecha_consulta . ' ' . ($h->hora_consulta ?? '00:00:00');
+                                    }
+                                    ?>
                                     <tr>
-                                        <td>
+                                        <td data-order="<?= esc($fechaOrder) ?>">
                                             <?php if ($h->fecha_consulta): ?>
                                                 <?= date('d/m/Y', strtotime($h->fecha_consulta)) ?>
                                                 <?php if ($h->hora_consulta): ?>
@@ -667,5 +673,25 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    if ($('#tablaHistorialPaciente').length && $('#tablaHistorialPaciente tbody tr').length) {
+        $('#tablaHistorialPaciente').DataTable({
+            order: [[0, 'desc']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+            },
+            responsive: true,
+            autoWidth: false,
+            columnDefs: [
+                { orderable: false, targets: 5 }
+            ]
+        });
+    }
+});
+</script>
 
 <?= $this->endSection() ?>

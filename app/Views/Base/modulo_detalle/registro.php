@@ -182,6 +182,21 @@
                         <div class="col-md-6">
                             <div class="form-group mb-3">
                                 <label class="form-label">
+                                    <i class="fas fa-tag icon-label"></i>
+                                    Etiqueta en menú lateral
+                                </label>
+                                <input type="text" id="menu_etiqueta" name="menu_etiqueta"
+                                       value="<?= old('menu_etiqueta') ?>"
+                                       class="form-control"
+                                       placeholder="Vacío = usar descripción">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">
                                     <i class="fas fa-route icon-label"></i>
                                     Ruta
                                 </label>

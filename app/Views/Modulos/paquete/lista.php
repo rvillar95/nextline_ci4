@@ -189,6 +189,10 @@ jQuery(document).ready(function($) {
             window.location.href = '<?= base_url('dashboard/paquete/gestionar-modulos') ?>/' + id;
         };
 
+        window.gestionarMetodos = function(id) {
+            window.location.href = '<?= base_url('dashboard/paquete/gestionar-metodos') ?>/' + id;
+        };
+
         window.eliminarPaquete = function(id) {
             window.paqueteIdAEliminar = id;
             jQuery('#modalConfirmarEliminacion').modal('show');

@@ -92,6 +92,12 @@ class BotonPagoController extends BaseController
      */
     public function crear($detalleAgendaId = null)
     {
+        // Editar tarifa vía ?plantilla_id= (ruta /crear ya está en permisos; /editar a menudo no)
+        $plantillaIdGet = (int) ($this->request->getGet('plantilla_id') ?? 0);
+        if ($plantillaIdGet > 0 && empty($detalleAgendaId)) {
+            return $this->editar($plantillaIdGet);
+        }
+
         $menuTotal = array();
         $modulo = new ModuloDetalle();
         $data['menu'] = $modulo->getMenu(session()->get('usuario')['perfil_id']);
@@ -124,6 +130,9 @@ class BotonPagoController extends BaseController
         } else {
             $data['plantillas'] = [];
         }
+
+        // Sin cita asociada: pantalla solo para definir tarifas del menú (no cobro puntual).
+        $data['modo_tarifa'] = empty($detalleAgendaId);
 
         return view('Modulos/boton_pago/crear', $data);
     }
@@ -163,6 +172,7 @@ class BotonPagoController extends BaseController
 
         $data['plantilla'] = $plantilla;
         $data['es_edicion'] = true;
+        $data['modo_tarifa'] = true;
 
         return view('Modulos/boton_pago/crear', $data);
     }

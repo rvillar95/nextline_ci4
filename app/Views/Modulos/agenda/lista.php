@@ -37,23 +37,70 @@
     border-color: #fff;
     color: #fff;
 }
+#tablaAgenda tr.cita-destacada td {
+    background-color: rgba(123, 193, 67, 0.35) !important;
+    box-shadow: inset 0 0 0 2px #7bc143;
+}
+@keyframes citaDestacadaPulse {
+    0%, 100% { background-color: rgba(123, 193, 67, 0.35); }
+    50% { background-color: rgba(123, 193, 67, 0.55); }
+}
+#tablaAgenda tr.cita-destacada td {
+    animation: citaDestacadaPulse 1.2s ease-in-out 4;
+}
+.agenda-page-header .agenda-header-inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.agenda-page-header .agenda-header-titles h2 {
+    font-size: clamp(1.15rem, 4.5vw, 1.75rem);
+    margin-bottom: 0.25rem;
+}
+.agenda-page-header .agenda-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+@media (max-width: 767.98px) {
+    .agenda-page-header .agenda-header-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .agenda-page-header .agenda-header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+    .agenda-page-header .agenda-header-actions .btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.78rem;
+        padding: 0.6rem 0.45rem;
+    }
+}
 </style>
 
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="main-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+            <div class="main-header agenda-page-header">
+                <div class="agenda-header-inner">
+                    <div class="agenda-header-titles">
                         <h2 style="color: white;"><i class="fas fa-calendar-check me-2"></i> Lista de Citas</h2>
                         <p style="color: white;">Gestione las citas agendadas de sus pacientes</p>
                     </div>
-                    <div class="d-flex align-items-center gap-2 agenda-header-actions">
+                    <div class="agenda-header-actions">
                         <a href="<?= base_url('dashboard/agenda/calendario') ?>" class="btn btn-agenda-ghost" title="Ver agenda en calendario">
-                            <i class="fas fa-calendar-alt me-2"></i> Vista Calendario
+                            <i class="fas fa-calendar-alt me-2"></i><span class="d-none d-sm-inline">Vista </span>Calendario
+                        </a>
+                        <a href="<?= base_url('dashboard/agenda/gestionar') ?>" class="btn btn-agenda-ghost" title="Editar o eliminar días de agenda">
+                            <i class="fas fa-edit me-2"></i><span class="d-none d-sm-inline">Editar </span>Agenda
                         </a>
                         <button type="button" class="btn btn-agenda-primary" onclick="crearHorarios()" title="Crear horarios disponibles">
-                            <i class="fas fa-clock me-2"></i> Crear Horarios
+                            <i class="fas fa-clock me-2"></i><span class="d-none d-sm-inline">Crear </span>Horarios
                         </button>
                     </div>
                 </div>
@@ -64,6 +111,7 @@
                     <table id="tablaAgenda" class="table table-bordered table-striped nowrap" style="width:100%">
                         <thead>
                             <tr>
+                                <th class="d-none">ID</th>
                                 <th>Paciente</th>
                                 <th>Fecha</th>
                                 <th>Hora Inicio</th>
@@ -82,7 +130,7 @@
     </div>
 </div>
 
-<!-- Modal Cancelar Cita -->
+<!-- Modal Cancelar Cita / Rechazar reserva web -->
 <div class="modal fade" id="modalCancelarCita" tabindex="-1" aria-labelledby="modalCancelarCitaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -91,12 +139,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-3">¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.</p>
-                <label for="motivoCancelarCita" class="form-label small text-muted">Motivo de cancelación (opcional)</label>
+                <p class="mb-3" id="textoModalCancelarCita">¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.</p>
+                <label for="motivoCancelarCita" class="form-label small text-muted" id="labelMotivoCancelarCita">Motivo de cancelación (opcional)</label>
                 <textarea class="form-control" id="motivoCancelarCita" rows="2" placeholder="Ej.: Paciente reprogramó"></textarea>
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmarCancelarCita">
                     <i class="fas fa-times me-1"></i> Sí, cancelar cita
                 </button>
@@ -125,14 +173,50 @@ toastr.options = {
     "hideMethod": "fadeOut"
 };
 
+function obtenerParamUrl(nombre) {
+    return new URLSearchParams(window.location.search).get(nombre);
+}
+
+function destacarCitaEnTabla(table, citaId) {
+    if (!citaId) return;
+    var id = parseInt(citaId, 10);
+    if (!id) return;
+    var $row = null;
+    table.rows().every(function() {
+        var d = this.data();
+        if (d && parseInt(d[0], 10) === id) {
+            $row = $(this.node());
+            return false;
+        }
+    });
+    if ($row && $row.length) {
+        $('#tablaAgenda tr.cita-destacada').removeClass('cita-destacada');
+        $row.addClass('cita-destacada');
+        var top = $row.offset().top - 140;
+        $('html, body').animate({ scrollTop: top > 0 ? top : 0 }, 400);
+        if (typeof toastr !== 'undefined') {
+            toastr.info('Reserva destacada en la lista. Puede aprobarla con el botón correspondiente.', 'Nueva reserva', { timeOut: 6000 });
+        }
+    }
+}
+
 $(document).ready(function() {
+    var destacarId = obtenerParamUrl('destacar');
     var table = $('#tablaAgenda').DataTable({
         "processing": true,
         "serverSide": true,
         "ajax": {
             "url": "<?= base_url('dashboard/agenda/getAgenda') ?>",
-            "type": "GET"
+            "type": "GET",
+            "data": function(d) {
+                if (destacarId) {
+                    d.destacar = destacarId;
+                }
+            }
         },
+        "columnDefs": [
+            { "targets": 0, "visible": false, "searchable": false, "orderable": false }
+        ],
         "columns": [
             { "data": 0 },
             { "data": 1 },
@@ -140,13 +224,25 @@ $(document).ready(function() {
             { "data": 3 },
             { "data": 4 },
             { "data": 5 },
-            { "data": 6, "orderable": false }
+            { "data": 6 },
+            { "data": 7, "orderable": false }
         ],
+        "order": [[2, 'asc'], [3, 'asc']],
+        "createdRow": function(row, data) {
+            if (data && data[0]) {
+                $(row).attr('id', 'cita-' + data[0]);
+            }
+        },
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
         },
         "responsive": true,
-        "pageLength": 25
+        "pageLength": 25,
+        "drawCallback": function() {
+            if (destacarId) {
+                destacarCitaEnTabla(table, destacarId);
+            }
+        }
     });
 });
 
@@ -226,9 +322,23 @@ function eliminarHorarios() {
     });
 }
 
+function actualizarCsrfAgendaLista(xhr, data) {
+    var token = (data && data.csrf_token) ? data.csrf_token : null;
+    if (!token && xhr && xhr.getResponseHeader) {
+        token = xhr.getResponseHeader('X-CSRF-TOKEN');
+    }
+    if (typeof csrfHash !== 'undefined' && token) {
+        csrfHash = token;
+    }
+    if (token) {
+        $('meta[name="csrf-token"]').attr('content', token);
+        $('input[name="csrf_test_name"]').val(token);
+    }
+}
+
 function confirmarCita(id) {
     if (!id) return;
-    var csrfToken = $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') || (typeof csrfHash !== 'undefined' ? csrfHash : '<?= csrf_hash() ?>');
     var csrfName = 'csrf_test_name';
     $.ajax({
         url: '<?= base_url('dashboard/agenda/confirmarCita') ?>',
@@ -236,39 +346,67 @@ function confirmarCita(id) {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
         data: { [csrfName]: csrfToken, id: id },
         dataType: 'json',
-        success: function(response) {
-            if (response && response.csrf_token) {
-                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
-                $('input[name="' + csrfName + '"]').val(response.csrf_token);
-            }
+        success: function(response, textStatus, xhr) {
+            actualizarCsrfAgendaLista(xhr, response);
             if (response && response.error) {
                 toastr.error(response.message || response.error || 'Error al confirmar', 'Error', { timeOut: 5000 });
-                $('#tablaAgenda').DataTable().ajax.reload();
+                $('#tablaAgenda').DataTable().ajax.reload(null, false);
                 return;
             }
             toastr.success(response && response.message ? response.message : 'Cita confirmada', 'Éxito', { timeOut: 4000 });
-            $('#tablaAgenda').DataTable().ajax.reload();
+            $('#tablaAgenda').DataTable().ajax.reload(null, false);
         },
         error: function(xhr) {
             var r = (xhr && xhr.responseJSON) || {};
-            if (r.csrf_token) {
-                $('meta[name="csrf-token"]').attr('content', r.csrf_token);
-                $('input[name="csrf_test_name"]').val(r.csrf_token);
-            }
+            actualizarCsrfAgendaLista(xhr, r);
             toastr.error(r.message || r.error || 'Error al confirmar la cita', 'Error', { timeOut: 5000 });
-            $('#tablaAgenda').DataTable().ajax.reload();
+            $('#tablaAgenda').DataTable().ajax.reload(null, false);
         }
     });
 }
 
 var citaIdACancelar = null;
+var modoCancelarCita = 'cancelar'; // 'cancelar' | 'rechazar_reserva'
 
-function cancelarCita(id) {
+var textosModalCancelar = {
+    cancelar: {
+        titulo: '<i class="fas fa-calendar-times me-2 text-danger"></i>Cancelar cita',
+        cuerpo: '¿Cancelar esta cita? El horario quedará libre para agendar a otro paciente.',
+        labelMotivo: 'Motivo de cancelación (opcional)',
+        placeholder: 'Ej.: Paciente reprogramó',
+        btnConfirmar: '<i class="fas fa-times me-1"></i> Sí, cancelar cita',
+        mensajeExito: 'Cita cancelada y horario liberado'
+    },
+    rechazar_reserva: {
+        titulo: '<i class="fas fa-ban me-2 text-danger"></i>Rechazar solicitud de hora',
+        cuerpo: '¿Rechazar esta reserva solicitada desde la web? El horario volverá a estar disponible y, si el paciente tiene correo, recibirá la notificación de cancelación.',
+        labelMotivo: 'Motivo del rechazo (opcional)',
+        placeholder: 'Ej.: No hay disponibilidad en ese horario',
+        btnConfirmar: '<i class="fas fa-ban me-1"></i> Sí, rechazar reserva',
+        mensajeExito: 'Reserva rechazada. El horario quedó disponible nuevamente.'
+    }
+};
+
+function abrirModalCancelarCita(id, modo) {
     if (!id) return;
     citaIdACancelar = id;
-    $('#motivoCancelarCita').val('');
+    modoCancelarCita = modo || 'cancelar';
+    var t = textosModalCancelar[modoCancelarCita] || textosModalCancelar.cancelar;
+    $('#modalCancelarCitaLabel').html(t.titulo);
+    $('#textoModalCancelarCita').text(t.cuerpo);
+    $('#labelMotivoCancelarCita').text(t.labelMotivo);
+    $('#motivoCancelarCita').attr('placeholder', t.placeholder).val('');
+    $('#btnConfirmarCancelarCita').html(t.btnConfirmar);
     var modal = new bootstrap.Modal(document.getElementById('modalCancelarCita'));
     modal.show();
+}
+
+function cancelarCita(id) {
+    abrirModalCancelarCita(id, 'cancelar');
+}
+
+function rechazarReserva(id) {
+    abrirModalCancelarCita(id, 'rechazar_reserva');
 }
 
 $('#btnConfirmarCancelarCita').on('click', function() {
@@ -277,7 +415,7 @@ $('#btnConfirmarCancelarCita').on('click', function() {
     var id = citaIdACancelar;
     citaIdACancelar = null;
     bootstrap.Modal.getInstance(document.getElementById('modalCancelarCita')).hide();
-    var csrfToken = $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
+    var csrfToken = $('meta[name="csrf-token"]').attr('content') || (typeof csrfHash !== 'undefined' ? csrfHash : '<?= csrf_hash() ?>');
     var csrfName = 'csrf_test_name';
     var data = { [csrfName]: csrfToken, id: id };
     if (motivo !== '') data.motivo = motivo;
@@ -289,28 +427,24 @@ $('#btnConfirmarCancelarCita').on('click', function() {
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
         data: data,
         dataType: 'json',
-        success: function(response) {
+        success: function(response, textStatus, xhr) {
             $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
-            if (response && response.csrf_token) {
-                $('meta[name="csrf-token"]').attr('content', response.csrf_token);
-                $('input[name="' + csrfName + '"]').val(response.csrf_token);
-            }
+            actualizarCsrfAgendaLista(xhr, response);
             if (response && (response.error || !response.success)) {
                 toastr.error(response.message || response.error || 'Error al cancelar', 'Error', { timeOut: 5000 });
                 return;
             }
-            toastr.success(response && response.message ? response.message : 'Cita cancelada y horario liberado', 'Éxito', { timeOut: 4000 });
-            $('#tablaAgenda').DataTable().ajax.reload();
+            var msgOk = (textosModalCancelar[modoCancelarCita] || textosModalCancelar.cancelar).mensajeExito;
+            toastr.success(response && response.message ? response.message : msgOk, 'Éxito', { timeOut: 4000 });
+            modoCancelarCita = 'cancelar';
+            $('#tablaAgenda').DataTable().ajax.reload(null, false);
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html('<i class="fas fa-times me-1"></i> Sí, cancelar cita');
             var r = (xhr && xhr.responseJSON) || {};
-            if (r.csrf_token) {
-                $('meta[name="csrf-token"]').attr('content', r.csrf_token);
-                $('input[name="csrf_test_name"]').val(r.csrf_token);
-            }
+            actualizarCsrfAgendaLista(xhr, r);
             toastr.error(r.message || r.error || 'Error al cancelar la cita', 'Error', { timeOut: 5000 });
-            $('#tablaAgenda').DataTable().ajax.reload();
+            $('#tablaAgenda').DataTable().ajax.reload(null, false);
         }
     });
 });

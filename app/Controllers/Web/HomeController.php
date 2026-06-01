@@ -8,12 +8,15 @@ class HomeController extends BaseController
 {
     public function index()
     {
-        $data = [
-            'title' => 'VitaSync - Gestión integral para nutricionistas',
-            'description' => 'Plataforma de gestión para nutricionistas: agenda de citas, historiales clínicos, planes alimentarios, pagos y recordatorios por WhatsApp.',
-            'keywords' => 'vitasync, nutrición, nutricionista, agenda, consultas, pacientes, plan alimentario, Chile',
-        ];
+        $funcionalidades = (new \App\Models\ServicioNutrinext())->getDestacadosWeb(6);
 
-        return view('Web/home', $data);
+        return view('Web/home', array_merge(seo_page([
+            'title'       => 'NutriNext | Software de gestión para nutricionistas en Chile',
+            'description' => 'Agenda online, historial clínico, planes alimentarios y recordatorios WhatsApp. Todo en una plataforma para tu consulta nutricional.',
+            'keywords'    => 'nutrinext, software nutricionista, agenda citas nutrición, historial clínico, plan alimentario, Chile',
+            'canonical'   => seo_canonical_url(''),
+        ]), [
+            'funcionalidades_home' => $funcionalidades,
+        ]));
     }
 }

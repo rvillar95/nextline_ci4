@@ -15,8 +15,28 @@ class App extends BaseConfig
      * WITH a trailing slash:
      *
      * E.g., http://example.com/
+     * En GKE/producción se sobreescribe desde APP_BASE_URL (variable de entorno).
      */
     public string $baseURL = 'http://localhost/codeigniter4/nextline_ci4/';
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // En GKE/producción usar la URL pública (IP o dominio) para redirects y base_url()
+        $appBaseUrl = getenv('APP_BASE_URL') ?: ($_SERVER['APP_BASE_URL'] ?? null);
+        if ($appBaseUrl !== null && $appBaseUrl !== '') {
+            $this->baseURL = rtrim($appBaseUrl, '/') . '/';
+        }
+
+        // Detrás de proxy/SSL en hosting: confiar cabeceras (evita bucles con redirects)
+        if (str_starts_with($this->baseURL, 'https://')) {
+            $this->proxyIPs = [
+                '127.0.0.1' => 'X-Forwarded-For',
+                '::1'       => 'X-Forwarded-For',
+            ];
+        }
+    }
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

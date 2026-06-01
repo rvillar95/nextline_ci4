@@ -40,8 +40,9 @@ final class LeadController extends BaseController
         $servicio_id = $this->request->getGet('servicio_id');
         
         // Construir la consulta base
-        $query = $m->select('lead_contacto.*, servicio.nombre as servicio_nombre, lead_estado.nombre as estado_nombre')
+        $query = $m->select('lead_contacto.*, servicio.nombre as servicio_nombre, paquete.nombre as plan_nombre, lead_estado.nombre as estado_nombre')
                   ->join('servicio', 'servicio.id = lead_contacto.servicio_id', 'left')
+                  ->join('paquete', 'paquete.slug = lead_contacto.plan_interes', 'left')
                   ->join('lead_estado', 'lead_estado.id = lead_contacto.estado_id', 'left');
         
         // Aplicar filtros
@@ -80,7 +81,7 @@ final class LeadController extends BaseController
                 esc($r['correo']),
                 esc($r['telefono'] ?? ''),
                 esc(mb_substr((string)$r['mensaje'], 0, 50)) . '...',
-                esc($r['servicio_nombre'] ?? 'Sin servicio'),
+                esc($this->labelInteresLead($r)),
                 $badge,
                 $fecha,
                 '<div class="btn-group" role="group">' .
@@ -155,8 +156,9 @@ final class LeadController extends BaseController
         }
 
         $m = new LeadModel();
-        $lead = $m->select('lead_contacto.*, servicio.nombre as servicio_nombre, lead_estado.nombre as estado_nombre')
+        $lead = $m->select('lead_contacto.*, servicio.nombre as servicio_nombre, paquete.nombre as plan_nombre, lead_estado.nombre as estado_nombre')
                   ->join('servicio', 'servicio.id = lead_contacto.servicio_id', 'left')
+                  ->join('paquete', 'paquete.slug = lead_contacto.plan_interes', 'left')
                   ->join('lead_estado', 'lead_estado.id = lead_contacto.estado_id', 'left')
                   ->where('lead_contacto.id', $id)
                   ->first();
@@ -195,5 +197,26 @@ final class LeadController extends BaseController
         } else {
             return $this->redirectWithFilters(base_url('dashboard/leads/lista'), 'Error al eliminar el lead', 'errors');
         }
+    }
+
+    /**
+     * Etiqueta de plan/servicio para listado y detalle de leads.
+     */
+    private function labelInteresLead(array $row): string
+    {
+        if (!empty($row['plan_nombre'])) {
+            return (string) $row['plan_nombre'];
+        }
+        if (($row['plan_interes'] ?? '') === 'otro') {
+            return 'Otro / Consulta general';
+        }
+        if (!empty($row['plan_interes'])) {
+            return (string) $row['plan_interes'];
+        }
+        if (!empty($row['servicio_nombre'])) {
+            return (string) $row['servicio_nombre'];
+        }
+
+        return 'Sin especificar';
     }
 }

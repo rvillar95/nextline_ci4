@@ -41,6 +41,8 @@ final class SessionFilter implements FilterInterface
         '/cancelar-cita',
         // Callback público de OAuth2 para calendario (Google/Microsoft llama esta URL directamente)
         '/dashboard/agenda/calendario/callback',
+        // Webhook WhatsApp (Meta, sin sesión)
+        '/whatsapp/webhook',
     ];
 
     /**
@@ -120,6 +122,14 @@ final class SessionFilter implements FilterInterface
                     ]);
             }
             return redirect()->to(route_to('login'));
+        }
+
+        // 2.5) Suscripción vencida (no aplica a Super Admin ni plan partner)
+        if ((int) ($user['poder'] ?? 0) !== 3) {
+            $suscripcionBlock = $this->checkSuscripcionVencida($user, $path, $request);
+            if ($suscripcionBlock !== null) {
+                return $suscripcionBlock;
+            }
         }
 
         // 3) Permisos por perfil (con o sin caché)
@@ -207,6 +217,9 @@ final class SessionFilter implements FilterInterface
             '/dashboard/agenda/guardarInformacionClinica',
             '/dashboard/agenda/guardarMediciones',
             '/dashboard/agenda/consulta',
+            '/dashboard/notificaciones/listar',
+            '/dashboard/notificaciones/marcar-leida',
+            '/dashboard/notificaciones/marcar-todas-leidas',
         ];
         
         foreach ($calendarioExcepciones as $excepcion) {
@@ -228,6 +241,37 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Mensajes WhatsApp: hilo/{id} y enviar si tiene acceso al módulo mensajes
+        $esMensajesAjax = (bool) preg_match('#^/dashboard/mensajes/hilo/[0-9]+/?$#', $this->sanitizePath($path))
+            || $this->isDirectMatch($path, '/dashboard/mensajes/enviar')
+            || $this->isDirectMatch($path, '/dashboard/mensajes/sync');
+        if ($esMensajesAjax) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/mensajes') === 0) {
+                    log_message('info', 'SessionFilter: Ruta mensajes permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
+        // Tarifas de consulta: /editar/{id} si tiene acceso al módulo boton-pago
+        if (preg_match('#^/dashboard/boton-pago/editar/[0-9]+/?$#', $this->sanitizePath($path))) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/boton-pago') === 0) {
+                    return;
+                }
+            }
+        }
+
+        // Cobros a pacientes: /pago/cobros si tiene acceso al módulo pago
+        if ($this->isDirectMatch($path, '/dashboard/pago/cobros')) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/pago') === 0) {
+                    return;
+                }
+            }
+        }
+
         // Rutas AJAX/acciones del módulo Empresa (getEmpresas, eliminar, activar) permitidas si tiene acceso a empresa
         $empresaExcepcionPrefijo = '/dashboard/empresa/eliminar/';
         $empresaExcepcionPrefijo2 = '/dashboard/empresa/activar/';
@@ -238,6 +282,15 @@ final class SessionFilter implements FilterInterface
             foreach ($allowed as $rule) {
                 if (strpos($rule['pattern'], '/dashboard/empresa') === 0) {
                     log_message('info', 'SessionFilter: Ruta empresa permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
+        // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos
+        if (strpos($this->sanitizePath($path), '/dashboard/menu-grupo') === 0) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/modulo') === 0) {
                     return;
                 }
             }
@@ -567,6 +620,69 @@ final class SessionFilter implements FilterInterface
 
         $raw = '/' . trim($raw, '/');
         return $raw === '//' ? '/' : $raw;
+    }
+
+    /**
+     * Bloquea acceso si la empresa tiene suscripción registrada y no está activa.
+     * Sin fila en suscripciones = comportamiento legacy (solo paquete).
+     */
+    private function checkSuscripcionVencida(array $user, string $path, RequestInterface $request): ?ResponseInterface
+    {
+        $exemptPatterns = [
+            '/dashboard/menu',
+            '/logout',
+            '/dashboard/mi-perfil',
+        ];
+        foreach ($exemptPatterns as $pattern) {
+            if ($this->matchesPattern($path, $pattern)) {
+                return null;
+            }
+        }
+
+        $empresaId = (int) ($user['empresa_id'] ?? 0);
+        if ($empresaId <= 0) {
+            return null;
+        }
+
+        $db = \Config\Database::connect();
+        $paquete = $db->table('empresa e')
+            ->select('p.slug, p.precio_mensual')
+            ->join('paquetes p', 'p.id = e.paquete_id', 'left')
+            ->where('e.id', $empresaId)
+            ->get()
+            ->getRow();
+
+        if ($paquete && ($paquete->slug === 'nutri-partner' || (float) $paquete->precio_mensual <= 0)) {
+            return null;
+        }
+
+        $suscripcionModel = new \App\Models\Suscripcion();
+        $ultima           = $suscripcionModel->where('empresa_id', $empresaId)
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$ultima) {
+            return null;
+        }
+
+        if ($suscripcionModel->estaActiva($empresaId)) {
+            return null;
+        }
+
+        $message = 'Tu suscripción no está activa. Contacta a soporte para renovar el plan.';
+
+        if ($request->isAJAX() || $request->hasHeader('X-Requested-With')) {
+            return service('response')
+                ->setContentType('application/json')
+                ->setStatusCode(403)
+                ->setJSON([
+                    'error' => $message,
+                    'suscripcion_vencida' => true,
+                ]);
+        }
+
+        return redirect()->to(base_url('dashboard/menu'))
+            ->with('error', $message);
     }
 
     /** Denegación (mantengo tu patrón de redirect con flash) */

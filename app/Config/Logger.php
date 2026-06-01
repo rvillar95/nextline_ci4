@@ -3,6 +3,7 @@
 namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
+use CodeIgniter\Log\Handlers\ErrorlogHandler;
 use CodeIgniter\Log\Handlers\FileHandler;
 
 class Logger extends BaseConfig
@@ -38,7 +39,8 @@ class Logger extends BaseConfig
      *
      * @var int|list<int>
      */
-    public $threshold = (ENVIRONMENT === 'production') ? 4 : 9;
+    // En producción 7 (info) para que se cree writable/logs/log-*.log y se vean envíos de email; bajar a 4 para solo errores
+    public $threshold = (ENVIRONMENT === 'production') ? 7 : 9;
 
     /**
      * --------------------------------------------------------------------------
@@ -133,18 +135,12 @@ class Logger extends BaseConfig
         // ],
 
         /*
-         * The ErrorlogHandler writes the logs to PHP's native `error_log()` function.
-         * Uncomment this block to use it.
+         * ErrorlogHandler: envía los mismos logs a stderr (visible en kubectl logs y Cloud Logging).
+         * En GKE no se ven los archivos de writable/logs/; con TYPE_SAPI (4) PHP escribe a stderr.
          */
-        // 'CodeIgniter\Log\Handlers\ErrorlogHandler' => [
-        //     /* The log levels this handler can handle. */
-        //     'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
-        //
-        //     /*
-        //     * The message type where the error should go. Can be 0 or 4, or use the
-        //     * class constants: `ErrorlogHandler::TYPE_OS` (0) or `ErrorlogHandler::TYPE_SAPI` (4)
-        //     */
-        //     'messageType' => 0,
-        // ],
+        ErrorlogHandler::class => [
+            'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
+            'messageType' => ErrorlogHandler::TYPE_SAPI,
+        ],
     ];
 }

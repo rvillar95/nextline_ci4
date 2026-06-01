@@ -179,10 +179,12 @@ jQuery(function($) {
     }, $metodos ?? [])) ?>;
 
     const modulosAddon = <?= json_encode(array_map(function($m){
+        $row = is_array($m) ? $m : (array) $m;
         return [
-            'id' => (int) $m->id,
-            'nombre' => $m->nombre,
-            'ruta' => $m->ruta,
+            'id' => (int) ($row['id'] ?? 0),
+            'nombre' => $row['nombre'] ?? '',
+            'ruta' => $row['ruta'] ?? '',
+            'precio_mensual' => (float) ($row['precio_mensual'] ?? 0),
         ];
     }, $modulos_addon ?? [])) ?>;
 
@@ -207,7 +209,7 @@ jQuery(function($) {
         } else {
             modulosAddon.forEach(m => {
                 const label = `${m.nombre} (${m.ruta})`;
-                $sel.append(`<option value="${m.id}" data-precio="0">${label}</option>`);
+                $sel.append(`<option value="${m.id}" data-precio="${m.precio_mensual}">${label}</option>`);
             });
         }
         // Auto precio

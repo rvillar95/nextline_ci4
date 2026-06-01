@@ -6,15 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no">
     <meta name="csrf-token" content="<?= csrf_hash() ?>">
-    <title>Dashboard VitaSync</title>
+    <title>Dashboard NutriNext</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="icon" type="image/png" href="<?= base_url("lib/logo/icono-transparente.png") ?>" />
+    <link rel="icon" type="image/png" href="<?= base_url("lib/logo/isotipo.png") ?>" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/light/loader.css") ?>" rel="stylesheet" type="text/css" />
     <link href="<?= base_url("lib/layouts/vertical-light-menu/css/dark/loader.css") ?>" rel="stylesheet" type="text/css" />
     <script>
     // URL base para logos (evita que loader.js use rutas relativas y el logo desaparezca en rutas profundas)
-    window.VitaSyncBaseUrl = <?= json_encode(rtrim(base_url(), '/') . '/') ?>;
+    window.NutriNextBaseUrl = <?= json_encode(rtrim(base_url(), '/') . '/') ?>;
     </script>
     <script src="<?= base_url("lib/layouts/vertical-light-menu/loader.js") ?>"></script>
 
@@ -72,7 +72,7 @@
     <?php
     $usuarioHeader = session()->get('usuario') ?? [];
     $temaUsuario = $usuarioHeader['tema'] ?? 'claro';
-    $colorPrimario = $usuarioHeader['color_primario'] ?? '#4dcba5';
+    $colorPrimario = $usuarioHeader['color_primario'] ?? '#7bc143';
     $cardHeaderPorDefecto = (int)($usuarioHeader['card_header_por_defecto'] ?? 1);
     $cardHeaderEsGradiente = (int)($usuarioHeader['card_header_es_gradiente'] ?? 0);
     $colorCardHeaderBg = $usuarioHeader['color_card_header_bg'] ?? '#6c757d';
@@ -80,15 +80,15 @@
     $colorCardHeaderText = $usuarioHeader['color_card_header_text'] ?? '#ffffff';
     $mainHeaderPorDefecto = (int)($usuarioHeader['main_header_por_defecto'] ?? 1);
     $mainHeaderEsGradiente = (int)($usuarioHeader['main_header_es_gradiente'] ?? 0);
-    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#4dcba5';
+    $colorMainHeaderBg = $usuarioHeader['color_main_header_bg'] ?? '#7bc143';
     $colorMainHeaderBg2 = $usuarioHeader['color_main_header_bg2'] ?? null;
     $colorMainHeaderText = $usuarioHeader['color_main_header_text'] ?? '#ffffff';
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#4dcba5'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorPrimario)) { $colorPrimario = '#7bc143'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg)) { $colorCardHeaderBg = '#6c757d'; }
     if ($colorCardHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderBg2)) { $colorCardHeaderBg2 = '#495057'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorCardHeaderText)) { $colorCardHeaderText = '#ffffff'; }
-    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#4dcba5'; }
-    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#bee6db'; }
+    if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg)) { $colorMainHeaderBg = '#7bc143'; }
+    if ($colorMainHeaderBg2 !== null && !preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderBg2)) { $colorMainHeaderBg2 = '#2daae1'; }
     if (!preg_match('/^#[a-fA-F0-9]{6}$/', $colorMainHeaderText)) { $colorMainHeaderText = '#ffffff'; }
     $hex = ltrim($colorCardHeaderBg, '#');
     $dr = max(0, (int)round(hexdec(substr($hex, 0, 2)) * 0.65));
@@ -100,9 +100,9 @@
     ?>
     <style id="user-theme-css">
         :root {
-            --vitasync-primary: #4dcba5;
-            --vitasync-bg: #fafeff;
-            --vitasync-muted: #bee6db;
+            --nutrinext-primary: #7bc143;
+            --nutrinext-bg: #f8fbf5;
+            --nutrinext-muted: #d4edc4;
             --user-primary: <?= esc($colorPrimario) ?>;
             --user-primary-hover: <?= esc($colorPrimario) ?>dd;
             <?php if ($aplicarCardHeaderCustom): ?>
@@ -147,9 +147,9 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php else: ?>
-        /* Main-header por defecto: gradiente VitaSync */
+        /* Main-header por defecto: gradiente NutriNext */
         body:not(.dark) .main-header {
-            background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%) !important;
+            background: linear-gradient(135deg, #7bc143 0%, #2daae1 100%) !important;
             color: #fff !important;
         }
         body:not(.dark) .main-header h2,
@@ -162,7 +162,7 @@
             border-color: rgba(255,255,255,0.8) !important;
         }
         <?php endif; ?>
-        /* Logo VitaSync: mismo aspecto en header y sidebar en todos los módulos */
+        /* Logo NutriNext: mismo aspecto en header y sidebar en todos los módulos */
         .header-container .theme-brand .theme-logo a img.navbar-logo,
         .header-container .navbar .theme-brand .theme-logo img {
             height: 36px !important;
@@ -353,7 +353,7 @@
             color: #64748b !important;
             background-color: #1e293b !important;
         }
-        /* Fondo VitaSync por defecto (modo claro) */
+        /* Fondo NutriNext por defecto (modo claro) */
         body:not(.dark) { background-color: #fafeff !important; }
     </style>
 

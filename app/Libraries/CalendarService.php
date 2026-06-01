@@ -552,7 +552,7 @@ class CalendarService
         $modalidad     = $citaData['modalidad'] ?? '-';
         $motivo        = $citaData['motivo'] ?? null;
 
-        // Encabezado más amigable y con marca VitaSync
+        // Encabezado más amigable y con marca NutriNext
         $descripcion  = "🩺 Consulta nutricional con {$nutricionista}";
 
         if (!empty($citaData['email_nutricionista'])) {
@@ -568,7 +568,7 @@ class CalendarService
             $descripcion .= "📝 Motivo: {$motivo}\n";
         }
 
-        $descripcion .= "\n🔁 Evento creado automáticamente desde VitaSync (Nextline).";
+        $descripcion .= "\n🔁 Evento creado automáticamente desde NutriNext (Nextline).";
 
         return $descripcion;
     }

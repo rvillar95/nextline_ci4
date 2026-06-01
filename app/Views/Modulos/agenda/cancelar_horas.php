@@ -256,6 +256,18 @@ document.addEventListener('DOMContentLoaded', function() {
         allowInput: true
     });
 
+    var paramsUrl = new URLSearchParams(window.location.search);
+    var desdeUrl = paramsUrl.get('desde');
+    var hastaUrl = paramsUrl.get('hasta');
+    if (desdeUrl) {
+        $('#fecha_inicio').val(desdeUrl);
+    }
+    if (hastaUrl) {
+        $('#fecha_fin').val(hastaUrl);
+    } else if (desdeUrl) {
+        $('#fecha_fin').val(desdeUrl);
+    }
+
     // Botón ver citas
     $('#btnVerCitas').on('click', function() {
         var fechaInicio = $('#fecha_inicio').val();

@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Libraries\WhatsAppService;
-use Config\Services;
+use App\Models\Paciente;
+use App\Models\WhatsAppAgendaSesion;
+use App\Models\WhatsAppMensaje;
 
 /**
  * Controlador para recibir webhooks de WhatsApp
@@ -12,12 +14,6 @@ use Config\Services;
  */
 class WhatsAppWebhookController extends BaseController
 {
-    protected $whatsappService;
-
-    public function __construct()
-    {
-        $this->whatsappService = new WhatsAppService();
-    }
 
     /**
      * Webhook para verificación (WhatsApp Business API)
@@ -25,19 +21,24 @@ class WhatsAppWebhookController extends BaseController
      */
     public function verify()
     {
-        $mode = $this->request->getGet('hub_mode');
-        $token = $this->request->getGet('hub_verify_token');
-        $challenge = $this->request->getGet('hub_challenge');
+        $mode = $this->request->getGet('hub_mode') ?? $this->request->getGet('hub.mode');
+        $token = $this->request->getGet('hub_verify_token') ?? $this->request->getGet('hub.verify_token');
+        $challenge = $this->request->getGet('hub_challenge') ?? $this->request->getGet('hub.challenge');
 
-        $verifyToken = env('WHATSAPP_VERIFY_TOKEN', 'nextline_verify_token');
+        $verifyToken = $this->resolverVerifyToken();
 
-        if ($mode === 'subscribe' && $token === $verifyToken) {
-            log_message('info', 'WhatsApp webhook verificado correctamente');
-            return $this->response->setBody($challenge);
+        log_message('info', 'WhatsApp webhook verify: mode=' . ($mode ?? 'null') . ' token_match=' . ($token === $verifyToken ? 'yes' : 'no'));
+
+        if ($mode === 'subscribe' && $token === $verifyToken && $challenge !== null && $challenge !== '') {
+            return $this->response
+                ->setStatusCode(200)
+                ->setContentType('text/plain')
+                ->setBody((string) $challenge);
         }
 
-        log_message('warning', 'WhatsApp webhook verificación fallida');
-        return $this->response->setStatusCode(403);
+        log_message('warning', 'WhatsApp webhook verificación fallida. Esperado token distinto o challenge vacío.');
+
+        return $this->response->setStatusCode(403)->setBody('Forbidden');
     }
 
     /**
@@ -50,36 +51,61 @@ class WhatsAppWebhookController extends BaseController
     }
 
     /**
+     * Token de verificación: .env, luego empresa_configuracion, luego default.
+     */
+    protected function resolverVerifyToken(): string
+    {
+        $env = env('WHATSAPP_VERIFY_TOKEN');
+        if ($env !== null && $env !== false && trim((string) $env) !== '') {
+            return trim((string) $env);
+        }
+
+        $db = \Config\Database::connect();
+        $row = $db->table('empresa_configuracion')
+            ->select('whatsapp_verify_token')
+            ->where('whatsapp_verify_token IS NOT NULL', null, false)
+            ->where('whatsapp_verify_token !=', '')
+            ->orderBy('id', 'ASC')
+            ->limit(1)
+            ->get()
+            ->getRow();
+
+        if ($row && trim((string) $row->whatsapp_verify_token) !== '') {
+            return trim((string) $row->whatsapp_verify_token);
+        }
+
+        return 'nextline_verify_token';
+    }
+
+    /**
      * Procesar webhook de WhatsApp Business API
      */
     protected function procesarWebhookWhatsAppBusiness()
     {
         $json = $this->request->getJSON(true);
-        
-        if (!isset($json['entry'])) {
+
+        if (!is_array($json) || !isset($json['entry'])) {
             return $this->response->setStatusCode(400)->setJSON(['error' => 'Formato inválido']);
         }
-        
+
         foreach ($json['entry'] as $entry) {
             if (!isset($entry['changes'])) {
                 continue;
             }
-            
+
             foreach ($entry['changes'] as $change) {
-                if ($change['field'] !== 'messages') {
+                if (($change['field'] ?? '') !== 'messages') {
                     continue;
                 }
-                
+
                 $value = $change['value'] ?? [];
-                
-                // Procesar mensajes entrantes
+
                 if (isset($value['messages'])) {
                     foreach ($value['messages'] as $message) {
                         $this->procesarMensajeWhatsAppBusiness($message, $value);
                     }
                 }
-                
-                // Procesar actualizaciones de estado
+
                 if (isset($value['statuses'])) {
                     foreach ($value['statuses'] as $status) {
                         $this->actualizarEstadoMensaje(
@@ -90,8 +116,8 @@ class WhatsAppWebhookController extends BaseController
                 }
             }
         }
-        
-        return $this->response->setJSON(['success' => true]);
+
+        return $this->response->setStatusCode(200)->setJSON(['success' => true]);
     }
 
     /**
@@ -102,26 +128,37 @@ class WhatsAppWebhookController extends BaseController
         $tipo = $message['type'] ?? 'unknown';
         $mensajeId = $message['id'] ?? null;
         $numeroOrigen = $message['from'] ?? null;
-        
-        // Solo procesar mensajes de texto
-        if ($tipo !== 'text') {
-            log_message('info', 'Mensaje no texto recibido: ' . $tipo);
+
+        $entrada = WhatsAppService::entradaDesdeWebhook($message);
+        if ($entrada === null) {
+            log_message('info', 'Mensaje WhatsApp no procesable: tipo=' . $tipo);
+
             return;
         }
-        
-        $mensajeTexto = $message['text']['body'] ?? '';
-        
-        log_message('info', 'Mensaje recibido de WhatsApp Business: ' . $numeroOrigen . ' - ' . $mensajeTexto);
-        
-        // Formatear número (agregar + si no lo tiene)
-        if (substr($numeroOrigen, 0, 1) !== '+') {
-            $numeroOrigen = '+' . $numeroOrigen;
+
+        $mensajeTexto = $entrada['comando'];
+        $mensajeMostrar = $entrada['texto_historial'];
+
+        log_message('info', 'Mensaje recibido de WhatsApp Business: ' . $numeroOrigen . ' - ' . $mensajeMostrar);
+
+        $soloDigitos = preg_replace('/\D+/', '', (string) $numeroOrigen);
+        if ($soloDigitos !== '') {
+            $numeroOrigen = '+' . $soloDigitos;
         }
-        
-        $this->whatsappService->procesarMensajeEntrante(
+
+        $metadata = $value['metadata'] ?? [];
+        $lineaEmpresa = $metadata['display_phone_number'] ?? null;
+
+        $paciente = (new Paciente())->buscarPorTelefono($numeroOrigen);
+        $sesionAgenda = (new WhatsAppAgendaSesion())->obtenerPorTelefono($numeroOrigen);
+        $whatsappService = WhatsAppService::paraMensajeEntrante($paciente, $sesionAgenda);
+
+        $whatsappService->procesarMensajeEntrante(
             $numeroOrigen,
             $mensajeTexto,
-            $mensajeId
+            $mensajeId,
+            $lineaEmpresa,
+            $mensajeMostrar
         );
     }
 
@@ -134,9 +171,9 @@ class WhatsAppWebhookController extends BaseController
             'sent' => 'enviado',
             'delivered' => 'entregado',
             'read' => 'leido',
-            'failed' => 'error'
+            'failed' => 'error',
         ];
-        
+
         return $map[$status] ?? 'pendiente';
     }
 
@@ -148,15 +185,13 @@ class WhatsAppWebhookController extends BaseController
         if (!$mensajeId) {
             return;
         }
-        
-        $whatsappModel = new \App\Models\WhatsAppMensaje();
-        
+
+        $whatsappModel = new WhatsAppMensaje();
+
         $mensaje = $whatsappModel->where('mensaje_id_api', $mensajeId)->first();
-        
+
         if ($mensaje) {
             $whatsappModel->actualizarEstado($mensaje->id, $estado, date('Y-m-d H:i:s'));
         }
-        
-        return $this->response->setJSON(['success' => true]);
     }
 }

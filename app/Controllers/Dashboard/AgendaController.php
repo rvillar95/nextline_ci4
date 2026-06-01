@@ -13,6 +13,7 @@ use App\Models\EmpresaConfiguracion;
 use App\Traits\MaintainsFilters;
 use App\Libraries\WhatsAppService;
 use App\Libraries\CalendarService;
+use App\Services\NotificacionNutricionistaService;
 use Config\Services;
 
 class AgendaController extends BaseController
@@ -46,6 +47,12 @@ class AgendaController extends BaseController
         }
         $data['data'] = $menuTotal;
 
+        $db = \Config\Database::connect();
+        $data['modalidades'] = $db->table('modalidad_agenda')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResult();
+
         return view('Modulos/agenda/gestionar', $data);
     }
 
@@ -77,10 +84,12 @@ class AgendaController extends BaseController
         $usuario = session()->get('usuario');
         $empresaId = $usuario['empresa_id'] ?? null;
         $data['plantillas_pago'] = [];
+        $data['mercado_pago_habilitado'] = false;
         
         if ($empresaId) {
             $empresaConfigModel = new EmpresaConfiguracion();
-            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+            $data['mercado_pago_habilitado'] = $empresaConfigModel->mercadoPagoHabilitado($empresaId);
+            if ($data['mercado_pago_habilitado']) {
                 $plantillaModel = new BotonPagoPlantilla();
                 $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
             }
@@ -203,17 +212,22 @@ class AgendaController extends BaseController
                 default => '❔'
             };
             
-            // Construir título con icono de modalidad
-            $titulo = '';
+            // Título completo (tooltip / detalle) y corto (celda del calendario)
+            $tituloCompleto = '';
+            $nombreCorto = $this->nombreCortoCalendario($nombrePaciente);
             if ($estadoCita === 'cancelada') {
-                // Para citas canceladas, mostrar como cancelada incluso si no tiene paciente
-                $titulo = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $tituloCompleto = $iconoModalidad . ' Cancelada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $titulo = $iconoModalidad . ' Cancelada' . ($nombreCorto !== '' ? "\n" . $nombreCorto : '');
             } elseif ($estadoCita === 'reservada') {
-                $titulo = $iconoModalidad . ' Reservada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $tituloCompleto = $iconoModalidad . ' Reservada' . ($nombrePaciente !== 'Disponible' ? ' - ' . $nombrePaciente : '');
+                $titulo = $iconoModalidad . ' Reservada' . ($nombreCorto !== '' ? "\n" . $nombreCorto : '');
             } elseif ($estaDisponible) {
-                $titulo = $iconoModalidad . ' Disponible';
+                $tituloCompleto = $iconoModalidad . ' Disponible';
+                $titulo = $tituloCompleto;
             } else {
-                $titulo = $iconoModalidad . ' ' . $nombrePaciente . ($evento->motivo ? ' - ' . substr($evento->motivo, 0, 25) : '');
+                $motivoCorto = $evento->motivo ? ' · ' . mb_substr($evento->motivo, 0, 18) : '';
+                $tituloCompleto = $iconoModalidad . ' ' . $nombrePaciente . ($evento->motivo ? ' - ' . $evento->motivo : '');
+                $titulo = $iconoModalidad . ' ' . ($nombreCorto !== '' ? $nombreCorto : $nombrePaciente) . $motivoCorto;
             }
 
             // Para citas completadas, agregar estilo especial para diferenciarlas mejor
@@ -239,7 +253,10 @@ class AgendaController extends BaseController
                     'tipo_consulta' => $evento->tipo_consulta,
                     'motivo' => $evento->motivo,
                     'modalidad_id' => $modalidadId,
-                    'modalidad_icono' => $iconoModalidad
+                    'modalidad_icono' => $iconoModalidad,
+                    'titulo_completo' => $tituloCompleto,
+                    'hora_inicio' => substr((string) $evento->hora_inicio, 0, 5),
+                    'hora_fin' => substr((string) $evento->hora_fin, 0, 5),
                 ]
             ];
         }
@@ -249,6 +266,23 @@ class AgendaController extends BaseController
             'events' => $data,
             'slotMinTime' => $horaMinimaFormateada
         ]);
+    }
+
+    /**
+     * Nombre abreviado para celdas del calendario (primer nombre + último apellido).
+     */
+    private function nombreCortoCalendario(string $nombreCompleto): string
+    {
+        $nombreCompleto = trim($nombreCompleto);
+        if ($nombreCompleto === '' || $nombreCompleto === 'Disponible') {
+            return '';
+        }
+        $partes = preg_split('/\s+/u', $nombreCompleto, -1, PREG_SPLIT_NO_EMPTY);
+        if ($partes === false || count($partes) <= 2) {
+            return $nombreCompleto;
+        }
+
+        return $partes[0] . ' ' . $partes[count($partes) - 1];
     }
 
     /**
@@ -338,6 +372,8 @@ class AgendaController extends BaseController
                 'rut_dni' => $cita->rut_dni ?? null
             ];
         }
+
+        $data['cobro'] = $this->obtenerResumenCobroCita((int) $detalleAgendaId);
 
         return $this->response->setJSON($data);
     }
@@ -570,6 +606,175 @@ class AgendaController extends BaseController
         }
     }
 
+    /**
+     * Agendar próxima cita desde consulta (mismo flujo que agendar en calendario).
+     * Estado pendiente (o en_proceso si hay pago) + correo de confirmación de cita al paciente.
+     */
+    public function agendarDesdeConsulta()
+    {
+        $this->response->setContentType('application/json');
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'Su sesión ha expirado.'])->setStatusCode(401);
+        }
+
+        $rules = [
+            'detalle_agenda_id' => 'required|integer|greater_than[0]',
+            'paciente_id' => 'required|integer|greater_than[0]',
+            'modalidad_id' => 'required|integer|greater_than[0]',
+        ];
+        if (!$this->validate($rules)) {
+            $errors = $this->validator->getErrors();
+            return $this->response->setJSON([
+                'error' => 'Error de validación',
+                'message' => implode(', ', array_values($errors)),
+                'errors' => $errors,
+            ])->setStatusCode(400);
+        }
+
+        $post = $this->request->getPost([
+            'detalle_agenda_id', 'paciente_id', 'modalidad_id', 'tipo_consulta', 'motivo', 'boton_pago_plantilla_id'
+        ]);
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $detalleAgendaId = (int) $post['detalle_agenda_id'];
+        $pacienteId = (int) $post['paciente_id'];
+        $modalidadId = (int) $post['modalidad_id'];
+        if (!in_array($modalidadId, [1, 2], true)) {
+            return $this->response->setJSON([
+                'error' => 'Modalidad inválida',
+                'message' => 'Debe seleccionar modalidad Presencial u Online.',
+            ])->setStatusCode(400);
+        }
+        $tipoConsulta = $post['tipo_consulta'] ?? 'seguimiento';
+        $motivo = trim((string) ($post['motivo'] ?? 'Próxima cita desde consulta'));
+        $botonPagoPlantillaId = !empty($post['boton_pago_plantilla_id']) ? (int) $post['boton_pago_plantilla_id'] : null;
+
+        $db = \Config\Database::connect();
+
+        try {
+            $detalle = $db->table('detalle_agenda da')
+                ->select('da.id, da.usuario_id, da.paciente_id, da.estado_cita, da.hora_inicio, da.hora_fin, a.fecha as fecha_agenda')
+                ->join('agenda a', 'a.id = da.agenda_id', 'left')
+                ->where('da.id', $detalleAgendaId)
+                ->where('da.usuario_id', $usuarioId)
+                ->get()
+                ->getRow();
+
+            if (!$detalle) {
+                return $this->response->setJSON([
+                    'error' => 'No autorizado',
+                    'message' => 'No tiene permiso para usar este horario.',
+                ])->setStatusCode(403);
+            }
+
+            if (!empty($detalle->paciente_id)) {
+                return $this->response->setJSON([
+                    'error' => 'Horario ocupado',
+                    'message' => 'Este horario ya no está disponible. Elija otro.',
+                ])->setStatusCode(400);
+            }
+
+            $estadoCitaActual = strtolower(trim((string) ($detalle->estado_cita ?? '')));
+            if (in_array($estadoCitaActual, ['cancelada', 'no_disponible', 'bloqueado'], true)) {
+                return $this->response->setJSON([
+                    'error' => 'Horario no disponible',
+                    'message' => 'Este horario no se puede agendar.',
+                ])->setStatusCode(400);
+            }
+
+            $paciente = $db->table('pacientes')
+                ->select('id, email')
+                ->where('id', $pacienteId)
+                ->where('estado', 'A')
+                ->get()
+                ->getRow();
+
+            if (!$paciente) {
+                return $this->response->setJSON([
+                    'error' => 'Paciente no encontrado',
+                    'message' => 'El paciente no existe o está inactivo.',
+                ])->setStatusCode(400);
+            }
+
+            if (empty($paciente->email)) {
+                return $this->response->setJSON([
+                    'error' => 'Sin correo',
+                    'message' => 'El paciente debe tener correo electrónico para enviar la confirmación de cita.',
+                ])->setStatusCode(400);
+            }
+
+            $estadoCita = !empty($botonPagoPlantillaId) ? 'en_proceso' : 'pendiente';
+
+            $dataUpdate = [
+                'paciente_id' => $pacienteId,
+                'modalidad_id' => $modalidadId,
+                'tipo_consulta' => $tipoConsulta,
+                'motivo' => $motivo,
+                'estado_cita' => $estadoCita,
+                'estado' => 2,
+            ];
+
+            $updated = $db->table('detalle_agenda')
+                ->where('id', $detalleAgendaId)
+                ->where('paciente_id', null)
+                ->update($dataUpdate);
+
+            if (!$updated) {
+                return $this->response->setJSON([
+                    'error' => 'Error al agendar',
+                    'message' => 'No se pudo agendar el horario. Puede que ya esté ocupado.',
+                ])->setStatusCode(500);
+            }
+
+            // Asegurar estado_cita (evitar NULL en BD)
+            $verificacion = $db->table('detalle_agenda')
+                ->select('estado_cita')
+                ->where('id', $detalleAgendaId)
+                ->get()
+                ->getRow();
+            if ($verificacion && ($verificacion->estado_cita === null || $verificacion->estado_cita === '')) {
+                $db->query("UPDATE detalle_agenda SET estado_cita = ? WHERE id = ?", [$estadoCita, $detalleAgendaId]);
+            }
+
+            if (!empty($botonPagoPlantillaId)) {
+                try {
+                    $this->crearPagoSinEnviarEmail($detalleAgendaId, $pacienteId, $botonPagoPlantillaId);
+                } catch (\Exception $e) {
+                    log_message('error', 'Agendar desde consulta: error al crear pago: ' . $e->getMessage());
+                }
+            }
+
+            $configuracionModel = new EmpresaConfiguracion();
+            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
+            if ($configuracion['enviar_email'] ?? 1) {
+                try {
+                    $this->enviarEmailConfirmacion($detalleAgendaId, $pacienteId);
+                } catch (\Exception $e) {
+                    log_message('error', 'Agendar desde consulta: error email confirmación: ' . $e->getMessage());
+                }
+            }
+
+            $msgEstado = ($estadoCita === 'en_proceso')
+                ? 'Cita agendada en estado En proceso (con pago).'
+                : 'Cita agendada en estado Pendiente.';
+
+            $response = $this->response->setJSON([
+                'success' => true,
+                'message' => $msgEstado . ' Se envió el correo de confirmación al paciente.',
+                'estado_cita' => $estadoCita,
+                'detalle_agenda_id' => $detalleAgendaId,
+                'csrf_token' => csrf_hash(),
+            ]);
+            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+            return $response;
+        } catch (\Exception $e) {
+            log_message('error', 'agendarDesdeConsulta: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => 'Error al agendar',
+                'message' => 'Ocurrió un error inesperado. Intente nuevamente.',
+            ])->setStatusCode(500);
+        }
+    }
+
     public function confirmarCita()
     {
         error_log('========================================');
@@ -586,14 +791,14 @@ class AgendaController extends BaseController
         
         if (!session()->get('usuario')) {
             log_message('warning', 'CONFIRMAR CITA: No hay sesión de usuario');
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
         }
 
         $id = $this->request->getPost('id');
         log_message('info', 'CONFIRMAR CITA: ID recibido=' . ($id ?? 'N/A'));
         
         if (!$id) {
-            return $this->response->setJSON(['error' => 'ID requerido'])->setStatusCode(400);
+            return $this->agendaJsonResponse(['error' => 'ID requerido'], 400);
         }
 
         $db = \Config\Database::connect();
@@ -608,24 +813,26 @@ class AgendaController extends BaseController
             ->getRow();
 
         if (!$detalle) {
-            return $this->response->setJSON([
+            return $this->agendaJsonResponse([
                 'error' => 'No autorizado',
-                'message' => 'No tiene permiso para modificar esta cita o la cita no existe'
-            ])->setStatusCode(403);
+                'message' => 'No tiene permiso para modificar esta cita o la cita no existe',
+            ], 403);
         }
+
+        $estadoActual = strtolower(trim((string) ($detalle->estado_cita ?? '')));
 
         // Verificar que la cita esté en estado pendiente, en_proceso o agendada
         $estadosValidos = ['pendiente', 'en_proceso', 'agendada'];
-        if (!in_array($detalle->estado_cita, $estadosValidos)) {
-            return $this->response->setJSON([
+        if (!in_array($estadoActual, $estadosValidos, true)) {
+            return $this->agendaJsonResponse([
                 'error' => 'Estado inválido',
-                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente, en_proceso o agendada. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido')
-            ])->setStatusCode(400);
+                'message' => 'Solo se pueden confirmar citas que estén en estado pendiente, en_proceso o agendada. Estado actual: ' . ($detalle->estado_cita ?? 'desconocido'),
+            ], 400);
         }
         
         // Si está en 'en_proceso', cambiar a 'pendiente' (esperando pago)
         // Si está en 'pendiente' o 'agendada', cambiar a 'confirmada'
-        $nuevoEstado = ($detalle->estado_cita === 'en_proceso') ? 'pendiente' : 'confirmada';
+        $nuevoEstado = ($estadoActual === 'en_proceso') ? 'pendiente' : 'confirmada';
 
         // Actualizar estado según el estado actual
         $updated = $db->table('detalle_agenda')
@@ -691,16 +898,13 @@ class AgendaController extends BaseController
                 log_message('info', 'CONFIRMAR CITA (Dashboard): WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuario_id);
             }
 
-            $response = $this->response->setJSON([
-                'success' => true, 
+            return $this->agendaJsonResponse([
+                'success' => true,
                 'message' => 'Cita confirmada',
-                'csrf_token' => csrf_hash()
             ]);
-            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
-            return $response;
-        } else {
-            return $this->response->setJSON(['error' => 'Error al confirmar la cita'])->setStatusCode(500);
         }
+
+        return $this->agendaJsonResponse(['error' => 'Error al confirmar la cita'], 500);
     }
 
     public function cancelarCita()
@@ -797,16 +1001,18 @@ class AgendaController extends BaseController
                 log_message('info', 'CANCELAR CITA (Lista): WhatsApp deshabilitado en configuraciones. usuario_id=' . $usuario_id);
             }
 
-            $response = $this->response->setJSON([
-                'success' => true, 
-                'message' => 'Cita cancelada y horario liberado',
-                'csrf_token' => csrf_hash()
+            $esReservaWeb = strtolower(trim((string) ($citaCompleta->estado_cita ?? ''))) === 'reservada';
+            $msgExito = $esReservaWeb
+                ? 'Reserva rechazada. El horario quedó disponible nuevamente.'
+                : 'Cita cancelada y horario liberado';
+
+            return $this->agendaJsonResponse([
+                'success' => true,
+                'message' => $msgExito,
             ]);
-            $response->setHeader('X-CSRF-TOKEN', csrf_hash());
-            return $response;
-        } else {
-            return $this->response->setJSON(['error' => 'Error al cancelar la cita'])->setStatusCode(500);
         }
+
+        return $this->agendaJsonResponse(['error' => 'Error al cancelar la cita'], 500);
     }
 
     /**
@@ -842,6 +1048,10 @@ class AgendaController extends BaseController
 
         if (!$detalle) {
             return $this->response->setJSON(['error' => 'No autorizado', 'message' => 'Cita no encontrada o sin permiso'])->setStatusCode(403);
+        }
+
+        if (empty($botonPagoPlantillaId) && preg_match('/\[plantilla_pago_pendiente=(\d+)\]/', (string) ($detalle->observaciones ?? ''), $mPago)) {
+            $botonPagoPlantillaId = (int) $mPago[1];
         }
 
         $estadoActual = strtolower(trim((string)($detalle->estado_cita ?? '')));
@@ -906,29 +1116,6 @@ class AgendaController extends BaseController
             return false;
         }
 
-        $configuracionModel = new EmpresaConfiguracion();
-        $usuario_id = session()->get('usuario')['id'];
-        $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuario_id);
-
-        $estadoCita = $cita->estado_cita ?? 'pendiente';
-        $mapEstados = [
-            'reservada' => 'mensaje_cancelacion_pendiente',
-            'pendiente' => 'mensaje_cancelacion_pendiente',
-            'confirmada' => 'mensaje_cancelacion_confirmada',
-            'agendada' => 'mensaje_cancelacion_pendiente',
-            'en_proceso' => 'mensaje_cancelacion_en_proceso'
-        ];
-        $campo = $mapEstados[$estadoCita] ?? 'mensaje_cancelacion_pendiente';
-        $mensaje = $configuracion[$campo] ?? '';
-
-        if (empty($mensaje)) {
-            $mensaje = "Estimado/a [NOMBRE_PACIENTE],\n\nLamentamos informarle que su cita programada para el [FECHA] a las [HORA] ha sido cancelada.\n\nPor favor, contáctenos para reagendar su consulta.\n\nSaludos,\n[NOMBRE_NUTRICIONISTA]";
-        }
-
-        if ($motivoCancelacion) {
-            $mensaje .= "\n\nMotivo: " . htmlspecialchars(trim($motivoCancelacion), ENT_QUOTES, 'UTF-8');
-        }
-
         $fechaRaw = $cita->fecha ?? '';
         if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaRaw, $m)) {
             $fechaFormateada = $m[1] . '/' . $m[2] . '/' . $m[3];
@@ -939,24 +1126,16 @@ class AgendaController extends BaseController
         $nombrePaciente = trim(($cita->paciente_nombre ?? '') . ' ' . ($cita->paciente_apellido ?? ''));
         $nombreNutricionista = trim(($cita->nutricionista_nombre ?? '') . ' ' . ($cita->nutricionista_apellido ?? ''));
 
-        $mensaje = str_replace('[NOMBRE_PACIENTE]', $nombrePaciente, $mensaje);
-        $mensaje = str_replace('[FECHA]', $fechaFormateada, $mensaje);
-        $mensaje = str_replace('[HORA]', $horaFormateada, $mensaje);
-        $mensaje = str_replace('[NOMBRE_NUTRICIONISTA]', $nombreNutricionista, $mensaje);
-
-        // Si el mensaje viene de BD/config con "\n" literal (backslash+n), convertirlo a salto real para que nl2br genere <br>
-        $mensaje = str_replace(["\\n", "\\r\\n", "\\r"], ["\n", "\n", "\n"], $mensaje);
-        $mensajeHtml = nl2br($mensaje);
-
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'Sistema de Agenda'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($cita->paciente_email);
         $email->setSubject('Cancelación de Cita - ' . ($nombreNutricionista ?: 'Nutricionista'));
         $email->setMessage(view('emails/cancelacion_cita_paciente', [
             'paciente_nombre' => $nombrePaciente,
             'fecha' => $fechaFormateada,
             'hora' => $horaFormateada,
-            'mensaje' => $mensajeHtml,
+            'motivo' => $motivoCancelacion ? trim($motivoCancelacion) : '',
             'nutricionista_nombre' => $nombreNutricionista
         ]));
         return $email->send();
@@ -977,6 +1156,7 @@ class AgendaController extends BaseController
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         $estado_cita = $this->request->getGet('estado_cita');
+        $destacarId = (int) $this->request->getGet('destacar');
         
         // Obtener citas desde detalle_agenda; fecha/hora de referencia: da.fecha, da.hora_inicio, da.hora_fin
         // fecha_orden para ordenar (fecha en BD es DD-MM-YYYY)
@@ -997,9 +1177,16 @@ class AgendaController extends BaseController
             $builder->where('da.estado_cita', $estado_cita);
         }
 
-        // Por defecto: solo citas cuya fecha+hora de inicio (detalle_agenda) sea >= ahora
+        // Por defecto: solo citas futuras; si viene ?destacar=ID, incluir esa cita aunque sea pasada
         if (!$fecha_desde && !$fecha_hasta) {
-            $builder->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false);
+            if ($destacarId > 0) {
+                $builder->groupStart()
+                    ->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false)
+                    ->orWhere('da.id', $destacarId)
+                    ->groupEnd();
+            } else {
+                $builder->where("TIMESTAMP(STR_TO_DATE(da.fecha, '%d-%m-%Y'), da.hora_inicio) >= NOW()", null, false);
+            }
         }
 
         // Ordenar por fecha y hora ascendente (usamos alias fecha_orden para evitar raw en ORDER BY)
@@ -1023,22 +1210,26 @@ class AgendaController extends BaseController
                 default => '<span class="badge bg-secondary">N/A</span>',
             };
 
-            // No mostrar Confirmar/Cancelar en completada (no se pueden cancelar) ni en reservada (se aprueba con otro flujo).
+            // Confirmar: pendiente/agendada/en_proceso. Cancelar: también confirmadas (el nutricionista puede liberar el horario).
             $estadoCitaLower = strtolower(trim((string)($r->estado_cita ?? '')));
-            $esCompletada = ($estadoCitaLower === 'completada');
-            $esCancelada = ($estadoCitaLower === 'cancelada');
             $esReservada = ($estadoCitaLower === 'reservada');
+            $estadosConfirmar = ['pendiente', 'en_proceso', 'agendada'];
+            $estadosCancelar = ['pendiente', 'en_proceso', 'agendada', 'confirmada'];
             $botones = '';
-            if (!$esCompletada && !$esCancelada && !$esReservada) {
-                $botones = '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ' .
-                          '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
+            if (in_array($estadoCitaLower, $estadosConfirmar, true)) {
+                $botones .= '<button class="btn btn-sm btn-outline-success" onclick="confirmarCita(' . $r->id . ')">Confirmar</button> ';
+            }
+            if (in_array($estadoCitaLower, $estadosCancelar, true)) {
+                $botones .= '<button class="btn btn-sm btn-outline-danger" onclick="cancelarCita(' . $r->id . ')">Cancelar</button> ';
             }
             if ($esReservada) {
                 $botones .= '<a href="' . base_url('dashboard/agenda/consulta?id=' . $r->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-check-circle me-1"></i> Aprobar</a> ';
+                $botones .= '<button type="button" class="btn btn-sm btn-outline-danger" onclick="rechazarReserva(' . $r->id . ')"><i class="fas fa-times me-1"></i> Rechazar</button> ';
             }
             $botones .= '<button class="btn btn-sm btn-outline-info" onclick="verCita(' . $r->id . ')">Ver</button>';
 
             $data[] = array(
+                (int) $r->id,
                 esc($nombrePaciente),
                 esc($r->fecha ?: ''), // La fecha ya está en formato DD-MM-YYYY en la BD
                 esc($r->hora_inicio ?? ''),
@@ -1119,6 +1310,247 @@ class AgendaController extends BaseController
         );
 
         return $this->response->setJSON($output);
+    }
+
+    /**
+     * Listado enriquecido de días (agenda) del nutricionista en sesión.
+     */
+    public function listarAgendasDias()
+    {
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $fechaDesde = $this->request->getGet('fecha_desde');
+        $fechaHasta = $this->request->getGet('fecha_hasta');
+        $soloFuturos = $this->request->getGet('solo_futuros') === '1' || $this->request->getGet('solo_futuros') === 'true';
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('agenda a')
+            ->select("a.id AS agenda_id, a.fecha, a.hora_inicio, a.hora_fin, a.almuerzo_inicio, a.almuerzo_fin,
+                COUNT(DISTINCT da.id) AS total_bloques,
+                COUNT(DISTINCT CASE WHEN da.estado = 1 AND da.paciente_id IS NULL THEN da.id END) AS disponibles,
+                COUNT(DISTINCT CASE WHEN da.paciente_id IS NOT NULL
+                    AND (da.estado_cita IS NULL OR da.estado_cita NOT IN ('cancelada','completada')) THEN da.id END) AS ocupados,
+                MIN(TIMESTAMPDIFF(MINUTE, da.hora_inicio, da.hora_fin)) AS duracion_minutos", false)
+            ->join('detalle_agenda da', 'da.agenda_id = a.id AND da.usuario_id = ' . $usuarioId, 'inner')
+            ->groupBy('a.id, a.fecha, a.hora_inicio, a.hora_fin, a.almuerzo_inicio, a.almuerzo_fin');
+
+        if ($fechaDesde) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= ", $fechaDesde);
+        }
+        if ($fechaHasta) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') <= ", $fechaHasta);
+        }
+        if ($soloFuturos) {
+            $builder->where("STR_TO_DATE(a.fecha, '%d-%m-%Y') >= CURDATE()", null, false);
+        }
+
+        $rows = $builder
+            ->orderBy("STR_TO_DATE(a.fecha, '%d-%m-%Y')", 'ASC', false)
+            ->orderBy('a.hora_inicio', 'ASC')
+            ->get()
+            ->getResult();
+
+        $dias = [];
+        foreach ($rows as $r) {
+            $duracion = (int) ($r->duracion_minutos ?? 30);
+            if ($duracion <= 0) {
+                $duracion = 30;
+            }
+            $totalBloques = (int) ($r->total_bloques ?? 0);
+            $ocupados = (int) ($r->ocupados ?? 0);
+            $horasEst = round(($totalBloques * $duracion) / 60, 1);
+
+            $almuerzoTexto = 'Sin almuerzo';
+            if ($r->almuerzo_inicio && $r->almuerzo_fin) {
+                $almuerzoTexto = date('H:i', strtotime($r->almuerzo_inicio)) . ' - ' . date('H:i', strtotime($r->almuerzo_fin));
+            }
+
+            $dias[] = [
+                'agenda_id' => (int) $r->agenda_id,
+                'fecha' => $r->fecha,
+                'hora_inicio' => date('H:i', strtotime($r->hora_inicio)),
+                'hora_fin' => date('H:i', strtotime($r->hora_fin)),
+                'almuerzo' => $almuerzoTexto,
+                'duracion_minutos' => $duracion,
+                'total_bloques' => $totalBloques,
+                'disponibles' => (int) ($r->disponibles ?? 0),
+                'ocupados' => $ocupados,
+                'horas_estimadas' => $horasEst,
+                'tiene_citas' => $ocupados > 0,
+                'resumen' => $totalBloques . ' bloques × ' . $duracion . ' min ≈ ' . $horasEst . ' h',
+                'url_cancelar' => base_url('dashboard/agenda/cancelar-horas?desde=' . urlencode($r->fecha) . '&hasta=' . urlencode($r->fecha)),
+                'fecha_ymd' => $this->fechaAgendaDdMmYyyyAEntero($r->fecha ?? ''),
+            ];
+        }
+
+        if (count($dias) > 1) {
+            $fechasYmd = array_column($dias, 'fecha_ymd');
+            $horasInicio = array_column($dias, 'hora_inicio');
+            array_multisort($fechasYmd, SORT_NUMERIC, $horasInicio, SORT_STRING, $dias);
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'dias' => $dias,
+        ]);
+    }
+
+    /**
+     * Valida si los días seleccionados pueden editarse o eliminarse (sin citas activas con paciente).
+     */
+    public function validarAgendasSeleccionadas()
+    {
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'Seleccione al menos un día de agenda.',
+            ], 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $resultado = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'validas' => $resultado['validas'],
+            'bloqueadas' => $resultado['bloqueadas'],
+            'puede_proceder' => count($resultado['bloqueadas']) === 0,
+        ]);
+    }
+
+    /**
+     * Actualiza horarios de días seleccionados y regenera bloques disponibles.
+     */
+    public function actualizarAgendas()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        if (!$this->request->isAJAX()) {
+            return $this->agendaJsonResponse(['error' => 'Solicitud inválida'], 400);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse(['success' => false, 'message' => 'Seleccione al menos un día.'], 400);
+        }
+
+        $config = $this->validarConfigHorariosPost();
+        if (isset($config['error'])) {
+            return $this->agendaJsonResponse($config, 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $clasificacion = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+        if (!empty($clasificacion['bloqueadas'])) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'Algunos días tienen citas con paciente. Cancélelas primero en Cancelar horas.',
+                'bloqueadas' => $clasificacion['bloqueadas'],
+            ], 400);
+        }
+
+        $db = \Config\Database::connect();
+        $actualizados = 0;
+        $bloquesCreados = 0;
+
+        foreach ($clasificacion['validas'] as $dia) {
+            $agendaId = (int) $dia['agenda_id'];
+            $fecha = $dia['fecha'];
+
+            $db->table('agenda')->where('id', $agendaId)->where('usuario_id', $usuarioId)->update([
+                'hora_inicio' => $config['hora_inicio'] . ':00',
+                'hora_fin' => $config['hora_fin'] . ':00',
+                'almuerzo_inicio' => $config['incluir_almuerzo'] ? ($config['almuerzo_inicio'] . ':00') : null,
+                'almuerzo_fin' => $config['incluir_almuerzo'] ? ($config['almuerzo_fin'] . ':00') : null,
+            ]);
+
+            $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('paciente_id IS NULL')
+                ->delete();
+
+            $bloquesCreados += $this->generarSlotsDelDia($db, $agendaId, $fecha, $usuarioId, $config);
+            $actualizados++;
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'message' => "Se actualizaron {$actualizados} día(s) y se generaron {$bloquesCreados} bloques disponibles.",
+            'actualizados' => $actualizados,
+            'bloques_creados' => $bloquesCreados,
+        ]);
+    }
+
+    /**
+     * Elimina días de agenda seleccionados (solo sin citas activas con paciente).
+     */
+    public function eliminarAgendasDias()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->agendaJsonResponse(['error' => 'No autorizado'], 401);
+        }
+
+        $agendaIds = $this->normalizarAgendaIds($this->request->getPost('agenda_ids'));
+        if (empty($agendaIds)) {
+            return $this->agendaJsonResponse(['success' => false, 'message' => 'Seleccione al menos un día.'], 400);
+        }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $clasificacion = $this->clasificarAgendasPorCitas($agendaIds, $usuarioId);
+        if (!empty($clasificacion['bloqueadas'])) {
+            return $this->agendaJsonResponse([
+                'success' => false,
+                'message' => 'No se pueden eliminar días con citas activas. Use Cancelar horas primero.',
+                'bloqueadas' => $clasificacion['bloqueadas'],
+            ], 400);
+        }
+
+        $db = \Config\Database::connect();
+        $eliminados = 0;
+        $bloquesEliminados = 0;
+
+        foreach ($clasificacion['validas'] as $dia) {
+            $agendaId = (int) $dia['agenda_id'];
+
+            $bloquesEliminados += (int) $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->countAllResults();
+
+            $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->delete();
+
+            $quedan = $db->table('detalle_agenda')->where('agenda_id', $agendaId)->countAllResults();
+            if ($quedan === 0) {
+                $db->table('agenda')->where('id', $agendaId)->delete();
+            }
+
+            $eliminados++;
+        }
+
+        return $this->agendaJsonResponse([
+            'success' => true,
+            'message' => "Se eliminaron {$eliminados} día(s) ({$bloquesEliminados} bloques).",
+            'dias_eliminados' => $eliminados,
+            'bloques_eliminados' => $bloquesEliminados,
+        ]);
     }
 
     public function actualizarModalidad()
@@ -1290,9 +1722,10 @@ class AgendaController extends BaseController
                 if (in_array($diaSemana, $diasSemanaInt)) {
                     $fecha = $fechaActual->format('d-m-Y'); // Guardar en formato día-mes-año
                     
-                    // Verificar si ya existe agenda para esta fecha
+                    // Verificar si ya existe agenda para esta fecha y nutricionista
                     $agenda = $db->table('agenda')
                         ->where('fecha', $fecha)
+                        ->where('usuario_id', $usuario_id)
                         ->get()
                         ->getRow();
                     
@@ -1349,60 +1782,16 @@ class AgendaController extends BaseController
                     } else {
                         $agendaId = $agenda->id;
                     }
-                    
-                    // Crear horarios según la duración especificada
-                    $horaInicioObj = new \DateTime($fecha . ' ' . $horaInicio . ':00');
-                    $horaFinObj = new \DateTime($fecha . ' ' . $horaFin . ':00');
-                    $almuerzoInicioObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoInicio . ':00') : null;
-                    $almuerzoFinObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoFin . ':00') : null;
-                    
-                    $orden = 1;
-                    $horaActual = clone $horaInicioObj;
-                    
-                    while ($horaActual < $horaFinObj) {
-                        $horaFinCita = clone $horaActual;
-                        $horaFinCita->modify("+{$duracion} minutes");
-                        
-                        // Si hay horario de almuerzo, saltarlo
-                        if ($incluirAlmuerzo && $almuerzoInicioObj && $almuerzoFinObj) {
-                            if ($horaActual >= $almuerzoInicioObj && $horaActual < $almuerzoFinObj) {
-                                $horaActual = clone $almuerzoFinObj;
-                                continue;
-                            }
-                            // Si el horario se solapa con el almuerzo, ajustarlo
-                            if ($horaActual < $almuerzoFinObj && $horaFinCita > $almuerzoInicioObj) {
-                                $horaActual = clone $almuerzoFinObj;
-                                continue;
-                            }
-                        }
-                        
-                        // Verificar si ya existe este horario
-                        $existe = $db->table('detalle_agenda')
-                            ->where('agenda_id', $agendaId)
-                            ->where('usuario_id', $usuario_id)
-                            ->where('hora_inicio', $horaActual->format('H:i:s'))
-                            ->get()
-                            ->getRow();
-                        
-                        if (!$existe) {
-                            $db->table('detalle_agenda')->insert([
-                                'agenda_id' => $agendaId,
-                                'fecha' => $fecha, // Agregar fecha
-                                'usuario_id' => $usuario_id,
-                                'orden' => $orden++,
-                                'hora_inicio' => $horaActual->format('H:i:s'),
-                                'hora_fin' => $horaFinCita->format('H:i:s'),
-                                'estado' => 1, // Disponible
-                                'estado_solicitud_id' => 1,
-                                'modalidad_id' => $modalidadId, // Usar la modalidad seleccionada
-                                'forma_asignacion' => 'Manual',
-                                'estado_cita' => NULL // NULL = Disponible (sin paciente asignado)
-                            ]);
-                            $horariosCreados++;
-                        }
-                        
-                        $horaActual = $horaFinCita;
-                    }
+
+                    $horariosCreados += $this->generarSlotsDelDia($db, (int) $agendaId, $fecha, $usuario_id, [
+                        'hora_inicio' => $horaInicio,
+                        'hora_fin' => $horaFin,
+                        'duracion' => $duracion,
+                        'incluir_almuerzo' => $incluirAlmuerzo,
+                        'almuerzo_inicio' => $almuerzoInicio,
+                        'almuerzo_fin' => $almuerzoFin,
+                        'modalidad_id' => (int) $modalidadId,
+                    ]);
                     
                     // Incrementar contador solo si se procesó un día seleccionado
                     $diasCreados++;
@@ -1580,9 +1969,10 @@ class AgendaController extends BaseController
             'baseUrl' => base_url()
         ]);
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para que en GKE se use EMAIL_FROM_EMAIL / EMAIL_FROM_NAME)
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'Sistema de Agenda'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($cita->paciente_email);
         $email->setSubject('📅 Confirmación de Cita - ' . $fechaFormateada . ' a las ' . $horaInicio);
         $email->setMessage($mensaje);
@@ -1593,6 +1983,129 @@ class AgendaController extends BaseController
         } else {
             log_message('error', 'Error al enviar email: ' . $email->printDebugger(['headers']));
             return false;
+        }
+    }
+
+    /**
+     * Resumen de cobro asociado a una cita (para API y vistas).
+     */
+    private function obtenerResumenCobroCita(int $detalleAgendaId): array
+    {
+        $pagoModel = new \App\Models\Pago();
+        $pago = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$pago) {
+            return ['tiene' => false];
+        }
+
+        $estado = strtolower(trim((string) ($pago->estado_pago ?? '')));
+        $puedeReenviar = ($estado === 'pendiente' && !empty($pago->mp_preference_id));
+
+        return [
+            'tiene' => true,
+            'pago_id' => (int) $pago->id,
+            'estado' => $estado,
+            'estado_label' => match ($estado) {
+                'pendiente' => 'Pendiente de pago',
+                'completado', 'aprobado' => 'Pagado',
+                'procesando' => 'Procesando',
+                'fallido' => 'Fallido',
+                'reembolsado' => 'Reembolsado',
+                default => ucfirst($estado ?: 'Desconocido'),
+            },
+            'monto' => (float) ($pago->monto ?? 0),
+            'monto_formateado' => number_format((float) ($pago->monto ?? 0), 0, ',', '.'),
+            'moneda' => $pago->moneda ?? 'CLP',
+            'concepto' => $this->extraerConceptoPagoDesdeObservaciones($pago->observaciones ?? ''),
+            'medio' => 'Mercado Pago',
+            'puede_reenviar' => $puedeReenviar,
+            'fecha_pago' => !empty($pago->fecha_pago) ? date('d/m/Y H:i', strtotime($pago->fecha_pago)) : null,
+        ];
+    }
+
+    private function extraerConceptoPagoDesdeObservaciones(string $observaciones): string
+    {
+        if (preg_match('/Plantilla:\s*(.+)$/i', $observaciones, $m)) {
+            return trim($m[1]);
+        }
+        return 'Consulta nutricional';
+    }
+
+    /**
+     * Envía el correo con link MP para el pago pendiente de una cita.
+     */
+    private function enviarLinkPagoPendienteCita(int $detalleAgendaId, int $pacienteId): void
+    {
+        $db = \Config\Database::connect();
+        $pagoModel = new \App\Models\Pago();
+        $pago = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->where('estado_pago', 'pendiente')
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if (!$pago || empty($pago->mp_preference_id)) {
+            throw new \Exception('No hay un cobro pendiente con link de pago para esta cita.');
+        }
+
+        $empresaId = $pago->empresa_id ?? null;
+        if (!$empresaId) {
+            throw new \Exception('No se pudo determinar la empresa del cobro.');
+        }
+
+        $pacienteModel = new \App\Models\Paciente();
+        $paciente = $pacienteModel->find($pacienteId);
+        if (!$paciente || empty($paciente->email)) {
+            throw new \Exception('El paciente no tiene correo registrado.');
+        }
+
+        $citaCompleta = $db->table('detalle_agenda da')
+            ->select('da.*, a.fecha, da.hora_inicio, da.hora_fin')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.id', $detalleAgendaId)
+            ->get()
+            ->getRow();
+        if (!$citaCompleta) {
+            throw new \Exception('Cita no encontrada.');
+        }
+
+        $empresaConfigModel = new \App\Models\EmpresaConfiguracion();
+        $credenciales = $empresaConfigModel->obtenerCredencialesMercadoPago($empresaId);
+        if (!$credenciales || empty($credenciales['habilitado'])) {
+            throw new \Exception('Mercado Pago no está configurado para esta empresa.');
+        }
+
+        $mercadoPagoService = new \App\Services\MercadoPagoService(
+            $credenciales['access_token'],
+            $credenciales['public_key'],
+            $credenciales['mode'],
+            rtrim(base_url(), '/')
+        );
+
+        $preferencia = $mercadoPagoService->obtenerPreferencia($pago->mp_preference_id);
+        if (!$preferencia) {
+            throw new \Exception('No se pudo obtener el link de pago desde Mercado Pago.');
+        }
+
+        $initPoint = ($credenciales['mode'] === 'sandbox')
+            ? ($preferencia->sandbox_init_point ?? null)
+            : ($preferencia->init_point ?? null);
+        if (empty($initPoint)) {
+            throw new \Exception('El link de pago no está disponible. Intente nuevamente más tarde.');
+        }
+
+        $plantillaTemporal = (object) [
+            'titulo' => $this->extraerConceptoPagoDesdeObservaciones($pago->observaciones ?? ''),
+            'descripcion' => $pago->observaciones ?? 'Pago de consulta nutricional',
+            'monto' => $pago->monto,
+            'moneda' => $pago->moneda ?? 'CLP',
+        ];
+
+        if (!$this->enviarEmailBotonPago($paciente, $citaCompleta, $plantillaTemporal, $initPoint)) {
+            throw new \Exception('No se pudo enviar el correo con el link de pago.');
         }
     }
 
@@ -1856,9 +2369,10 @@ class AgendaController extends BaseController
             'baseUrl' => base_url()
         ]);
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para GKE)
         $email = Services::email();
-        $email->setFrom(env('email.fromEmail', 'noreply@example.com'), env('email.fromName', 'NextLine Nutrición'));
+        $emailConfig = config(\Config\Email::class);
+        $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
         $email->setTo($paciente->email);
         $email->setSubject('💳 Pago de Consulta - ' . $plantilla->titulo);
         $email->setMessage($mensaje);
@@ -1950,12 +2464,12 @@ class AgendaController extends BaseController
             return false;
         }
 
-        // Enviar email
+        // Enviar email (From desde Config/Email para GKE)
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: Configurando email');
         $email = Services::email();
-        $fromEmail = env('email.fromEmail', 'noreply@example.com');
-        $fromName = env('email.fromName', 'Sistema de Agenda');
-        
+        $emailConfig = config(\Config\Email::class);
+        $fromEmail = $emailConfig->fromEmail;
+        $fromName = $emailConfig->fromName;
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: From: ' . $fromEmail . ' (' . $fromName . ')');
         log_message('info', 'ENVIAR EMAIL CANCELACIÓN: To: ' . $cita->nutricionista_email);
         
@@ -2454,6 +2968,38 @@ class AgendaController extends BaseController
                 log_message('info', 'CONFIRMAR DESDE EMAIL: WhatsApp deshabilitado en configuraciones del usuario ID: ' . $usuarioId);
             }
 
+            // Notificación in-app y correo al nutricionista
+            try {
+                if ($configuracion['enviar_email'] ?? 1) {
+                    (new NotificacionNutricionistaService())->notificarConfirmacionDesdeEmail(
+                        (int) $detalleAgendaId,
+                        (int) $pacienteId,
+                        $tienePago
+                    );
+                } else {
+                    $citaNotif = (new NotificacionNutricionistaService())->obtenerDatosCita((int) $detalleAgendaId, (int) $pacienteId);
+                    if ($citaNotif && !empty($citaNotif->usuario_id)) {
+                        $nombrePac = trim(($citaNotif->paciente_nombre ?? '') . ' ' . ($citaNotif->paciente_apellido ?? ''));
+                        $fechaN = $citaNotif->fecha ?? $citaNotif->fecha_agenda ?? '';
+                        $horaN = !empty($citaNotif->hora_inicio) ? date('H:i', strtotime($citaNotif->hora_inicio)) : '';
+                        $msg = $tienePago
+                            ? $nombrePac . ' confirmó la cita del ' . $fechaN . ' a las ' . $horaN . ' (pendiente de pago).'
+                            : $nombrePac . ' confirmó la cita del ' . $fechaN . ' a las ' . $horaN . '.';
+                        (new \App\Models\Notificacion())->crear(
+                            (int) $citaNotif->usuario_id,
+                            'confirmacion_email',
+                            $tienePago ? 'Paciente confirmó — pendiente de pago' : 'Cita confirmada por el paciente',
+                            $msg,
+                            base_url('dashboard/agenda/lista?destacar=' . $detalleAgendaId),
+                            'detalle_agenda',
+                            (int) $detalleAgendaId
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'CONFIRMAR DESDE EMAIL: notificación nutricionista: ' . $e->getMessage());
+            }
+
             // Mensaje final según si tiene pago o no
             $mensajeFinal = $tienePago 
                 ? 'Cita confirmada. Revisa tu correo para completar el pago.'
@@ -2706,6 +3252,15 @@ class AgendaController extends BaseController
                 }
             }
 
+            // Notificación in-app al nutricionista (el correo ya se envió arriba si aplica)
+            if ($citaCompleta) {
+                try {
+                    (new NotificacionNutricionistaService())->notificarCancelacionDesdeEmail($citaCompleta);
+                } catch (\Throwable $e) {
+                    log_message('error', 'CANCELAR DESDE EMAIL: notificación in-app: ' . $e->getMessage());
+                }
+            }
+
             log_message('info', 'CANCELAR DESDE EMAIL: Proceso completado exitosamente');
             log_message('info', '========================================');
 
@@ -2823,26 +3378,74 @@ class AgendaController extends BaseController
             $data['tags_string'] = '';
         }
 
-        // Buscar la última consulta completada del mismo paciente (para mostrar como referencia)
+        // Última cita anterior con ficha clínica guardada (sin exigir estado_cita completada)
+        $data['referencia_ultima_consulta'] = [];
+        $data['referencia_ultima_fecha'] = '';
+        $data['referencia_detalle_agenda_id'] = null;
+        $data['referencia_examenes_bioquimicos'] = [];
+        $data['referencia_tendencia_consumo'] = [];
         $consultaAnterior = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha as fecha_agenda,
-                      hc.peso_actual as peso_anterior, hc.altura_actual as altura_anterior, 
-                      hc.imc_actual as imc_anterior, hc.circunferencia_cintura as cintura_anterior,
-                      hc.circunferencia_cadera as cadera_anterior, hc.grasa_corporal as grasa_anterior,
-                      hc.masa_muscular as masa_muscular_anterior')
+            ->select('da.*, a.fecha as fecha_agenda')
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->join('historial_clinico hc', 'hc.detalle_agenda_id = da.id', 'left')
+            ->join(
+                'historial_clinico hc',
+                'hc.detalle_agenda_id = da.id AND hc.paciente_id = da.paciente_id AND hc.estado = \'A\'',
+                'inner'
+            )
             ->where('da.paciente_id', $cita->paciente_id)
             ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId) // Excluir la consulta actual
-            ->where('da.fecha_fin_real IS NOT NULL') // Solo consultas terminadas
-            ->orderBy('da.fecha_fin_real', 'DESC')
+            ->where('da.id !=', $detalleAgendaId)
+            ->orderBy(
+                'TIMESTAMP(COALESCE(STR_TO_DATE(da.fecha, \'%d-%m-%Y\'), a.fecha), COALESCE(da.hora_inicio, \'00:00:00\'))',
+                'DESC',
+                false
+            )
             ->limit(1)
             ->get()
             ->getRow();
-        
-        $data['consulta_anterior'] = $consultaAnterior;
+
+        if ($consultaAnterior) {
+            $historialModel = new HistorialClinico();
+            $historialAnterior = $historialModel->withDeleted()
+                ->where('detalle_agenda_id', $consultaAnterior->id)
+                ->where('paciente_id', $cita->paciente_id)
+                ->first();
+            if ($historialAnterior) {
+                $data['referencia_detalle_agenda_id'] = (int) $consultaAnterior->id;
+                if ($historialAnterior->id) {
+                    $examenModel = new \App\Models\HistorialExamenBioquimico();
+                    $data['referencia_examenes_bioquimicos'] = $examenModel->getPorHistorial($historialAnterior->id);
+                    $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
+                    $data['referencia_tendencia_consumo'] = $tendenciaModel->getPorHistorial($historialAnterior->id);
+                }
+                $hArr = is_object($historialAnterior) ? (array) $historialAnterior : $historialAnterior;
+                foreach (HistorialClinico::camposReferenciaUltimaConsulta() as $campo) {
+                    if (!array_key_exists($campo, $hArr)) {
+                        continue;
+                    }
+                    $v = $hArr[$campo];
+                    if ($v === null || $v === '') {
+                        continue;
+                    }
+                    if ($v instanceof \DateTimeInterface) {
+                        $data['referencia_ultima_consulta'][$campo] = $v->format('Y-m-d H:i:s');
+                    } else {
+                        $data['referencia_ultima_consulta'][$campo] = $v;
+                    }
+                }
+            }
+            $fechaRef = !empty($consultaAnterior->fecha) ? $consultaAnterior->fecha : null;
+            if (!$fechaRef && !empty($consultaAnterior->fecha_agenda)) {
+                $ts = strtotime($consultaAnterior->fecha_agenda);
+                $fechaRef = $ts ? date('d-m-Y', $ts) : null;
+            }
+            if ($fechaRef) {
+                $horaRef = !empty($consultaAnterior->hora_inicio)
+                    ? date('H:i', strtotime($consultaAnterior->hora_inicio))
+                    : '';
+                $data['referencia_ultima_fecha'] = trim($fechaRef . ($horaRef !== '' ? ' ' . $horaRef : ''));
+            }
+        }
 
         // Cargar métodos de cálculo disponibles (igual que en historial/editar)
         $perfilId = $usuario['perfil_id'];
@@ -2875,171 +3478,69 @@ class AgendaController extends BaseController
         // Para citas reservadas: cargar modalidades y plantillas de pago (formulario Aprobar reserva)
         $data['modalidades'] = $db->table('modalidad_agenda')->orderBy('id', 'ASC')->get()->getResult();
         $data['plantillas_pago'] = [];
+        $data['mercado_pago_habilitado'] = false;
+        $data['pago_cita'] = null;
         if ($empresaId) {
             $empresaConfigModel = new EmpresaConfiguracion();
-            if ($empresaConfigModel->mercadoPagoHabilitado($empresaId)) {
+            $data['mercado_pago_habilitado'] = $empresaConfigModel->mercadoPagoHabilitado($empresaId);
+            if ($data['mercado_pago_habilitado']) {
                 $plantillaModel = new BotonPagoPlantilla();
                 $data['plantillas_pago'] = $plantillaModel->getPlantillasActivas($empresaId);
             }
         }
+        $pagoModel = new \App\Models\Pago();
+        $data['pago_cita'] = $pagoModel->where('detalle_agenda_id', $detalleAgendaId)
+            ->where('tipo_pago', 'cita')
+            ->orderBy('id', 'DESC')
+            ->first();
 
         return view('Modulos/agenda/consulta', $data);
     }
 
     /**
-     * Listar consultas anteriores del mismo paciente (paginado) para "hojas" en vista consulta
+     * Reenviar por correo el link de pago Mercado Pago de una cita (pago pendiente).
      */
-    public function getConsultasAnteriores()
+    public function reenviarLinkPagoCita()
     {
         $this->response->setContentType('application/json');
-        if (!session()->get('usuario')) {
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
-        }
-        $detalleAgendaId = (int) ($this->request->getGet('detalle_agenda_id') ?? 0);
-        $page = max(1, (int) ($this->request->getGet('page') ?? 1));
-        $perPage = min(20, max(5, (int) ($this->request->getGet('per_page') ?? 10)));
-        if (!$detalleAgendaId) {
-            return $this->response->setJSON(['error' => 'detalle_agenda_id requerido'])->setStatusCode(400);
-        }
-        $db = \Config\Database::connect();
-        $usuario_id = session()->get('usuario')['id'];
-        $citaActual = $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaId)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id IS NOT NULL')
-            ->get()->getRow();
-        if (!$citaActual) {
-            return $this->response->setJSON(['error' => 'Cita no encontrada'])->setStatusCode(404);
-        }
-        $paciente_id = (int) $citaActual->paciente_id;
-        $builder = $db->table('detalle_agenda da')
-            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
-            ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->where('da.paciente_id', $paciente_id)
-            ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId)
-            ->where('da.fecha_fin_real IS NOT NULL')
-            ->orderBy('da.fecha_fin_real', 'DESC');
-        $total = $builder->countAllResults(false);
-        $offset = ($page - 1) * $perPage;
-        $rows = $db->table('detalle_agenda da')
-            ->select('da.id, da.fecha_inicio_real, da.fecha_fin_real, a.fecha as fecha_agenda, da.hora_inicio')
-            ->join('agenda a', 'a.id = da.agenda_id', 'left')
-            ->where('da.paciente_id', $paciente_id)
-            ->where('da.usuario_id', $usuario_id)
-            ->where('da.estado_cita', 'completada')
-            ->where('da.id !=', $detalleAgendaId)
-            ->where('da.fecha_fin_real IS NOT NULL')
-            ->orderBy('da.fecha_fin_real', 'DESC')
-            ->limit($perPage, $offset)
-            ->get()
-            ->getResult();
-        $consultas = [];
-        foreach ($rows as $r) {
-            $fecha = $r->fecha_agenda ?? '';
-            $hora = $r->hora_inicio ? date('H:i', strtotime($r->hora_inicio)) : '';
-            $consultas[] = [
-                'id' => (int) $r->id,
-                'fecha' => $fecha,
-                'hora' => $hora,
-                'fecha_fin_real' => $r->fecha_fin_real ? date('d-m-Y H:i', strtotime($r->fecha_fin_real)) : '',
-                'label' => $fecha . ($hora ? ' ' . $hora : ''),
-            ];
-        }
-        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 0;
-        return $this->response->setJSON([
-            'consultas' => $consultas,
-            'total' => $total,
-            'page' => $page,
-            'per_page' => $perPage,
-            'total_pages' => $totalPages,
-        ]);
-    }
 
-    /**
-     * Obtener datos completos de una consulta anterior para rellenar el formulario actual (solo lectura, no modifica la consulta anterior)
-     */
-    public function getDatosConsultaAnterior()
-    {
-        $this->response->setContentType('application/json');
         if (!session()->get('usuario')) {
-            return $this->response->setJSON(['error' => 'No autorizado'])->setStatusCode(401);
+            return $this->response->setJSON(['error' => 'No autorizado', 'csrf_hash' => csrf_hash()])
+                ->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(401);
         }
-        $detalleAgendaIdActual = (int) ($this->request->getGet('detalle_agenda_id') ?? $this->request->getPost('detalle_agenda_id') ?? 0);
-        $idAnterior = (int) ($this->request->getGet('id_anterior') ?? $this->request->getPost('id_anterior') ?? 0);
-        if (!$detalleAgendaIdActual || !$idAnterior) {
-            return $this->response->setJSON(['error' => 'detalle_agenda_id e id_anterior requeridos'])->setStatusCode(400);
+
+        $detalleAgendaId = (int) ($this->request->getPost('detalle_agenda_id') ?? 0);
+        if ($detalleAgendaId <= 0) {
+            return $this->response->setJSON([
+                'error' => 'ID de cita inválido',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
         }
+
+        $usuarioId = (int) session()->get('usuario')['id'];
         $db = \Config\Database::connect();
-        $usuario_id = session()->get('usuario')['id'];
-        $actual = $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaIdActual)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id IS NOT NULL')
-            ->get()->getRow();
-        if (!$actual) {
-            return $this->response->setJSON(['error' => 'Cita actual no encontrada'])->setStatusCode(404);
+        $cita = $db->table('detalle_agenda')->where('id', $detalleAgendaId)->where('usuario_id', $usuarioId)->get()->getRow();
+        if (!$cita || empty($cita->paciente_id)) {
+            return $this->response->setJSON([
+                'error' => 'Cita no encontrada',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(404);
         }
-        $anterior = $db->table('detalle_agenda')
-            ->where('id', $idAnterior)
-            ->where('usuario_id', $usuario_id)
-            ->where('paciente_id', $actual->paciente_id)
-            ->where('estado_cita', 'completada')
-            ->where('fecha_fin_real IS NOT NULL')
-            ->get()->getRow();
-        if (!$anterior) {
-            return $this->response->setJSON(['error' => 'Consulta anterior no encontrada o no pertenece al mismo paciente'])->setStatusCode(404);
+
+        try {
+            $this->enviarLinkPagoPendienteCita($detalleAgendaId, (int) $cita->paciente_id);
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Link de pago reenviado al correo del paciente.',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        } catch (\Throwable $e) {
+            log_message('error', 'reenviarLinkPagoCita: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => $e->getMessage(),
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
         }
-        $historialModel = new HistorialClinico();
-        $historialExistente = $historialModel->withDeleted()
-            ->where('detalle_agenda_id', $idAnterior)
-            ->where('paciente_id', $actual->paciente_id)
-            ->first();
-        $historial = [];
-        if ($historialExistente) {
-            $h = is_object($historialExistente) ? (array) $historialExistente : $historialExistente;
-            foreach ($h as $k => $v) {
-                if ($v instanceof \DateTimeInterface) {
-                    $historial[$k] = $v->format('Y-m-d H:i:s');
-                } else {
-                    $historial[$k] = $v;
-                }
-            }
-        }
-        $detalle = [
-            'motivo' => $anterior->motivo ?? null,
-            'objetivos' => $anterior->objetivos ?? null,
-            'plan_alimentacion' => $anterior->plan_alimentacion ?? null,
-            'recomendaciones' => $anterior->recomendaciones ?? null,
-            'notas_consulta' => $anterior->notas_consulta ?? null,
-            'proxima_cita_recomendada' => $anterior->proxima_cita_recomendada ?? null,
-        ];
-        $tags_string = '';
-        if (!empty($anterior->tags)) {
-            $arr = json_decode($anterior->tags, true);
-            if (is_array($arr)) {
-                $tags_string = implode(', ', $arr);
-            } else {
-                $tags_string = $anterior->tags;
-            }
-        }
-        $detalle['tags_string'] = $tags_string;
-        $examenes_bioquimicos = [];
-        $tendencia_consumo = [];
-        if (!empty($historial['id'])) {
-            $examenModel = new \App\Models\HistorialExamenBioquimico();
-            $examenes_bioquimicos = $examenModel->getPorHistorial($historial['id']);
-            $tendenciaModel = new \App\Models\HistorialTendenciaConsumo();
-            $tcIndexed = $tendenciaModel->getPorHistorial($historial['id']);
-            $tendencia_consumo = is_array($tcIndexed) ? array_values($tcIndexed) : [];
-        }
-        return $this->response->setJSON([
-            'historial' => $historial,
-            'detalle' => $detalle,
-            'examenes_bioquimicos' => $examenes_bioquimicos,
-            'tendencia_consumo' => $tendencia_consumo,
-        ]);
     }
 
     /**
@@ -3537,6 +4038,7 @@ class AgendaController extends BaseController
         $detalleAgendaId = $post['detalle_agenda_id'] ?? null;
         $pacienteId = $post['paciente_id'] ?? null;
         $historialId = $post['historial_id'] ?? null;
+        $seccionGuardar = $post['seccion_guardar'] ?? 'ambos'; // 'mediciones' | 'registro' | 'ambos'
 
         if (!$detalleAgendaId || !$pacienteId) {
             return $this->response->setJSON([
@@ -3718,19 +4220,38 @@ class AgendaController extends BaseController
         
         $tagsJson = $historialModel->procesarTags($tagsInput, $empresaId);
         
-        // Guardar tags en detalle_agenda
-        $db->table('detalle_agenda')
-            ->where('id', $detalleAgendaId)
-            ->update(['tags' => $tagsJson]);
-        
-        // También guardar en historial_clinico para sincronización
-        $dataHistorial['tags'] = $tagsJson;
+        // Tags y detalle_agenda solo cuando se guarda registro o ambos (no solo mediciones)
+        if ($seccionGuardar !== 'mediciones') {
+            $db->table('detalle_agenda')
+                ->where('id', $detalleAgendaId)
+                ->update(['tags' => $tagsJson]);
+            $dataHistorial['tags'] = $tagsJson;
+        }
+
+        // Actualización parcial: solo las columnas de la sección indicada
+        if ($historialExistente && $seccionGuardar === 'mediciones') {
+            $keysMediciones = [
+                'peso_actual', 'altura_actual', 'altura_sentado', 'imc_actual',
+                'circunferencia_cintura', 'circunferencia_cadera', 'circunferencia_brazo_relajado', 'circunferencia_brazo_contraido',
+                'circunferencia_muslo_medio', 'circunferencia_pantorrilla', 'circunferencia_cuello', 'circunferencia_torax',
+                'circunferencia_cabeza', 'circunferencia_antebrazo_maximo', 'circunferencia_muslo_maximo', 'circunferencia_muneca',
+                'diametro_biacromial', 'diametro_bi_iliocristal', 'diametro_torax_transverso', 'diametro_torax_anteroposterior',
+                'diametro_humero', 'diametro_femur', 'diametro_muneca', 'diametro_tobillo',
+                'grasa_corporal', 'masa_muscular', 'pliegue_tricipital', 'pliegue_bicipital', 'pliegue_subescapular',
+                'pliegue_suprailíaco', 'pliegue_supraespinal', 'pliegue_abdominal', 'pliegue_muslo_anterior', 'pliegue_pantorrilla_medial',
+                'pliegue_pectoral', 'pliegue_axilar_medio', 'pliegue_muslo_medial', 'suma_pliegues', 'grasa_corporal_calculada', 'estado'
+            ];
+            $dataHistorial = array_intersect_key($dataHistorial, array_flip($keysMediciones));
+        } elseif ($historialExistente && $seccionGuardar === 'registro') {
+            $keysRegistro = ['anamnesis_clinica', 'anamnesis_alimentaria', 'recordatorio_24h', 'tags', 'estado'];
+            $dataHistorial = array_intersect_key($dataHistorial, array_flip($keysRegistro));
+        }
 
         try {
             if ($historialId) {
                 // Actualizar registro existente
                 $historialModel->update($historialId, $dataHistorial);
-                $mensaje = 'Mediciones actualizadas correctamente';
+                $mensaje = $seccionGuardar === 'mediciones' ? 'Mediciones actualizadas correctamente' : ($seccionGuardar === 'registro' ? 'Registro clínico actualizado correctamente' : 'Mediciones actualizadas correctamente');
             } else {
                 // Crear nuevo registro
                 $nuevoId = $historialModel->insert($dataHistorial);
@@ -3738,7 +4259,8 @@ class AgendaController extends BaseController
                 $historialId = $nuevoId;
             }
 
-            // Exámenes bioquímicos: reemplazar todos los del historial
+            // Exámenes bioquímicos y tendencia: solo al guardar registro o ambos
+            if ($seccionGuardar !== 'mediciones') {
             $examenModel = new \App\Models\HistorialExamenBioquimico();
             $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $historialId)->delete();
             $examenesRaw = $post['examenes_bioquimicos'] ?? '';
@@ -3780,6 +4302,7 @@ class AgendaController extends BaseController
                     }
                 }
             }
+            } // fin si seccionGuardar !== 'mediciones'
 
             $response = $this->response->setJSON([
                 'success' => true,
@@ -4238,5 +4761,217 @@ class AgendaController extends BaseController
             log_message('error', 'Error al eliminar evento del calendario: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Convierte fecha agenda DD-MM-YYYY a entero YYYYMMDD para ordenar.
+     */
+    private function fechaAgendaDdMmYyyyAEntero(?string $fecha): int
+    {
+        $fecha = trim((string) $fecha);
+        if ($fecha === '') {
+            return 0;
+        }
+        // DD-MM-YYYY (formato agenda en BD)
+        if (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $fecha, $m)) {
+            return (int) sprintf('%04d%02d%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        }
+        // YYYY-MM-DD por si hubiera registros legacy
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $fecha, $m)) {
+            return (int) sprintf('%04d%02d%02d', (int) $m[1], (int) $m[2], (int) $m[3]);
+        }
+        return 0;
+    }
+
+    /**
+     * Genera bloques disponibles en detalle_agenda para un día.
+     */
+    private function generarSlotsDelDia($db, int $agendaId, string $fecha, int $usuarioId, array $config): int
+    {
+        $horaInicio = $config['hora_inicio'];
+        $horaFin = $config['hora_fin'];
+        $duracion = (int) $config['duracion'];
+        $incluirAlmuerzo = !empty($config['incluir_almuerzo']);
+        $almuerzoInicio = $config['almuerzo_inicio'] ?? '13:00';
+        $almuerzoFin = $config['almuerzo_fin'] ?? '14:00';
+        $modalidadId = (int) ($config['modalidad_id'] ?? 3);
+
+        $horaInicioObj = new \DateTime($fecha . ' ' . $horaInicio . ':00');
+        $horaFinObj = new \DateTime($fecha . ' ' . $horaFin . ':00');
+        $almuerzoInicioObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoInicio . ':00') : null;
+        $almuerzoFinObj = $incluirAlmuerzo ? new \DateTime($fecha . ' ' . $almuerzoFin . ':00') : null;
+
+        $ordenRow = $db->table('detalle_agenda')
+            ->selectMax('orden', 'max_orden')
+            ->where('agenda_id', $agendaId)
+            ->where('usuario_id', $usuarioId)
+            ->get()
+            ->getRow();
+        $orden = (int) ($ordenRow->max_orden ?? 0) + 1;
+
+        $creados = 0;
+        $horaActual = clone $horaInicioObj;
+
+        while ($horaActual < $horaFinObj) {
+            $horaFinCita = clone $horaActual;
+            $horaFinCita->modify("+{$duracion} minutes");
+
+            if ($incluirAlmuerzo && $almuerzoInicioObj && $almuerzoFinObj) {
+                if ($horaActual >= $almuerzoInicioObj && $horaActual < $almuerzoFinObj) {
+                    $horaActual = clone $almuerzoFinObj;
+                    continue;
+                }
+                if ($horaActual < $almuerzoFinObj && $horaFinCita > $almuerzoInicioObj) {
+                    $horaActual = clone $almuerzoFinObj;
+                    continue;
+                }
+            }
+
+            $existe = $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('hora_inicio', $horaActual->format('H:i:s'))
+                ->get()
+                ->getRow();
+
+            if (!$existe) {
+                $db->table('detalle_agenda')->insert([
+                    'agenda_id' => $agendaId,
+                    'fecha' => $fecha,
+                    'usuario_id' => $usuarioId,
+                    'orden' => $orden++,
+                    'hora_inicio' => $horaActual->format('H:i:s'),
+                    'hora_fin' => $horaFinCita->format('H:i:s'),
+                    'estado' => 1,
+                    'estado_solicitud_id' => 1,
+                    'modalidad_id' => $modalidadId,
+                    'forma_asignacion' => 'Manual',
+                    'estado_cita' => null,
+                ]);
+                $creados++;
+            }
+
+            $horaActual = $horaFinCita;
+        }
+
+        return $creados;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return int[]
+     */
+    private function normalizarAgendaIds($raw): array
+    {
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $raw = $decoded;
+            } else {
+                $raw = array_filter(array_map('trim', explode(',', $raw)));
+            }
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+        $ids = array_map('intval', $raw);
+        return array_values(array_filter($ids, static fn ($id) => $id > 0));
+    }
+
+    /**
+     * @param int[] $agendaIds
+     * @return array{validas: array<int, array>, bloqueadas: array<int, array>}
+     */
+    private function clasificarAgendasPorCitas(array $agendaIds, int $usuarioId): array
+    {
+        $db = \Config\Database::connect();
+        $validas = [];
+        $bloqueadas = [];
+
+        foreach ($agendaIds as $agendaId) {
+            $agenda = $db->table('agenda a')
+                ->select('a.id, a.fecha')
+                ->join('detalle_agenda da', 'da.agenda_id = a.id AND da.usuario_id = ' . $usuarioId, 'inner')
+                ->where('a.id', $agendaId)
+                ->groupBy('a.id, a.fecha')
+                ->get()
+                ->getRow();
+
+            if (!$agenda) {
+                continue;
+            }
+
+            $ocupados = (int) $db->table('detalle_agenda')
+                ->where('agenda_id', $agendaId)
+                ->where('usuario_id', $usuarioId)
+                ->where('paciente_id IS NOT NULL')
+                ->groupStart()
+                    ->where('estado_cita IS NULL')
+                    ->orWhereNotIn('estado_cita', ['cancelada', 'completada'])
+                ->groupEnd()
+                ->countAllResults();
+
+            $item = [
+                'agenda_id' => (int) $agenda->id,
+                'fecha' => $agenda->fecha,
+                'ocupados' => $ocupados,
+                'url_cancelar' => base_url('dashboard/agenda/cancelar-horas?desde=' . urlencode($agenda->fecha) . '&hasta=' . urlencode($agenda->fecha)),
+            ];
+
+            if ($ocupados > 0) {
+                $item['mensaje'] = "El día {$agenda->fecha} tiene {$ocupados} cita(s). Cancélelas primero en Cancelar horas.";
+                $bloqueadas[] = $item;
+            } else {
+                $validas[] = $item;
+            }
+        }
+
+        return ['validas' => $validas, 'bloqueadas' => $bloqueadas];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validarConfigHorariosPost(): array
+    {
+        $horaInicio = $this->request->getPost('hora_inicio');
+        $horaFin = $this->request->getPost('hora_fin');
+        $duracion = (int) $this->request->getPost('duracion');
+        $incluirAlmuerzo = $this->request->getPost('incluir_almuerzo') == 'true'
+            || $this->request->getPost('incluir_almuerzo') == 'on';
+        $almuerzoInicio = $this->request->getPost('almuerzo_inicio') ?: '13:00';
+        $almuerzoFin = $this->request->getPost('almuerzo_fin') ?: '14:00';
+        $modalidadId = (int) ($this->request->getPost('modalidad_id') ?: 3);
+
+        if (empty($horaInicio) || empty($horaFin)) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'Hora de inicio y fin son requeridas.'];
+        }
+        if ($duracion < 5 || $duracion > 480) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'La duración debe estar entre 5 y 480 minutos.'];
+        }
+        if (strtotime($horaFin . ':00') <= strtotime($horaInicio . ':00')) {
+            return ['success' => false, 'error' => 'Error de validación', 'message' => 'La hora de fin debe ser mayor que la de inicio.'];
+        }
+
+        return [
+            'hora_inicio' => $horaInicio,
+            'hora_fin' => $horaFin,
+            'duracion' => $duracion,
+            'incluir_almuerzo' => $incluirAlmuerzo,
+            'almuerzo_inicio' => $almuerzoInicio,
+            'almuerzo_fin' => $almuerzoFin,
+            'modalidad_id' => $modalidadId,
+        ];
+    }
+
+    /**
+     * Respuesta JSON de agenda con token CSRF renovado (evita "The action you requested..." en el siguiente POST).
+     */
+    private function agendaJsonResponse(array $payload, int $status = 200)
+    {
+        $payload['csrf_token'] = csrf_hash();
+        $response = $this->response->setJSON($payload)->setStatusCode($status);
+        $response->setHeader('X-CSRF-TOKEN', csrf_hash());
+        return $response;
     }
 }

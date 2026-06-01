@@ -24,9 +24,6 @@
                         <a href="<?= base_url('dashboard/historial/comparar' . (!empty($retorno_consulta_id) ? '?retorno=consulta&id=' . (int)$retorno_consulta_id : '')) ?>" class="btn btn-light me-2">
                             <i class="fas fa-chart-line me-2"></i> Comparar Historiales
                         </a>
-                        <a href="<?= base_url('dashboard/historial/registro') ?>" class="btn btn-light">
-                            <i class="fas fa-plus me-2"></i> Nueva Consulta
-                        </a>
                     </div>
                 </div>
             </div>
@@ -61,7 +58,6 @@
                                 <th>Medidas</th>
                                 <th>Motivo</th>
                                 <th>Tags</th>
-                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -144,8 +140,7 @@ $(document).ready(function() {
             { "data": 4 },
             { "data": 5 },
             { "data": 6 },
-            { "data": 7 },
-            { "data": 8, "orderable": false }
+            { "data": 7, "orderable": false }
         ],
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"

@@ -171,6 +171,11 @@ class HistorialController extends BaseController
             $imcInfo = $r->imc_actual ? "IMC: {$r->imc_actual}" : '';
             $medidas = trim($pesoInfo . ($imcInfo ? ' | ' . $imcInfo : ''));
 
+            // Motivo sin etiquetas HTML (solo texto para la tabla)
+            $motivoTexto = strip_tags($r->motivo_consulta ?? '');
+            $motivoTexto = trim(preg_replace('/\s+/', ' ', $motivoTexto));
+            $motivoCorta = $motivoTexto !== '' ? (mb_substr($motivoTexto, 0, 50) . (mb_strlen($motivoTexto) > 50 ? '...' : '')) : '';
+
             // Obtener tags como badges
             $tagsHtml = '';
             if (!empty($r->tags)) {
@@ -184,18 +189,8 @@ class HistorialController extends BaseController
                 }
             }
 
-            $estadoBadge = $r->estado == 'A' 
-                ? '<span class="badge bg-success">Activo</span>' 
-                : '<span class="badge bg-danger">Inactivo</span>';
-
-            $botones = '';
-            if ($r->estado == 'A') {
-                $botones = '<button class="btn btn-sm btn-outline-primary" onclick="editarHistorial(' . $r->id . ')">Editar</button> ' .
-                          '<button class="btn btn-sm btn-outline-info" onclick="verHistorial(' . $r->id . ')">Ver</button> ' .
-                          '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHistorial(' . $r->id . ')">Eliminar</button>';
-            } else {
-                $botones = '<button class="btn btn-sm btn-outline-info" onclick="verHistorial(' . $r->id . ')">Ver</button>';
-            }
+            $botones = '<button class="btn btn-sm btn-outline-primary" onclick="verHistorial(' . $r->id . ')">Ver</button> ' .
+                       '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHistorial(' . $r->id . ')">Eliminar</button>';
 
             $data[] = array(
                 esc($nombrePaciente),
@@ -203,9 +198,8 @@ class HistorialController extends BaseController
                 esc($r->hora_consulta ?? ''),
                 $tipoBadge,
                 esc($medidas),
-                esc(substr($r->motivo_consulta ?? '', 0, 50)) . (strlen($r->motivo_consulta ?? '') > 50 ? '...' : ''),
+                esc($motivoCorta),
                 $tagsHtml ?: '<span class="text-muted">-</span>',
-                $estadoBadge,
                 $botones
             );
         }
@@ -1174,6 +1168,12 @@ class HistorialController extends BaseController
         foreach ($historialIds as $id) {
             $h = $historial->getHistorialCompleto($id);
             if ($h) {
+                $peso = $h->peso_actual !== null && $h->peso_actual !== '' ? (float) $h->peso_actual : null;
+                $grasaPct = $h->grasa_corporal !== null && $h->grasa_corporal !== '' ? (float) $h->grasa_corporal : null;
+                $masaMuscKg = $h->masa_muscular !== null && $h->masa_muscular !== '' ? (float) $h->masa_muscular : null;
+                $masaGrasaKg = ($peso !== null && $grasaPct !== null) ? round($peso * $grasaPct / 100, 1) : null;
+                $masaMuscularPct = ($peso !== null && $peso > 0 && $masaMuscKg !== null) ? round($masaMuscKg / $peso * 100, 1) : null;
+
                 $historiales[] = [
                     'id' => $h->id,
                     'fecha_consulta' => $h->fecha_consulta,
@@ -1183,9 +1183,10 @@ class HistorialController extends BaseController
                     'altura_actual' => $h->altura_actual,
                     'imc_actual' => $h->imc_actual,
                     'circunferencia_cintura' => $h->circunferencia_cintura,
-                    'circunferencia_cadera' => $h->circunferencia_cadera,
                     'grasa_corporal' => $h->grasa_corporal,
                     'masa_muscular' => $h->masa_muscular,
+                    'masa_grasa_kg' => $masaGrasaKg,
+                    'masa_muscular_pct' => $masaMuscularPct,
                     'motivo_consulta' => $h->motivo_consulta,
                     'anamnesis' => $h->anamnesis,
                     'diagnostico' => $h->diagnostico,

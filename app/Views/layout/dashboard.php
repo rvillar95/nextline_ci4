@@ -39,11 +39,29 @@ exit(); */
         <ul class="navbar-item theme-brand flex-row  text-center">
             <li class="nav-item theme-logo">
                 <a href="<?= base_url('dashboard/menu') ?>" class="nav-link d-flex align-items-center gap-2">
-                    <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" alt="VitaSync" class="navbar-logo" style="height: 36px; width: auto;">
+                    <img src="<?= base_url('lib/logo/logo-horizontal.png') ?>" alt="NutriNext" class="navbar-logo" style="height: 40px; width: auto;">
                 </a>
             </li>
         </ul>
         <ul class="navbar-item flex-row ms-lg-auto ms-0 action-area">
+            <li class="nav-item dropdown notification-dropdown">
+                <a href="javascript:void(0);" class="nav-link dropdown-toggle position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notificaciones">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notif-badge-count" id="notifBadge" style="display: none;">0</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end notification-menu-panel" aria-labelledby="notificationDropdown" >
+                    <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Notificaciones</h6>
+                        <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" id="btnMarcarTodasLeidas" style="display: none;">Marcar todas</button>
+                    </div>
+                    <div class="notification-scroll" id="notifLista">
+                        <div class="notif-empty text-muted small py-3 text-center" id="notifCargando">Cargando...</div>
+                    </div>
+                </div>
+            </li>
             <li class="nav-item theme-toggle-item">
                 <a href="javascript:void(0);" class="nav-link theme-toggle">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon dark-mode">
@@ -109,7 +127,7 @@ exit(); */
 <!--  END NAVBAR  -->
 
 <!-- CRONÓMETRO GLOBAL DE CONSULTA ACTIVA -->
-<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 80px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #4dcba5 0%, #bee6db 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
+<div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 48px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #7bc143 0%, #2daae1 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
     <div class="d-flex align-items-center justify-content-between">
         <div class="flex-grow-1">
             <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">
@@ -142,11 +160,11 @@ exit(); */
                 <div class="nav-logo">
                     <div class="nav-item theme-logo">
                         <a href="<?= base_url('dashboard/menu') ?>">
-                            <img src="<?= base_url('lib/logo/logo-grande-sin-margen.png') ?>" class="navbar-logo" alt="VitaSync" style="max-height: 64px; width: auto;">
+                            <img src="<?= base_url('lib/logo/logo-horizontal.png') ?>" class="navbar-logo" alt="NutriNext" style="max-height: 56px; width: auto;">
                         </a>
                     </div>
                     <div class="nav-item theme-text">
-                        <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"> <span style="color: var(--user-primary, #4dcba5);">N</span>utri<span style="color: var(--user-primary, #4dcba5);">S</span>ync</a>
+                        <a href="<?= base_url('dashboard/menu') ?>" class="nav-link"><span style="color: #6b7280;">Nutri</span><span style="color: var(--user-primary, #7bc143);">Next</span></a>
                     </div>
                 </div>
                 <div class="nav-item sidebar-toggle">
@@ -160,143 +178,98 @@ exit(); */
             </div>
             <div class="shadow-bottom"></div>
             
-            <!-- CSS personalizado para el menú -->
             <style>
-                /* Solución simple: permitir que el texto se envuelva en los botones del menú */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle {
-                    white-space: normal !important;     /* Permite que el texto se envuelva */
-                    word-wrap: break-word !important;   /* Permite que se divida si es necesario */
-                    height: auto !important;            /* Altura automática para acomodar múltiples líneas */
-                    min-height: 40px !important;       /* Altura mínima para mantener consistencia */
-                    padding: 10px 16px !important;      /* Padding adecuado para múltiples líneas */
+                /* Anular nowrap global del tema (#sidebar * { white-space: nowrap }) */
+                #sidebar ul.nutrinext-sidebar-menu,
+                #sidebar ul.nutrinext-sidebar-menu li,
+                #sidebar ul.nutrinext-sidebar-menu a,
+                #sidebar ul.nutrinext-sidebar-menu .dropdown-toggle,
+                #sidebar ul.nutrinext-sidebar-menu .dropdown-toggle span {
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-overflow: unset !important;
                 }
 
-                /* Ajustar el contenedor del texto para que se expanda */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div {
-                    flex: 1 !important;                 /* Permitir que se expanda */
-                    min-width: 0 !important;            /* Permitir que se contraiga si es necesario */
+                #sidebar ul.nutrinext-sidebar-menu .menu-section-heading {
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    color: #94a3b8;
+                    padding: 14px 16px 6px;
+                    margin: 0;
                 }
 
-                /* Ajustar el texto para que se envuelva correctamente */
-                #sidebar ul.menu-categories li.menu > .dropdown-toggle > div span {
-                    white-space: normal !important;     /* Permitir envoltura del texto */
-                    word-wrap: break-word !important;   /* Permitir división de palabras */
-                    line-height: 1.3 !important;       /* Altura de línea cómoda para múltiples líneas */
-                    display: block !important;          /* Mostrar como bloque para mejor control */
+                #sidebar ul.nutrinext-sidebar-menu li.menu-section-heading-item {
+                    margin-bottom: 0 !important;
                 }
 
-                /* Asegurar que el último elemento del menú se vea bien */
-                #sidebar ul.menu-categories li.menu:last-child {
-                    margin-bottom: 80px !important;     /* Espacio al final del menú */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    flex: 1;
+                    min-width: 0;
                 }
 
-                /* Asegurar que todos los elementos del menú tengan el mismo estilo */
-                #sidebar ul.menu-categories li.menu {
-                    margin-bottom: 5px !important;     /* Espacio consistente entre elementos */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner svg {
+                    flex-shrink: 0;
+                    margin-top: 2px;
                 }
 
-                /* SOLUCIÓN PARA EL SCROLL EN MÓVILES */
-                /* Permitir que el sidebar tenga scroll en todas las resoluciones */
+                #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner span {
+                    line-height: 1.35;
+                    word-break: break-word;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu > .dropdown-toggle.sidebar-menu-link {
+                    display: flex !important;
+                    align-items: flex-start;
+                    height: auto !important;
+                    min-height: 42px;
+                    padding: 10px 14px !important;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu ul.submenu > li a {
+                    display: block;
+                    line-height: 1.35 !important;
+                    word-break: break-word;
+                    padding: 8px 12px 8px 18px !important;
+                    margin-left: 28px !important;
+                    font-size: 13px;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu:last-child {
+                    margin-bottom: 72px !important;
+                }
+
                 #sidebar {
-                    overflow-y: auto !important;        /* Permitir scroll vertical */
-                    overflow-x: hidden !important;      /* Ocultar scroll horizontal */
-                    -webkit-overflow-scrolling: touch;  /* Scroll suave en iOS */
-                    max-height: 100vh !important;       /* Altura máxima de la ventana */
-                }
-
-                /* Permitir que el contenedor del menú tenga scroll */
-                #sidebar ul.menu-categories {
-                    overflow-y: visible !important;     /* Permitir que el contenido sea visible */
+                    overflow-y: auto !important;
                     overflow-x: hidden !important;
+                    -webkit-overflow-scrolling: touch;
+                    max-height: 100vh !important;
                 }
 
-                /* En móviles, asegurar que el sidebar tenga altura correcta */
                 @media (max-width: 991px) {
-                    .sidebar-wrapper {
-                        overflow-y: auto !important;
-                        -webkit-overflow-scrolling: touch;
-                    }
-                    
+                    .sidebar-wrapper { overflow-y: auto !important; }
                     #sidebar {
                         height: 100vh !important;
-                        overflow-y: auto !important;
-                        padding-bottom: 50px !important;
+                        padding-bottom: 48px !important;
                     }
                 }
             </style>
-            
-            <ul class="list-unstyled menu-categories" id="accordionExample">
-                <?php
-                $contador = 1;
-                // Soporte para $data['data'] (módulos) o $data como lista de ítems (dashboard/menu)
-                if (isset($data['data']) && is_array($data['data'])) {
-                    $menuItems = $data['data'];
-                } elseif (isset($data[0]['menu']) && isset($data[0]['submenu'])) {
-                    $menuItems = $data;
-                } else {
-                    $menuItems = [];
-                }
-                foreach ($menuItems as $menu) : ?>
-                    <?php //if ($modulo['mostrar'] == 'S') { 
-                    if (count($menu['submenu']) > 0) { ?>
-                        <li class="menu active">
-                            <a href="#modulo_<?= $contador ?>" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed">
-                                <div class="">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-layers">
-                                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                        <polyline points="2 17 12 22 22 17"></polyline>
-                                        <polyline points="2 12 12 17 22 12"></polyline>
-                                    </svg>
-                                    <span><?= $menu['menu']['nombre'] ?></span>
-                                </div>
-                            </a>
-                            <ul class="submenu list-unstyled collapse" id="modulo_<?= $contador ?>" data-bs-parent="#accordionExample" style="">
-                                <?php foreach ($menu['submenu'] as $submenu) :
-                                    // Verificar si el permiso correspondiente en el menú principal está habilitado
-                                    $acciones = explode(',', $submenu['accion']);
-                                    $mostrar = false;
-                                    foreach ($acciones as $accion) {
-                                        if (isset($menu['menu'][$accion]) && $menu['menu'][$accion] == 1) {
-                                            $mostrar = true;
-                                            break;
-                                        }
-                                    }
-                                    if ($mostrar && $submenu['mostrar'] == 'S') : 
-                                        // Si la ruta del submódulo empieza con /dashboard/ o dashboard/, usarla directamente (ruta absoluta)
-                                        // Si no, concatenarla con la ruta del módulo padre (ruta relativa)
-                                        $ruta_submenu = trim($submenu['ruta']);
-                                        $ruta_completa = (strpos($ruta_submenu, '/dashboard/') === 0 || strpos($ruta_submenu, 'dashboard/') === 0) 
-                                            ? (strpos($ruta_submenu, '/') === 0 ? $ruta_submenu : '/' . $ruta_submenu)
-                                            : $menu['menu']['ruta'] . $ruta_submenu;
-                                    ?>
-                                        <li>
-                                            <a href="<?= base_url($ruta_completa) ?>"> <?= $submenu['descripcion'] ?></a>
-                                        </li>
-                                <?php endif;
-                                endforeach; ?>
-                            </ul>
-                        </li>
-                    <?php
-                        $contador++;
-                    } else {
-                    ?>
-                        <li class="menu active">
 
-                            <a href="<?= base_url($menu['menu']['ruta']) ?>" aria-expanded="false" class="dropdown-toggle">
-                                <div class="aaa">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home">
-                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                                    </svg>
-                                    <span><?= $menu['menu']['nombre'] ?></span>
-                                </div>
-                            </a>
-                        </li>
-                    <?php
-                    }
-                    ?>
-                <?php endforeach; ?>
-            </ul>
+            <?php
+            if (isset($data['data']) && is_array($data['data'])) {
+                $menuItemsRaw = $data['data'];
+            } elseif (isset($data[0]['menu']) && isset($data[0]['submenu'])) {
+                $menuItemsRaw = $data;
+            } else {
+                $menuItemsRaw = [];
+            }
+            $sidebarMenu = \App\Libraries\DashboardMenuBuilder::build($menuItemsRaw, $usuario ?? null);
+            echo view('layout/partials/sidebar_menu', ['sidebarMenu' => $sidebarMenu]);
+            ?>
         </nav>
     </div>
     <!--  END SIDEBAR  -->
@@ -365,6 +338,10 @@ exit(); */
                     <?php echo $this->renderSection("modulo_detalle/registro"); ?>
                     <?php echo $this->renderSection("modulo_detalle/lista"); ?>
                     <?php echo $this->renderSection("modulo_detalle/detalle"); ?>
+
+                    <?php echo $this->renderSection("menu_grupo/lista"); ?>
+                    <?php echo $this->renderSection("menu_grupo/registro"); ?>
+                    <?php echo $this->renderSection("menu_grupo/detalle"); ?>
                     <!-- END Section Modulo Detalle-->
 
                     <!-- Star Section Modulo Servicio-->
@@ -424,6 +401,9 @@ exit(); */
                     <?php echo $this->renderSection("empresa/registro"); ?>
                     <?php echo $this->renderSection("empresa/detalle"); ?>
 
+                    <?php echo $this->renderSection("servicio-nutrinext/lista"); ?>
+                    <?php echo $this->renderSection("servicio-nutrinext/registro"); ?>
+
                     <?php echo $this->renderSection("paquete/lista"); ?>
                     <?php echo $this->renderSection("paquete/registro"); ?>
                     <?php echo $this->renderSection("paquete/detalle"); ?>
@@ -461,6 +441,10 @@ exit(); */
                     <?php echo $this->renderSection("agenda/consulta"); ?>
                     <?php echo $this->renderSection("agenda/estadisticas"); ?>
                     <!-- END Section Agenda -->
+
+                    <!-- Secciones de Mensajes WhatsApp -->
+                    <?php echo $this->renderSection("mensajes/index"); ?>
+                    <!-- END Section Mensajes -->
                     
                     <!-- Secciones de Documentos -->
                     <?php echo $this->renderSection("documento/lista"); ?>
@@ -487,7 +471,7 @@ exit(); */
                     <?php echo $this->renderSection("pago/editar"); ?>
                     <!-- END Section Pagos -->
                     
-                    <!-- Secciones de Botones de Pago (Mercado Pago) -->
+                    <!-- Tarifas de consulta / Mercado Pago -->
                     <?php echo $this->renderSection("boton_pago/lista"); ?>
                     <?php echo $this->renderSection("boton_pago/crear"); ?>
                     <?php echo $this->renderSection("boton_pago/ver"); ?>
@@ -817,6 +801,7 @@ exit(); */
                             $('#cronometroPacienteNombre').text(response.paciente.nombre || 'Paciente');
                             $('#cronometroBtnIrConsulta').attr('href', response.url_consulta);
                             $('#cronometroGlobalConsulta').fadeIn(300);
+                            document.body.classList.add('cronometro-consulta-visible');
                             
                             // Iniciar actualización del cronómetro
                             if (!cronometroInterval) {
@@ -825,6 +810,7 @@ exit(); */
                             }
                         } else {
                             // Ocultar cronómetro si no hay consulta activa
+                            document.body.classList.remove('cronometro-consulta-visible');
                             $('#cronometroGlobalConsulta').fadeOut(300);
                             if (cronometroInterval) {
                                 clearInterval(cronometroInterval);
@@ -840,6 +826,7 @@ exit(); */
                     },
                     error: function() {
                         // En caso de error, ocultar el cronómetro
+                        document.body.classList.remove('cronometro-consulta-visible');
                         $('#cronometroGlobalConsulta').fadeOut(300);
                         if (cronometroInterval) {
                             clearInterval(cronometroInterval);
@@ -869,6 +856,236 @@ exit(); */
         .blink {
             animation: blink 1s infinite;
         }
+        .notification-dropdown .nav-link { padding-right: 0.35rem !important; }
+        .notif-badge-count {
+            position: absolute;
+            top: 2px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #dc3545;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+            box-sizing: border-box;
+            border: 2px solid var(--user-main-header-bg, #1e293b);
+            pointer-events: none;
+            z-index: 1;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Panel notificaciones: anular tema (min-width 15rem, overflow, etc.) */
+        .navbar .navbar-item .nav-item.notification-dropdown .dropdown-menu.notification-menu-panel {
+            width: 400px !important;
+            min-width: 400px !important;
+            max-width: min(420px, calc(100vw - 24px)) !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+        .notification-menu-panel .notification-scroll {
+            height: auto !important;
+            max-height: min(420px, 70vh) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            position: relative !important;
+        }
+        .notification-menu-panel .notif-panel-header {
+            flex-shrink: 0;
+        }
+        .notification-menu-panel .notif-panel-header h6 {
+            white-space: nowrap;
+        }
+        .notification-menu-panel .notif-empty {
+            padding: 1rem;
+            text-align: center;
+        }
+        .notification-menu-panel .notif-item {
+            cursor: pointer;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            padding: 0.85rem 1rem !important;
+            text-decoration: none !important;
+            color: #1e293b !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            white-space: normal !important;
+            overflow: visible !important;
+            text-overflow: unset !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+        }
+        .notification-menu-panel .notif-item.unread {
+            background: rgba(123, 193, 67, 0.12) !important;
+            border-left: 3px solid #7bc143;
+        }
+        .notification-menu-panel .notif-item:hover {
+            background: rgba(123, 193, 67, 0.18) !important;
+            color: #1e293b !important;
+        }
+        .notification-menu-panel .notif-item .notif-titulo {
+            display: block;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+            color: #0f172a;
+            line-height: 1.35;
+            white-space: normal !important;
+        }
+        .notification-menu-panel .notif-item .notif-msg {
+            display: block;
+            font-size: 0.875rem;
+            color: #334155;
+            margin: 0 0 0.35rem 0;
+            line-height: 1.5;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+        }
+        .notification-menu-panel .notif-item .notif-hace {
+            display: block;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
         </style>
+
+        <script>
+        (function() {
+            var urlListar = <?= json_encode(base_url('dashboard/notificaciones/listar')) ?>;
+            var urlMarcar = <?= json_encode(base_url('dashboard/notificaciones/marcar-leida')) ?>;
+            var urlMarcarTodas = <?= json_encode(base_url('dashboard/notificaciones/marcar-todas-leidas')) ?>;
+            var csrfName = <?= json_encode(csrf_token()) ?>;
+            var csrfHash = <?= json_encode(csrf_hash()) ?>;
+            var badge = document.getElementById('notifBadge');
+            var lista = document.getElementById('notifLista');
+            var btnTodas = document.getElementById('btnMarcarTodasLeidas');
+            var ultimoNoLeidas = 0;
+            var ultimaNotifId = 0;
+
+            function csrfBody(extra) {
+                var p = new URLSearchParams(extra || {});
+                p.set(csrfName, csrfHash);
+                return p;
+            }
+
+            function actualizarBadge(n) {
+                if (!badge) return;
+                if (n > 0) {
+                    badge.textContent = n > 99 ? '99+' : String(n);
+                    badge.style.display = 'inline-flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+                if (btnTodas) btnTodas.style.display = n > 0 ? '' : 'none';
+            }
+
+            function renderLista(notificaciones) {
+                if (!lista) return;
+                if (!notificaciones || !notificaciones.length) {
+                    lista.innerHTML = '<div class="notif-empty text-muted small py-3 text-center">Sin notificaciones</div>';
+                    return;
+                }
+                var html = '';
+                notificaciones.forEach(function(n) {
+                    var unread = parseInt(n.leida, 10) === 0;
+                    html += '<a href="#" class="notif-item' + (unread ? ' unread' : '') + '" data-id="' + n.id + '" data-enlace="' + escapeHtml(n.enlace || '') + '">';
+                    html += '<span class="notif-titulo">' + escapeHtml(n.titulo || '') + '</span>';
+                    html += '<span class="notif-msg">' + escapeHtml(n.mensaje || '') + '</span>';
+                    html += '<span class="notif-hace">' + escapeHtml(n.hace || '') + '</span></a>';
+                });
+                lista.innerHTML = html;
+                lista.querySelectorAll('.notif-item').forEach(function(el) {
+                    el.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var id = parseInt(this.getAttribute('data-id'), 10);
+                        var enlace = this.getAttribute('data-enlace') || '';
+                        if (enlace) {
+                            marcarLeida(id, function() {
+                                window.location.href = enlace;
+                            });
+                        } else {
+                            marcarLeida(id);
+                        }
+                    });
+                });
+            }
+
+            function escapeHtml(s) {
+                var d = document.createElement('div');
+                d.textContent = s;
+                return d.innerHTML;
+            }
+
+            function cargarNotificaciones(mostrarToastNueva) {
+                fetch(urlListar + '?limit=15', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (!data || data.error) return;
+                        var noLeidas = data.no_leidas || 0;
+                        if (mostrarToastNueva && noLeidas > ultimoNoLeidas && data.notificaciones && data.notificaciones.length) {
+                            var primera = data.notificaciones[0];
+                            if (parseInt(primera.leida, 10) === 0 && parseInt(primera.id, 10) > ultimaNotifId) {
+                                mostrarAvisoNueva(primera.titulo, primera.mensaje);
+                                ultimaNotifId = parseInt(primera.id, 10);
+                            }
+                        }
+                        ultimoNoLeidas = noLeidas;
+                        actualizarBadge(noLeidas);
+                        renderLista(data.notificaciones);
+                    })
+                    .catch(function() {
+                        if (lista) lista.innerHTML = '<div class="notif-empty text-muted small py-3 text-center">No se pudieron cargar</div>';
+                    });
+            }
+
+            function mostrarAvisoNueva(titulo, mensaje) {
+                var toast = document.createElement('div');
+                toast.className = 'alert alert-info shadow position-fixed top-0 end-0 m-3';
+                toast.style.zIndex = '10000';
+                toast.style.maxWidth = '360px';
+                toast.innerHTML = '<strong><i class="fas fa-bell me-1"></i> ' + escapeHtml(titulo) + '</strong><br><span class="small">' + escapeHtml(mensaje || '') + '</span>';
+                document.body.appendChild(toast);
+                setTimeout(function() { toast.remove(); }, 8000);
+            }
+
+            function marcarLeida(id, cb) {
+                fetch(urlMarcar, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: csrfBody({ id: id }).toString()
+                }).then(function(r) { return r.json(); }).then(function(data) {
+                    if (data && data.no_leidas !== undefined) ultimoNoLeidas = data.no_leidas;
+                    cargarNotificaciones(false);
+                    if (typeof cb === 'function') cb();
+                });
+            }
+
+            if (btnTodas) {
+                btnTodas.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fetch(urlMarcarTodas, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: csrfBody().toString()
+                    }).then(function() { cargarNotificaciones(false); });
+                });
+            }
+
+            var dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                dropdown.addEventListener('show.bs.dropdown', function() { cargarNotificaciones(false); });
+            }
+
+            cargarNotificaciones(false);
+            setInterval(function() { cargarNotificaciones(true); }, 120000);
+        })();
+        </script>
         
         <?= view('template/footer') ?>
