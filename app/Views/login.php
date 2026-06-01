@@ -85,6 +85,29 @@
                                     </div>
                                 </form>
 
+                                <div class="col-12 mb-4">
+                                    <div class="">
+                                        <div class="seperator">
+                                            <hr>
+                                            <div class="seperator-text"> <span>O continuar con</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <a class="btn btn-social-login w-100" href="<?= base_url('auth/google'); ?>">
+                                            <span class="btn-text-inner">Google</span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="text-center">
+                                        <p class="mb-0">¿No tienes cuenta? <a href="<?= base_url('registro'); ?>" class="text-warning">Crear cuenta</a></p>
+                                    </div>
+                                </div>
+
 
 
                                 <!--               <div class="col-12">

@@ -5,7 +5,9 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\Pago;
 use App\Models\EmpresaConfiguracion;
+use App\Models\Gym\PagoSuscripcion as GymPagoSuscripcion;
 use App\Services\MercadoPagoService;
+use App\Services\Gym\SuscripcionService;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -17,12 +19,14 @@ class MercadoPagoWebhookController extends BaseController
     protected $mercadoPagoService;
     protected $pagoModel;
     protected $empresaConfigModel;
+    protected $gymPagoModel;
 
     public function __construct()
     {
         $this->mercadoPagoService = new MercadoPagoService();
         $this->pagoModel = new Pago();
         $this->empresaConfigModel = new EmpresaConfiguracion();
+        $this->gymPagoModel = new GymPagoSuscripcion();
     }
 
     /**
@@ -91,10 +95,19 @@ class MercadoPagoWebhookController extends BaseController
                     ->where('fcreacion >=', $fechaDesde)
                     ->orderBy('fcreacion', 'DESC')
                     ->findAll();
+
+                // Pagos pendientes gym (suscripción alumno)
+                $gymPagosPendientes = $this->gymPagoModel->where('estado', 'pendiente')
+                    ->where('mp_preference_id IS NOT NULL')
+                    ->where('fcreacion >=', $fechaDesde)
+                    ->orderBy('fcreacion', 'DESC')
+                    ->findAll();
                 
                 log_message('info', 'Pagos pendientes encontrados: ' . count($pagosPendientes));
+                log_message('info', 'Pagos gym pendientes encontrados: ' . count($gymPagosPendientes));
                 
                 $pagoEncontrado = null;
+                $gymPagoEncontrado = null;
                 
                 // Primero intentar obtener el pago directamente de Mercado Pago
                 // para evitar iterar sobre todas las empresas si el pago no existe
@@ -147,8 +160,69 @@ class MercadoPagoWebhookController extends BaseController
                         }
                     }
                 }
-                
+
+                // Si no se encontró un pago legacy, intentar asociar con pagos gym
                 if (!$pagoEncontrado) {
+                    foreach ($gymPagosPendientes as $gymPagoTemp) {
+                        $credenciales = $this->empresaConfigModel->obtenerCredencialesMercadoPago($gymPagoTemp->empresa_id);
+
+                        if ($credenciales && $credenciales['habilitado']) {
+                            try {
+                                $mercadoPagoService = new MercadoPagoService(
+                                    $credenciales['access_token'],
+                                    $credenciales['public_key'],
+                                    $credenciales['mode']
+                                );
+
+                                if (!$payment) {
+                                    $payment = $mercadoPagoService->obtenerPago($dataId);
+                                    if ($payment) {
+                                        $empresaIdParaPago = $gymPagoTemp->empresa_id;
+                                        log_message('info', 'Pago (gym) encontrado en Mercado Pago para empresa: ' . $empresaIdParaPago);
+                                    }
+                                }
+
+                                if ($payment && $empresaIdParaPago == $gymPagoTemp->empresa_id) {
+                                    $externalRef = $payment->external_reference ?? null;
+
+                                    if (($externalRef && $externalRef == $gymPagoTemp->external_reference) ||
+                                        ($payment->preference_id && $payment->preference_id == $gymPagoTemp->mp_preference_id)) {
+                                        $gymPagoEncontrado = $gymPagoTemp;
+
+                                        // Actualizar estado local según MP
+                                        $mpStatus = (string) ($payment->status ?? '');
+                                        $estado = match ($mpStatus) {
+                                            'approved' => 'aprobado',
+                                            'rejected' => 'rechazado',
+                                            'cancelled' => 'cancelado',
+                                            'refunded', 'charged_back' => 'devuelto',
+                                            default => 'pendiente',
+                                        };
+
+                                        $this->gymPagoModel->update($gymPagoEncontrado->id, [
+                                            'estado' => $estado,
+                                            'mp_payment_id' => (string) ($payment->id ?? null),
+                                            'detalle' => json_encode(['mp_status' => $mpStatus], JSON_UNESCAPED_UNICODE),
+                                        ]);
+
+                                        if ($estado === 'aprobado') {
+                                            $svc = new SuscripcionService();
+                                            $svc->procesarPagoAprobado((int) $gymPagoEncontrado->id, (string) ($payment->id ?? ''));
+                                        }
+
+                                        log_message('info', 'Pago gym actualizado: ' . $gymPagoEncontrado->id . ' - Estado: ' . $mpStatus);
+                                        break;
+                                    }
+                                }
+                            } catch (\Exception $e) {
+                                log_message('debug', 'Error al procesar pago gym para empresa ' . $gymPagoTemp->empresa_id . ': ' . $e->getMessage());
+                                continue;
+                            }
+                        }
+                    }
+                }
+                
+                if (!$pagoEncontrado && !$gymPagoEncontrado) {
                     if ($payment) {
                         log_message('warning', 'Pago encontrado en MP pero no se pudo asociar con ningún pago local. Payment ID: ' . $dataId);
                     } else {

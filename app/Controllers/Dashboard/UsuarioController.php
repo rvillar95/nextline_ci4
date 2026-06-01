@@ -212,6 +212,10 @@ class UsuarioController extends BaseController
 
         if ($usuario !== null) {
             $this->session->set('usuario', $usuario);
+            $poder = (int) ($usuario['poder'] ?? 0);
+            if ($poder <= 1) {
+                return redirect()->to(base_url('alumno/inicio'))->with('mensaje', "Bienvenid@");
+            }
             return redirect()->to(base_url('dashboard/menu'))->with('mensaje', "Bienvenid@");
         }
         return redirect()->back()->withInput()->with('errors', 'El correo o contraseña son incorrectos.');

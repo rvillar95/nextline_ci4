@@ -141,3 +141,8 @@ nb-configuration.xml
 # Dumps locales / snapshots (no versionar en raíz)
 nextline_pyme*.sql
 *.sql
+
+# Schemas/Seeds versionados (dominios nuevos)
+!database/schema_gym.sql
+!database/migration_usuario_google_oauth.sql
+!database/seed_gym_modulos_perfiles.sql

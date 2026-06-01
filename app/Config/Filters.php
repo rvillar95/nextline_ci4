@@ -15,6 +15,7 @@ use CodeIgniter\Filters\SecureHeaders;
 
 use App\Filters\SessionFilter;
 use App\Filters\CSRFExceptWebhook;
+use App\Filters\AlumnoFilter;
 
 class Filters extends BaseFilters
 {
@@ -41,6 +42,7 @@ class Filters extends BaseFilters
         'session'       => SessionFilter::class,
         // Compatibilidad por si quedó referenciado con mayúsculas en algún sitio
         'SessionFilter' => SessionFilter::class,
+        'alumno'        => AlumnoFilter::class,
         'perfilDetalle' => PerfilDetalleFilter::class
     ];
 
@@ -121,6 +123,12 @@ class Filters extends BaseFilters
                 'dashboard',
                 'dashboard/*'
             ]
+        ],
+        'alumno' => [
+            'before' => [
+                'alumno',
+                'alumno/*',
+            ],
         ]
     ];
 

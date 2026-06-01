@@ -6,12 +6,27 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 $routes->get('/', 'Web\HomeController::index');
+$routes->get('/gym', 'Web\\GymHomeController::index');
 
 $routes->get('/test', 'UsuarioController::test');
 
 $routes->get('/login', 'ViewController::login');
 
 $routes->get('/layout', 'ViewController::layout');
+
+// Auth alumno (registro público + Google OAuth)
+$routes->get('/registro', 'Auth\\RegistroController::form');
+$routes->post('/registro', 'Auth\\RegistroController::registrar');
+$routes->get('/auth/google', 'Auth\\GoogleAuthController::redirect');
+$routes->get('/auth/google/callback', 'Auth\\GoogleAuthController::callback');
+
+// Portal alumno (protegido por AlumnoFilter)
+$routes->group('alumno', function ($routes) {
+    $routes->get('inicio', 'Alumno\\InicioController::index');
+    $routes->get('programa/(:num)', 'Alumno\\ProgramaController::ver/$1');
+    $routes->get('suscripcion', 'Alumno\\SuscripcionController::index');
+    $routes->post('suscripcion/pagar', 'Alumno\\SuscripcionController::pagar');
+});
 
 
 
@@ -24,6 +39,62 @@ $routes->group('dashboard', function ($routes) {
     $routes->get('registro/usuario', 'ViewController::registro');
     $routes->get('menu', 'ViewController::menu');
     $routes->get('layout_menu', 'ViewController::layout_menu');
+
+    // ---------------------------------------------------------------------
+    // Gym (MVP) - módulos replicando patrón CRUD del sistema
+    // ---------------------------------------------------------------------
+    $routes->group('gym', function ($routes2) {
+        $routes2->group('ejercicio', function ($r) {
+            $r->get('registro', 'Dashboard\\Gym\\EjercicioController::registro');
+            $r->get('editar/(:num)', 'Dashboard\\Gym\\EjercicioController::editar/$1');
+            $r->get('lista', 'Dashboard\\Gym\\EjercicioController::lista');
+            $r->get('getEjercicios', 'Dashboard\\Gym\\EjercicioController::getEjercicios');
+            $r->post('registrar', 'Dashboard\\Gym\\EjercicioController::registrar');
+            $r->post('update', 'Dashboard\\Gym\\EjercicioController::update');
+            $r->post('eliminar', 'Dashboard\\Gym\\EjercicioController::eliminar');
+        });
+
+        $routes2->group('rutina', function ($r) {
+            $r->get('registro', 'Dashboard\\Gym\\RutinaController::registro');
+            $r->get('editar/(:num)', 'Dashboard\\Gym\\RutinaController::editar/$1');
+            $r->get('lista', 'Dashboard\\Gym\\RutinaController::lista');
+            $r->get('getRutinas', 'Dashboard\\Gym\\RutinaController::getRutinas');
+            $r->post('registrar', 'Dashboard\\Gym\\RutinaController::registrar');
+            $r->post('update', 'Dashboard\\Gym\\RutinaController::update');
+            $r->post('eliminar', 'Dashboard\\Gym\\RutinaController::eliminar');
+            // Builder: actualizar ejercicios de rutina (JSON)
+            $r->post('update-ejercicios', 'Dashboard\\Gym\\RutinaController::updateEjercicios');
+        });
+
+        $routes2->group('programa', function ($r) {
+            $r->get('registro', 'Dashboard\\Gym\\ProgramaController::registro');
+            $r->get('editar/(:num)', 'Dashboard\\Gym\\ProgramaController::editar/$1');
+            $r->get('lista', 'Dashboard\\Gym\\ProgramaController::lista');
+            $r->get('getProgramas', 'Dashboard\\Gym\\ProgramaController::getProgramas');
+            $r->post('registrar', 'Dashboard\\Gym\\ProgramaController::registrar');
+            $r->post('update', 'Dashboard\\Gym\\ProgramaController::update');
+            $r->post('eliminar', 'Dashboard\\Gym\\ProgramaController::eliminar');
+            // Asociar rutinas al programa (JSON)
+            $r->post('update-rutinas', 'Dashboard\\Gym\\ProgramaController::updateRutinas');
+        });
+
+        $routes2->group('alumno', function ($r) {
+            $r->get('registro', 'Dashboard\\Gym\\AlumnoController::registro');
+            $r->get('editar/(:num)', 'Dashboard\\Gym\\AlumnoController::editar/$1');
+            $r->get('lista', 'Dashboard\\Gym\\AlumnoController::lista');
+            $r->get('getAlumnos', 'Dashboard\\Gym\\AlumnoController::getAlumnos');
+            $r->post('registrar', 'Dashboard\\Gym\\AlumnoController::registrar');
+            $r->post('update', 'Dashboard\\Gym\\AlumnoController::update');
+            $r->post('eliminar', 'Dashboard\\Gym\\AlumnoController::eliminar');
+        });
+
+        $routes2->group('asignacion', function ($r) {
+            $r->get('lista', 'Dashboard\\Gym\\AsignacionController::lista');
+            $r->get('getAsignaciones', 'Dashboard\\Gym\\AsignacionController::getAsignaciones');
+            $r->post('asignar', 'Dashboard\\Gym\\AsignacionController::asignar');
+            $r->post('desasignar', 'Dashboard\\Gym\\AsignacionController::desasignar');
+        });
+    });
 
 
     $routes->group('usuario', function ($routes2) {
