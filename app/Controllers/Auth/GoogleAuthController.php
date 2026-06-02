@@ -131,9 +131,7 @@ class GoogleAuthController extends BaseController
             // Guardar sesión
             session()->set('usuario', $user);
 
-            // Redirigir por poder
-            $poder = (int) ($user['poder'] ?? 0);
-            if ($poder <= 1) {
+            if (es_usuario_portal_alumno($user)) {
                 return redirect()->to(base_url('alumno/inicio'));
             }
             return redirect()->to(base_url('dashboard/menu'))->with('mensaje', 'Bienvenid@');

@@ -3,7 +3,7 @@
 -- Motor: MySQL 8.0+ / MariaDB 10.5+  |  Charset: utf8mb4
 --
 -- Nota: Este schema se integra a la BD principal del proyecto (p.ej. nextline_pyme)
--- y reutiliza tablas existentes: empresa, usuario, perfil, etc.
+-- Compatible con empresa.id y usuario.id (INT signed en NutriNext)
 -- =============================================================================
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS `gym_tipo_base_ejercicio` (
 -- Ejercicios (biblioteca por gimnasio/empresa)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gym_ejercicio` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
   `nombre` VARCHAR(160) NOT NULL,
   `grupo_muscular_principal_id` SMALLINT UNSIGNED NOT NULL,
   `grupo_muscular_secundario_id` SMALLINT UNSIGNED NULL,
@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS `gym_ejercicio` (
 -- Rutinas y detalle ejercicios
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gym_rutina` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
-  `creado_por_usuario_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `creado_por_usuario_id` INT NOT NULL,
   `nombre` VARCHAR(160) NOT NULL,
   `descripcion` TEXT NULL,
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
@@ -75,9 +75,9 @@ CREATE TABLE IF NOT EXISTS `gym_rutina` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gym_rutina_ejercicio` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `rutina_id` INT UNSIGNED NOT NULL,
-  `ejercicio_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `rutina_id` INT NOT NULL,
+  `ejercicio_id` INT NOT NULL,
   `orden` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   `series` SMALLINT UNSIGNED NULL,
   `repeticiones` VARCHAR(32) NULL COMMENT 'ej: 12, 8-10, AMRAP',
@@ -95,9 +95,9 @@ CREATE TABLE IF NOT EXISTS `gym_rutina_ejercicio` (
 -- Programas y relación M:N con rutinas
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gym_programa` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
-  `creado_por_usuario_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `creado_por_usuario_id` INT NOT NULL,
   `nombre` VARCHAR(160) NOT NULL,
   `descripcion` TEXT NULL,
   `duracion_semanas` SMALLINT UNSIGNED NULL,
@@ -112,9 +112,9 @@ CREATE TABLE IF NOT EXISTS `gym_programa` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gym_programa_rutina` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `programa_id` INT UNSIGNED NOT NULL,
-  `rutina_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `programa_id` INT NOT NULL,
+  `rutina_id` INT NOT NULL,
   `orden` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   `dia_semana` TINYINT UNSIGNED NULL COMMENT '1=Lun ... 7=Dom',
   PRIMARY KEY (`id`),
@@ -130,10 +130,10 @@ CREATE TABLE IF NOT EXISTS `gym_programa_rutina` (
 -- Asignación de programas a alumnos (usuario)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gym_programa_usuario` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `programa_id` INT UNSIGNED NOT NULL,
-  `usuario_id` INT UNSIGNED NOT NULL COMMENT 'Alumno (usuario.perfil_id = perfil Alumno)',
-  `asignado_por_usuario_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `programa_id` INT NOT NULL,
+  `usuario_id` INT NOT NULL COMMENT 'Alumno (usuario.perfil_id = perfil Alumno)',
+  `asignado_por_usuario_id` INT NOT NULL,
   `fecha_inicio` DATE NULL,
   `fecha_fin` DATE NULL,
   `estado` ENUM('activa','pausada','finalizada') NOT NULL DEFAULT 'activa',
@@ -152,8 +152,8 @@ CREATE TABLE IF NOT EXISTS `gym_programa_usuario` (
 -- Suscripciones mensuales (alumno)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `gym_plan_suscripcion` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
   `nombre` VARCHAR(120) NOT NULL,
   `descripcion` TEXT NULL,
   `monto_mensual` DECIMAL(10,2) NOT NULL,
@@ -168,10 +168,10 @@ CREATE TABLE IF NOT EXISTS `gym_plan_suscripcion` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gym_suscripcion_alumno` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
-  `usuario_id` INT UNSIGNED NOT NULL,
-  `plan_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `usuario_id` INT NOT NULL,
+  `plan_id` INT NOT NULL,
   `estado` ENUM('pendiente','activa','suspendida','cancelada','vencida') NOT NULL DEFAULT 'pendiente',
   `fecha_inicio` DATE NULL,
   `fecha_fin` DATE NULL,
@@ -191,10 +191,10 @@ CREATE TABLE IF NOT EXISTS `gym_suscripcion_alumno` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `gym_pago_suscripcion` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `empresa_id` INT UNSIGNED NOT NULL,
-  `usuario_id` INT UNSIGNED NOT NULL,
-  `plan_id` INT UNSIGNED NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT NOT NULL,
+  `usuario_id` INT NOT NULL,
+  `plan_id` INT NOT NULL,
   `monto` DECIMAL(10,2) NOT NULL,
   `moneda` VARCHAR(8) NOT NULL DEFAULT 'CLP',
   `estado` ENUM('pendiente','aprobado','rechazado','cancelado','devuelto') NOT NULL DEFAULT 'pendiente',
@@ -217,15 +217,16 @@ CREATE TABLE IF NOT EXISTS `gym_pago_suscripcion` (
 -- -----------------------------------------------------------------------------
 -- Seeds mínimos catálogos
 -- -----------------------------------------------------------------------------
-INSERT IGNORE INTO `gym_tipo_base_ejercicio` (`codigo`, `nombre`, `orden`, `activo`) VALUES
+INSERT INTO `gym_tipo_base_ejercicio` (`codigo`, `nombre`, `orden`, `activo`) VALUES
   ('peso_libre', 'Peso libre', 1, 1),
   ('maquina', 'Máquina', 2, 1),
   ('peso_corporal', 'Peso corporal', 3, 1),
   ('banda', 'Banda', 4, 1),
   ('cable', 'Cable', 5, 1),
-  ('otro', 'Otro', 99, 1);
+  ('otro', 'Otro', 99, 1)
+ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `orden` = VALUES(`orden`), `activo` = VALUES(`activo`);
 
-INSERT IGNORE INTO `gym_grupo_muscular` (`nombre`, `orden`, `activo`) VALUES
+INSERT INTO `gym_grupo_muscular` (`nombre`, `orden`, `activo`) VALUES
   ('Pecho', 1, 1),
   ('Espalda', 2, 1),
   ('Hombros', 3, 1),
@@ -235,7 +236,8 @@ INSERT IGNORE INTO `gym_grupo_muscular` (`nombre`, `orden`, `activo`) VALUES
   ('Glúteos', 7, 1),
   ('Core', 8, 1),
   ('Cardio', 9, 1),
-  ('Cuerpo completo', 10, 1);
+  ('Cuerpo completo', 10, 1)
+ON DUPLICATE KEY UPDATE `orden` = VALUES(`orden`), `activo` = VALUES(`activo`);
 
 SET FOREIGN_KEY_CHECKS = 1;
 

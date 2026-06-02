@@ -2,130 +2,116 @@
 
 <?= $this->section('gym/rutina/editar') ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-edit"></i> Editar Rutina
-                    </h3>
-                    <div class="card-tools">
-                        <a href="<?= base_url('dashboard/gym/rutina/lista') ?>" class="btn btn-light">Volver</a>
+<?= $this->include('Modulos/gym/partials/assets') ?>
+
+<div class="container-fluid gym-page gym-page--rutina">
+    <?= view('Modulos/gym/partials/page_header', [
+        'icon' => 'fa-clipboard-list',
+        'title' => 'Editar rutina',
+        'subtitle' => esc($rutina->nombre ?? ''),
+        'module' => 'rutina',
+        'back' => ['url' => base_url('dashboard/gym/rutina/lista'), 'label' => 'Volver al listado'],
+    ]) ?>
+
+    <?= view('Modulos/gym/partials/workflow', ['active' => 'rutina']) ?>
+    <?= $this->include('Modulos/gym/partials/flash') ?>
+
+    <div class="gym-section-card">
+        <div class="gym-section-card__head">
+            <h3><i class="fas fa-info-circle"></i> Información general</h3>
+        </div>
+        <div class="gym-section-card__body">
+            <form method="POST" action="<?= base_url('dashboard/gym/rutina/update') ?>" class="gym-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int) $rutina->id ?>">
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" value="<?= esc(old('nombre') ?? $rutina->nombre) ?>" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Estado</label>
+                        <?php $activoVal = old('activo'); ?>
+                        <?php $activo = ($activoVal !== null) ? (int) $activoVal : (int) $rutina->activo; ?>
+                        <select name="activo" class="form-select">
+                            <option value="1" <?= $activo === 1 ? 'selected' : '' ?>>Activa</option>
+                            <option value="0" <?= $activo === 0 ? 'selected' : '' ?>>Inactiva</option>
+                        </select>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="3"><?= esc(old('descripcion') ?? ($rutina->descripcion ?? '')) ?></textarea>
                     </div>
                 </div>
-                <div class="card-body">
-                    <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                                    <li><?= session()->getFlashdata('errors') ?></li>
-                                <?php else : ?>
-                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
-                                        <li><?= esc($error) ?></li>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
+                <button type="submit" class="btn gym-btn-primary btn-sm"><i class="fas fa-save me-1"></i> Guardar datos</button>
+            </form>
+        </div>
+    </div>
 
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success" role="alert">
-                            <?= session()->getFlashdata('success') ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <form method="POST" action="<?= base_url('dashboard/gym/rutina/update') ?>">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="id" value="<?= (int) $rutina->id ?>">
-
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label class="form-label">Nombre</label>
-                                <input type="text" name="nombre" class="form-control" value="<?= esc(old('nombre') ?? $rutina->nombre) ?>" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Activa</label>
-                                <?php $activoVal = old('activo'); ?>
-                                <?php $activo = ($activoVal !== null) ? (int)$activoVal : (int)$rutina->activo; ?>
-                                <select name="activo" class="form-control">
-                                    <option value="1" <?= $activo === 1 ? 'selected' : '' ?>>Sí</option>
-                                    <option value="0" <?= $activo === 0 ? 'selected' : '' ?>>No</option>
-                                </select>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label class="form-label">Descripción</label>
-                                <textarea name="descripcion" class="form-control" rows="4"><?= esc(old('descripcion') ?? ($rutina->descripcion ?? '')) ?></textarea>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Guardar datos</button>
-                    </form>
-                </div>
+    <div class="gym-section-card gym-builder-panel">
+        <div class="gym-section-card__head">
+            <div>
+                <h3><i class="fas fa-layer-group"></i> Ejercicios de la rutina</h3>
+                <p class="gym-section-card__hint">Agrega movimientos, define series, reps y descanso. Guarda al terminar.</p>
             </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-list"></i> Builder: ejercicios de la rutina
-                    </h3>
-                    <div class="card-tools">
-                        <button id="btnGuardarDetalle" class="btn btn-success">Guardar ejercicios</button>
+            <button id="btnGuardarDetalle" type="button" class="btn gym-btn-primary">
+                <i class="fas fa-save me-1"></i> Guardar ejercicios
+            </button>
+        </div>
+        <div class="gym-section-card__body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Agregar ejercicio</label>
+                    <select id="selEjercicio" class="form-select">
+                        <option value="">Seleccione del catálogo...</option>
+                        <?php foreach (($ejercicios ?? []) as $e) : ?>
+                            <option value="<?= (int) $e->id ?>"><?= esc($e->nombre) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button id="btnAgregar" type="button" class="btn gym-btn-primary mt-2 w-100">
+                        <i class="fas fa-plus me-1"></i> Agregar a la rutina
+                    </button>
+                    <div class="gym-builder-tip">
+                        Ordena con el número de la primera columna. El descanso va en segundos.
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Agregar ejercicio</label>
-                            <select id="selEjercicio" class="form-control">
-                                <option value="">Seleccione...</option>
-                                <?php foreach (($ejercicios ?? []) as $e) : ?>
-                                    <option value="<?= (int)$e->id ?>"><?= esc($e->nombre) ?></option>
+                <div class="col-md-8">
+                    <div class="gym-table-wrap table-responsive">
+                        <table class="table gym-table mb-0" id="tblDetalle">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px;">#</th>
+                                    <th>Ejercicio</th>
+                                    <th style="width:90px;">Series</th>
+                                    <th style="width:120px;">Reps</th>
+                                    <th style="width:120px;">Descanso</th>
+                                    <th>Notas</th>
+                                    <th style="width:80px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach (($detalle ?? []) as $d) : ?>
+                                    <tr data-ejercicio-id="<?= (int) $d['ejercicio_id'] ?>">
+                                        <td><input type="number" class="form-control form-control-sm orden" value="<?= (int) $d['orden'] ?>"></td>
+                                        <td class="align-middle fw-semibold"><?= esc($d['ejercicio_nombre'] ?? '') ?></td>
+                                        <td><input type="number" class="form-control form-control-sm series" value="<?= esc($d['series'] ?? '') ?>"></td>
+                                        <td><input type="text" class="form-control form-control-sm repeticiones" value="<?= esc($d['repeticiones'] ?? '') ?>"></td>
+                                        <td><input type="number" class="form-control form-control-sm descanso_seg" value="<?= esc($d['descanso_seg'] ?? '') ?>"></td>
+                                        <td><input type="text" class="form-control form-control-sm notas" value="<?= esc($d['notas'] ?? '') ?>"></td>
+                                        <td><button type="button" class="btn btn-sm btn-outline-danger btnQuitar">Quitar</button></td>
+                                    </tr>
                                 <?php endforeach; ?>
-                            </select>
-                            <button id="btnAgregar" class="btn btn-primary mt-2">Agregar</button>
-                            <div class="text-muted mt-2">Tip: agrega y luego edita series/reps/descanso.</div>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="tblDetalle">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:60px;">Orden</th>
-                                            <th>Ejercicio</th>
-                                            <th style="width:90px;">Series</th>
-                                            <th style="width:120px;">Reps</th>
-                                            <th style="width:140px;">Descanso (seg)</th>
-                                            <th>Notas</th>
-                                            <th style="width:80px;">Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach (($detalle ?? []) as $d) : ?>
-                                            <tr data-ejercicio-id="<?= (int)$d['ejercicio_id'] ?>">
-                                                <td><input type="number" class="form-control orden" value="<?= (int)$d['orden'] ?>"></td>
-                                                <td><?= esc($d['ejercicio_nombre'] ?? '') ?></td>
-                                                <td><input type="number" class="form-control series" value="<?= esc($d['series'] ?? '') ?>"></td>
-                                                <td><input type="text" class="form-control repeticiones" value="<?= esc($d['repeticiones'] ?? '') ?>"></td>
-                                                <td><input type="number" class="form-control descanso_seg" value="<?= esc($d['descanso_seg'] ?? '') ?>"></td>
-                                                <td><input type="text" class="form-control notas" value="<?= esc($d['notas'] ?? '') ?>"></td>
-                                                <td><button type="button" class="btn btn-sm btn-danger btnQuitar">Quitar</button></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
-    const rutinaId = <?= (int)$rutina->id ?>;
+    const rutinaId = <?= (int) $rutina->id ?>;
 
     function nextOrden() {
         let max = 0;
@@ -142,7 +128,7 @@
         const texto = $('#selEjercicio option:selected').text();
         if (!ejercicioId) return;
 
-        if ($('#tblDetalle tbody tr[data-ejercicio-id=\"' + ejercicioId + '\"]').length) {
+        if ($('#tblDetalle tbody tr[data-ejercicio-id="' + ejercicioId + '"]').length) {
             alert('Ese ejercicio ya está en la rutina');
             return;
         }
@@ -150,13 +136,13 @@
         const orden = nextOrden();
         $('#tblDetalle tbody').append(`
             <tr data-ejercicio-id="${ejercicioId}">
-                <td><input type="number" class="form-control orden" value="${orden}"></td>
-                <td>${texto}</td>
-                <td><input type="number" class="form-control series" value=""></td>
-                <td><input type="text" class="form-control repeticiones" value=""></td>
-                <td><input type="number" class="form-control descanso_seg" value=""></td>
-                <td><input type="text" class="form-control notas" value=""></td>
-                <td><button type="button" class="btn btn-sm btn-danger btnQuitar">Quitar</button></td>
+                <td><input type="number" class="form-control form-control-sm orden" value="${orden}"></td>
+                <td class="align-middle fw-semibold">${texto}</td>
+                <td><input type="number" class="form-control form-control-sm series" value=""></td>
+                <td><input type="text" class="form-control form-control-sm repeticiones" value=""></td>
+                <td><input type="number" class="form-control form-control-sm descanso_seg" value=""></td>
+                <td><input type="text" class="form-control form-control-sm notas" value=""></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger btnQuitar">Quitar</button></td>
             </tr>
         `);
         $('#selEjercicio').val('');
@@ -194,13 +180,11 @@
             alert((json && json.error) ? json.error : 'Error al guardar');
             return;
         }
-        alert('Rutina guardada');
-        // refrescar token CSRF si viene
+        alert('Ejercicios de la rutina guardados correctamente');
         if (json.csrf_token) {
-            document.querySelectorAll('input[name=\"<?= csrf_token() ?>\"]').forEach(el => el.value = json.csrf_token);
+            document.querySelectorAll('input[name="<?= csrf_token() ?>"]').forEach(el => el.value = json.csrf_token);
         }
     });
 </script>
 
 <?= $this->endSection() ?>
-

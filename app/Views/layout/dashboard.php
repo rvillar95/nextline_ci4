@@ -1,7 +1,11 @@
 <?php
+helper('auth_portal');
+
 if (session()->get('usuario')) {
     $usuario = session()->get('usuario');
 }
+
+$tieneModuloClinico = usuario_dashboard_tiene_modulo_clinico($usuario ?? null);
 
 
 /* echo "<pre>";
@@ -44,6 +48,7 @@ exit(); */
             </li>
         </ul>
         <ul class="navbar-item flex-row ms-lg-auto ms-0 action-area">
+            <?php if ($tieneModuloClinico): ?>
             <li class="nav-item dropdown notification-dropdown">
                 <a href="javascript:void(0);" class="nav-link dropdown-toggle position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Notificaciones">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-bell">
@@ -62,6 +67,7 @@ exit(); */
                     </div>
                 </div>
             </li>
+            <?php endif; ?>
             <li class="nav-item theme-toggle-item">
                 <a href="javascript:void(0);" class="nav-link theme-toggle">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon dark-mode">
@@ -126,6 +132,7 @@ exit(); */
 </div>
 <!--  END NAVBAR  -->
 
+<?php if ($tieneModuloClinico): ?>
 <!-- CRONÓMETRO GLOBAL DE CONSULTA ACTIVA -->
 <div id="cronometroGlobalConsulta" style="display: none; position: fixed; top: 48px; right: 20px; z-index: 1050; background: linear-gradient(135deg, #7bc143 0%, #2daae1 100%); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: white; min-width: 280px;">
     <div class="d-flex align-items-center justify-content-between">
@@ -144,6 +151,7 @@ exit(); */
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 <!--  BEGIN MAIN CONTAINER  -->
 <div class="main-container" id="container">
@@ -481,6 +489,22 @@ exit(); */
                     <?php echo $this->renderSection("configuracion/index"); ?>
                     <?php echo $this->renderSection("mi_perfil/index"); ?>
                     <!-- END Section Configuraciones -->
+
+                    <!-- Gimnasio -->
+                    <?php echo $this->renderSection("gym/ejercicio/lista"); ?>
+                    <?php echo $this->renderSection("gym/ejercicio/registro"); ?>
+                    <?php echo $this->renderSection("gym/ejercicio/editar"); ?>
+                    <?php echo $this->renderSection("gym/rutina/lista"); ?>
+                    <?php echo $this->renderSection("gym/rutina/registro"); ?>
+                    <?php echo $this->renderSection("gym/rutina/editar"); ?>
+                    <?php echo $this->renderSection("gym/programa/lista"); ?>
+                    <?php echo $this->renderSection("gym/programa/registro"); ?>
+                    <?php echo $this->renderSection("gym/programa/editar"); ?>
+                    <?php echo $this->renderSection("gym/alumno/lista"); ?>
+                    <?php echo $this->renderSection("gym/alumno/registro"); ?>
+                    <?php echo $this->renderSection("gym/alumno/editar"); ?>
+                    <?php echo $this->renderSection("gym/asignacion/lista"); ?>
+                    <!-- END Gimnasio -->
                 </div>
 
             </div>
@@ -672,20 +696,20 @@ exit(); */
 
         // ============================================
         // VERIFICACIÓN Y RENOVACIÓN AUTOMÁTICA DE TOKEN DE CALENDARIO
-        // Solo se ejecuta si la configuración tiene activo crear_evento_calendario
+        // Solo perfiles clínicos con crear_evento_calendario activo
         // ============================================
         <?php
-        // Verificar si la empresa tiene activo crear_evento_calendario
-        $configuracionModel = new \App\Models\EmpresaConfiguracion();
-        $usuarioId = session()->get('usuario')['id'] ?? null;
         $crearEventoCalendario = false;
-        
-        if ($usuarioId) {
-            $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
-            $crearEventoCalendario = ($configuracion['crear_evento_calendario'] ?? 1) == 1;
+        if ($tieneModuloClinico) {
+            $configuracionModel = new \App\Models\EmpresaConfiguracion();
+            $usuarioId = session()->get('usuario')['id'] ?? null;
+            if ($usuarioId) {
+                $configuracion = $configuracionModel->obtenerConfiguracionPorUsuario($usuarioId);
+                $crearEventoCalendario = ($configuracion['crear_evento_calendario'] ?? 1) == 1;
+            }
         }
         ?>
-        <?php if ($crearEventoCalendario): ?>
+        <?php if ($tieneModuloClinico && $crearEventoCalendario): ?>
         (function() {
             // Verificar y renovar token de calendario cada 30 minutos
             const TOKEN_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutos en milisegundos
@@ -747,6 +771,7 @@ exit(); */
         })();
         <?php endif; ?>
         
+        <?php if ($tieneModuloClinico): ?>
         // =====================================================
         // CRONÓMETRO GLOBAL DE CONSULTA ACTIVA
         // =====================================================
@@ -846,8 +871,10 @@ exit(); */
                 scheduleNextPoll(document.hidden ? POLL_MS_HIDDEN : POLL_MS_INACTIVE);
             });
         })();
+        <?php endif; ?>
         </script>
         
+        <?php if ($tieneModuloClinico): ?>
         <style>
         @keyframes blink {
             0%, 50%, 100% { opacity: 1; }
@@ -1087,5 +1114,6 @@ exit(); */
             setInterval(function() { cargarNotificaciones(true); }, 120000);
         })();
         </script>
+        <?php endif; ?>
         
         <?= view('template/footer') ?>

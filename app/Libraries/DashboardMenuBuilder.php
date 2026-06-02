@@ -50,6 +50,8 @@ class DashboardMenuBuilder
         }
 
         $flat = [];
+        $slugsEnGrupos = array_column($grupos, 'slug');
+
         foreach ($grupos as $g) {
             $slug = $g['slug'];
             if (empty($bucket[$slug])) {
@@ -61,7 +63,8 @@ class DashboardMenuBuilder
             }
         }
 
-        if (! empty($bucket['otros'])) {
+        // Solo si "otros" no está en menu_grupo (fallback sin tabla configurada)
+        if (! empty($bucket['otros']) && ! in_array('otros', $slugsEnGrupos, true)) {
             $flat[] = ['type' => 'heading', 'label' => 'Más'];
             foreach ($bucket['otros'] as $entry) {
                 $flat[] = $entry;

@@ -2,130 +2,113 @@
 
 <?= $this->section('gym/asignacion/lista') ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-link"></i> Asignar programas a alumnos
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                                    <li><?= session()->getFlashdata('errors') ?></li>
-                                <?php else : ?>
-                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
-                                        <li><?= esc($error) ?></li>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
+<?= $this->include('Modulos/gym/partials/assets') ?>
+<?= $this->include('Modulos/gym/partials/datatable_lang') ?>
 
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success" role="alert">
-                            <?= session()->getFlashdata('success') ?>
-                        </div>
-                    <?php endif; ?>
+<div class="container-fluid gym-page gym-page--asignacion">
+    <?= view('Modulos/gym/partials/page_header', [
+        'icon' => 'fa-paper-plane',
+        'title' => 'Asignar programas',
+        'subtitle' => 'Vincula un plan de entrenamiento a un alumno. Lo verá en su portal desde la fecha de inicio.',
+        'module' => 'asignacion',
+    ]) ?>
 
-                    <form method="POST" action="<?= base_url('dashboard/gym/asignacion/asignar') ?>">
-                        <?= csrf_field() ?>
-                        <div class="row">
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label">Programa</label>
-                                <select name="programa_id" class="form-control" required>
-                                    <option value="">Seleccione...</option>
-                                    <?php foreach (($programas ?? []) as $p) : ?>
-                                        <option value="<?= (int)$p->id ?>"><?= esc($p->nombre) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-5 mb-3">
-                                <label class="form-label">Alumno</label>
-                                <select name="usuario_id" class="form-control" required>
-                                    <option value="">Seleccione...</option>
-                                    <?php foreach (($alumnos ?? []) as $a) : ?>
-                                        <option value="<?= (int)$a->id ?>"><?= esc($a->nombre . ' ' . $a->apellido) ?> (<?= esc($a->correo) ?>)</option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-2 mb-3">
-                                <label class="form-label">Inicio</label>
-                                <input type="date" name="fecha_inicio" class="form-control">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Asignar</button>
-                    </form>
-                </div>
-            </div>
+    <?= view('Modulos/gym/partials/workflow', ['active' => 'asignacion']) ?>
+    <?= $this->include('Modulos/gym/partials/flash') ?>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-list"></i> Asignaciones actuales
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered getAsignaciones">
-                            <thead>
-                                <tr>
-                                    <th>Programa</th>
-                                    <th>Alumno</th>
-                                    <th>Correo</th>
-                                    <th>Estado</th>
-                                    <th>Inicio</th>
-                                    <th>Fin</th>
-                                    <th>Acción</th>
-                                </tr>
-                            </thead>
-                        </table>
+    <div class="gym-section-card">
+        <div class="gym-section-card__head">
+            <h3><i class="fas fa-plus-circle"></i> Nueva asignación</h3>
+        </div>
+        <div class="gym-section-card__body gym-assign-box">
+            <form method="POST" action="<?= base_url('dashboard/gym/asignacion/asignar') ?>" class="gym-form">
+                <?= csrf_field() ?>
+                <div class="row align-items-end">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label">Programa</label>
+                        <select name="programa_id" class="form-select" required>
+                            <option value="">Elige un programa...</option>
+                            <?php foreach (($programas ?? []) as $p) : ?>
+                                <option value="<?= (int) $p->id ?>"><?= esc($p->nombre) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label class="form-label">Alumno</label>
+                        <select name="usuario_id" class="form-select" required>
+                            <option value="">Elige un alumno...</option>
+                            <?php foreach (($alumnos ?? []) as $a) : ?>
+                                <option value="<?= (int) $a->id ?>">
+                                    <?= esc($a->nombre . ' ' . $a->apellido) ?> — <?= esc($a->correo) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2 mb-3 mb-md-0">
+                        <label class="form-label">Inicio</label>
+                        <input type="date" name="fecha_inicio" class="form-control" value="<?= date('Y-m-d') ?>">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn gym-btn-primary w-100">
+                            <i class="fas fa-check me-1"></i> Asignar
+                        </button>
                     </div>
                 </div>
-            </div>
+            </form>
+        </div>
+    </div>
 
+    <div class="gym-section-card">
+        <div class="gym-section-card__head">
+            <div>
+                <h3><i class="fas fa-list"></i> Asignaciones actuales</h3>
+                <p class="gym-section-card__hint">Programas activos por alumno. Puedes quitar una asignación si fue un error.</p>
+            </div>
+        </div>
+        <div class="gym-section-card__body">
+            <div class="gym-table-wrap table-responsive">
+                <table class="table gym-table getAsignaciones w-100">
+                    <thead>
+                        <tr>
+                            <th>Programa</th>
+                            <th>Alumno</th>
+                            <th>Correo</th>
+                            <th>Estado</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-<form id="frmDesasignar" method="POST" action="<?= base_url('dashboard/gym/asignacion/desasignar'); ?>" style="display:none;">
+<form id="frmDesasignar" method="POST" action="<?= base_url('dashboard/gym/asignacion/desasignar') ?>" class="d-none">
     <?= csrf_field() ?>
     <input type="hidden" name="id" id="desasignar_id" value="">
 </form>
 
 <script>
-    getAsignaciones();
-
-    function getAsignaciones() {
-        $('.getAsignaciones').DataTable().clear().destroy();
+    $(function() {
         $('.getAsignaciones').DataTable({
-            language: {
-                "sProcessing": "Procesando...",
-                "sLengthMenu": "Registros _MENU_ ",
-                "sZeroRecords": "No se encontraron resultados",
-                "sEmptyTable": "Ningún dato disponible en esta tabla =(",
-                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "sSearch": "Buscar:",
-                "oPaginate": { "sNext": "Siguiente", "sPrevious": "Anterior" }
-            },
+            language: window.gymDataTableLang,
             processing: true,
             serverSide: false,
-            ajax: { url: 'getAsignaciones', type: 'GET' }
+            ajax: { url: 'getAsignaciones', type: 'GET' },
+            order: [[4, 'desc']],
+            pageLength: 25,
         });
-    }
+    });
 
     $(document).on('click', '#btnDesasignar', function() {
-        if (!confirm('¿Quitar asignación?')) return;
+        if (!confirm('¿Quitar esta asignación? El alumno dejará de ver el programa en el portal.')) {
+            return;
+        }
         $('#desasignar_id').val($(this).val());
         $('#frmDesasignar').submit();
     });
 </script>
 
 <?= $this->endSection() ?>
-

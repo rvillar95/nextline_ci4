@@ -1,0 +1,412 @@
+/**
+ * NutriNext — Dashboard Gimnasio (entrenador)
+ * Usar con contenedor .gym-page y modificador .gym-page--{ejercicio|rutina|...}
+ */
+:root {
+    --gym-radius: 14px;
+    --gym-radius-lg: 18px;
+    --gym-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+    --gym-shadow-hover: 0 8px 32px rgba(15, 23, 42, 0.1);
+    --gym-text: #0f172a;
+    --gym-muted: #64748b;
+    --gym-border: #e2e8f0;
+    --gym-surface: #ffffff;
+    --gym-bg: #f1f5f9;
+
+    --gym-ejercicio: #059669;
+    --gym-ejercicio-soft: #d1fae5;
+    --gym-rutina: #2563eb;
+    --gym-rutina-soft: #dbeafe;
+    --gym-programa: #7c3aed;
+    --gym-programa-soft: #ede9fe;
+    --gym-alumno: #d97706;
+    --gym-alumno-soft: #ffedd5;
+    --gym-asignacion: #e11d48;
+    --gym-asignacion-soft: #ffe4e6;
+}
+
+.gym-page {
+    --gym-accent: var(--gym-ejercicio);
+    --gym-accent-soft: var(--gym-ejercicio-soft);
+    padding-bottom: 2rem;
+}
+
+.gym-page--ejercicio { --gym-accent: var(--gym-ejercicio); --gym-accent-soft: var(--gym-ejercicio-soft); }
+.gym-page--rutina { --gym-accent: var(--gym-rutina); --gym-accent-soft: var(--gym-rutina-soft); }
+.gym-page--programa { --gym-accent: var(--gym-programa); --gym-accent-soft: var(--gym-programa-soft); }
+.gym-page--alumno { --gym-accent: var(--gym-alumno); --gym-accent-soft: var(--gym-alumno-soft); }
+.gym-page--asignacion { --gym-accent: var(--gym-asignacion); --gym-accent-soft: var(--gym-asignacion-soft); }
+
+/* Cabecera de página */
+.gym-hero {
+    background: linear-gradient(135deg, var(--gym-accent) 0%, color-mix(in srgb, var(--gym-accent) 75%, #0f172a) 100%);
+    border-radius: var(--gym-radius-lg);
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--gym-shadow);
+    color: #fff;
+}
+
+.gym-hero__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.gym-hero__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.gym-hero__title i {
+    opacity: 0.9;
+    font-size: 1.35rem;
+}
+
+.gym-hero__subtitle {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.92;
+    max-width: 42rem;
+    line-height: 1.45;
+}
+
+.gym-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.gym-btn-hero {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: var(--gym-text) !important;
+    border: none !important;
+    font-weight: 600;
+    padding: 0.55rem 1.15rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gym-btn-hero:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    color: var(--gym-accent) !important;
+}
+
+.gym-btn-hero--ghost {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+
+.gym-btn-hero--ghost:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+}
+
+/* Flujo de trabajo (entrenador) */
+.gym-workflow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: var(--gym-surface);
+    border-radius: var(--gym-radius);
+    border: 1px solid var(--gym-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.gym-workflow__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gym-muted);
+    width: 100%;
+    margin-bottom: 0.15rem;
+}
+
+.gym-workflow__step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gym-muted);
+    background: var(--gym-bg);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.gym-workflow__step:hover {
+    color: var(--gym-accent);
+    background: var(--gym-accent-soft);
+}
+
+.gym-workflow__step--active {
+    background: var(--gym-accent);
+    color: #fff;
+}
+
+.gym-workflow__step--active:hover {
+    color: #fff;
+    filter: brightness(1.05);
+}
+
+.gym-workflow__num {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+}
+
+.gym-workflow__step--active .gym-workflow__num {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Tarjetas de contenido */
+.gym-section-card {
+    background: var(--gym-surface);
+    border-radius: var(--gym-radius-lg);
+    box-shadow: var(--gym-shadow);
+    border: 1px solid var(--gym-border);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+}
+
+.gym-section-card__head {
+    padding: 1.15rem 1.5rem;
+    border-bottom: 1px solid var(--gym-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
+}
+
+.gym-section-card__head h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gym-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.gym-section-card__head h3 i {
+    color: var(--gym-accent);
+}
+
+.gym-section-card__hint {
+    margin: 0.25rem 0 0;
+    font-size: 0.875rem;
+    color: var(--gym-muted);
+    width: 100%;
+}
+
+.gym-section-card__body {
+    padding: 1.35rem 1.5rem;
+}
+
+/* Alertas */
+.gym-page .alert {
+    border-radius: var(--gym-radius);
+    border: none;
+}
+
+.gym-page .alert-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.gym-page .alert-success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+/* Formularios */
+.gym-form .form-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--gym-text);
+    margin-bottom: 0.35rem;
+}
+
+.gym-form .form-control,
+.gym-form .form-select {
+    border-radius: 10px;
+    border-color: var(--gym-border);
+    padding: 0.55rem 0.85rem;
+}
+
+.gym-form .form-control:focus,
+.gym-form .form-select:focus {
+    border-color: var(--gym-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--gym-accent) 22%, transparent);
+}
+
+.gym-form__group-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gym-muted);
+    margin: 1.25rem 0 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--gym-border);
+}
+
+.gym-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--gym-border);
+}
+
+.gym-btn-primary {
+    background: var(--gym-accent) !important;
+    border-color: var(--gym-accent) !important;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.55rem 1.25rem;
+}
+
+.gym-btn-primary:hover {
+    filter: brightness(1.08);
+}
+
+.gym-btn-outline {
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid var(--gym-border);
+    color: var(--gym-muted);
+}
+
+/* Tablas / DataTables */
+.gym-table-wrap {
+    border-radius: var(--gym-radius);
+    overflow: hidden;
+    border: 1px solid var(--gym-border);
+}
+
+.gym-page table.dataTable,
+.gym-page table.gym-table {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+}
+
+.gym-page table.dataTable thead th,
+.gym-page table.gym-table thead th {
+    background: var(--gym-bg);
+    color: var(--gym-text);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 2px solid var(--gym-border) !important;
+    padding: 0.85rem 1rem !important;
+}
+
+.gym-page table.dataTable tbody td {
+    padding: 0.75rem 1rem !important;
+    vertical-align: middle;
+    color: #334155;
+}
+
+.gym-page table.dataTable tbody tr:hover {
+    background: color-mix(in srgb, var(--gym-accent-soft) 40%, #fff) !important;
+}
+
+.gym-page .dataTables_wrapper .dataTables_filter input {
+    border-radius: 10px;
+    border: 1px solid var(--gym-border);
+    padding: 0.4rem 0.75rem;
+}
+
+.gym-page .dataTables_wrapper .dataTables_length select {
+    border-radius: 8px;
+}
+
+.gym-page .badge-success {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    font-weight: 600;
+}
+
+.gym-page .badge-danger {
+    background: #fef2f2 !important;
+    color: #b91c1c !important;
+    font-weight: 600;
+}
+
+/* Builder rutina */
+.gym-builder-tip {
+    background: var(--gym-accent-soft);
+    border-radius: var(--gym-radius);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--gym-text);
+    margin-top: 0.75rem;
+    border-left: 3px solid var(--gym-accent);
+}
+
+.gym-builder-panel .table thead th {
+    background: var(--gym-bg);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+/* Modal eliminar */
+.gym-modal .modal-content {
+    border-radius: var(--gym-radius-lg);
+    border: none;
+    box-shadow: var(--gym-shadow-hover);
+}
+
+.gym-modal .modal-header {
+    border-bottom: 1px solid var(--gym-border);
+}
+
+.gym-modal .modal-footer {
+    border-top: 1px solid var(--gym-border);
+}
+
+/* Asignación: bloque destacado */
+.gym-assign-box {
+    background: linear-gradient(180deg, var(--gym-accent-soft) 0%, #fff 120%);
+    border: 1px solid color-mix(in srgb, var(--gym-accent) 25%, var(--gym-border));
+    border-radius: var(--gym-radius);
+    padding: 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .gym-hero {
+        padding: 1.25rem;
+    }
+    .gym-hero__title {
+        font-size: 1.25rem;
+    }
+    .gym-workflow__step {
+        font-size: 0.75rem;
+    }
+}

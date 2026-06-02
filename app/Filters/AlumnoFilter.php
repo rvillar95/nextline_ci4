@@ -15,8 +15,7 @@ class AlumnoFilter implements FilterInterface
             return redirect()->to(base_url('login'));
         }
 
-        $poder = (int) ($usuario['poder'] ?? 0);
-        if ($poder > 1) {
+        if (! es_usuario_portal_alumno($usuario)) {
             return redirect()->to(base_url('dashboard/menu'));
         }
 

@@ -117,6 +117,10 @@ class MenuSidebarConfigurable extends Migration
             $this->db->table('modulo')->where('menu_grupo_id', null)->update(['menu_grupo_id' => $gid('otros')]);
         }
 
+        if ($gid('gimnasio')) {
+            $this->db->query("UPDATE modulo SET menu_grupo_id = ? WHERE ruta = '/dashboard/gym'", [$gid('gimnasio')]);
+        }
+
         $this->db->query("
             UPDATE modulo SET
                 menu_ruta_alterna = 'dashboard/pago/cobros',

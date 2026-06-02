@@ -2,107 +2,65 @@
 
 <?= $this->section('gym/rutina/lista') ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-clipboard-list"></i> Rutinas
-                    </h3>
-                    <div class="card-tools">
-                        <a href="<?= base_url('dashboard/gym/rutina/registro') ?>" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Nueva Rutina
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <?php if (session()->getFlashdata('errors') !== null) : ?>
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                <?php if (!is_array(session()->getFlashdata('errors'))) : ?>
-                                    <li><?= session()->getFlashdata('errors') ?></li>
-                                <?php else : ?>
-                                    <?php foreach (session()->getFlashdata('errors') as $error) : ?>
-                                        <li><?= esc($error) ?></li>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
+<?= $this->include('Modulos/gym/partials/assets') ?>
+<?= $this->include('Modulos/gym/partials/datatable_lang') ?>
 
-                    <?php if (session()->getFlashdata('success') !== null) : ?>
-                        <div class="alert alert-success" role="alert">
-                            <?= session()->getFlashdata('success') ?>
-                        </div>
-                    <?php endif; ?>
+<div class="container-fluid gym-page gym-page--rutina">
+    <?= view('Modulos/gym/partials/page_header', [
+        'icon' => 'fa-clipboard-list',
+        'title' => 'Rutinas de entrenamiento',
+        'subtitle' => 'Agrupa ejercicios con series, repeticiones y descansos. Luego únelas en programas.',
+        'module' => 'rutina',
+        'primary' => [
+            'url' => base_url('dashboard/gym/rutina/registro'),
+            'label' => 'Nueva rutina',
+            'icon' => 'fa-plus',
+        ],
+    ]) ?>
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered getRutinas">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Creada por</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
-                </div>
+    <?= view('Modulos/gym/partials/workflow', ['active' => 'rutina']) ?>
+    <?= $this->include('Modulos/gym/partials/flash') ?>
+
+    <div class="gym-section-card">
+        <div class="gym-section-card__head">
+            <div>
+                <h3><i class="fas fa-list"></i> Rutinas guardadas</h3>
+                <p class="gym-section-card__hint">Abre una rutina para editar su lista de ejercicios (builder).</p>
+            </div>
+        </div>
+        <div class="gym-section-card__body">
+            <div class="gym-table-wrap table-responsive">
+                <table class="table gym-table getRutinas w-100">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Creada por</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalEliminacion" tabindex="-1" aria-labelledby="modalEliminacionTitle" aria-hidden="true" style="display: none;">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEliminacionTitle">Confirmar eliminación</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="modal-text">¿Eliminar esta rutina? Se perderá su detalle de ejercicios.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-light-dark _effect--ripple waves-effect waves-light" data-bs-dismiss="modal">Cancelar</button>
-                <form method="POST" action="<?= base_url('dashboard/gym/rutina/eliminar'); ?>">
-                    <?= csrf_field() ?>
-                    <input type="hidden" id="id" name="id" value="">
-                    <button type="submit" class="btn btn-danger">Eliminar</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<?= view('Modulos/gym/partials/delete_modal', [
+    'action' => base_url('dashboard/gym/rutina/eliminar'),
+    'message' => '¿Eliminar esta rutina? Se perderá el detalle de ejercicios.',
+]) ?>
 
 <script>
-    getRutinas();
-
-    function getRutinas() {
-        $('.getRutinas').DataTable().clear().destroy();
+    $(function() {
         $('.getRutinas').DataTable({
-            language: {
-                "sProcessing": "Procesando...",
-                "sLengthMenu": "Registros _MENU_ ",
-                "sZeroRecords": "No se encontraron resultados",
-                "sEmptyTable": "Ningún dato disponible en esta tabla =(",
-                "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-                "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-                "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
-                "sSearch": "Buscar:",
-                "oPaginate": { "sNext": "Siguiente", "sPrevious": "Anterior" }
-            },
+            language: window.gymDataTableLang,
             processing: true,
             serverSide: false,
-            ajax: {
-                url: 'getRutinas',
-                type: 'GET'
-            }
+            ajax: { url: 'getRutinas', type: 'GET' },
+            order: [[0, 'asc']],
+            pageLength: 25,
         });
-    }
-
+    });
     $(document).on('click', '#btnEliminar', function() {
         $('#id').val($(this).val());
         $('#modalEliminacion').modal('show');
@@ -110,4 +68,3 @@
 </script>
 
 <?= $this->endSection() ?>
-

@@ -239,7 +239,15 @@
                     </div>
 
                     <?= view('Base/partials/modulo_campos_menu', [
-                        'modulo' => old() ?: [],
+                        'modulo' => [
+                            'menu_grupo_id'        => old('menu_grupo_id'),
+                            'menu_icono'           => old('menu_icono', 'circle'),
+                            'menu_etiqueta'        => old('menu_etiqueta'),
+                            'menu_aplanar'         => old('menu_aplanar', 'S'),
+                            'menu_ruta_alterna'    => old('menu_ruta_alterna'),
+                            'menu_etiqueta_alterna'=> old('menu_etiqueta_alterna'),
+                            'menu_solo_sa'         => old('menu_solo_sa', 'N'),
+                        ],
                         'menuGrupos' => $menuGrupos ?? [],
                         'iconosMenu' => $iconosMenu ?? config('MenuSidebar')->iconos,
                     ]) ?>
