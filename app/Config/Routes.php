@@ -190,7 +190,12 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('registrar', 'Dashboard\DocumentoController::registrar');
         $routes2->post('update', 'Dashboard\DocumentoController::update');
         $routes2->post('eliminar', 'Dashboard\DocumentoController::eliminar');
+        $routes2->post('eliminar/(:num)', 'Dashboard\DocumentoController::eliminar/$1');
+        $routes2->post('enviar-correo', 'Dashboard\DocumentoController::enviarCorreo');
+        $routes2->get('por-paciente/(:num)', 'Dashboard\DocumentoController::documentosPorPaciente/$1');
         $routes2->post('enviar/(:num)', 'Dashboard\DocumentoController::enviar/$1');
+        $routes2->get('(:num)/descargar', 'Dashboard\ArchivoController::descargarDocumento/$1');
+        $routes2->get('(:num)/enlace-compartir', 'Dashboard\ArchivoController::enlaceCompartirDocumento/$1');
     });
 
     $routes->group('historial', function ($routes2) {
@@ -401,6 +406,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('vista-plan', 'Dashboard\PlanAlimentarioController::vistaPlan');
         $routes2->get('vista-distribucion', 'Dashboard\PlanAlimentarioController::vistaDistribucion');
         $routes2->get('get-paciente-data', 'Dashboard\PlanAlimentarioController::getPacienteData');
+        $routes2->get('consultas-paciente', 'Dashboard\PlanAlimentarioController::consultasPaciente');
         
         // Calorimetría
         $routes2->post('calcular-calorimetria', 'Dashboard\PlanAlimentarioController::calcularCalorimetria');
@@ -453,6 +459,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('perfil-publico', 'Dashboard\MiPerfilController::guardarPerfilPublico');
         $routes2->post('credencial', 'Dashboard\MiPerfilController::guardarCredencial');
         $routes2->post('credencial/eliminar', 'Dashboard\MiPerfilController::eliminarCredencial');
+        $routes2->get('credencial/(:num)/descargar', 'Dashboard\ArchivoController::descargarCredencial/$1');
     });
 });
 

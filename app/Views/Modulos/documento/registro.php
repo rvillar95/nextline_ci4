@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <form action="<?= base_url('dashboard/documento/registrar') ?>" method="post">
+            <form action="<?= base_url('dashboard/documento/registrar') ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
                 
                 <div class="section-card">
@@ -112,6 +112,16 @@
                             <div class="form-group">
                                 <label>Contenido</label>
                                 <textarea name="contenido" class="form-control" rows="10" placeholder="Ingrese el contenido del documento..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Archivo adjunto (PDF o imagen)</label>
+                                <input type="file" name="archivo" class="form-control" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*">
+                                <small class="text-muted">Máx. 5 MB. Se guardará en la nube: empresa → nutricionista → paciente → documentos.</small>
                             </div>
                         </div>
                     </div>

@@ -14,29 +14,110 @@ use Config\Services;
  */
 class ReservaPublicaService
 {
+    /**
+     * Expresión SQL que normaliza fechas de agenda (dd-mm-yyyy, yyyy-mm-dd o dd/mm/yyyy).
+     */
+    private function exprFechaAgenda(string $aliasDa = 'da', string $aliasA = 'a'): string
+    {
+        $raw = "COALESCE({$aliasDa}.fecha, {$aliasA}.fecha)";
+
+        return "COALESCE(
+            STR_TO_DATE({$raw}, '%d-%m-%Y'),
+            STR_TO_DATE({$raw}, '%Y-%m-%d'),
+            STR_TO_DATE({$raw}, '%d/%m/%Y')
+        )";
+    }
+
+    /**
+     * @param \CodeIgniter\Database\BaseBuilder $builder
+     */
+    private function aplicarFiltroCuposFuturos($builder): void
+    {
+        $expr = $this->exprFechaAgenda();
+        $hoy = date('Y-m-d');
+        $horaAhora = date('H:i:s');
+
+        $builder->groupStart()
+            ->where("{$expr} > '{$hoy}'", null, false)
+            ->orGroupStart()
+                ->where("{$expr} = '{$hoy}'", null, false)
+                ->where('da.hora_inicio >=', $horaAhora)
+            ->groupEnd()
+        ->groupEnd();
+    }
+
     public function resolverEmpresaId(?int $empresaId = null): int
     {
         if ($empresaId !== null && $empresaId > 0) {
             return $empresaId;
         }
-        $envId = (int) env('WHATSAPP_EMPRESA_ID', 0);
-        if ($envId > 0) {
-            return $envId;
+
+        foreach (['RESERVA_EMPRESA_ID', 'WHATSAPP_EMPRESA_ID'] as $envKey) {
+            $envId = (int) env($envKey, 0);
+            if ($envId > 0) {
+                return $envId;
+            }
         }
+
         $db = Database::connect();
-        $row = $db->table('empresa')->select('id')->limit(1)->get()->getRow();
-        return $row ? (int) $row->id : 0;
+        $expr = $this->exprFechaAgenda();
+        $hoy = date('Y-m-d');
+        $horaAhora = date('H:i:s');
+        $perfilNutri = (int) Usuario::PERFIL_NUTRICIONISTA;
+
+        $row = $db->query(
+            "SELECT u.empresa_id
+             FROM usuario u
+             INNER JOIN detalle_agenda da ON da.usuario_id = u.id
+             INNER JOIN agenda a ON a.id = da.agenda_id
+             WHERE u.perfil_id = ?
+               AND u.estado = 'A'
+               AND u.empresa_id IS NOT NULL
+               AND da.paciente_id IS NULL
+               AND da.estado = 1
+               AND (
+                    {$expr} > ?
+                    OR ({$expr} = ? AND da.hora_inicio >= ?)
+               )
+             GROUP BY u.empresa_id
+             ORDER BY u.empresa_id ASC
+             LIMIT 1",
+            [$perfilNutri, $hoy, $hoy, $horaAhora]
+        )->getRow();
+
+        if ($row && !empty($row->empresa_id)) {
+            return (int) $row->empresa_id;
+        }
+
+        $rowNutri = $db->table('usuario')
+            ->select('empresa_id')
+            ->where('perfil_id', Usuario::PERFIL_NUTRICIONISTA)
+            ->where('estado', 'A')
+            ->where('empresa_id IS NOT NULL', null, false)
+            ->orderBy('empresa_id', 'ASC')
+            ->limit(1)
+            ->get()
+            ->getRow();
+
+        if ($rowNutri && !empty($rowNutri->empresa_id)) {
+            return (int) $rowNutri->empresa_id;
+        }
+
+        $rowEmpresa = $db->table('empresa')->select('id')->orderBy('id', 'ASC')->limit(1)->get()->getRow();
+
+        return $rowEmpresa ? (int) $rowEmpresa->id : 0;
     }
 
     /**
      * Nutricionistas activos con al menos un cupo futuro (misma lógica que /reservar).
+     *
+     * @return list<object>
      */
     public function listarNutricionistasConCupos(?int $empresaId = null): array
     {
+        $empresaIdSolicitada = ($empresaId !== null && $empresaId > 0) ? $empresaId : null;
         $empresaId = $this->resolverEmpresaId($empresaId);
         $db = Database::connect();
-        $hoy = date('Y-m-d');
-        $horaAhora = date('H:i:s');
 
         $builder = $db->table('usuario u')
             ->select('u.id, u.nombre, u.apellido, u.foto')
@@ -45,22 +126,57 @@ class ReservaPublicaService
             ->where('u.perfil_id', Usuario::PERFIL_NUTRICIONISTA)
             ->where('u.estado', 'A')
             ->where('da.paciente_id', null)
-            ->where('da.estado', 1)
-            ->groupStart()
-                ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') > ", $hoy)
-                ->orGroupStart()
-                    ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') = ", $hoy)
-                    ->where('da.hora_inicio >=', $horaAhora)
-                ->groupEnd()
-            ->groupEnd()
-            ->groupBy('u.id')
-            ->orderBy('u.nombre');
+            ->where('da.estado', 1);
+
+        $this->aplicarFiltroCuposFuturos($builder);
 
         if ($empresaId > 0) {
             $builder->where('u.empresa_id', $empresaId);
         }
 
-        return $builder->get()->getResultArray();
+        $lista = $builder->groupBy('u.id')->orderBy('u.nombre')->get()->getResult();
+
+        if ($lista === [] && $empresaIdSolicitada === null && $empresaId > 0) {
+            $builderSinEmpresa = $db->table('usuario u')
+                ->select('u.id, u.nombre, u.apellido, u.foto')
+                ->join('detalle_agenda da', 'da.usuario_id = u.id')
+                ->join('agenda a', 'a.id = da.agenda_id')
+                ->where('u.perfil_id', Usuario::PERFIL_NUTRICIONISTA)
+                ->where('u.estado', 'A')
+                ->where('da.paciente_id', null)
+                ->where('da.estado', 1);
+            $this->aplicarFiltroCuposFuturos($builderSinEmpresa);
+            $lista = $builderSinEmpresa->groupBy('u.id')->orderBy('u.nombre')->get()->getResult();
+            if ($lista !== []) {
+                log_message('info', 'ReservaPublica: nutricionistas con cupos encontrados sin filtro empresa (empresa resuelta ' . $empresaId . ' sin cupos).');
+            }
+        }
+
+        return $lista;
+    }
+
+    /**
+     * Nutricionistas activos por ID (p. ej. enlace desde /equipo sin cupos en el listado inicial).
+     *
+     * @param list<int> $ids
+     * @return list<object>
+     */
+    public function listarNutricionistasPorIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            return [];
+        }
+
+        return Database::connect()
+            ->table('usuario')
+            ->select('id, nombre, apellido, foto')
+            ->whereIn('id', $ids)
+            ->where('perfil_id', Usuario::PERFIL_NUTRICIONISTA)
+            ->where('estado', 'A')
+            ->orderBy('nombre')
+            ->get()
+            ->getResult();
     }
 
     public function empresaIdDelNutricionista(int $nutricionistaId): int
@@ -95,6 +211,7 @@ class ReservaPublicaService
         }
 
         $db = Database::connect();
+        $expr = $this->exprFechaAgenda();
         $builder = $db->table('usuario u')
             ->select('u.id, u.nombre, u.apellido, u.empresa_id')
             ->join('detalle_agenda da', 'da.usuario_id = u.id')
@@ -103,7 +220,7 @@ class ReservaPublicaService
             ->where('u.estado', 'A')
             ->where('da.paciente_id', null)
             ->where('da.estado', 1)
-            ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') = ", $fecha)
+            ->where("{$expr} = '{$fecha}'", null, false)
             ->groupBy('u.id')
             ->orderBy('u.nombre', 'ASC');
 
@@ -119,7 +236,7 @@ class ReservaPublicaService
         $horaAhora = date('H:i:s');
         $conCupos = [];
         foreach ($rows as $nut) {
-            $slots = $this->disponibilidad((int) $nut['id'], $fecha);
+            $slots = $this->disponibilidad((int) $nut['id'], $fecha, ($empresaId !== null && $empresaId > 0) ? $empresaId : null);
             if ($slots !== []) {
                 $conCupos[] = $nut;
             }
@@ -130,7 +247,7 @@ class ReservaPublicaService
     /**
      * Slots libres para nutricionista y fecha (Y-m-d).
      */
-    public function disponibilidad(?int $nutricionistaId, string $fecha): array
+    public function disponibilidad(?int $nutricionistaId, string $fecha, ?int $empresaId = null): array
     {
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
             $fecha = date('Y-m-d');
@@ -141,16 +258,24 @@ class ReservaPublicaService
         }
 
         $db = Database::connect();
+        $expr = $this->exprFechaAgenda();
         $builder = $db->table('detalle_agenda da')
             ->select('da.id, da.hora_inicio, da.hora_fin, da.fecha, a.fecha as fecha_agenda, u.nombre as nutricionista_nombre, u.apellido as nutricionista_apellido')
             ->join('agenda a', 'a.id = da.agenda_id')
             ->join('usuario u', 'u.id = da.usuario_id')
+            ->where('u.perfil_id', Usuario::PERFIL_NUTRICIONISTA)
+            ->where('u.estado', 'A')
             ->where('da.paciente_id', null)
             ->where('da.estado', 1)
-            ->where("STR_TO_DATE(COALESCE(da.fecha, a.fecha), '%d-%m-%Y') = ", $fecha);
+            ->where("{$expr} = '{$fecha}'", null, false);
 
         if ($nutricionistaId !== null && $nutricionistaId > 0) {
             $builder->where('da.usuario_id', $nutricionistaId);
+        } elseif ($empresaId === null) {
+            $empresaId = $this->resolverEmpresaId(null);
+        }
+        if ($empresaId !== null && $empresaId > 0) {
+            $builder->where('u.empresa_id', $empresaId);
         }
 
         $slots = $builder->orderBy('da.hora_inicio')->get()->getResultArray();

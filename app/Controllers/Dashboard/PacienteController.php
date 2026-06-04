@@ -387,10 +387,6 @@ class PacienteController extends BaseController
             return redirect()->to(base_url('dashboard/paciente/lista'))->with('error', 'Paciente no encontrado');
         }
 
-        // Cargar historial clínico
-        $historialModel = new \App\Models\HistorialClinico();
-        $data['historial'] = $historialModel->getHistorialPorPaciente($id);
-
         // Cargar documentos
         $documentoModel = new \App\Models\Documento();
         $data['documentos'] = $documentoModel->getDocumentosPorPaciente($id);
@@ -401,18 +397,22 @@ class PacienteController extends BaseController
             ->orderBy('fcreacion', 'DESC')
             ->findAll();
 
-        // Cargar detalle_agenda (citas) del paciente solo del usuario logueado (para que "Ver consulta" funcione)
+        // Consultas unificadas (cita + datos de historial clínico si existen)
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
-        $data['citas'] = $db->table('detalle_agenda da')
-            ->select('da.*, a.fecha as fecha_agenda, ma.nombre as modalidad_nombre')
+        $data['consultas'] = $db->table('detalle_agenda da')
+            ->select(
+                'da.id, da.estado_cita, da.tipo_consulta, da.hora_inicio, da.hora_fin, da.motivo,'
+                . ' a.fecha as fecha_agenda, ma.nombre as modalidad_nombre,'
+                . ' hc.id as historial_id, hc.peso_actual, hc.imc_actual, hc.motivo_consulta, hc.tipo_registro as historial_tipo'
+            )
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join('modalidad_agenda ma', 'ma.id = da.modalidad_id', 'left')
+            ->join('historial_clinico hc', 'hc.detalle_agenda_id = da.id AND hc.estado = \'A\'', 'left')
             ->where('da.paciente_id', $id)
             ->where('da.usuario_id', $usuario_id)
             ->orderBy('a.fecha', 'DESC')
             ->orderBy('da.hora_inicio', 'DESC')
-            ->limit(50)
             ->get()
             ->getResult();
 

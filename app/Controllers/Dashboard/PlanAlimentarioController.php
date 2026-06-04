@@ -51,31 +51,94 @@ class PlanAlimentarioController extends BaseController
         $pacienteModel = new Paciente();
         $usuario = session()->get('usuario');
         $data['pacientes'] = $pacienteModel->getPacientesSelect($usuario['id']);
+
+        $data['autoPacienteId'] = (int) $this->request->getGet('paciente_id');
+        $data['autoDetalleAgendaId'] = (int) $this->request->getGet('detalle_agenda_id');
+        $data['autoTab'] = in_array($this->request->getGet('tab'), ['calorimetria', 'plan', 'distribucion'], true)
+            ? $this->request->getGet('tab')
+            : 'calorimetria';
+
+        // Asegurar que el paciente de la URL aparezca en el select
+        $data['consultasPreload'] = [];
+        $data['mostrarContenido'] = false;
+        $data['pacientePrecargado'] = null;
+        $data['detalleAgendaIdActivo'] = null;
+        $data['htmlCalorimetria'] = '';
+        $data['htmlPlan'] = '';
+        $data['htmlDistribucion'] = '';
+
+        if ($data['autoPacienteId'] > 0) {
+            $ids = array_map(static fn ($p) => (int) $p->id, $data['pacientes']);
+            if (!in_array($data['autoPacienteId'], $ids, true)) {
+                $extra = $pacienteModel->find($data['autoPacienteId']);
+                if ($extra) {
+                    $extra->nombre_completo = trim(($extra->nombre ?? '') . ' ' . ($extra->apellido ?? ''));
+                    array_unshift($data['pacientes'], $extra);
+                }
+            }
+
+            $paciente = $pacienteModel->find($data['autoPacienteId']);
+            if ($paciente) {
+                $data['pacientePrecargado'] = $paciente;
+                $data['consultasPreload'] = $this->obtenerConsultasPaciente($data['autoPacienteId']);
+                $detalleId = $data['autoDetalleAgendaId'] > 0 ? $data['autoDetalleAgendaId'] : null;
+                $data['detalleAgendaIdActivo'] = $detalleId;
+                $data['mostrarContenido'] = true;
+                $data['htmlCalorimetria'] = $this->renderVistaCalorimetria($data['autoPacienteId'], $detalleId);
+                $data['htmlPlan'] = $this->renderVistaPlan($data['autoPacienteId'], $detalleId);
+                $data['htmlDistribucion'] = $this->renderVistaDistribucion($data['autoPacienteId'], $detalleId);
+            }
+        }
         
         return view('Modulos/plan_alimentario/index', $data);
     }
 
     /**
-     * Vista parcial de Calorimetría (para cargar con AJAX)
+     * @return list<array<string, mixed>>
      */
-    public function vistaCalorimetria()
+    private function obtenerConsultasPaciente(int $pacienteId): array
     {
-        $pacienteId = $this->request->getGet('paciente_id');
-        $detalleAgendaId = $this->request->getGet('detalle_agenda_id');
-        
-        // Obtener datos del paciente
+        $db = \Config\Database::connect();
+        $rows = $db->table('detalle_agenda da')
+            ->select('da.id, da.tipo_consulta, da.hora_inicio, da.hora_fin, da.estado_cita, a.fecha as fecha_agenda')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('da.paciente_id', $pacienteId)
+            ->orderBy('a.fecha', 'DESC')
+            ->orderBy('da.hora_inicio', 'DESC')
+            ->limit(100)
+            ->get()
+            ->getResult();
+
+        $lista = [];
+        foreach ($rows as $r) {
+            $lista[] = [
+                'id'            => (int) $r->id,
+                'fecha_agenda'  => $r->fecha_agenda ?? '',
+                'hora_inicio'   => $r->hora_inicio ?? '',
+                'hora_fin'      => $r->hora_fin ?? '',
+                'tipo_consulta' => $r->tipo_consulta ?? 'consulta',
+                'estado_cita'   => $r->estado_cita ?? '',
+            ];
+        }
+
+        return $lista;
+    }
+
+    private function renderVistaCalorimetria(int $pacienteId, ?int $detalleAgendaId): string
+    {
         $pacienteModel = new Paciente();
         $paciente = $pacienteModel->find($pacienteId);
-        
-        // Crear objeto cita simulado para compatibilidad con la vista
-        $cita = (object)[
-            'id' => $detalleAgendaId,
-            'paciente_id' => $pacienteId,
-            'genero' => $paciente->genero ?? null,
-            'fecha_nacimiento' => $paciente->fecha_nacimiento ?? null
+        if (!$paciente) {
+            return '';
+        }
+
+        $cita = (object) [
+            'id'               => $detalleAgendaId,
+            'paciente_id'      => $pacienteId,
+            'genero'           => $paciente->genero ?? null,
+            'fecha_nacimiento' => $paciente->fecha_nacimiento ?? null,
         ];
-        
-        // Obtener historial si existe
+
         $historial = null;
         if ($detalleAgendaId) {
             $historialModel = new \App\Models\HistorialClinico();
@@ -83,11 +146,43 @@ class PlanAlimentarioController extends BaseController
                 ->where('paciente_id', $pacienteId)
                 ->first();
         }
-        
+
         return view('Modulos/plan_alimentario/calorimetria', [
-            'cita' => $cita,
-            'historial' => $historial
+            'cita'      => $cita,
+            'historial' => $historial,
         ]);
+    }
+
+    private function renderVistaPlan(int $pacienteId, ?int $detalleAgendaId): string
+    {
+        $cita = (object) [
+            'id'          => $detalleAgendaId,
+            'paciente_id' => $pacienteId,
+        ];
+
+        return view('Modulos/plan_alimentario/plan', ['cita' => $cita]);
+    }
+
+    private function renderVistaDistribucion(int $pacienteId, ?int $detalleAgendaId): string
+    {
+        $cita = (object) [
+            'id'          => $detalleAgendaId,
+            'paciente_id' => $pacienteId,
+        ];
+
+        return view('Modulos/plan_alimentario/distribucion_comidas', ['cita' => $cita]);
+    }
+
+    /**
+     * Vista parcial de Calorimetría (para cargar con AJAX)
+     */
+    public function vistaCalorimetria()
+    {
+        $pacienteId = (int) $this->request->getGet('paciente_id');
+        $detalleAgendaId = $this->request->getGet('detalle_agenda_id');
+        $detalleAgendaId = $detalleAgendaId !== null && $detalleAgendaId !== '' ? (int) $detalleAgendaId : null;
+
+        return $this->response->setBody($this->renderVistaCalorimetria($pacienteId, $detalleAgendaId));
     }
 
     /**
@@ -95,18 +190,11 @@ class PlanAlimentarioController extends BaseController
      */
     public function vistaPlan()
     {
-        $pacienteId = $this->request->getGet('paciente_id');
+        $pacienteId = (int) $this->request->getGet('paciente_id');
         $detalleAgendaId = $this->request->getGet('detalle_agenda_id');
-        
-        // Crear objeto cita simulado
-        $cita = (object)[
-            'id' => $detalleAgendaId,
-            'paciente_id' => $pacienteId
-        ];
-        
-        return view('Modulos/plan_alimentario/plan', [
-            'cita' => $cita
-        ]);
+        $detalleAgendaId = $detalleAgendaId !== null && $detalleAgendaId !== '' ? (int) $detalleAgendaId : null;
+
+        return $this->response->setBody($this->renderVistaPlan($pacienteId, $detalleAgendaId));
     }
 
     /**
@@ -114,18 +202,11 @@ class PlanAlimentarioController extends BaseController
      */
     public function vistaDistribucion()
     {
-        $pacienteId = $this->request->getGet('paciente_id');
+        $pacienteId = (int) $this->request->getGet('paciente_id');
         $detalleAgendaId = $this->request->getGet('detalle_agenda_id');
-        
-        // Crear objeto cita simulado
-        $cita = (object)[
-            'id' => $detalleAgendaId,
-            'paciente_id' => $pacienteId
-        ];
-        
-        return view('Modulos/plan_alimentario/distribucion_comidas', [
-            'cita' => $cita
-        ]);
+        $detalleAgendaId = $detalleAgendaId !== null && $detalleAgendaId !== '' ? (int) $detalleAgendaId : null;
+
+        return $this->response->setBody($this->renderVistaDistribucion($pacienteId, $detalleAgendaId));
     }
 
     /**
@@ -133,12 +214,8 @@ class PlanAlimentarioController extends BaseController
      */
     public function getPacienteData()
     {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setJSON(['error' => 'Solo peticiones AJAX'])->setStatusCode(400);
-        }
-
-        $pacienteId = $this->request->getGet('paciente_id');
-        if (!$pacienteId) {
+        $pacienteId = (int) $this->request->getGet('paciente_id');
+        if ($pacienteId <= 0) {
             return $this->response->setJSON(['error' => 'ID de paciente requerido'])->setStatusCode(400);
         }
 
@@ -150,6 +227,26 @@ class PlanAlimentarioController extends BaseController
         }
 
         return $this->response->setJSON(['paciente' => $paciente]);
+    }
+
+    /**
+     * Citas/consultas del paciente (detalle_agenda) para el selector del plan.
+     */
+    public function consultasPaciente()
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'error' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $pacienteId = (int) $this->request->getGet('paciente_id');
+        if ($pacienteId <= 0) {
+            return $this->response->setJSON(['success' => false, 'error' => 'Paciente requerido'])->setStatusCode(400);
+        }
+
+        return $this->response->setJSON([
+            'success'   => true,
+            'consultas' => $this->obtenerConsultasPaciente($pacienteId),
+        ]);
     }
 
     /**

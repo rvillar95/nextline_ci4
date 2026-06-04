@@ -90,7 +90,12 @@ $u = $usuario;
                                     <td><?= ($c['visible_web'] ?? 'S') === 'S' ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-secondary">No</span>' ?></td>
                                     <td>
                                         <?php if (!empty($c['archivo_ruta'])): ?>
-                                            <a href="<?= base_url($c['archivo_ruta']) ?>" target="_blank" rel="noopener" class="small">Ver</a>
+                                            <?php
+                                            $urlDoc = str_starts_with((string) $c['archivo_ruta'], 'private/')
+                                                ? base_url('dashboard/mi-perfil/credencial/' . (int) $c['id'] . '/descargar')
+                                                : base_url($c['archivo_ruta']);
+                                            ?>
+                                            <a href="<?= esc($urlDoc) ?>" target="_blank" rel="noopener" class="small">Ver</a>
                                         <?php else: ?>
                                             —
                                         <?php endif; ?>

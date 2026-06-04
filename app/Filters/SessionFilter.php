@@ -254,6 +254,35 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Plan alimentario: sub-rutas AJAX si tiene acceso al módulo
+        $pathPlan = $this->sanitizePath($path);
+        if ($pathPlan === '/dashboard/plan-alimentario'
+            || strpos($pathPlan, '/dashboard/plan-alimentario/') === 0) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/plan-alimentario') === 0
+                    || str_contains($rule['pattern'], 'plan-alimentario')
+                    || str_contains($rule['pattern'], 'plan_alimentario')) {
+                    return;
+                }
+            }
+        }
+
+        // Documentos: AJAX (envío por correo, listado por paciente, eliminar) si tiene el módulo
+        $esDocumentoAjax = $this->isDirectMatch($path, '/dashboard/documento/enviar-correo')
+            || $this->isDirectMatch($path, '/dashboard/documento/getDocumentos')
+            || (bool) preg_match('#^/dashboard/documento/por-paciente/[0-9]+/?$#', $this->sanitizePath($path))
+            || (bool) preg_match('#^/dashboard/documento/eliminar/[0-9]+/?$#', $this->sanitizePath($path))
+            || (bool) preg_match('#^/dashboard/documento/enviar/[0-9]+/?$#', $this->sanitizePath($path))
+            || (bool) preg_match('#^/dashboard/documento/[0-9]+/descargar/?$#', $this->sanitizePath($path))
+            || (bool) preg_match('#^/dashboard/documento/[0-9]+/enlace-compartir/?$#', $this->sanitizePath($path));
+        if ($esDocumentoAjax) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/documento') === 0) {
+                    return;
+                }
+            }
+        }
+
         // Tarifas de consulta: /editar/{id} si tiene acceso al módulo boton-pago
         if (preg_match('#^/dashboard/boton-pago/editar/[0-9]+/?$#', $this->sanitizePath($path))) {
             foreach ($allowed as $rule) {

@@ -5,6 +5,7 @@
 <?php
 $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
 ?>
+<link href="<?= base_url('lib/css/nutrinext-reservar.css') ?>" rel="stylesheet" type="text/css" />
 
 <section class="py-5 reservar-hero">
     <div class="container">
@@ -13,7 +14,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     </div>
 </section>
 
-<section class="py-5" style="background: var(--bg-light);">
+<section class="py-5 reservar-page" style="background: var(--bg-light);">
     <div class="container">
         <input type="hidden" id="empresa_id" value="<?= (int)($empresa_id ?? 0) ?>">
         <?= csrf_field() ?>
@@ -25,38 +26,45 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
                     <div class="card-body text-center py-5">
                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
                         <h5>No hay profesionales con disponibilidad</h5>
-                        <p class="text-muted mb-0">En este momento no hay horarios publicados. Vuelva a intentar más tarde o contacte al consultorio.</p>
+                        <p class="text-muted mb-3">No hay nutricionistas con horas libres publicadas en la agenda. El profesional debe tener bloques en <strong>Agenda</strong> (estado disponible, sin paciente asignado) y fechas futuras.</p>
+                        <p class="text-muted small mb-0">Si es administrador, revise que existan usuarios con perfil Nutricionista activos y cupos en el calendario. También puede indicar la empresa en la URL: <code>?e=ID_EMPRESA</code>.</p>
                     </div>
                 </div>
                 <?php else: ?>
 
-                <!-- Paso 1: Elija un profesional (tarjetas con foto y nombre) -->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">1. Elija un profesional</h5>
-                        <div class="row g-3" id="nutricionistasGrid">
-                            <div class="col-6 col-md-4 col-lg-2">
-                                <div class="card nutricionista-card border h-100 cursor-pointer" data-id="" id="card-todos">
-                                    <div class="card-body text-center p-3">
-                                        <div class="nutricionista-foto-wrap mx-auto mb-2">
-                                            <i class="fas fa-users fa-2x text-muted"></i>
-                                        </div>
-                                        <div class="small fw-semibold">Todos</div>
+                <nav class="reservar-steps" aria-label="Pasos de reserva">
+                    <span class="reservar-step-pill is-active" id="stepPill1"><span class="step-num">1</span> Profesional</span>
+                    <span class="reservar-step-sep" aria-hidden="true"></span>
+                    <span class="reservar-step-pill" id="stepPill2"><span class="step-num">2</span> Día</span>
+                    <span class="reservar-step-sep" aria-hidden="true"></span>
+                    <span class="reservar-step-pill" id="stepPill3"><span class="step-num">3</span> Horario</span>
+                </nav>
+
+                <div class="card reservar-card mb-4">
+                    <div class="card-header-reservar">
+                        <h5>Profesional</h5>
+                        <p>Elija con quién desea agendar su consulta.</p>
+                    </div>
+                    <div class="card-body-reservar">
+                        <div class="reservar-pro-scroll" id="nutricionistasGrid">
+                            <div class="card nutricionista-card card-todos cursor-pointer" data-id="" data-nombre="Todos los profesionales" id="card-todos">
+                                <div class="card-body text-center">
+                                    <div class="nutricionista-foto-wrap">
+                                        <i class="fas fa-users fa-lg text-muted"></i>
                                     </div>
+                                    <div class="pro-name">Todos</div>
                                 </div>
                             </div>
-                            <?php foreach ($nutricionistas as $n): 
+                            <?php foreach ($nutricionistas as $n):
                                 $nombreCompleto = trim(($n->nombre ?? '') . ' ' . ($n->apellido ?? ''));
                                 $fotoUrl = !empty($n->foto) ? base_url($n->foto) : $placeholderFoto;
                             ?>
-                            <div class="col-6 col-md-4 col-lg-2">
-                                <div class="card nutricionista-card border h-100 cursor-pointer" data-id="<?= (int)$n->id ?>" id="card-<?= (int)$n->id ?>">
-                                    <div class="card-body text-center p-3">
-                                        <div class="nutricionista-foto-wrap mx-auto mb-2">
-                                            <img src="<?= esc($fotoUrl) ?>" alt="<?= esc($nombreCompleto) ?>" class="nutricionista-foto">
-                                        </div>
-                                        <div class="small fw-semibold text-break"><?= esc($nombreCompleto) ?></div>
+                            <div class="card nutricionista-card cursor-pointer" data-id="<?= (int) $n->id ?>" data-nombre="<?= esc($nombreCompleto) ?>" id="card-<?= (int) $n->id ?>">
+                                <div class="card-body text-center">
+                                    <div class="nutricionista-foto-wrap">
+                                        <img src="<?= esc($fotoUrl) ?>" alt="<?= esc($nombreCompleto) ?>" class="nutricionista-foto" loading="lazy">
                                     </div>
+                                    <div class="pro-name"><?= esc($nombreCompleto) ?></div>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -65,44 +73,55 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
                     </div>
                 </div>
 
-                <!-- Paso 2: Elija un día (visible al seleccionar profesional) -->
-                <div class="card shadow-sm border-0 mb-4" id="cardFechas" style="display: none;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">2. Elija el día</h5>
-                        <p class="text-muted small mb-3">Seleccione el día y pulse Buscar para ver los horarios disponibles.</p>
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-6">
-                                <label class="form-label small mb-0">Día</label>
+                <div class="card reservar-card mb-4" id="cardFechas" style="display: none;">
+                    <div class="card-header-reservar">
+                        <h5>Fecha</h5>
+                        <p>Indique el día y busque los horarios libres.</p>
+                    </div>
+                    <div class="card-body-reservar">
+                        <div class="reservar-date-row">
+                            <div class="fecha-field">
+                                <label class="form-label small fw-semibold text-secondary mb-1" for="fecha_dia">Día de la consulta</label>
                                 <input type="date" id="fecha_dia" class="form-control" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>">
                             </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <label class="form-label small mb-0 d-md-block d-none">&nbsp;</label>
-                                <a href="#" class="btn-buscar-horarios" id="btnBuscar" role="button">
-                                    <i class="fas fa-search me-1"></i> Buscar horarios
-                                </a>
+                            <a href="#" class="btn-buscar-horarios" id="btnBuscar" role="button">
+                                <i class="fas fa-search" aria-hidden="true"></i> Buscar horarios
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card reservar-card mb-4" id="cardSlots" style="display: none;">
+                    <div class="card-header-reservar">
+                        <h5>Horario disponible</h5>
+                        <p>Seleccione un bloque para continuar con sus datos.</p>
+                    </div>
+                    <div class="card-body-reservar">
+                        <div class="reservar-pro-badge" id="reservaProBadge">
+                            <i class="fas fa-user-md" aria-hidden="true"></i>
+                            <span id="reservaProBadgeText"></span>
+                        </div>
+                        <ul class="nav nav-tabs" id="tabsDias" role="tablist" style="display: none;"></ul>
+                        <div class="tab-content" id="panelesDias"></div>
+                        <div id="slotsContainer">
+                            <div class="reservar-slots-empty">
+                                <i class="fas fa-clock d-block"></i>
+                                <p class="mb-0">Elija el día y pulse <strong>Buscar horarios</strong>.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Días con slots (tabs) -->
-                <div class="card shadow-sm border-0 mb-4" id="cardSlots" style="display: none;">
-                    <div class="card-body">
-                        <h5 class="card-title mb-2">3. Elija día y horario</h5>
-                        <p class="text-muted small mb-3">Seleccione un día y luego el horario. Al hacer clic en "Reservar" complete sus datos.</p>
-                        <ul class="nav nav-tabs mb-3" id="tabsDias" role="tablist" style="display: none;"></ul>
-                        <div class="tab-content" id="panelesDias"></div>
-                        <div id="slotsContainer">
-                            <p class="text-muted mb-0">Elija el día y pulse Buscar horarios.</p>
-                        </div>
+                <div class="card reservar-card mb-4" id="cardFormulario" style="display: none;">
+                    <div class="card-header-reservar">
+                        <h5>Confirmar reserva</h5>
+                        <p>Complete sus datos de contacto.</p>
                     </div>
-                </div>
-
-                <!-- Formulario de reserva -->
-                <div class="card shadow-sm border-0 mb-4" id="cardFormulario" style="display: none;">
-                    <div class="card-body">
-                        <h5 class="card-title">Datos para la reserva</h5>
-                        <p class="text-muted small mb-3">Horario elegido: <strong id="slotResumen"></strong></p>
+                    <div class="card-body-reservar">
+                        <div class="reservar-slot-resumen">
+                            <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                            <span><strong id="slotResumen"></strong></span>
+                        </div>
                         <form id="formReserva">
                             <input type="hidden" name="detalle_agenda_id" id="detalle_agenda_id">
                             <div class="mb-3">
@@ -136,7 +155,7 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
                     </div>
                 </div>
 
-                <div class="alert alert-success shadow-sm border-0" id="mensajeExito" style="display: none;">
+                <div class="alert alert-success reservar-card border-0" id="mensajeExito" style="display: none;">
                     <i class="fas fa-check-circle me-2"></i>
                     <span id="mensajeExitoTexto"></span>
                 </div>
@@ -152,103 +171,14 @@ $placeholderFoto = base_url('lib/src/assets/img/profile-30.png');
     background: linear-gradient(135deg, var(--brand-green-primary) 0%, var(--brand-green-dark) 100%);
     padding: 80px 0 60px !important;
 }
-.nutricionista-card { transition: all 0.2s ease; }
-.nutricionista-card:hover { border-color: var(--nutrinext-primary) !important; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2); }
-.nutricionista-card.selected { border-color: var(--nutrinext-primary) !important; background: rgba(34, 197, 94, 0.08); box-shadow: 0 0 0 2px var(--nutrinext-primary); }
 .cursor-pointer { cursor: pointer; }
-.nutricionista-foto-wrap {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--nutrinext-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.nutricionista-foto {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.text-break { word-break: break-word; }
-
-/* Enlace “Buscar horarios” con aspecto de botón (sin ripple) */
-a.btn-buscar-horarios {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--nutrinext-primary);
-    color: #fff;
-    border: 1px solid var(--nutrinext-primary);
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
-}
-a.btn-buscar-horarios:hover {
-    background: var(--brand-green-dark);
-    border-color: var(--brand-green-dark);
-    color: #fff;
-    text-decoration: none;
-}
-a.btn-buscar-horarios:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.35);
-}
-a.btn-buscar-horarios .me-1 { margin-right: 0.35rem; }
-
-/* Botón “Reservar” de cada horario (enlace sin .btn para evitar ripple) */
-a.btn-reservar-slot {
-    display: inline-block;
-    background: var(--nutrinext-primary);
-    color: #fff;
-    border: 1px solid var(--nutrinext-primary);
-    padding: 0.35rem 0.75rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-}
-a.btn-reservar-slot:hover {
-    background: var(--brand-green-dark);
-    border-color: var(--brand-green-dark);
-    color: #fff;
-    text-decoration: none;
-}
-
-/* Botón Confirmar reserva (sin .btn para evitar ripple) */
-button.btn-confirmar-reserva {
-    display: inline-flex;
-    align-items: center;
-    background: var(--nutrinext-primary);
-    color: #fff;
-    border: 1px solid var(--nutrinext-primary);
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-}
-button.btn-confirmar-reserva:hover {
-    background: var(--brand-green-dark);
-    border-color: var(--brand-green-dark);
-    color: #fff;
-}
-button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
 </style>
 
 <script>
 (function() {
     var empresaId = document.getElementById('empresa_id').value;
     var slotSeleccionado = null;
+    var nombreProfesionalSeleccionado = '';
     var diasSemana = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
     var meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
@@ -292,18 +222,47 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         return parts[2] + '-' + parts[1] + '-' + parts[0];
     }
 
+    function actualizarPasos(pasoActivo) {
+        [1, 2, 3].forEach(function(n) {
+            var pill = document.getElementById('stepPill' + n);
+            if (!pill) return;
+            pill.classList.remove('is-active', 'is-done');
+            if (n < pasoActivo) pill.classList.add('is-done');
+            if (n === pasoActivo) pill.classList.add('is-active');
+        });
+    }
+
+    function slotsPlaceholderHtml() {
+        return '<div class="reservar-slots-empty"><i class="fas fa-clock d-block"></i><p class="mb-0">Elija el día y pulse <strong>Buscar horarios</strong>.</p></div>';
+    }
+
+    function actualizarBadgeProfesional() {
+        var badge = document.getElementById('reservaProBadge');
+        var text = document.getElementById('reservaProBadgeText');
+        if (!badge || !text) return;
+        if (nombreProfesionalSeleccionado && nombreProfesionalSeleccionado !== 'Todos los profesionales') {
+            text.textContent = 'Horarios con ' + nombreProfesionalSeleccionado;
+            badge.classList.add('is-visible');
+        } else {
+            badge.classList.remove('is-visible');
+        }
+    }
+
     function seleccionarNutricionista(card) {
         var id = card.getAttribute('data-id') || '';
+        nombreProfesionalSeleccionado = card.getAttribute('data-nombre') || '';
         document.getElementById('nutricionista_id').value = id;
         document.querySelectorAll('.nutricionista-card').forEach(function(c) { c.classList.remove('selected'); });
         card.classList.add('selected');
         document.getElementById('cardFechas').style.display = 'block';
         document.getElementById('cardSlots').style.display = 'block';
-            document.getElementById('slotsContainer').innerHTML = '<p class="text-muted mb-0">Elija el día y pulse Buscar horarios.</p>';
+        document.getElementById('slotsContainer').innerHTML = slotsPlaceholderHtml();
         document.getElementById('tabsDias').style.display = 'none';
         document.getElementById('panelesDias').innerHTML = '';
         document.getElementById('cardFormulario').style.display = 'none';
         document.getElementById('mensajeExito').style.display = 'none';
+        actualizarBadgeProfesional();
+        actualizarPasos(2);
     }
 
     document.querySelectorAll('.nutricionista-card').forEach(function(card) {
@@ -342,17 +301,18 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         var nutricionistaId = nutricionistaIdEl ? nutricionistaIdEl.value : '';
         var fechaDia = document.getElementById('fecha_dia').value;
         if (!fechaDia) {
-            document.getElementById('slotsContainer').innerHTML = '<p class="text-muted mb-0">Seleccione un día.</p>';
+            document.getElementById('slotsContainer').innerHTML = '<div class="reservar-slots-empty"><p class="mb-0">Seleccione un día.</p></div>';
             return;
         }
         if (esFechaPasada(fechaDia)) {
-            document.getElementById('slotsContainer').innerHTML = '<p class="text-danger mb-0">No puede reservar en fechas pasadas. Elija hoy o una fecha futura.</p>';
+            document.getElementById('slotsContainer').innerHTML = '<div class="reservar-slots-empty text-danger"><p class="mb-0">No puede reservar en fechas pasadas.</p></div>';
             return;
         }
         var container = document.getElementById('slotsContainer');
         var tabsEl = document.getElementById('tabsDias');
         var panelesEl = document.getElementById('panelesDias');
-        container.innerHTML = '<p class="text-muted mb-0"><i class="fas fa-spinner fa-spin me-1"></i> Cargando...</p>';
+        container.innerHTML = '<div class="reservar-slots-empty"><i class="fas fa-spinner fa-spin d-block mb-2"></i><p class="mb-0">Cargando horarios…</p></div>';
+        actualizarPasos(3);
         tabsEl.style.display = 'none';
         panelesEl.innerHTML = '';
 
@@ -361,7 +321,7 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
 
         fetch(url).then(function(r) { return r.json(); }).then(function(data) {
             if (!data.slots || !data.slots.length) {
-                container.innerHTML = '<p class="text-muted mb-0">No hay horarios para ese día. Elija otro día.</p>';
+                container.innerHTML = '<div class="reservar-slots-empty"><i class="fas fa-calendar-day d-block"></i><p class="mb-0">No hay horarios para ese día. Pruebe otra fecha.</p></div>';
                 return;
             }
             container.innerHTML = '';
@@ -374,9 +334,10 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
             });
             var fechasOrdenadas = Object.keys(porDia).sort();
             if (fechasOrdenadas.length === 0) {
-                container.innerHTML = '<p class="text-muted mb-0">No hay horarios disponibles.</p>';
+                container.innerHTML = '<div class="reservar-slots-empty"><p class="mb-0">No hay horarios disponibles.</p></div>';
                 return;
             }
+            var mostrarNombreEnSlot = !nutricionistaId;
             tabsEl.style.display = 'flex';
             tabsEl.innerHTML = '';
             panelesEl.innerHTML = '';
@@ -393,16 +354,19 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
                 panel.className = 'tab-pane fade' + (idx === 0 ? ' show active' : '');
                 panel.id = paneId;
                 panel.setAttribute('role', 'tabpanel');
-                var listHtml = '<div class="list-group list-group-flush">';
+                var listHtml = '<div class="slot-grid">';
                 dia.slots.forEach(function(s) {
                     var fecha = s.fecha || s.fecha_agenda || '';
                     var horaIni = s.hora_inicio ? (typeof s.hora_inicio === 'string' ? s.hora_inicio.substring(0,5) : s.hora_inicio) : '';
                     var horaFin = s.hora_fin ? (typeof s.hora_fin === 'string' ? s.hora_fin.substring(0,5) : s.hora_fin) : '';
-                    var nut = (s.nutricionista_nombre || '') + ' ' + (s.nutricionista_apellido || '');
-                    listHtml += '<div class="list-group-item d-flex justify-content-between align-items-center">';
-                    listHtml += '<span>' + horaIni + ' - ' + horaFin + (nut ? ' <small class="text-muted">(' + nut.trim() + ')</small>' : '') + '</span>';
-                    listHtml += '<a href="#" class="btn-reservar-slot" data-id="' + s.id + '" data-fecha="' + (fecha || dia.label) + '" data-hora="' + horaIni + '" role="button">Reservar</a>';
-                    listHtml += '</div>';
+                    var nut = ((s.nutricionista_nombre || '') + ' ' + (s.nutricionista_apellido || '')).trim();
+                    var labelHora = horaIni + (horaFin ? ' – ' + horaFin : '');
+                    if (mostrarNombreEnSlot && nut) {
+                        labelHora += '<span class="d-block small fw-normal text-muted mt-1" style="font-size:0.7rem;">' + nut + '</span>';
+                    }
+                    listHtml += '<a href="#" class="slot-chip btn-reservar-slot" data-id="' + s.id + '" data-fecha="' + (fecha || dia.label) + '" data-hora="' + horaIni + '" role="button">';
+                    listHtml += '<span class="slot-chip-time">' + labelHora + '</span>';
+                    listHtml += '<span class="slot-chip-action">Reservar</span></a>';
                 });
                 listHtml += '</div>';
                 panel.innerHTML = listHtml;
@@ -421,7 +385,9 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
                 });
             });
         }).catch(function() {
-            if (document.getElementById('slotsContainer')) document.getElementById('slotsContainer').innerHTML = '<p class="text-danger mb-0">Error al cargar. Intente de nuevo.</p>';
+            if (document.getElementById('slotsContainer')) {
+                document.getElementById('slotsContainer').innerHTML = '<div class="reservar-slots-empty text-danger"><p class="mb-0">Error al cargar. Intente de nuevo.</p></div>';
+            }
         });
     }
 
@@ -434,9 +400,14 @@ button.btn-confirmar-reserva .me-1 { margin-right: 0.35rem; }
         if (!btn) return;
         slotSeleccionado = { id: btn.dataset.id, fecha: btn.dataset.fecha, hora: btn.dataset.hora };
         document.getElementById('detalle_agenda_id').value = slotSeleccionado.id;
-        document.getElementById('slotResumen').textContent = slotSeleccionado.fecha + ' a las ' + slotSeleccionado.hora;
+        var resumen = slotSeleccionado.fecha + ' · ' + slotSeleccionado.hora;
+        if (nombreProfesionalSeleccionado && nombreProfesionalSeleccionado !== 'Todos los profesionales') {
+            resumen += ' · ' + nombreProfesionalSeleccionado;
+        }
+        document.getElementById('slotResumen').textContent = resumen;
         document.getElementById('cardFormulario').style.display = 'block';
         document.getElementById('mensajeExito').style.display = 'none';
+        actualizarPasos(3);
         document.getElementById('cardFormulario').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 

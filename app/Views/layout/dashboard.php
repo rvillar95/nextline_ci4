@@ -1087,5 +1087,8 @@ exit(); */
             setInterval(function() { cargarNotificaciones(true); }, 120000);
         })();
         </script>
+
+        <?= view('components/modals') ?>
+        <script src="<?= base_url('lib/js/modals.js') ?>"></script>
         
         <?= view('template/footer') ?>

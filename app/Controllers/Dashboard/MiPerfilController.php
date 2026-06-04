@@ -5,6 +5,7 @@ namespace App\Controllers\Dashboard;
 use App\Controllers\BaseController;
 use App\Models\Usuario;
 use App\Models\UsuarioCredencial;
+use App\Services\StorageService;
 
 class MiPerfilController extends BaseController
 {
@@ -435,46 +436,33 @@ class MiPerfilController extends BaseController
      */
     private function subirArchivoCredencial($file, int $usuarioId): array
     {
-        $allowedMimes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/webp',
-        ];
-        $mime = $file->getMimeType();
-        if (!in_array($mime, $allowedMimes, true)) {
-            return ['error' => 'Formato no permitido. Use PDF, JPG, PNG o WebP'];
-        }
-        if ($file->getSize() > 5 * 1024 * 1024) {
-            return ['error' => 'El archivo no debe superar 5 MB'];
-        }
+        $storage = new StorageService();
+        $config = config('Storage');
+        $ctx = storage_context_for_usuario($usuarioId);
+        $result = $storage->putUploadedFile(
+            $file,
+            StorageService::VISIBILITY_PRIVATE,
+            storage_folder_credenciales($ctx['empresa_id'], $ctx['nutricionista_id']),
+            $config->documentMimeTypes,
+            $config->maxDocumentBytes
+        );
 
-        $dir = FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'credenciales' . DIRECTORY_SEPARATOR . $usuarioId;
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        if (isset($result['error'])) {
+            if ($result['error'] === 'Formato no permitido') {
+                return ['error' => 'Formato no permitido. Use PDF, JPG, PNG o WebP'];
+            }
 
-        $ext = $file->getClientExtension() ?: 'pdf';
-        $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file->getClientName());
-        $newName = time() . '_' . $safeName;
-        if (!$file->move($dir, $newName)) {
-            return ['error' => 'Error al guardar el archivo'];
+            return ['error' => $result['error']];
         }
 
         return [
-            'ruta'   => 'uploads/credenciales/' . $usuarioId . '/' . $newName,
-            'nombre' => $file->getClientName(),
+            'ruta'   => $result['key'],
+            'nombre' => $result['nombre'],
         ];
     }
 
     private function eliminarArchivoFisico(?string $rutaRelativa): void
     {
-        if (!$rutaRelativa) {
-            return;
-        }
-        $path = FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $rutaRelativa);
-        if (is_file($path)) {
-            @unlink($path);
-        }
+        (new StorageService())->delete($rutaRelativa);
     }
 }

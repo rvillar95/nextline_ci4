@@ -1,0 +1,407 @@
+/* Flujo público /reservar */
+.reservar-page {
+    --reservar-radius: 14px;
+    --reservar-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+}
+
+.reservar-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+}
+
+.reservar-step-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.reservar-step-pill .step-num {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.reservar-step-pill.is-active {
+    color: #0f766e;
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.08);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+}
+
+.reservar-step-pill.is-active .step-num {
+    background: var(--nutrinext-primary, #22c55e);
+    color: #fff;
+}
+
+.reservar-step-pill.is-done {
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+
+.reservar-step-pill.is-done .step-num {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.reservar-step-sep {
+    width: 1.5rem;
+    height: 2px;
+    background: #e2e8f0;
+    flex-shrink: 0;
+}
+
+.reservar-card {
+    border: 0;
+    border-radius: var(--reservar-radius);
+    box-shadow: var(--reservar-shadow);
+    overflow: hidden;
+}
+
+.reservar-card .card-header-reservar {
+    padding: 1.1rem 1.35rem 0.35rem;
+    background: transparent;
+    border: 0;
+}
+
+.reservar-card .card-header-reservar h5 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+}
+
+.reservar-card .card-header-reservar p {
+    margin: 0.35rem 0 0;
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.reservar-card .card-body-reservar {
+    padding: 0.75rem 1.35rem 1.35rem;
+}
+
+/* Profesionales */
+.reservar-pro-scroll {
+    display: flex;
+    gap: 0.85rem;
+    overflow-x: auto;
+    padding: 0.25rem 0.15rem 0.75rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+}
+
+.reservar-pro-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.reservar-pro-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.nutricionista-card {
+    flex: 0 0 auto;
+    width: 118px;
+    border-radius: 12px !important;
+    border: 2px solid #e2e8f0 !important;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    scroll-snap-align: start;
+}
+
+.nutricionista-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(34, 197, 94, 0.5) !important;
+    box-shadow: 0 8px 20px rgba(34, 197, 94, 0.15);
+}
+
+.nutricionista-card.selected {
+    border-color: var(--nutrinext-primary, #22c55e) !important;
+    background: linear-gradient(180deg, rgba(34, 197, 94, 0.1) 0%, #fff 55%) !important;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.nutricionista-card .card-body {
+    padding: 1rem 0.65rem !important;
+}
+
+.nutricionista-card.card-todos {
+    width: 100px;
+}
+
+.nutricionista-foto-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.65rem;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.nutricionista-card.selected .nutricionista-foto-wrap {
+    box-shadow: 0 0 0 2px var(--nutrinext-primary, #22c55e);
+}
+
+.nutricionista-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nutricionista-card .pro-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1e293b;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Fecha */
+.reservar-date-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.reservar-date-row .fecha-field {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.reservar-date-row .fecha-field .form-control {
+    border-radius: 10px;
+    border-color: #e2e8f0;
+    padding: 0.55rem 0.85rem;
+}
+
+.reservar-date-row .fecha-field .form-control:focus {
+    border-color: var(--nutrinext-primary, #22c55e);
+    box-shadow: 0 0 0 0.2rem rgba(34, 197, 94, 0.2);
+}
+
+a.btn-buscar-horarios {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background: var(--nutrinext-primary, #22c55e);
+    color: #fff !important;
+    border: none;
+    padding: 0.6rem 1.35rem;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+}
+
+a.btn-buscar-horarios:hover {
+    background: var(--brand-green-dark, #16a34a);
+    color: #fff !important;
+    transform: translateY(-1px);
+}
+
+/* Contexto profesional seleccionado */
+.reservar-pro-badge {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    font-size: 0.875rem;
+    color: #166534;
+}
+
+.reservar-pro-badge.is-visible {
+    display: inline-flex;
+}
+
+.reservar-pro-badge i {
+    opacity: 0.85;
+}
+
+/* Tabs día */
+#tabsDias {
+    border: 0;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem !important;
+}
+
+#tabsDias .tab-dia-btn {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.45rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+#tabsDias .tab-dia-btn:hover {
+    border-color: #86efac;
+    color: #15803d;
+}
+
+#tabsDias .tab-dia-btn.active {
+    background: var(--nutrinext-primary, #22c55e);
+    border-color: var(--nutrinext-primary, #22c55e);
+    color: #fff;
+}
+
+/* Grilla de horarios */
+.slot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.65rem;
+}
+
+.slot-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.slot-chip:hover {
+    border-color: var(--nutrinext-primary, #22c55e);
+    box-shadow: 0 6px 16px rgba(34, 197, 94, 0.18);
+    transform: translateY(-2px);
+}
+
+.slot-chip-time {
+    padding: 0.75rem 0.5rem 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.slot-chip-action {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #f0fdf4;
+    color: #15803d;
+    border-top: 1px solid #ecfdf5;
+}
+
+.slot-chip:hover .slot-chip-action {
+    background: var(--nutrinext-primary, #22c55e);
+    color: #fff;
+    border-top-color: transparent;
+}
+
+.reservar-slots-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #64748b;
+}
+
+.reservar-slots-empty i {
+    font-size: 2rem;
+    opacity: 0.45;
+    margin-bottom: 0.75rem;
+}
+
+/* Formulario */
+#cardFormulario.reservar-card {
+    border-top: 3px solid var(--nutrinext-primary, #22c55e);
+}
+
+.reservar-slot-resumen {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 0.9375rem;
+}
+
+.reservar-slot-resumen i {
+    color: var(--nutrinext-primary, #22c55e);
+    font-size: 1.15rem;
+}
+
+button.btn-confirmar-reserva {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    max-width: 320px;
+    padding: 0.7rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+    background: var(--nutrinext-primary, #22c55e);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+    transition: background 0.2s, transform 0.15s;
+}
+
+button.btn-confirmar-reserva:hover:not(:disabled) {
+    background: var(--brand-green-dark, #16a34a);
+    transform: translateY(-1px);
+}
+
+button.btn-confirmar-reserva:disabled {
+    opacity: 0.7;
+}
+
+@media (min-width: 768px) {
+    .nutricionista-card {
+        width: 130px;
+    }
+
+    .slot-grid {
+        grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    }
+}

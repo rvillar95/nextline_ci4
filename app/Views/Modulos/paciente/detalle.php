@@ -357,75 +357,86 @@
                 </div>
             </div>
 
-            <!-- Historial Clínico -->
+            <!-- Consultas (citas + historial clínico unificado) -->
             <div class="section-card">
                 <div class="section-title">
-                    <i class="fas fa-history icon-label"></i>
-                    <span>Historial Clínico</span>
-                    <span class="badge bg-secondary ms-2"><?= count($historial ?? []) ?></span>
+                    <i class="fas fa-stethoscope icon-label"></i>
+                    <span>Consultas</span>
+                    <span class="badge bg-secondary ms-2"><?= count($consultas ?? []) ?></span>
                 </div>
-                
-                <?php if (!empty($historial)): ?>
+                <p class="text-muted small mb-3">Citas del paciente con datos clínicos cuando existen. Todas abren la misma ficha de consulta.</p>
+
+                <?php if (!empty($consultas)): ?>
                     <div class="table-responsive">
-                        <table id="tablaHistorialPaciente" class="table table-hover table-striped w-100">
+                        <table id="tablaConsultasPaciente" class="table table-hover table-striped w-100">
                             <thead>
                                 <tr>
                                     <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Modalidad</th>
+                                    <th>Estado</th>
                                     <th>Tipo</th>
                                     <th>Peso</th>
                                     <th>IMC</th>
-                                    <th>Motivo</th>
+                                    <th>Resumen</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($historial as $h): ?>
+                                <?php foreach ($consultas as $c): ?>
                                     <?php
+                                    $fechaRaw = $c->fecha ?? $c->fecha_agenda ?? '';
                                     $fechaOrder = '';
-                                    if (!empty($h->fecha_consulta)) {
-                                        $fechaOrder = $h->fecha_consulta . ' ' . ($h->hora_consulta ?? '00:00:00');
+                                    $fechaTxt = '—';
+                                    if ($fechaRaw) {
+                                        if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fechaRaw, $m)) {
+                                            $fechaOrder = $m[3] . '-' . $m[2] . '-' . $m[1];
+                                            $fechaTxt = $fechaRaw;
+                                        } else {
+                                            $ts = strtotime($fechaRaw);
+                                            $fechaOrder = $ts ? date('Y-m-d', $ts) : '';
+                                            $fechaTxt = $ts ? date('d/m/Y', $ts) : $fechaRaw;
+                                        }
+                                    }
+                                    if ($c->hora_inicio) {
+                                        $fechaOrder .= ' ' . date('H:i:s', strtotime($c->hora_inicio));
+                                    }
+                                    $estado = $c->estado_cita ?? 'pendiente';
+                                    $estadoBadge = match ($estado) {
+                                        'confirmada' => 'bg-success',
+                                        'en_proceso' => 'bg-info',
+                                        'completada' => 'bg-primary',
+                                        'cancelada' => 'bg-danger',
+                                        'no_asistio' => 'bg-warning',
+                                        default => 'bg-secondary',
+                                    };
+                                    $tipo = $c->tipo_consulta ?? $c->historial_tipo ?? '—';
+                                    $motivoRaw = $c->motivo_consulta ?: ($c->motivo ?? '');
+                                    $motivoTxt = trim(strip_tags(html_entity_decode((string) $motivoRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                                    if (strlen($motivoTxt) > 60) {
+                                        $motivoTxt = substr($motivoTxt, 0, 60) . '…';
                                     }
                                     ?>
                                     <tr>
-                                        <td data-order="<?= esc($fechaOrder) ?>">
-                                            <?php if ($h->fecha_consulta): ?>
-                                                <?= date('d/m/Y', strtotime($h->fecha_consulta)) ?>
-                                                <?php if ($h->hora_consulta): ?>
-                                                    <br><small class="text-muted"><?= date('H:i', strtotime($h->hora_consulta)) ?></small>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                —
-                                            <?php endif; ?>
+                                        <td data-order="<?= esc($fechaOrder) ?>"><?= esc($fechaTxt) ?></td>
+                                        <td data-order="<?= $c->hora_inicio ? esc(date('H:i', strtotime($c->hora_inicio))) : '' ?>">
+                                            <?php if ($c->hora_inicio): ?>
+                                                <?= date('H:i', strtotime($c->hora_inicio)) ?>
+                                                <?php if ($c->hora_fin): ?>– <?= date('H:i', strtotime($c->hora_fin)) ?><?php endif; ?>
+                                            <?php else: ?>—<?php endif; ?>
                                         </td>
+                                        <td><?= esc($c->modalidad_nombre ?? '—') ?></td>
+                                        <td><span class="badge <?= $estadoBadge ?>"><?= ucfirst(str_replace('_', ' ', $estado)) ?></span></td>
+                                        <td><?= esc(str_replace('_', ' ', $tipo)) ?></td>
+                                        <td><?= $c->peso_actual ? number_format((float) $c->peso_actual, 2) . ' kg' : '—' ?></td>
+                                        <td><?= $c->imc_actual ? number_format((float) $c->imc_actual, 2) : '—' ?></td>
+                                        <td class="small text-muted"><?= $motivoTxt !== '' ? esc($motivoTxt) : '—' ?></td>
                                         <td>
-                                            <?php
-                                            $tipo = $h->tipo_registro ?? 'consulta';
-                                            $badgeClass = match($tipo) {
-                                                'consulta' => 'bg-primary',
-                                                'seguimiento' => 'bg-info',
-                                                'control' => 'bg-success',
-                                                'emergencia' => 'bg-danger',
-                                                default => 'bg-secondary'
-                                            };
-                                            ?>
-                                            <span class="badge <?= $badgeClass ?>"><?= ucfirst($tipo) ?></span>
-                                        </td>
-                                        <td>
-                                            <?= $h->peso_actual ? number_format($h->peso_actual, 2) . ' kg' : '—' ?>
-                                        </td>
-                                        <td>
-                                            <?= $h->imc_actual ? number_format($h->imc_actual, 2) : '—' ?>
-                                        </td>
-                                        <td>
-                                            <?= $h->motivo_consulta ? esc(substr($h->motivo_consulta, 0, 50)) . (strlen($h->motivo_consulta) > 50 ? '...' : '') : '—' ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($h->detalle_agenda_id): ?>
-                                                <a href="<?= base_url('dashboard/agenda/consulta?id=' . $h->detalle_agenda_id) ?>" 
-                                                   class="btn btn-sm btn-outline-primary btn-action">
-                                                    <i class="fas fa-eye"></i> Ver
-                                                </a>
-                                            <?php endif; ?>
+                                            <a href="<?= base_url('dashboard/agenda/consulta?id=' . (int) $c->id) ?>"
+                                               class="btn btn-sm btn-outline-primary btn-action"
+                                               title="Abrir consulta completa">
+                                                <i class="fas fa-eye"></i> Ver consulta
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -433,8 +444,8 @@
                         </table>
                     </div>
                 <?php else: ?>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No hay registros de historial clínico para este paciente.
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle me-2"></i> No hay consultas registradas para este paciente.
                     </div>
                 <?php endif; ?>
             </div>
@@ -491,12 +502,18 @@
                                             <?php endif; ?>
                                         </td>
                                         <td>
-                                            <?php if ($plan->detalle_agenda_id): ?>
-                                                <a href="<?= base_url('dashboard/plan-alimentario?detalle_agenda_id=' . $plan->detalle_agenda_id) ?>" 
-                                                   class="btn btn-sm btn-outline-primary btn-action">
-                                                    <i class="fas fa-eye"></i> Ver Plan
-                                                </a>
-                                            <?php endif; ?>
+                                            <?php
+                                            $urlPlan = base_url('dashboard/plan-alimentario')
+                                                . '?paciente_id=' . (int) $paciente->id
+                                                . '&tab=plan';
+                                            if (!empty($plan->detalle_agenda_id)) {
+                                                $urlPlan .= '&detalle_agenda_id=' . (int) $plan->detalle_agenda_id;
+                                            }
+                                            ?>
+                                            <a href="<?= $urlPlan ?>"
+                                               class="btn btn-sm btn-outline-primary btn-action">
+                                                <i class="fas fa-eye"></i> Ver plan
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -510,92 +527,6 @@
                 <?php endif; ?>
             </div>
 
-            <!-- Citas / Detalle Agenda -->
-            <div class="section-card">
-                <div class="section-title">
-                    <i class="fas fa-calendar-alt icon-label"></i>
-                    <span>Citas y Consultas</span>
-                    <span class="badge bg-secondary ms-2"><?= count($citas ?? []) ?></span>
-                </div>
-                
-                <?php if (!empty($citas)): ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Hora</th>
-                                    <th>Modalidad</th>
-                                    <th>Estado</th>
-                                    <th>Tipo Consulta</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($citas as $cita): ?>
-                                    <tr>
-                                        <td>
-                                            <?php 
-                                            $fecha = $cita->fecha ?? $cita->fecha_agenda ?? '';
-                                            if ($fecha) {
-                                                // Intentar parsear fecha en formato DD-MM-YYYY
-                                                if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $fecha, $matches)) {
-                                                    echo $fecha; // Ya está en formato correcto
-                                                } else {
-                                                    echo date('d/m/Y', strtotime($fecha));
-                                                }
-                                            } else {
-                                                echo '—';
-                                            }
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($cita->hora_inicio): ?>
-                                                <?= date('H:i', strtotime($cita->hora_inicio)) ?>
-                                                <?php if ($cita->hora_fin): ?>
-                                                    - <?= date('H:i', strtotime($cita->hora_fin)) ?>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                —
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?= esc($cita->modalidad_nombre ?? '—') ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            $estado = $cita->estado_cita ?? 'pendiente';
-                                            $badgeClass = match($estado) {
-                                                'confirmada' => 'bg-success',
-                                                'en_proceso' => 'bg-info',
-                                                'completada' => 'bg-primary',
-                                                'cancelada' => 'bg-danger',
-                                                'no_asistio' => 'bg-warning',
-                                                default => 'bg-secondary'
-                                            };
-                                            ?>
-                                            <span class="badge <?= $badgeClass ?>"><?= ucfirst(str_replace('_', ' ', $estado)) ?></span>
-                                        </td>
-                                        <td>
-                                            <?= esc($cita->tipo_consulta ?? '—') ?>
-                                        </td>
-                                        <td>
-                                            <a href="<?= base_url('dashboard/agenda/consulta?id=' . $cita->id) ?>" 
-                                               class="btn btn-sm btn-outline-primary btn-action">
-                                                <i class="fas fa-eye"></i> Ver
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php else: ?>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No hay citas registradas para este paciente.
-                    </div>
-                <?php endif; ?>
-            </div>
 
             <!-- Documentos -->
             <div class="section-card">
@@ -607,13 +538,13 @@
                 
                 <?php if (!empty($documentos)): ?>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table id="tablaDocumentosPaciente" class="table table-hover table-striped w-100">
                             <thead>
                                 <tr>
                                     <th>Tipo</th>
                                     <th>Título</th>
                                     <th>Fecha</th>
-                                    <th>Estado</th>
+                                    <th>Enviado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -622,39 +553,33 @@
                                     <tr>
                                         <td>
                                             <?php
-                                            $tipo = $doc->tipo_documento ?? 'otro';
-                                            $tipoText = match($tipo) {
+                                            $tipoText = match ($doc->tipo_documento ?? 'otro') {
                                                 'pauta_nutricional' => 'Pauta Nutricional',
                                                 'receta' => 'Receta',
                                                 'informe' => 'Informe',
                                                 'consentimiento' => 'Consentimiento',
-                                                default => 'Otro'
+                                                default => 'Otro',
                                             };
                                             ?>
                                             <span class="badge bg-info"><?= $tipoText ?></span>
                                         </td>
-                                        <td>
-                                            <?= esc($doc->titulo ?? 'Sin título') ?>
+                                        <td><?= esc($doc->titulo ?? 'Sin título') ?></td>
+                                        <td data-order="<?= $doc->fecha_documento ? esc($doc->fecha_documento) : '' ?>">
+                                            <?= $doc->fecha_documento ? date('d/m/Y', strtotime($doc->fecha_documento)) : '—' ?>
                                         </td>
                                         <td>
-                                            <?php if ($doc->fecha_documento): ?>
-                                                <?= date('d/m/Y', strtotime($doc->fecha_documento)) ?>
-                                            <?php else: ?>
-                                                —
-                                            <?php endif; ?>
+                                            <?= $doc->enviado
+                                                ? '<span class="badge bg-success">Enviado</span>'
+                                                : '<span class="badge bg-secondary">Pendiente</span>' ?>
                                         </td>
-                                        <td>
-                                            <?php if ($doc->enviado): ?>
-                                                <span class="badge bg-success">Enviado</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-secondary">No enviado</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($doc->archivo_ruta): ?>
-                                                <a href="<?= base_url($doc->archivo_ruta) ?>" 
-                                                   target="_blank"
-                                                   class="btn btn-sm btn-outline-primary btn-action">
+                                        <td class="text-nowrap">
+                                            <a href="<?= base_url('dashboard/documento/detalle/' . (int) $doc->id) ?>"
+                                               class="btn btn-sm btn-outline-info btn-action">
+                                                <i class="fas fa-eye"></i> Ver
+                                            </a>
+                                            <?php if (!empty($doc->archivo_ruta)): ?>
+                                                <a href="<?= base_url('dashboard/documento/' . (int) $doc->id . '/descargar') ?>"
+                                                   class="btn btn-sm btn-outline-primary btn-action ms-1">
                                                     <i class="fas fa-download"></i> Descargar
                                                 </a>
                                             <?php endif; ?>
@@ -676,20 +601,27 @@
 
 <script>
 $(document).ready(function() {
-    if ($('#tablaHistorialPaciente').length && $('#tablaHistorialPaciente tbody tr').length) {
-        $('#tablaHistorialPaciente').DataTable({
+    var dtLang = { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' };
+    var dtCommon = {
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
+        language: dtLang,
+        responsive: true,
+        autoWidth: false
+    };
+
+    if ($('#tablaConsultasPaciente').length && $('#tablaConsultasPaciente tbody tr').length) {
+        $('#tablaConsultasPaciente').DataTable($.extend({}, dtCommon, {
             order: [[0, 'desc']],
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'Todos']],
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
-            },
-            responsive: true,
-            autoWidth: false,
-            columnDefs: [
-                { orderable: false, targets: 5 }
-            ]
-        });
+            columnDefs: [{ orderable: false, targets: 8 }]
+        }));
+    }
+
+    if ($('#tablaDocumentosPaciente').length && $('#tablaDocumentosPaciente tbody tr').length) {
+        $('#tablaDocumentosPaciente').DataTable($.extend({}, dtCommon, {
+            order: [[2, 'desc']],
+            columnDefs: [{ orderable: false, targets: 4 }]
+        }));
     }
 });
 </script>

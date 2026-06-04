@@ -24,13 +24,20 @@ class ReservarController extends BaseController
      */
     public function index()
     {
-        $empresaId = (int) $this->request->getGet('e');
-        if ($empresaId <= 0) {
-            $empresaId = $this->reservaService->resolverEmpresaId(null);
+        $empresaParam = (int) $this->request->getGet('e');
+        $empresaId = $empresaParam > 0 ? $empresaParam : $this->reservaService->resolverEmpresaId(null);
+        $nutricionistaPre = (int) $this->request->getGet('nutricionista_id');
+        $nutricionistas = $this->reservaService->listarNutricionistasConCupos($empresaParam > 0 ? $empresaParam : null);
+        if ($nutricionistaPre > 0 && ! $this->nutricionistaEnLista($nutricionistas, $nutricionistaPre)) {
+            $nutricionistas = array_merge(
+                $nutricionistas,
+                $this->reservaService->listarNutricionistasPorIds([$nutricionistaPre])
+            );
         }
         $data = [
-            'empresa_id'     => $empresaId,
-            'nutricionistas' => $this->reservaService->listarNutricionistasConCupos($empresaId),
+            'empresa_id'          => $empresaId,
+            'nutricionista_pre'   => $nutricionistaPre,
+            'nutricionistas'      => $nutricionistas,
             'csrf_token'     => csrf_hash(),
         ];
         return view('Web/reservar', array_merge(seo_page([
@@ -54,8 +61,24 @@ class ReservarController extends BaseController
             $fecha = date('Y-m-d');
         }
         $nutId = ($nutricionistaId !== null && $nutricionistaId !== '') ? (int) $nutricionistaId : null;
-        $slots = $this->reservaService->disponibilidad($nutId, $fecha);
+        $empresaParam = (int) $this->request->getGet('e');
+        $empresaFiltro = $empresaParam > 0 ? $empresaParam : null;
+        $slots = $this->reservaService->disponibilidad($nutId, $fecha, $empresaFiltro);
         return $this->response->setJSON(['success' => true, 'slots' => $slots]);
+    }
+
+    /**
+     * @param list<object> $lista
+     */
+    private function nutricionistaEnLista(array $lista, int $id): bool
+    {
+        foreach ($lista as $n) {
+            if ((int) ($n->id ?? 0) === $id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
