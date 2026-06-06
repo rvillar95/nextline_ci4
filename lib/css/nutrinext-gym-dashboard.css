@@ -227,6 +227,10 @@
     width: 100%;
 }
 
+.gym-section-card__hint--scroll {
+    display: none;
+}
+
 .gym-section-card__body {
     padding: 1.35rem 1.5rem;
 }
@@ -331,11 +335,75 @@
     width: 100%;
 }
 
+/* Barra superior: Mostrar + Buscar (sin filas/columnas Bootstrap rotas) */
+.gym-page .gym-dt-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--gym-border);
+}
+
+.gym-page .gym-dt-toolbar__length,
+.gym-page .gym-dt-toolbar__filter {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.gym-page .gym-dt-toolbar__filter {
+    text-align: right;
+}
+
+.gym-page .dataTables_wrapper .dataTables_length,
+.gym-page .dataTables_wrapper .dataTables_filter {
+    margin: 0;
+    float: none;
+}
+
+.gym-page .dataTables_wrapper .dataTables_length label,
+.gym-page .dataTables_wrapper .dataTables_filter label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gym-muted);
+}
+
+/* Ocultar restos de scrollX / cabecera duplicada */
+.gym-page .dataTables_scrollHead,
+.gym-page .dataTables_scrollFoot {
+    display: none !important;
+}
+
+.gym-page .dataTables_scrollBody {
+    border: none !important;
+}
+
+.gym-page .dataTables_scroll {
+    margin-bottom: 0;
+}
+
 .gym-page table.dataTable,
 .gym-page table.gym-table {
     margin-top: 0 !important;
     margin-bottom: 0 !important;
     width: 100% !important;
+    min-width: 520px;
+}
+
+/* Responsive DT desactivado; ocultar control "+" si quedó en caché */
+.gym-page td.dtr-control,
+.gym-page th.dtr-control {
+    display: none !important;
+    width: 0 !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
 .gym-page table.dataTable thead th,
@@ -364,10 +432,45 @@
     border-radius: 10px;
     border: 1px solid var(--gym-border);
     padding: 0.4rem 0.75rem;
+    min-width: 8rem;
 }
 
 .gym-page .dataTables_wrapper .dataTables_length select {
     border-radius: 8px;
+    border: 1px solid var(--gym-border);
+    padding: 0.35rem 1.75rem 0.35rem 0.5rem;
+    min-width: 4.25rem;
+    font-weight: 600;
+    color: var(--gym-text);
+    background-color: #fff;
+    appearance: auto;
+}
+
+.gym-page .gym-dt-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--gym-border);
+}
+
+.gym-page .gym-dt-footer__info,
+.gym-page .gym-dt-footer__pages {
+    flex: 1 1 auto;
+}
+
+.gym-page .gym-dt-footer__pages {
+    text-align: right;
+}
+
+.gym-page .dataTables_wrapper .dataTables_info,
+.gym-page .dataTables_wrapper .dataTables_paginate {
+    float: none;
+    margin: 0;
+    padding: 0;
 }
 
 .gym-page .badge-success {
@@ -585,17 +688,48 @@ body.dark .gym-builder-panel .gym-table textarea.form-control-sm.notas:focus {
         min-width: 520px;
     }
 
-    .gym-page .dataTables_wrapper .dataTables_length,
-    .gym-page .dataTables_wrapper .dataTables_filter {
-        float: none;
+    .gym-page .gym-dt-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gym-page .gym-dt-toolbar__filter {
         text-align: left;
-        margin-bottom: 0.75rem;
+    }
+
+    .gym-page .dataTables_wrapper .dataTables_filter label {
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .gym-page .dataTables_wrapper .dataTables_filter input {
         width: 100%;
         max-width: none;
         margin-left: 0;
+    }
+
+    .gym-page .gym-dt-footer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .gym-page .gym-dt-footer__pages {
+        text-align: center;
+    }
+
+    .gym-page table.dataTable {
+        min-width: 480px;
+    }
+
+    .gym-page table.dataTable thead th,
+    .gym-page table.dataTable tbody td {
+        padding: 0.6rem 0.75rem !important;
+        font-size: 0.875rem;
+    }
+
+    .gym-section-card__hint--scroll {
+        display: block;
     }
 
     .gym-assign-box {

@@ -223,6 +223,32 @@ exit(); */
                 #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner svg {
                     flex-shrink: 0;
                     margin-top: 2px;
+                    width: 20px !important;
+                    height: 20px !important;
+                    stroke-width: 2;
+                    color: #506690;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link {
+                    display: flex !important;
+                    align-items: center;
+                    min-height: 44px;
+                    padding: 10px 14px !important;
+                    border-radius: 8px;
+                    color: #191e3a;
+                    font-weight: 600;
+                    text-decoration: none;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu.active > a.sidebar-menu-link,
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link.active {
+                    background: #fff;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu.active > a.sidebar-menu-link svg,
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link.active svg {
+                    color: var(--user-primary, #7bc143);
                 }
 
                 #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner span {

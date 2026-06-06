@@ -22,6 +22,9 @@ class MenuSidebar extends BaseConfig
         'settings'       => 'Configuración',
         'user'           => 'Usuario / perfil',
         'briefcase'      => 'Empresa',
+        'activity'       => 'Actividad / ejercicio',
+        'layers'         => 'Capas / programas',
+        'link'           => 'Enlace / asignar',
         'circle'         => 'Genérico',
     ];
 }

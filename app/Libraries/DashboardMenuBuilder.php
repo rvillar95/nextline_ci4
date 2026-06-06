@@ -126,7 +126,8 @@ class DashboardMenuBuilder
     {
         $mod = $menu['menu'] ?? [];
         $modNombre = (string) ($mod['nombre'] ?? 'Módulo');
-        $icon = self::sanitizeIcon((string) ($mod['menu_icono'] ?? 'circle'));
+        $modRuta = (string) ($mod['ruta'] ?? '');
+        $icon = self::resolveModuleIcon((string) ($mod['menu_icono'] ?? ''), $modRuta);
 
         if (! $esSuperAdmin && ! empty($mod['menu_ruta_alterna'])) {
             $label = trim((string) ($mod['menu_etiqueta_alterna'] ?? ''));
@@ -255,12 +256,59 @@ class DashboardMenuBuilder
         return site_url(ltrim($ruta, '/'));
     }
 
+    private static function resolveModuleIcon(string $iconRaw, string $modRuta): string
+    {
+        $iconRaw = trim($iconRaw);
+        if ($iconRaw !== '' && $iconRaw !== 'circle') {
+            return self::sanitizeIcon($iconRaw);
+        }
+
+        $fromRoute = self::defaultIconForModuloRuta($modRuta);
+
+        return $fromRoute !== 'circle' ? $fromRoute : self::sanitizeIcon($iconRaw ?: 'circle');
+    }
+
     private static function sanitizeIcon(string $icon): string
     {
         $icon = preg_replace('/[^a-z0-9\-]/', '', strtolower($icon)) ?: 'circle';
         $allowed = array_keys(config('MenuSidebar')->iconos);
 
         return in_array($icon, $allowed, true) ? $icon : 'circle';
+    }
+
+    /** Icono por ruta cuando menu_icono está vacío en BD (p. ej. módulos gym). */
+    private static function defaultIconForModuloRuta(string $ruta): string
+    {
+        $ruta = rtrim(trim($ruta), '/');
+        if ($ruta !== '' && ! str_starts_with($ruta, '/')) {
+            $ruta = '/' . $ruta;
+        }
+        $map = [
+            '/dashboard/menu'           => 'home',
+            '/dashboard/mensajes'       => 'message-circle',
+            '/dashboard/agenda'         => 'calendar',
+            '/dashboard/paciente'       => 'users',
+            '/dashboard/historial'      => 'clipboard',
+            '/dashboard/documento'      => 'file-text',
+            '/dashboard/boton-pago'     => 'tag',
+            '/dashboard/pago'           => 'dollar-sign',
+            '/dashboard/configuracion'  => 'settings',
+            '/dashboard/mi-perfil'      => 'user',
+            '/dashboard/empresa'        => 'briefcase',
+            '/dashboard/gym/ejercicio'  => 'activity',
+            '/dashboard/gym/rutina'     => 'clipboard',
+            '/dashboard/gym/programa'   => 'layers',
+            '/dashboard/gym/alumno'     => 'users',
+            '/dashboard/gym/asignacion' => 'link',
+        ];
+
+        foreach ($map as $prefix => $icon) {
+            if ($ruta === $prefix || str_starts_with($ruta, $prefix . '/')) {
+                return self::sanitizeIcon($icon);
+            }
+        }
+
+        return 'circle';
     }
 
     public static function featherSvg(string $icon, int $size = 20): string
@@ -278,6 +326,9 @@ class DashboardMenuBuilder
             'settings'       => '<circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>',
             'user'           => '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>',
             'briefcase'      => '<rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>',
+            'activity'       => '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>',
+            'layers'         => '<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline>',
+            'link'           => '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>',
             'circle'         => '<circle cx="12" cy="12" r="10"></circle>',
         ];
 

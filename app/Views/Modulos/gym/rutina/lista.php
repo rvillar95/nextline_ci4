@@ -25,7 +25,8 @@
         <div class="gym-section-card__head">
             <div>
                 <h3><i class="fas fa-list"></i> Rutinas guardadas</h3>
-                <p class="gym-section-card__hint">Abre una rutina para editar su lista de ejercicios (builder).</p>
+                <p class="gym-section-card__hint mb-0">Abre una rutina para editar su lista de ejercicios (builder).</p>
+                <p class="gym-section-card__hint gym-section-card__hint--scroll mb-0 mt-1"><i class="fas fa-arrows-alt-h"></i> Desliza la tabla para ver estado y acciones.</p>
             </div>
         </div>
         <div class="gym-section-card__body">
