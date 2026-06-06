@@ -50,20 +50,27 @@
     'message' => '¿Eliminar esta rutina? Se perderá el detalle de ejercicios.',
 ]) ?>
 
+<?= view('Modulos/gym/partials/duplicate_modal', [
+    'action'  => base_url('dashboard/gym/rutina/duplicar'),
+    'title'   => 'Duplicar rutina',
+    'message' => 'Se copiarán todos los ejercicios, series y notas del alumno.',
+    'module'  => 'rutina',
+]) ?>
+
 <script>
     $(function() {
-        $('.getRutinas').DataTable({
-            language: window.gymDataTableLang,
-            processing: true,
-            serverSide: false,
-            ajax: { url: 'getRutinas', type: 'GET' },
-            order: [[0, 'asc']],
-            pageLength: 25,
-        });
+        gymInitListTable('.getRutinas', '<?= base_url('dashboard/gym/rutina/getRutinas') ?>', 4);
     });
-    $(document).on('click', '#btnEliminar', function() {
+    $(document).on('click', '.btnEliminarGym, #btnEliminar', function() {
         $('#id').val($(this).val());
         $('#modalEliminacion').modal('show');
+    });
+    $(document).on('click', '.btnDuplicar', function() {
+        var id = $(this).val();
+        var nombre = $(this).data('nombre') || '';
+        $('#dup_id').val(id);
+        $('#dup_nombre').val('Copia de ' + nombre);
+        $('#modalDuplicar').modal('show');
     });
 </script>
 

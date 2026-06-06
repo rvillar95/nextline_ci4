@@ -72,7 +72,7 @@
                         <i class="fas fa-plus me-1"></i> Agregar a la rutina
                     </button>
                     <div class="gym-builder-tip">
-                        Ordena con el número de la primera columna. El descanso va en segundos.
+                        Ordena con el número de la primera columna. El descanso va en segundos. «Notas alumno» aparece al entrenar.
                     </div>
                 </div>
                 <div class="col-md-8">
@@ -80,24 +80,24 @@
                         <table class="table gym-table mb-0" id="tblDetalle">
                             <thead>
                                 <tr>
-                                    <th style="width:60px;">#</th>
+                                    <th style="width:56px;min-width:56px;">#</th>
                                     <th>Ejercicio</th>
-                                    <th style="width:90px;">Series</th>
+                                    <th style="width:72px;min-width:72px;">Series</th>
                                     <th style="width:120px;">Reps</th>
                                     <th style="width:120px;">Descanso</th>
-                                    <th>Notas</th>
+                                    <th>Notas alumno</th>
                                     <th style="width:80px;"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach (($detalle ?? []) as $d) : ?>
                                     <tr data-ejercicio-id="<?= (int) $d['ejercicio_id'] ?>">
-                                        <td><input type="number" class="form-control form-control-sm orden" value="<?= (int) $d['orden'] ?>"></td>
+                                        <td><input type="number" min="1" step="1" class="form-control form-control-sm orden" value="<?= (int) $d['orden'] ?>"></td>
                                         <td class="align-middle fw-semibold"><?= esc($d['ejercicio_nombre'] ?? '') ?></td>
-                                        <td><input type="number" class="form-control form-control-sm series" value="<?= esc($d['series'] ?? '') ?>"></td>
+                                        <td><input type="number" min="0" step="1" class="form-control form-control-sm series" value="<?= $d['series'] !== null && $d['series'] !== '' ? (int) $d['series'] : '' ?>"></td>
                                         <td><input type="text" class="form-control form-control-sm repeticiones" value="<?= esc($d['repeticiones'] ?? '') ?>"></td>
                                         <td><input type="number" class="form-control form-control-sm descanso_seg" value="<?= esc($d['descanso_seg'] ?? '') ?>"></td>
-                                        <td><input type="text" class="form-control form-control-sm notas" value="<?= esc($d['notas'] ?? '') ?>"></td>
+                                        <td><textarea class="form-control form-control-sm notas" rows="2" placeholder="Indicaciones para el alumno"><?= esc($d['notas'] ?? '') ?></textarea></td>
                                         <td><button type="button" class="btn btn-sm btn-outline-danger btnQuitar">Quitar</button></td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -110,51 +110,69 @@
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('page_scripts') ?>
 <script>
+(function () {
     const rutinaId = <?= (int) $rutina->id ?>;
+    let csrfHashGym = window.NutriNextCsrf ? NutriNextCsrf.getToken() : '<?= csrf_hash() ?>';
+    const updateUrl = <?= json_encode(base_url('dashboard/gym/rutina/update-ejercicios')) ?>;
+
+    function notify(msg, type) {
+        if (typeof nnNotify === 'function') {
+            nnNotify(msg, type || 'info');
+        } else if (typeof alert === 'function') {
+            alert(msg);
+        }
+    }
 
     function nextOrden() {
         let max = 0;
-        $('#tblDetalle tbody tr').each(function() {
+        $('#tblDetalle tbody tr').each(function () {
             const v = parseInt($(this).find('input.orden').val() || '0', 10);
             if (v > max) max = v;
         });
         return max + 1;
     }
 
-    $('#btnAgregar').on('click', function(e) {
+    $('#btnAgregar').on('click', function (e) {
         e.preventDefault();
         const ejercicioId = $('#selEjercicio').val();
         const texto = $('#selEjercicio option:selected').text();
         if (!ejercicioId) return;
 
         if ($('#tblDetalle tbody tr[data-ejercicio-id="' + ejercicioId + '"]').length) {
-            alert('Ese ejercicio ya está en la rutina');
+            notify('Ese ejercicio ya está en la rutina', 'warning');
             return;
         }
 
         const orden = nextOrden();
         $('#tblDetalle tbody').append(`
             <tr data-ejercicio-id="${ejercicioId}">
-                <td><input type="number" class="form-control form-control-sm orden" value="${orden}"></td>
+                <td><input type="number" min="1" step="1" class="form-control form-control-sm orden" value="${orden}"></td>
                 <td class="align-middle fw-semibold">${texto}</td>
-                <td><input type="number" class="form-control form-control-sm series" value=""></td>
+                <td><input type="number" min="0" step="1" class="form-control form-control-sm series" value=""></td>
                 <td><input type="text" class="form-control form-control-sm repeticiones" value=""></td>
                 <td><input type="number" class="form-control form-control-sm descanso_seg" value=""></td>
-                <td><input type="text" class="form-control form-control-sm notas" value=""></td>
+                <td><textarea class="form-control form-control-sm notas" rows="2" placeholder="Indicaciones para el alumno"></textarea></td>
                 <td><button type="button" class="btn btn-sm btn-outline-danger btnQuitar">Quitar</button></td>
             </tr>
         `);
         $('#selEjercicio').val('');
     });
 
-    $(document).on('click', '.btnQuitar', function() {
+    $(document).on('click', '.btnQuitar', function () {
         $(this).closest('tr').remove();
     });
 
-    $('#btnGuardarDetalle').on('click', async function() {
+    $('#btnGuardarDetalle').on('click', async function () {
+        const btn = this;
+        if (btn.disabled) return;
+        btn.disabled = true;
+
         const items = [];
-        $('#tblDetalle tbody tr').each(function() {
+        $('#tblDetalle tbody tr').each(function () {
             const $tr = $(this);
             items.push({
                 ejercicio_id: parseInt($tr.data('ejercicio-id'), 10),
@@ -162,29 +180,28 @@
                 series: $tr.find('input.series').val(),
                 repeticiones: $tr.find('input.repeticiones').val(),
                 descanso_seg: $tr.find('input.descanso_seg').val(),
-                notas: $tr.find('input.notas').val(),
+                notas: $tr.find('textarea.notas').val(),
             });
         });
 
-        const res = await fetch("<?= base_url('dashboard/gym/rutina/update-ejercicios') ?>", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': "<?= csrf_hash() ?>"
-            },
-            body: JSON.stringify({ rutina_id: rutinaId, items })
-        });
-
-        const json = await res.json().catch(() => null);
-        if (!res.ok || !json || json.success !== true) {
-            alert((json && json.error) ? json.error : 'Error al guardar');
-            return;
-        }
-        alert('Ejercicios de la rutina guardados correctamente');
-        if (json.csrf_token) {
-            document.querySelectorAll('input[name="<?= csrf_token() ?>"]').forEach(el => el.value = json.csrf_token);
+        try {
+            const csrfRef = { token: csrfHashGym };
+            const result = window.NutriNextGym
+                ? await NutriNextGym.postJson(updateUrl, { rutina_id: rutinaId, items }, csrfRef)
+                : { ok: false, error: 'Script gym no cargado' };
+            csrfHashGym = csrfRef.token;
+            if (!result.ok) {
+                notify(result.error || 'Error al guardar', 'error');
+                return;
+            }
+            $('#tblDetalle tbody tr').each(function (i) {
+                $(this).find('input.orden').val(i + 1);
+            });
+            notify('Ejercicios de la rutina guardados correctamente', 'success');
+        } finally {
+            btn.disabled = false;
         }
     });
+})();
 </script>
-
 <?= $this->endSection() ?>

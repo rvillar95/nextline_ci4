@@ -2,6 +2,8 @@
 
 namespace App\Controllers\Dashboard\Gym;
 
+use App\Services\Gym\EntrenamientoService;
+
 class AlumnoController extends BaseGymController
 {
     private function getPerfilAlumnoId(): int
@@ -21,6 +23,15 @@ class AlumnoController extends BaseGymController
     public function lista()
     {
         $data = $this->buildMenuData();
+        $empresaId = $this->requireEmpresaId();
+        $perfilAlumnoId = $this->getPerfilAlumnoId();
+        $svc = new EntrenamientoService();
+        if ($perfilAlumnoId > 0) {
+            $data['sinEntrenar7'] = $svc->alumnosSinEntrenar($empresaId, $perfilAlumnoId, 7);
+        } else {
+            $data['sinEntrenar7'] = [];
+        }
+
         return view('Modulos/gym/alumno/lista', $data);
     }
 
@@ -51,7 +62,165 @@ class AlumnoController extends BaseGymController
             return redirect()->to(base_url('dashboard/gym/alumno/lista'))->with('errors', 'Alumno no encontrado');
         }
 
+        $svc = new EntrenamientoService();
+        $alumnoId = (int) $data['alumno']->id;
+        $data['entrenamientos'] = $svc->historialCoach($alumnoId, $empresaId, 30);
+        $data['adherencia'] = $svc->adherenciaSemanal($alumnoId, $empresaId);
+        $data['adherencia28'] = $svc->adherenciaPorcentaje($alumnoId, $empresaId, 28);
+        $data['heatmap'] = $svc->adherenciaDetalle($alumnoId, $empresaId, 28);
+
+        $data['asignacionesActivas'] = $db->table('gym_programa_usuario gpu')
+            ->select('gpu.*, p.nombre AS programa_nombre')
+            ->join('gym_programa p', 'p.id = gpu.programa_id')
+            ->where('gpu.usuario_id', $alumnoId)
+            ->where('p.empresa_id', $empresaId)
+            ->where('gpu.estado', 'activa')
+            ->orderBy('gpu.id', 'DESC')
+            ->get()
+            ->getResult();
+
         return view('Modulos/gym/alumno/editar', $data);
+    }
+
+    public function updateNotasAsignacion()
+    {
+        $empresaId = $this->requireEmpresaId();
+        $perfilAlumnoId = $this->getPerfilAlumnoId();
+        if ($perfilAlumnoId <= 0) {
+            return redirect()->back()->with('errors', 'Perfil Alumno no existe');
+        }
+
+        $asignacionId = (int) $this->request->getPost('asignacion_id');
+        $alumnoId = (int) $this->request->getPost('alumno_id');
+        $notas = trim((string) $this->request->getPost('notas_coach'));
+
+        $db = \Config\Database::connect();
+        $row = $db->table('gym_programa_usuario gpu')
+            ->select('gpu.id')
+            ->join('gym_programa p', 'p.id = gpu.programa_id')
+            ->join('usuario u', 'u.id = gpu.usuario_id')
+            ->where('gpu.id', $asignacionId)
+            ->where('gpu.usuario_id', $alumnoId)
+            ->where('u.perfil_id', $perfilAlumnoId)
+            ->where('u.empresa_id', $empresaId)
+            ->where('p.empresa_id', $empresaId)
+            ->get(1)
+            ->getRow();
+
+        if (!$row) {
+            return redirect()->back()->with('errors', 'Asignación no encontrada');
+        }
+
+        $gpu = new \App\Models\Gym\ProgramaUsuario();
+        $payload = ['notas_coach' => $notas !== '' ? $notas : null];
+        if (!$gpu->update($asignacionId, $payload)) {
+            return redirect()->back()->with('errors', 'No se pudieron guardar las notas');
+        }
+
+        return redirect()->back()->with('success', 'Notas del coach guardadas');
+    }
+
+    /**
+     * @return object|null
+     */
+    private function resolveAlumno(int $id, int $empresaId)
+    {
+        $perfilAlumnoId = $this->getPerfilAlumnoId();
+        if ($perfilAlumnoId <= 0) {
+            return null;
+        }
+
+        $db = \Config\Database::connect();
+
+        return $db->table('usuario')
+            ->where('id', $id)
+            ->where('empresa_id', $empresaId)
+            ->where('perfil_id', $perfilAlumnoId)
+            ->get()
+            ->getRow();
+    }
+
+    public function entrenamientos($alumnoId)
+    {
+        $data = $this->buildMenuData();
+        $empresaId = $this->requireEmpresaId();
+        $alumnoId = (int) $alumnoId;
+
+        $data['alumno'] = $this->resolveAlumno($alumnoId, $empresaId);
+        if (!$data['alumno']) {
+            return redirect()->to(base_url('dashboard/gym/alumno/lista'))->with('errors', 'Alumno no encontrado');
+        }
+
+        $svc = new EntrenamientoService();
+        $data['entrenamientos'] = $svc->historialCoach($alumnoId, $empresaId, 100);
+
+        return view('Modulos/gym/alumno/entrenamientos', $data);
+    }
+
+    public function entrenamientoDetalle($alumnoId, $entrenamientoId)
+    {
+        $data = $this->buildMenuData();
+        $empresaId = $this->requireEmpresaId();
+        $alumnoId = (int) $alumnoId;
+        $entrenamientoId = (int) $entrenamientoId;
+
+        $data['alumno'] = $this->resolveAlumno($alumnoId, $empresaId);
+        if (!$data['alumno']) {
+            return redirect()->to(base_url('dashboard/gym/alumno/lista'))->with('errors', 'Alumno no encontrado');
+        }
+
+        $svc = new EntrenamientoService();
+        $sesion = $svc->obtenerSesionCoach($entrenamientoId, $alumnoId, $empresaId);
+        if (!$sesion) {
+            return redirect()->to(base_url('dashboard/gym/alumno/' . $alumnoId . '/entrenamientos'))
+                ->with('errors', 'Sesión no encontrada');
+        }
+
+        $data['sesion'] = $sesion;
+        $data['sesionAnteriorId'] = $svc->sesionAnteriorMismaRutina($entrenamientoId, $alumnoId, $empresaId);
+
+        return view('Modulos/gym/alumno/entrenamiento_detalle', $data);
+    }
+
+    public function compararEntrenamientos($alumnoId)
+    {
+        $data = $this->buildMenuData();
+        $empresaId = $this->requireEmpresaId();
+        $alumnoId = (int) $alumnoId;
+        $idA = (int) $this->request->getGet('a');
+        $idB = (int) $this->request->getGet('b');
+
+        $data['alumno'] = $this->resolveAlumno($alumnoId, $empresaId);
+        if (!$data['alumno']) {
+            return redirect()->to(base_url('dashboard/gym/alumno/lista'))->with('errors', 'Alumno no encontrado');
+        }
+
+        $svc = new EntrenamientoService();
+        $data['entrenamientos'] = $svc->historialCoach($alumnoId, $empresaId, 100);
+
+        if ($idA <= 0 || $idB <= 0) {
+            $data['comparacion'] = null;
+            $data['errorCompare'] = null;
+
+            return view('Modulos/gym/alumno/comparar', $data);
+        }
+
+        $cmp = $svc->compararSesiones($idA, $idB, $alumnoId, $empresaId);
+        if (!$cmp['ok']) {
+            $data['comparacion'] = null;
+            $data['errorCompare'] = $cmp['error'] ?? 'No se pudo comparar';
+            $data['idA'] = $idA;
+            $data['idB'] = $idB;
+
+            return view('Modulos/gym/alumno/comparar', $data);
+        }
+
+        $data['comparacion'] = $cmp;
+        $data['idA'] = $idA;
+        $data['idB'] = $idB;
+        $data['errorCompare'] = null;
+
+        return view('Modulos/gym/alumno/comparar', $data);
     }
 
     public function getAlumnos()
@@ -78,8 +247,17 @@ class AlumnoController extends BaseGymController
             ->get()
             ->getResult('object');
 
+        $svc = new EntrenamientoService();
         $data = [];
         foreach ($rows as $u) {
+            $uid = (int) $u->id;
+            $pct = $svc->adherenciaPorcentaje($uid, $empresaId, 28);
+            $riesgo = $pct < 50;
+            $adherenciaHtml = '<span class="badge bg-' . ($riesgo ? 'danger' : ($pct >= 75 ? 'success' : 'warning')) . '">' . $pct . '%</span>';
+            if ($riesgo) {
+                $adherenciaHtml .= ' <span class="badge bg-dark">Riesgo</span>';
+            }
+
             $estado = ($u->estado === 'A')
                 ? '<span class="badge badge-success mb-2 me-4">Activo</span>'
                 : '<span class="badge badge-danger mb-2 me-4">Inactivo</span>';
@@ -88,9 +266,10 @@ class AlumnoController extends BaseGymController
                 esc($u->nombre . ' ' . $u->apellido),
                 esc($u->correo),
                 esc($u->telefono ?? ''),
+                $adherenciaHtml,
                 $estado,
-                '<a href="editar/' . (int) $u->id . '" style="display:inline-block; margin-right: 5px;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 25 25" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 table-cancel"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
-                 <button type="button" value="' . (int) $u->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>',
+                '<a href="' . base_url('dashboard/gym/alumno/editar/' . (int) $u->id) . '" style="display:inline-block; margin-right: 5px;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 25 25" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 table-cancel"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
+                 <button type="button" value="' . (int) $u->id . '" class="btnEliminarGym" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>',
             ];
         }
 

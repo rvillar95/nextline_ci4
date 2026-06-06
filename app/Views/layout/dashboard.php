@@ -259,10 +259,57 @@ exit(); */
                 }
 
                 @media (max-width: 991px) {
-                    .sidebar-wrapper { overflow-y: auto !important; }
+                    .sidebar-wrapper {
+                        overflow: visible !important;
+                        z-index: 10050 !important;
+                    }
                     #sidebar {
                         height: 100vh !important;
+                        max-height: 100vh !important;
                         padding-bottom: 48px !important;
+                        overflow-y: auto !important;
+                        overflow-x: hidden !important;
+                        -webkit-overflow-scrolling: touch;
+                        touch-action: pan-y;
+                    }
+                    #sidebar ul.menu-categories,
+                    #sidebar ul.menu-categories.ps {
+                        height: auto !important;
+                        max-height: none !important;
+                        overflow: visible !important;
+                    }
+                    #sidebar ul.menu-categories .ps__rail-y {
+                        display: none !important;
+                    }
+                    #sidebar ul.nutrinext-sidebar-menu li.menu > .dropdown-toggle.sidebar-menu-link {
+                        min-height: 48px;
+                        padding: 12px 14px !important;
+                    }
+                    #sidebar ul.nutrinext-sidebar-menu ul.submenu > li a {
+                        min-height: 44px;
+                        padding: 12px 12px 12px 18px !important;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .main-container.sbar-open .sidebar-wrapper {
+                        left: 0 !important;
+                        width: 280px !important;
+                        max-width: min(280px, 92vw) !important;
+                    }
+                    .overlay.show {
+                        z-index: 10040 !important;
+                        opacity: 0.55 !important;
+                        display: block !important;
+                    }
+                    .header-container {
+                        z-index: 10030;
+                    }
+                    .secondary-nav .btn-toggle.sidebarCollapse {
+                        min-width: 44px;
+                        min-height: 44px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
                     }
                 }
             </style>
@@ -503,6 +550,9 @@ exit(); */
                     <?php echo $this->renderSection("gym/alumno/lista"); ?>
                     <?php echo $this->renderSection("gym/alumno/registro"); ?>
                     <?php echo $this->renderSection("gym/alumno/editar"); ?>
+                    <?php echo $this->renderSection("gym/alumno/entrenamientos"); ?>
+                    <?php echo $this->renderSection("gym/alumno/entrenamiento_detalle"); ?>
+                    <?php echo $this->renderSection("gym/alumno/comparar"); ?>
                     <?php echo $this->renderSection("gym/asignacion/lista"); ?>
                     <!-- END Gimnasio -->
                 </div>
@@ -649,7 +699,9 @@ exit(); */
                 }
                 
                 // Mostrar mensaje y redirigir
-                alert('Tu sesión ha expirado. Serás redirigido al inicio de sesión.');
+                if (typeof mostrarModalError === 'function') {
+                    mostrarModalError('Tu sesión ha expirado. Serás redirigido al inicio de sesión.');
+                }
                 window.location.href = '<?= base_url('login') ?>';
             }
             
@@ -1001,6 +1053,13 @@ exit(); */
                 return p;
             }
 
+            function refreshCsrf(data) {
+                if (data && data.csrf_token) {
+                    csrfHash = data.csrf_token;
+                    if (window.NutriNextCsrf) NutriNextCsrf.setToken(data.csrf_token);
+                }
+            }
+
             function actualizarBadge(n) {
                 if (!badge) return;
                 if (n > 0) {
@@ -1087,6 +1146,7 @@ exit(); */
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: csrfBody({ id: id }).toString()
                 }).then(function(r) { return r.json(); }).then(function(data) {
+                    refreshCsrf(data);
                     if (data && data.no_leidas !== undefined) ultimoNoLeidas = data.no_leidas;
                     cargarNotificaciones(false);
                     if (typeof cb === 'function') cb();
@@ -1101,7 +1161,10 @@ exit(); */
                         method: 'POST',
                         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: csrfBody().toString()
-                    }).then(function() { cargarNotificaciones(false); });
+                    }).then(function(r) { return r.json(); }).then(function(data) {
+                        refreshCsrf(data);
+                        cargarNotificaciones(false);
+                    });
                 });
             }
 
@@ -1117,3 +1180,5 @@ exit(); */
         <?php endif; ?>
         
         <?= view('template/footer') ?>
+        <?php echo $this->renderSection('page_scripts'); ?>
+        <script src="<?= base_url('lib/js/nutrinext-dashboard-sidebar.js') ?>"></script>

@@ -51,20 +51,27 @@
     'message' => '¿Eliminar este programa? Los alumnos dejarán de verlo si estaba asignado.',
 ]) ?>
 
+<?= view('Modulos/gym/partials/duplicate_modal', [
+    'action'  => base_url('dashboard/gym/programa/duplicar'),
+    'title'   => 'Duplicar programa',
+    'message' => 'Se copiarán el programa y todas sus rutinas (ejercicios incluidos).',
+    'module'  => 'programa',
+]) ?>
+
 <script>
     $(function() {
-        $('.getProgramas').DataTable({
-            language: window.gymDataTableLang,
-            processing: true,
-            serverSide: false,
-            ajax: { url: 'getProgramas', type: 'GET' },
-            order: [[0, 'asc']],
-            pageLength: 25,
-        });
+        gymInitListTable('.getProgramas', '<?= base_url('dashboard/gym/programa/getProgramas') ?>', 5);
     });
-    $(document).on('click', '#btnEliminar', function() {
+    $(document).on('click', '.btnEliminarGym, #btnEliminar', function() {
         $('#id').val($(this).val());
         $('#modalEliminacion').modal('show');
+    });
+    $(document).on('click', '.btnDuplicar', function() {
+        var id = $(this).val();
+        var nombre = $(this).data('nombre') || '';
+        $('#dup_id').val(id);
+        $('#dup_nombre').val('Copia de ' + nombre);
+        $('#modalDuplicar').modal('show');
     });
 </script>
 

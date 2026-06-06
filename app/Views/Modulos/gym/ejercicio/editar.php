@@ -77,6 +77,13 @@
                         <label class="form-label">Instrucciones</label>
                         <textarea name="instrucciones" class="form-control" rows="6"><?= esc(old('instrucciones') ?? ($ejercicio->instrucciones ?? '')) ?></textarea>
                     </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Video demostrativo <span class="text-muted fw-normal">(opcional)</span></label>
+                        <input type="url" name="video_url" class="form-control"
+                               value="<?= esc(old('video_url') ?? ($ejercicio->video_url ?? '')) ?>"
+                               placeholder="https://www.youtube.com/watch?v=...">
+                        <small class="text-muted">YouTube, Vimeo o enlace directo.</small>
+                    </div>
                 </div>
 
                 <div class="gym-form__actions">

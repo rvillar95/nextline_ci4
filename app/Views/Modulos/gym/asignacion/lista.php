@@ -54,6 +54,13 @@
                         </button>
                     </div>
                 </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <label class="form-label">Notas para el alumno <span class="text-muted fw-normal">(opcional)</span></label>
+                        <textarea name="notas_coach" class="form-control" rows="4"
+                                  placeholder="Mensaje visible al entrenar: objetivos, precauciones, recordatorios..."></textarea>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -92,22 +99,17 @@
 
 <script>
     $(function() {
-        $('.getAsignaciones').DataTable({
-            language: window.gymDataTableLang,
-            processing: true,
-            serverSide: false,
-            ajax: { url: 'getAsignaciones', type: 'GET' },
+        gymInitListTable('.getAsignaciones', '<?= base_url('dashboard/gym/asignacion/getAsignaciones') ?>', 7, {
             order: [[4, 'desc']],
-            pageLength: 25,
         });
     });
 
     $(document).on('click', '#btnDesasignar', function() {
-        if (!confirm('¿Quitar esta asignación? El alumno dejará de ver el programa en el portal.')) {
-            return;
-        }
-        $('#desasignar_id').val($(this).val());
-        $('#frmDesasignar').submit();
+        var id = $(this).val();
+        confirmarAccion('¿Quitar esta asignación? El alumno dejará de ver el programa en el portal.', function() {
+            $('#desasignar_id').val(id);
+            $('#frmDesasignar').submit();
+        }, { titulo: 'Quitar asignación', botonOk: 'Quitar', botonClase: 'btn-warning', mostrarHint: false });
     });
 </script>
 

@@ -54,17 +54,10 @@
 
 <script>
     $(function() {
-        $('.getEjercicios').DataTable({
-            language: window.gymDataTableLang,
-            processing: true,
-            serverSide: false,
-            ajax: { url: 'getEjercicios', type: 'GET' },
-            order: [[0, 'asc']],
-            pageLength: 25,
-        });
+        gymInitListTable('.getEjercicios', '<?= base_url('dashboard/gym/ejercicio/getEjercicios') ?>', 6);
     });
 
-    $(document).on('click', '#btnEliminar', function() {
+    $(document).on('click', '.btnEliminarGym, #btnEliminar', function() {
         $('#id').val($(this).val());
         $('#modalEliminacion').modal('show');
     });

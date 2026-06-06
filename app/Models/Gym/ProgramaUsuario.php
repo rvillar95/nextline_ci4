@@ -20,6 +20,7 @@ class ProgramaUsuario extends Model
         'fecha_inicio',
         'fecha_fin',
         'estado',
+        'notas_coach',
     ];
 
     protected $useTimestamps = true;

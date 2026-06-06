@@ -287,6 +287,17 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Gym: sub-rutas bajo /dashboard/gym/{modulo}/... si el perfil tiene acceso al módulo
+        if (preg_match('#^/dashboard/gym/([a-z]+)(/|$)#', $path, $gymMatch)) {
+            $gymPrefix = '/dashboard/gym/' . $gymMatch[1];
+            foreach ($allowed as $rule) {
+                $pat = $rule['pattern'];
+                if ($pat === $gymPrefix || str_starts_with($pat, $gymPrefix . '/')) {
+                    return;
+                }
+            }
+        }
+
         // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos
         if (strpos($this->sanitizePath($path), '/dashboard/menu-grupo') === 0) {
             foreach ($allowed as $rule) {

@@ -21,6 +21,30 @@
     <?= view('Modulos/gym/partials/workflow', ['active' => 'alumno']) ?>
     <?= $this->include('Modulos/gym/partials/flash') ?>
 
+    <?php if (! empty($sinEntrenar7)) : ?>
+    <div class="gym-section-card mb-4 gym-inactive-alert">
+        <div class="gym-section-card__head">
+            <h3><i class="fas fa-exclamation-triangle text-warning"></i> Sin entrenar (7+ días)</h3>
+            <p class="gym-section-card__hint mb-0"><?= count($sinEntrenar7) ?> alumno(s) activos sin sesión completada reciente.</p>
+        </div>
+        <div class="gym-section-card__body">
+            <ul class="list-unstyled mb-0 gym-inactive-list">
+                <?php foreach ($sinEntrenar7 as $a) : ?>
+                <li class="d-flex flex-wrap justify-content-between align-items-center py-2 border-bottom">
+                    <div>
+                        <strong><?= esc(trim(($a->nombre ?? '') . ' ' . ($a->apellido ?? ''))) ?></strong>
+                        <?php if (! empty($a->correo)) : ?>
+                            <span class="text-muted small ms-1"><?= esc($a->correo) ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <a href="<?= base_url('dashboard/gym/alumno/editar/' . (int) $a->id) ?>" class="btn btn-sm gym-btn-outline">Ver ficha</a>
+                </li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="gym-section-card">
         <div class="gym-section-card__head">
             <div>
@@ -36,6 +60,7 @@
                             <th>Nombre</th>
                             <th>Correo</th>
                             <th>Teléfono</th>
+                            <th>Adherencia (28d)</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
@@ -53,16 +78,9 @@
 
 <script>
     $(function() {
-        $('.getAlumnos').DataTable({
-            language: window.gymDataTableLang,
-            processing: true,
-            serverSide: false,
-            ajax: { url: 'getAlumnos', type: 'GET' },
-            order: [[0, 'asc']],
-            pageLength: 25,
-        });
+        gymInitListTable('.getAlumnos', '<?= base_url('dashboard/gym/alumno/getAlumnos') ?>', 6);
     });
-    $(document).on('click', '#btnEliminar', function() {
+    $(document).on('click', '.btnEliminarGym, #btnEliminar', function() {
         $('#id').val($(this).val());
         $('#modalEliminacion').modal('show');
     });

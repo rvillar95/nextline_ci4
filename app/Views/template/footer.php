@@ -21,7 +21,7 @@
          <script src="<?= base_url("lib/src/plugins/src/perfect-scrollbar/perfect-scrollbar.min.js") ?>"></script>
          <script src="<?= base_url("lib/src/plugins/src/mousetrap/mousetrap.min.js") ?>"></script>
          <script src="<?= base_url("lib/src/plugins/src/waves/waves.min.js") ?>"></script>
-         <script src="<?= base_url("lib//layouts/vertical-light-menu/app.js") ?>"></script>
+         <script src="<?= base_url("lib/layouts/vertical-light-menu/app.js") ?>"></script>
          <!-- END GLOBAL MANDATORY SCRIPTS -->
 
         <!-- BEGIN PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
@@ -32,6 +32,10 @@
         <script src="<?= base_url("lib/js/icon-selector.js") ?>"></script>
         
         <!-- END PAGE LEVEL PLUGINS/CUSTOM SCRIPTS -->
+
+        <?= view('components/modals') ?>
+        <script src="<?= base_url('lib/js/nutrinext-csrf.js') ?>?v=2"></script>
+        <script src="<?= base_url('lib/js/modals.js') ?>?v=2"></script>
 
          </body>
 

@@ -21,11 +21,38 @@ class SuscripcionController extends BaseController
         $susModel = new SuscripcionAlumno();
         $suscripcion = $susModel->getByUsuario($usuarioId);
 
+        $db = \Config\Database::connect();
+        $recibirRecordatorios = 'S';
+        if ($db->fieldExists('recibir_recordatorios_gym', 'usuario')) {
+            $row = $db->table('usuario')->select('recibir_recordatorios_gym')->where('id', $usuarioId)->get(1)->getRow();
+            $recibirRecordatorios = $row->recibir_recordatorios_gym ?? 'S';
+        }
+
         return view('alumno/suscripcion', [
-            'usuario' => $usuario,
-            'planes' => $planes,
-            'suscripcion' => $suscripcion,
+            'usuario'              => $usuario,
+            'planes'               => $planes,
+            'suscripcion'          => $suscripcion,
+            'recibirRecordatorios' => $recibirRecordatorios,
+            'navActive'            => 'suscripcion',
+            'pageTitle'            => 'Suscripción',
         ]);
+    }
+
+    public function recordatorios()
+    {
+        $usuario = session()->get('usuario');
+        $usuarioId = (int) ($usuario['id'] ?? 0);
+        $recibir = $this->request->getPost('recibir') === 'S' ? 'S' : 'N';
+
+        $db = \Config\Database::connect();
+        if ($db->fieldExists('recibir_recordatorios_gym', 'usuario')) {
+            $db->table('usuario')->where('id', $usuarioId)->update([
+                'recibir_recordatorios_gym' => $recibir,
+            ]);
+        }
+
+        return redirect()->to(base_url('alumno/suscripcion'))
+            ->with('success', 'Preferencias de notificación guardadas.');
     }
 
     public function pagar()

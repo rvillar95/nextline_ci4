@@ -20,6 +20,7 @@ class Ejercicio extends Model
         'grupo_muscular_secundario_id',
         'tipo_base_id',
         'instrucciones',
+        'video_url',
         'activo',
     ];
 

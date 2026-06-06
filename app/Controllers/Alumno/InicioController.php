@@ -3,6 +3,8 @@
 namespace App\Controllers\Alumno;
 
 use App\Controllers\BaseController;
+use App\Services\Gym\EntrenamientoService;
+use App\Services\Gym\ProgresoService;
 
 class InicioController extends BaseController
 {
@@ -12,6 +14,8 @@ class InicioController extends BaseController
         $empresaId = (int) ($usuario['empresa_id'] ?? 0);
         $usuarioId = (int) ($usuario['id'] ?? 0);
 
+        $svc = new EntrenamientoService();
+        $progreso = new ProgresoService();
         $db = \Config\Database::connect();
 
         $asignaciones = $db->table('gym_programa_usuario gpu')
@@ -31,8 +35,14 @@ class InicioController extends BaseController
             ->getResult('object');
 
         return view('alumno/inicio', [
-            'usuario' => $usuario,
-            'asignaciones' => $asignaciones,
+            'usuario'        => $usuario,
+            'asignaciones'   => $asignaciones,
+            'rutinaHoy'      => $svc->rutinaDelDia($usuarioId, $empresaId),
+            'sesionEnCurso'  => $svc->sesionEnCurso($usuarioId),
+            'racha'          => $progreso->rachaDias($usuarioId),
+            'resumen30'      => $progreso->resumen30Dias($usuarioId),
+            'navActive'      => 'inicio',
+            'pageTitle'      => 'Inicio',
         ]);
     }
 }

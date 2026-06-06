@@ -38,9 +38,11 @@ class ProgramaController extends BaseController
             ->getResult('object');
 
         return view('alumno/programa_ver', [
-            'usuario' => $usuario,
-            'asign' => $asign,
-            'rutinas' => $rutinas,
+            'usuario'   => $usuario,
+            'asign'     => $asign,
+            'rutinas'   => $rutinas,
+            'navActive' => 'programas',
+            'pageTitle' => $asign->programa_nombre ?? 'Programa',
         ]);
     }
 }

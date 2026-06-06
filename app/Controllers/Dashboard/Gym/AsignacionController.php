@@ -116,12 +116,16 @@ class AsignacionController extends BaseGymController
 
         // Si ya existe asignación, la dejamos activa (update)
         $exist = $gpu->where('programa_id', $programaId)->where('usuario_id', $alumnoId)->first();
+        $notasCoach = trim((string) $this->request->getPost('notas_coach'));
+        $notasCoach = $notasCoach !== '' ? $notasCoach : null;
+
         if ($exist) {
             $ok = $gpu->update($exist->id, [
                 'estado' => 'activa',
                 'fecha_inicio' => $fechaInicio ?: null,
                 'fecha_fin' => null,
                 'asignado_por_usuario_id' => $usuarioId,
+                'notas_coach' => $notasCoach,
             ]);
         } else {
             $ok = (bool) $gpu->insert([
@@ -130,6 +134,7 @@ class AsignacionController extends BaseGymController
                 'asignado_por_usuario_id' => $usuarioId,
                 'fecha_inicio' => $fechaInicio ?: null,
                 'estado' => 'activa',
+                'notas_coach' => $notasCoach,
             ]);
         }
 

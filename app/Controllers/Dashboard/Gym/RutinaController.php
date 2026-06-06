@@ -5,6 +5,7 @@ namespace App\Controllers\Dashboard\Gym;
 use App\Models\Gym\Ejercicio;
 use App\Models\Gym\Rutina;
 use App\Models\Gym\RutinaEjercicio;
+use App\Services\Gym\ProgramaService;
 
 class RutinaController extends BaseGymController
 {
@@ -46,33 +47,46 @@ class RutinaController extends BaseGymController
 
     public function getRutinas()
     {
-        $empresaId = $this->requireEmpresaId();
-        $draw = (int) $this->request->getGet('draw');
+        try {
+            $empresaId = $this->requireEmpresaId();
+            $draw = (int) $this->request->getGet('draw');
 
-        $rutinaModel = new Rutina();
-        $rows = $rutinaModel->getAllByEmpresa($empresaId);
+            $rutinaModel = new Rutina();
+            $rows = $rutinaModel->getAllByEmpresa($empresaId);
 
-        $data = [];
-        foreach ($rows as $r) {
-            $estado = ((int) $r->activo === 1)
-                ? '<span class="badge badge-success mb-2 me-4">Activa</span>'
-                : '<span class="badge badge-danger mb-2 me-4">Inactiva</span>';
+            $data = [];
+            foreach ($rows as $r) {
+                $estado = ((int) $r->activo === 1)
+                    ? '<span class="badge badge-success mb-2 me-4">Activa</span>'
+                    : '<span class="badge badge-danger mb-2 me-4">Inactiva</span>';
 
-            $data[] = [
-                esc($r->nombre),
-                esc($r->creado_por ?? ''),
-                $estado,
-                '<a href="editar/' . (int) $r->id . '" style="display:inline-block; margin-right: 5px;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" data-original-title="Editar" aria-label="Editar" data-bs-original-title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 25 25" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 table-cancel"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
-                 <button type="button" value="' . (int) $r->id . '" id="btnEliminar" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>',
-            ];
+                $data[] = [
+                    esc($r->nombre),
+                    esc($r->creado_por ?? ''),
+                    $estado,
+                    '<a href="' . base_url('dashboard/gym/rutina/editar/' . (int) $r->id) . '" style="display:inline-block; margin-right: 5px;" class="bs-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Editar" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 25 25" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2 table-cancel"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></a>
+                     <button type="button" value="' . (int) $r->id . '" class="btnDuplicar" data-nombre="' . esc($r->nombre, 'attr') . '" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block; margin-right:5px;" title="Duplicar"><i class="fas fa-copy" style="font-size:18px;color:#555;"></i></button>
+                     <button type="button" value="' . (int) $r->id . '" class="btnEliminarGym" style="background:none; border:none; padding:0; cursor:pointer; display:inline-block;" ><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 table-cancel"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button>',
+                ];
+            }
+
+            return $this->response->setJSON([
+                'draw' => $draw,
+                'recordsTotal' => count($rows),
+                'recordsFiltered' => count($rows),
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'getRutinas: ' . $e->getMessage());
+
+            return $this->response->setStatusCode(500)->setJSON([
+                'draw' => (int) $this->request->getGet('draw'),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'Error al cargar rutinas',
+            ]);
         }
-
-        return $this->response->setJSON([
-            'draw' => $draw,
-            'recordsTotal' => count($rows),
-            'recordsFiltered' => count($rows),
-            'data' => $data,
-        ]);
     }
 
     public function registrar()
@@ -161,6 +175,24 @@ class RutinaController extends BaseGymController
         return redirect()->to(base_url('dashboard/gym/rutina/lista'))->with('errors', 'Error al eliminar la rutina');
     }
 
+    public function duplicar()
+    {
+        $empresaId = $this->requireEmpresaId();
+        $usuarioId = $this->requireUsuarioId();
+        $id = (int) $this->request->getPost('id');
+        $nombre = trim((string) $this->request->getPost('nombre'));
+
+        $svc = new ProgramaService();
+        $res = $svc->duplicarRutina($id, $empresaId, $usuarioId, $nombre !== '' ? $nombre : null);
+
+        if (!$res['ok']) {
+            return redirect()->back()->with('errors', $res['error'] ?? 'No se pudo duplicar');
+        }
+
+        return redirect()->to(base_url('dashboard/gym/rutina/editar/' . (int) $res['rutina_id']))
+            ->with('success', 'Rutina duplicada. Puedes ajustar ejercicios.');
+    }
+
     /**
      * Actualizar ejercicios de una rutina (builder).
      * Espera JSON: { rutina_id, items: [{ejercicio_id, orden, series, repeticiones, descanso_seg, notas}] }
@@ -194,7 +226,7 @@ class RutinaController extends BaseGymController
 
         // Solo permite a quien creó la rutina o super admin (poder=3)
         $poder = (int) (session()->get('usuario')['poder'] ?? 0);
-        if ($poder !== 3 && (int) $rutina->creado_por_usuario_id !== $usuarioId) {
+        if ($poder !== 3 && (int) $rutina->empresa_id !== $empresaId) {
             return $this->response->setStatusCode(403)->setJSON([
                 'success' => false,
                 'error' => 'No autorizado',
@@ -208,6 +240,7 @@ class RutinaController extends BaseGymController
         $db->table('gym_rutina_ejercicio')->where('rutina_id', $rutinaId)->delete();
 
         $batch = [];
+        $ordenSeq = 1;
         foreach ($items as $it) {
             $ejercicioId = (int) ($it['ejercicio_id'] ?? 0);
             if ($ejercicioId <= 0) {
@@ -216,7 +249,7 @@ class RutinaController extends BaseGymController
             $batch[] = [
                 'rutina_id' => $rutinaId,
                 'ejercicio_id' => $ejercicioId,
-                'orden' => (int) ($it['orden'] ?? 0),
+                'orden' => $ordenSeq++,
                 'series' => isset($it['series']) && $it['series'] !== '' ? (int) $it['series'] : null,
                 'repeticiones' => isset($it['repeticiones']) && $it['repeticiones'] !== '' ? (string) $it['repeticiones'] : null,
                 'descanso_seg' => isset($it['descanso_seg']) && $it['descanso_seg'] !== '' ? (int) $it['descanso_seg'] : null,

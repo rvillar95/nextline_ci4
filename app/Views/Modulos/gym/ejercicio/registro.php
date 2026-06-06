@@ -81,6 +81,12 @@
                     <label class="form-label">Instrucciones / técnica</label>
                     <textarea name="instrucciones" class="form-control" rows="5" placeholder="Postura, respiración, errores comunes..."><?= esc(old('instrucciones') ?? '') ?></textarea>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Video demostrativo <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input type="url" name="video_url" class="form-control" value="<?= esc(old('video_url') ?? '') ?>"
+                           placeholder="https://www.youtube.com/watch?v=...">
+                    <small class="text-muted">YouTube, Vimeo o enlace directo. El alumno lo verá al entrenar.</small>
+                </div>
 
                 <div class="gym-form__actions">
                     <button type="submit" class="btn gym-btn-primary">

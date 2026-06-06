@@ -27,8 +27,20 @@ $routes->get('/auth/google/callback', 'Auth\\GoogleAuthController::callback');
 $routes->group('alumno', function ($routes) {
     $routes->get('inicio', 'Alumno\\InicioController::index');
     $routes->get('programa/(:num)', 'Alumno\\ProgramaController::ver/$1');
+    $routes->get('rutina/(:num)', 'Alumno\\RutinaController::ver/$1');
+    $routes->post('rutina/(:num)/iniciar', 'Alumno\\RutinaController::iniciar/$1');
+    $routes->get('entrenamiento/(:num)', 'Alumno\\EntrenamientoController::ejecutar/$1');
+    $routes->post('entrenamiento/(:num)/serie', 'Alumno\\EntrenamientoController::guardarSerie/$1');
+    $routes->post('entrenamiento/(:num)/ejercicio-sensacion', 'Alumno\\EntrenamientoController::guardarSensacionEjercicio/$1');
+    $routes->post('entrenamiento/(:num)/finalizar', 'Alumno\\EntrenamientoController::finalizar/$1');
+    $routes->post('entrenamiento/(:num)/abandonar', 'Alumno\\EntrenamientoController::abandonar/$1');
+    $routes->get('historial', 'Alumno\\HistorialController::index');
+    $routes->get('historial/(:num)', 'Alumno\\HistorialController::detalle/$1');
+    $routes->get('progreso', 'Alumno\\ProgresoController::index');
+    $routes->get('progreso/ejercicio/(:num)', 'Alumno\\ProgresoController::ejercicioJson/$1');
     $routes->get('suscripcion', 'Alumno\\SuscripcionController::index');
     $routes->post('suscripcion/pagar', 'Alumno\\SuscripcionController::pagar');
+    $routes->post('suscripcion/recordatorios', 'Alumno\\SuscripcionController::recordatorios');
 });
 
 
@@ -65,6 +77,7 @@ $routes->group('dashboard', function ($routes) {
             $r->post('registrar', 'Dashboard\\Gym\\RutinaController::registrar');
             $r->post('update', 'Dashboard\\Gym\\RutinaController::update');
             $r->post('eliminar', 'Dashboard\\Gym\\RutinaController::eliminar');
+            $r->post('duplicar', 'Dashboard\\Gym\\RutinaController::duplicar');
             // Builder: actualizar ejercicios de rutina (JSON)
             $r->post('update-ejercicios', 'Dashboard\\Gym\\RutinaController::updateEjercicios');
         });
@@ -77,17 +90,23 @@ $routes->group('dashboard', function ($routes) {
             $r->post('registrar', 'Dashboard\\Gym\\ProgramaController::registrar');
             $r->post('update', 'Dashboard\\Gym\\ProgramaController::update');
             $r->post('eliminar', 'Dashboard\\Gym\\ProgramaController::eliminar');
+            $r->post('duplicar', 'Dashboard\\Gym\\ProgramaController::duplicar');
+            $r->post('duplicar-asignar', 'Dashboard\\Gym\\ProgramaController::duplicarAsignar');
             // Asociar rutinas al programa (JSON)
             $r->post('update-rutinas', 'Dashboard\\Gym\\ProgramaController::updateRutinas');
         });
 
         $routes2->group('alumno', function ($r) {
             $r->get('registro', 'Dashboard\\Gym\\AlumnoController::registro');
+            $r->get('(:num)/entrenamientos', 'Dashboard\\Gym\\AlumnoController::entrenamientos/$1');
+            $r->get('(:num)/entrenamiento/(:num)', 'Dashboard\\Gym\\AlumnoController::entrenamientoDetalle/$1/$2');
+            $r->get('(:num)/comparar', 'Dashboard\\Gym\\AlumnoController::compararEntrenamientos/$1');
             $r->get('editar/(:num)', 'Dashboard\\Gym\\AlumnoController::editar/$1');
             $r->get('lista', 'Dashboard\\Gym\\AlumnoController::lista');
             $r->get('getAlumnos', 'Dashboard\\Gym\\AlumnoController::getAlumnos');
             $r->post('registrar', 'Dashboard\\Gym\\AlumnoController::registrar');
             $r->post('update', 'Dashboard\\Gym\\AlumnoController::update');
+            $r->post('update-notas-asignacion', 'Dashboard\\Gym\\AlumnoController::updateNotasAsignacion');
             $r->post('eliminar', 'Dashboard\\Gym\\AlumnoController::eliminar');
         });
 
