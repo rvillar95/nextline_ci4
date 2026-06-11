@@ -179,6 +179,8 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('verificarRutNutricionista', 'Dashboard\PacienteController::verificarRutNutricionista');
         $routes2->post('update', 'Dashboard\PacienteController::update');
         $routes2->post('eliminar', 'Dashboard\PacienteController::eliminar');
+        $routes2->post('eliminar/(:num)', 'Dashboard\PacienteController::eliminar/$1');
+        $routes2->post('activar/(:num)', 'Dashboard\PacienteController::activar/$1');
     });
 
     $routes->group('documento', function ($routes2) {
@@ -255,6 +257,7 @@ $routes->group('dashboard', function ($routes) {
     });
 
     $routes->group('empresa', function ($routes2) {
+        $routes2->get('mi-consultorio', 'Dashboard\EmpresaController::miConsultorio');
         $routes2->get('lista', 'Dashboard\EmpresaController::lista'); //vista lista (SA) o redirige
         $routes2->get('getEmpresas', 'Dashboard\EmpresaController::getEmpresas'); //get Data (solo SA)
         $routes2->get('registro', 'Dashboard\EmpresaController::registro'); //vista crear/editar

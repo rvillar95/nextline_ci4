@@ -141,15 +141,13 @@ class HistorialController extends BaseController
             $rows = $rowsFiltrados;
         }
         
-        // Ordenar resultados por fecha y hora (descendente)
-        if (!empty($rows)) {
-            usort($rows, function($a, $b) {
-                $fechaA = strtotime($a->fecha_consulta . ' ' . ($a->hora_consulta ?? '00:00:00'));
-                $fechaB = strtotime($b->fecha_consulta . ' ' . ($b->hora_consulta ?? '00:00:00'));
-                if ($fechaA == $fechaB) {
-                    return 0;
-                }
-                return ($fechaA > $fechaB) ? -1 : 1;
+        // Ordenar por fecha real (soporta d-m-Y y Y-m-d en BD)
+        if (! empty($rows)) {
+            usort($rows, static function ($a, $b) {
+                $fechaA = HistorialClinico::fechaConsultaToTimestamp($a->fecha_consulta ?? '', $a->hora_consulta ?? '');
+                $fechaB = HistorialClinico::fechaConsultaToTimestamp($b->fecha_consulta ?? '', $b->hora_consulta ?? '');
+
+                return $fechaB <=> $fechaA;
             });
         }
 
@@ -192,9 +190,13 @@ class HistorialController extends BaseController
             $botones = '<button class="btn btn-sm btn-outline-primary" onclick="verHistorial(' . $r->id . ')">Ver</button> ' .
                        '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHistorial(' . $r->id . ')">Eliminar</button>';
 
+            $fechaSort = HistorialClinico::fechaConsultaToSortKey($r->fecha_consulta ?? '');
+            $fechaDisplay = HistorialClinico::fechaConsultaToDisplay($r->fecha_consulta ?? '');
+            $fechaCell = '<span data-order="' . esc($fechaSort, 'attr') . '">' . esc($fechaDisplay) . '</span>';
+
             $data[] = array(
                 esc($nombrePaciente),
-                esc(date('d/m/Y', strtotime($r->fecha_consulta))),
+                $fechaCell,
                 esc($r->hora_consulta ?? ''),
                 $tipoBadge,
                 esc($medidas),
@@ -863,8 +865,17 @@ class HistorialController extends BaseController
                 if (is_array($tendenciaRows)) {
                     foreach ($tendenciaRows as $row) {
                         $grupo = $row['grupo'] ?? null;
-                        if (empty($grupo)) continue;
-                        $tendenciaModel->insert(['historial_clinico_id' => $id, 'grupo' => $grupo, 'preferencia' => $row['preferencia'] ?? null, 'alergia_intolerancia' => $row['alergia_intolerancia'] ?? null]);
+                        $preferencia = trim((string) ($row['preferencia'] ?? ''));
+                        $alergia = trim((string) ($row['alergia_intolerancia'] ?? ''));
+                        if (empty($grupo) || ($preferencia === '' && $alergia === '')) {
+                            continue;
+                        }
+                        $tendenciaModel->insert([
+                            'historial_clinico_id' => $id,
+                            'grupo' => $grupo,
+                            'preferencia' => $preferencia !== '' ? $preferencia : null,
+                            'alergia_intolerancia' => $alergia !== '' ? $alergia : null,
+                        ]);
                     }
                 }
             }
@@ -948,6 +959,19 @@ class HistorialController extends BaseController
 
         // Si se llegó desde la vista de consulta, permitir volver a ella
         $data['retorno_consulta_id'] = $this->request->getGet('retorno') === 'consulta' ? (int) $this->request->getGet('id') : 0;
+
+        $pacienteIdPre = (int) $this->request->getGet('paciente_id');
+        $data['paciente_id_preseleccionado'] = 0;
+        if ($pacienteIdPre > 0) {
+            $tieneHistoriales = $db->table('historial_clinico')
+                ->where('paciente_id', $pacienteIdPre)
+                ->where('nutricionista_id', $usuario_id)
+                ->where('estado', 'A')
+                ->countAllResults();
+            if ($tieneHistoriales > 0) {
+                $data['paciente_id_preseleccionado'] = $pacienteIdPre;
+            }
+        }
 
         return view('Modulos/historial/comparar', $data);
     }

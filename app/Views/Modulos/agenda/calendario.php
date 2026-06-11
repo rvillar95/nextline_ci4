@@ -79,6 +79,51 @@
         display: flex !important;
         align-items: flex-start !important;
     }
+
+    /* Nuevo paciente sobre Agendar Cita (sin segundo backdrop) */
+    #modalAgendar.modal-agendar-dimmed > .modal-dialog {
+        filter: brightness(0.88);
+        transform: scale(0.98);
+        transition: filter 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+    }
+
+    body.modal-crear-paciente-sobre-agendar #modalAgendar {
+        z-index: 1055;
+    }
+
+    body.modal-crear-paciente-sobre-agendar .modal-backdrop {
+        z-index: 1050;
+    }
+
+    body.modal-crear-paciente-sobre-agendar #modalCrearPacienteRapido {
+        z-index: 1060 !important;
+    }
+
+    #modalCrearPacienteRapido .modal-content {
+        border: none;
+        border-radius: 14px;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.28);
+        overflow: hidden;
+        background: #ffffff;
+        color: #212529;
+    }
+
+    #modalCrearPacienteRapido .modal-body {
+        max-height: min(70vh, 520px);
+        overflow-y: auto;
+        background: #ffffff;
+        color: #212529;
+    }
+
+    #modalCrearPacienteRapido .form-label {
+        color: #495057;
+    }
+
+    #modalCrearPacienteRapido .form-text,
+    #modalCrearPacienteRapido .text-muted {
+        color: #6c757d !important;
+    }
     
     .fc-timeGridWeek-view .fc-event {
         min-height: 30px !important;
@@ -705,41 +750,37 @@
         </div>
     </div>
 </div>
-<script>
-var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre, 'rut' => $p->rut_dni ?? '']; }, $pacientes)) ?>;
-</script>
 
-<!-- Modal crear paciente rápido (desde Agendar Cita) -->
-<div class="modal fade" id="modalCrearPacienteRapido" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog">
+<!-- Crear paciente rápido (hermano de Agendar, sin backdrop propio) -->
+<div class="modal fade" id="modalCrearPacienteRapido" tabindex="-1" aria-hidden="true"
+     data-bs-backdrop="false" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                 <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i> Nuevo paciente</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar" style="opacity: 1; background-color: rgba(255, 255, 255, 0.2); border-radius: 4px; padding: 8px; width: 32px; height: 32px;">
-                    <span style="color: white; font-size: 20px; line-height: 1; display: block;">&times;</span>
-                </button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form id="formCrearPacienteRapido">
                 <div class="modal-body">
                     <p class="text-muted small mb-3">
                         El paciente quedará asociado a su consulta. El mismo RUT puede existir con otro nutricionista, pero no se repite en su lista.
                     </p>
-                    <div class="row g-2">
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="rapido_nombre" name="nombre" required maxlength="100">
+                            <label class="form-label" for="rapido_nombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_nombre" name="nombre" required maxlength="100" autocomplete="given-name">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Apellido <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="rapido_apellido" name="apellido" required maxlength="100">
+                            <label class="form-label" for="rapido_apellido">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_apellido" name="apellido" required maxlength="100" autocomplete="family-name">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">RUT / documento <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="rapido_rut_dni" name="rut_dni" required maxlength="20" placeholder="12.345.678-9">
+                            <label class="form-label" for="rapido_rut_dni">RUT / documento <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="rapido_rut_dni" name="rut_dni" required maxlength="20" placeholder="12.345.678-9" autocomplete="off">
                             <div id="rapido_rut_feedback" class="form-text"></div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Tipo de paciente <span class="text-danger">*</span></label>
+                            <label class="form-label" for="rapido_tipo_paciente">Tipo de paciente <span class="text-danger">*</span></label>
                             <select class="form-control" id="rapido_tipo_paciente" name="tipo_paciente" required>
                                 <option value="particular">Particular</option>
                                 <option value="convenio">Convenio</option>
@@ -750,17 +791,23 @@ var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre 
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="rapido_telefono" name="telefono" maxlength="50">
+                            <label class="form-label" for="rapido_telefono">Teléfono / WhatsApp <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="rapido_telefono" name="telefono" required maxlength="50"
+                                   placeholder="+56 9 1234 5678" autocomplete="tel">
+                            <div class="form-text text-muted">Obligatorio: se usará para recordatorios y confirmaciones por WhatsApp.</div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Correo</label>
-                            <input type="email" class="form-control" id="rapido_email" name="email" maxlength="150" placeholder="Recomendado para confirmación y botón de pago">
+                            <label class="form-label" for="rapido_email">Correo <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="rapido_email" name="email" required maxlength="150"
+                                   placeholder="correo@ejemplo.com" autocomplete="email">
+                            <div class="form-text text-muted">Obligatorio: confirmación de cita y botón de pago por correo.</div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
                     <button type="submit" class="btn btn-primary" id="btnGuardarPacienteRapido">
                         <i class="fas fa-save me-1"></i> Guardar y seleccionar
                     </button>
@@ -769,6 +816,9 @@ var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre 
         </div>
     </div>
 </div>
+<script>
+var pacientesAgendarOpciones = <?= json_encode(array_map(function($p) { $nombre = $p->nombre_completo ?? (trim(($p->nombre ?? '') . ' ' . ($p->apellido ?? ''))); return ['value' => (int)$p->id, 'text' => $nombre, 'rut' => $p->rut_dni ?? '']; }, $pacientes)) ?>;
+</script>
 
 <!-- Modal para elegir acción (Agendar o Editar Modalidad) -->
 <div class="modal fade" id="modalElegirAccion" tabindex="-1">
@@ -1433,6 +1483,99 @@ function agregarPacienteAgendarOpcion(paciente) {
     }
 }
 
+var modalCrearPacienteEl = document.getElementById('modalCrearPacienteRapido');
+var modalAgendarEl = document.getElementById('modalAgendar');
+
+/** Bootstrap se carga en el footer; no usarlo al parsear este script. */
+function obtenerModalBsAgenda(elementId) {
+    var el = typeof elementId === 'string' ? document.getElementById(elementId) : elementId;
+    if (!el || typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+        return null;
+    }
+    return bootstrap.Modal.getOrCreateInstance(el);
+}
+
+function mostrarModalAgenda(elementId) {
+    var inst = obtenerModalBsAgenda(elementId);
+    if (inst) {
+        inst.show();
+        return;
+    }
+    $('#' + elementId).modal('show');
+}
+
+function ocultarModalAgenda(elementId) {
+    var el = document.getElementById(elementId);
+    if (!el) {
+        return;
+    }
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        var inst = bootstrap.Modal.getInstance(el);
+        if (inst) {
+            inst.hide();
+            return;
+        }
+    }
+    $('#' + elementId).modal('hide');
+}
+
+function asegurarModalEnBody(el) {
+    if (el && el.parentElement !== document.body) {
+        document.body.appendChild(el);
+    }
+}
+
+function abrirModalCrearPacienteRapido() {
+    if (!modalCrearPacienteEl) {
+        return;
+    }
+    asegurarModalEnBody(modalCrearPacienteEl);
+    if (modalAgendarEl) {
+        modalAgendarEl.classList.add('modal-agendar-dimmed');
+    }
+    document.body.classList.add('modal-crear-paciente-sobre-agendar');
+    var inst = obtenerModalBsAgenda(modalCrearPacienteEl);
+    if (inst) {
+        inst.show();
+        return;
+    }
+    $('#modalCrearPacienteRapido').modal('show');
+}
+
+function cerrarModalCrearPacienteRapido() {
+    ocultarModalAgenda('modalCrearPacienteRapido');
+}
+
+if (modalCrearPacienteEl) {
+    modalCrearPacienteEl.addEventListener('show.bs.modal', function() {
+        asegurarModalEnBody(modalCrearPacienteEl);
+        if (modalAgendarEl) {
+            modalAgendarEl.classList.add('modal-agendar-dimmed');
+        }
+        document.body.classList.add('modal-crear-paciente-sobre-agendar');
+        // Quitar backdrops duplicados de aperturas anteriores
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        for (var i = 1; i < backdrops.length; i++) {
+            backdrops[i].remove();
+        }
+    });
+    modalCrearPacienteEl.addEventListener('shown.bs.modal', function() {
+        var primerCampo = document.getElementById('rapido_nombre');
+        if (primerCampo) {
+            primerCampo.focus();
+        }
+    });
+    modalCrearPacienteEl.addEventListener('hidden.bs.modal', function() {
+        if (modalAgendarEl) {
+            modalAgendarEl.classList.remove('modal-agendar-dimmed');
+        }
+        document.body.classList.remove('modal-crear-paciente-sobre-agendar');
+        if (modalAgendarEl && modalAgendarEl.classList.contains('show')) {
+            document.body.classList.add('modal-open');
+        }
+    });
+}
+
 $('#btnAbrirCrearPacienteRapido').on('click', function() {
     var $form = $('#formCrearPacienteRapido');
     $form[0].reset();
@@ -1442,8 +1585,7 @@ $('#btnAbrirCrearPacienteRapido').on('click', function() {
     if (busqueda && busqueda.indexOf(' ') === -1 && busqueda.length < 20) {
         $('#rapido_rut_dni').val(busqueda);
     }
-    var modalCrear = new bootstrap.Modal(document.getElementById('modalCrearPacienteRapido'));
-    modalCrear.show();
+    abrirModalCrearPacienteRapido();
 });
 
 var verificarRutTimer = null;
@@ -1488,6 +1630,23 @@ $('#formCrearPacienteRapido').on('submit', function(e) {
         toastr.error('Ingrese un RUT o documento de identidad válido.');
         return;
     }
+    var telefono = $('#rapido_telefono').val().trim();
+    if (!telefono || telefono.replace(/\D/g, '').length < 8) {
+        toastr.error('El teléfono es obligatorio para enviar WhatsApp (mínimo 8 dígitos).');
+        $('#rapido_telefono').focus();
+        return;
+    }
+    var email = $('#rapido_email').val().trim();
+    if (!email) {
+        toastr.error('El correo es obligatorio para confirmación y cobros.');
+        $('#rapido_email').focus();
+        return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        toastr.error('Ingrese un correo electrónico válido.');
+        $('#rapido_email').focus();
+        return;
+    }
     var csrfToken = obtenerTokenCSRF() || '<?= csrf_hash() ?>';
     var $btn = $('#btnGuardarPacienteRapido');
     $btn.prop('disabled', true);
@@ -1520,7 +1679,7 @@ $('#formCrearPacienteRapido').on('submit', function(e) {
                     $('#paciente_id').val(res.paciente.id);
                     $('#inputPacienteAgendar').val(res.paciente.text);
                 }
-                bootstrap.Modal.getInstance(document.getElementById('modalCrearPacienteRapido')).hide();
+                cerrarModalCrearPacienteRapido();
                 toastr.success(res.message || 'Paciente creado');
             } else {
                 var msg = res.message || 'No se pudo crear el paciente';
@@ -2181,7 +2340,7 @@ var citaIdCancelarCalendario = null;
 function cancelarCitaCalendario(detalleAgendaId) {
     citaIdCancelarCalendario = detalleAgendaId;
     $('#motivoCancelarCitaCalendario').val('');
-    new bootstrap.Modal(document.getElementById('modalCancelarCitaCalendario')).show();
+    mostrarModalAgenda('modalCancelarCitaCalendario');
 }
 
 $('#btnConfirmarCancelarCitaCalendario').on('click', function() {
@@ -2201,8 +2360,8 @@ $('#btnConfirmarCancelarCitaCalendario').on('click', function() {
             actualizarTokenCSRF(xhr);
             $btn.prop('disabled', false);
             if (response && (response.success || response.message)) {
-                bootstrap.Modal.getInstance(document.getElementById('modalCancelarCitaCalendario')).hide();
-                $('#modalVerCita').modal('hide');
+                ocultarModalAgenda('modalCancelarCitaCalendario');
+                ocultarModalAgenda('modalVerCita');
                 citaIdCancelarCalendario = null;
                 toastr.success(response.message || 'Cita cancelada', 'Éxito');
                 if (typeof calendar !== 'undefined' && calendar) calendar.refetchEvents();

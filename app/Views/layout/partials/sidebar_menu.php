@@ -23,7 +23,7 @@ $currentPath = '/' . trim(uri_string(), '/');
         $isActive = $path !== '' && str_starts_with($currentPath, rtrim($path, '/'));
         ?>
         <li class="menu<?= $isActive ? ' active' : '' ?>">
-            <a href="<?= esc($href) ?>" class="dropdown-toggle sidebar-menu-link<?= $isActive ? ' active' : '' ?>" aria-expanded="false">
+            <a href="<?= esc($href) ?>" class="sidebar-menu-link<?= $isActive ? ' active' : '' ?>">
                 <div class="sidebar-menu-link-inner">
                     <?= DashboardMenuBuilder::featherSvg((string) ($item['icon'] ?? 'circle')) ?>
                     <span><?= esc($item['label'] ?? '') ?></span>
@@ -35,15 +35,26 @@ $currentPath = '/' . trim(uri_string(), '/');
         $groupId = 'modulo_' . $contador;
         $contador++;
         $icon = (string) ($item['icon'] ?? 'circle');
+        $groupHasActive = false;
+        foreach ($item['children'] ?? [] as $childCheck) {
+            $childPathCheck = parse_url((string) ($childCheck['href'] ?? ''), PHP_URL_PATH) ?: '';
+            if ($childPathCheck !== '' && str_starts_with($currentPath, rtrim($childPathCheck, '/'))) {
+                $groupHasActive = true;
+                break;
+            }
+        }
         ?>
-        <li class="menu active">
-            <a href="#<?= esc($groupId) ?>" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle collapsed sidebar-menu-link">
+        <li class="menu<?= $groupHasActive ? ' active' : '' ?>">
+            <a href="#<?= esc($groupId) ?>"
+               data-bs-toggle="collapse"
+               aria-expanded="<?= $groupHasActive ? 'true' : 'false' ?>"
+               class="dropdown-toggle sidebar-menu-link<?= $groupHasActive ? '' : ' collapsed' ?>">
                 <div class="sidebar-menu-link-inner">
                     <?= DashboardMenuBuilder::featherSvg($icon) ?>
                     <span><?= esc($item['label'] ?? '') ?></span>
                 </div>
             </a>
-            <ul class="submenu list-unstyled collapse" id="<?= esc($groupId) ?>" data-bs-parent="#accordionExample">
+            <ul class="submenu list-unstyled collapse<?= $groupHasActive ? ' show' : '' ?>" id="<?= esc($groupId) ?>" data-bs-parent="#accordionExample">
                 <?php foreach ($item['children'] ?? [] as $child) : ?>
                     <?php
                     $childHref = (string) ($child['href'] ?? '#');

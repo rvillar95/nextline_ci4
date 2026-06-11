@@ -89,6 +89,28 @@
 
 <?= $this->include('components/modals') ?>
 
+<div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1" aria-labelledby="modalConfirmarEliminacionLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarEliminacionLabel">Confirmar desactivación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Desea desactivar este paciente?</p>
+                <p class="text-muted small mb-0">
+                    No se borrará de la base de datos. Quedará como inactivo y dejará de aparecer en el listado habitual.
+                    Podrá reactivarlo filtrando por estado «Inactivos».
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarEliminacionPaciente()">Desactivar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .section-card {
     background: white;
@@ -192,19 +214,74 @@ $(document).ready(function() {
     };
 
     window.confirmarEliminacionPaciente = function() {
-        var id = window.pacienteIdAEliminar;
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '<?= base_url('dashboard/paciente/eliminar') ?>/' + id;
-        
-        var csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '<?= csrf_token() ?>';
-        csrfToken.value = '<?= csrf_hash() ?>';
-        form.appendChild(csrfToken);
-        
-        document.body.appendChild(form);
-        form.submit();
+        if (!window.pacienteIdAEliminar) {
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url('dashboard/paciente/eliminar') ?>/' + window.pacienteIdAEliminar,
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
+            },
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(response.message || 'Paciente desactivado con éxito');
+                    }
+                    $('#modalConfirmarEliminacion').modal('hide');
+                    table.ajax.reload(null, false);
+                } else if (typeof toastr !== 'undefined') {
+                    toastr.error(response.error || 'Error al desactivar el paciente');
+                } else {
+                    alert(response.error || 'Error al desactivar el paciente');
+                }
+            },
+            error: function(xhr) {
+                var error = xhr.responseJSON?.error || 'Error al desactivar el paciente';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(error);
+                } else {
+                    alert(error);
+                }
+            }
+        });
+    };
+
+    window.activarPaciente = function(id) {
+        $.ajax({
+            url: '<?= base_url('dashboard/paciente/activar') ?>/' + id,
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
+            },
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(response.message || 'Paciente activado con éxito');
+                    }
+                    table.ajax.reload(null, false);
+                } else if (typeof toastr !== 'undefined') {
+                    toastr.error(response.error || 'Error al activar el paciente');
+                } else {
+                    alert(response.error || 'Error al activar el paciente');
+                }
+            },
+            error: function(xhr) {
+                var error = xhr.responseJSON?.error || 'Error al activar el paciente';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(error);
+                } else {
+                    alert(error);
+                }
+            }
+        });
     };
 });
 </script>

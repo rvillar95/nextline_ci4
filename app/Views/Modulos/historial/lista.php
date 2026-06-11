@@ -115,6 +115,21 @@ $(document).ready(function() {
         });
     }
 
+    // Ordenar columna Fecha por data-order (Y-m-d), no por texto dd/mm/yyyy
+    $.fn.dataTable.ext.type.order['fecha-historial-pre'] = function(data) {
+        var $el = $('<div>').html(data);
+        var order = $el.find('[data-order]').attr('data-order');
+        if (order) {
+            return order;
+        }
+        var text = ($el.text() || data || '').trim();
+        var m = text.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (m) {
+            return m[3] + '-' + m[2] + '-' + m[1];
+        }
+        return '0000-00-00';
+    };
+
     // Inicializar DataTable
     table = $('#tablaHistorial').DataTable({
         "processing": true,
@@ -141,6 +156,9 @@ $(document).ready(function() {
             { "data": 5 },
             { "data": 6 },
             { "data": 7, "orderable": false }
+        ],
+        "columnDefs": [
+            { "targets": 1, "type": "fecha-historial" }
         ],
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"

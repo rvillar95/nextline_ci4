@@ -81,6 +81,18 @@
         font-size: 0.85rem;
         border-radius: 6px;
     }
+
+    #tablaPlanesPaciente th.text-num,
+    #tablaPlanesPaciente td.text-num {
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    #tablaPlanesPaciente .macro-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 4px 8px;
+    }
 </style>
 
 <div class="container-fluid">
@@ -97,8 +109,15 @@
                             <?php endif; ?>
                         </p>
                     </div>
-                    <div>
-                        <a href="<?= base_url('dashboard/paciente/editar/' . $paciente->id) ?>" class="btn btn-light me-2">
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <?php if (($total_historiales ?? 0) >= 2): ?>
+                        <a href="<?= base_url('dashboard/historial/comparar?paciente_id=' . (int) $paciente->id) ?>"
+                           class="btn btn-light"
+                           title="Comparar evolución entre consultas de este paciente">
+                            <i class="fas fa-chart-line me-2"></i> Comparar historial
+                        </a>
+                        <?php endif; ?>
+                        <a href="<?= base_url('dashboard/paciente/editar/' . $paciente->id) ?>" class="btn btn-light">
                             <i class="fas fa-edit me-2"></i> Editar
                         </a>
                         <a href="<?= base_url('dashboard/paciente/lista') ?>" class="btn btn-light">
@@ -364,7 +383,15 @@
                     <span>Consultas</span>
                     <span class="badge bg-secondary ms-2"><?= count($consultas ?? []) ?></span>
                 </div>
-                <p class="text-muted small mb-3">Citas del paciente con datos clínicos cuando existen. Todas abren la misma ficha de consulta.</p>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <p class="text-muted small mb-0">Citas del paciente con datos clínicos cuando existen. Todas abren la misma ficha de consulta.</p>
+                    <?php if (($total_historiales ?? 0) >= 2): ?>
+                    <a href="<?= base_url('dashboard/historial/comparar?paciente_id=' . (int) $paciente->id) ?>"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chart-line me-1"></i> Comparar historial clínico
+                    </a>
+                    <?php endif; ?>
+                </div>
 
                 <?php if (!empty($consultas)): ?>
                     <div class="table-responsive">
@@ -460,58 +487,117 @@
                 
                 <?php if (!empty($planes)): ?>
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table id="tablaPlanesPaciente" class="table table-hover table-striped w-100">
                             <thead>
                                 <tr>
-                                    <th>Fecha Creación</th>
-                                    <th>Requerimiento (kcal)</th>
+                                    <th>Fecha creación</th>
+                                    <th>Consulta</th>
+                                    <th class="text-num">Requerimiento</th>
                                     <th>Distribución</th>
-                                    <th>Adecuación</th>
-                                    <th>Acciones</th>
+                                    <th class="text-center">Adecuación</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($planes as $plan): ?>
+                                    <?php
+                                    $fechaCreacionOrder = '';
+                                    $fechaCreacionTxt = '—';
+                                    if (!empty($plan->fcreacion)) {
+                                        $tsCreacion = strtotime($plan->fcreacion);
+                                        if ($tsCreacion) {
+                                            $fechaCreacionOrder = date('Y-m-d H:i:s', $tsCreacion);
+                                            $fechaCreacionTxt = date('d/m/Y H:i', $tsCreacion);
+                                        }
+                                    }
+
+                                    $fechaConsultaOrder = '';
+                                    $fechaConsultaTxt = '—';
+                                    if (!empty($plan->fecha_consulta)) {
+                                        $rawFecha = (string) $plan->fecha_consulta;
+                                        if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $rawFecha, $m)) {
+                                            $fechaConsultaOrder = $m[3] . '-' . $m[2] . '-' . $m[1];
+                                            $fechaConsultaTxt = $rawFecha;
+                                        } else {
+                                            $tsConsulta = strtotime($rawFecha);
+                                            if ($tsConsulta) {
+                                                $fechaConsultaOrder = date('Y-m-d', $tsConsulta);
+                                                $fechaConsultaTxt = date('d/m/Y', $tsConsulta);
+                                            }
+                                        }
+                                        if (!empty($plan->hora_consulta)) {
+                                            $horaTxt = date('H:i', strtotime($plan->hora_consulta));
+                                            $fechaConsultaTxt .= ' ' . $horaTxt;
+                                            $fechaConsultaOrder .= ' ' . date('H:i:s', strtotime($plan->hora_consulta));
+                                        }
+                                    }
+
+                                    $tieneMacros = is_numeric($plan->prot_porcentaje ?? null)
+                                        && is_numeric($plan->grasa_porcentaje ?? null)
+                                        && is_numeric($plan->cho_porcentaje ?? null);
+
+                                    $adecuacion = is_numeric($plan->adecuacion_kcal_porc ?? null)
+                                        ? (float) $plan->adecuacion_kcal_porc
+                                        : null;
+                                    $adecuacionBadge = 'secondary';
+                                    if ($adecuacion !== null) {
+                                        if ($adecuacion >= 90 && $adecuacion <= 110) {
+                                            $adecuacionBadge = 'success';
+                                        } elseif ($adecuacion > 0) {
+                                            $adecuacionBadge = 'warning';
+                                        }
+                                    }
+
+                                    $urlPlan = base_url('dashboard/plan-alimentario')
+                                        . '?paciente_id=' . (int) $paciente->id
+                                        . '&tab=plan';
+                                    if (!empty($plan->detalle_agenda_id)) {
+                                        $urlPlan .= '&detalle_agenda_id=' . (int) $plan->detalle_agenda_id;
+                                    }
+                                    ?>
                                     <tr>
+                                        <td data-order="<?= esc($fechaCreacionOrder) ?>"><?= esc($fechaCreacionTxt) ?></td>
+                                        <td data-order="<?= esc($fechaConsultaOrder) ?>">
+                                            <?php if ($fechaConsultaTxt !== '—'): ?>
+                                                <?= esc($fechaConsultaTxt) ?>
+                                                <?php if (!empty($plan->estado_consulta)): ?>
+                                                    <span class="badge bg-light text-dark border ms-1">
+                                                        <?= esc(ucfirst(str_replace('_', ' ', $plan->estado_consulta))) ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">Sin consulta</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="text-num" data-order="<?= is_numeric($plan->requerimiento_kcal ?? null) ? (float) $plan->requerimiento_kcal : '' ?>">
+                                            <?= is_numeric($plan->requerimiento_kcal ?? null)
+                                                ? number_format((float) $plan->requerimiento_kcal, 0) . ' kcal'
+                                                : '—' ?>
+                                        </td>
                                         <td>
-                                            <?php if ($plan->fcreacion): ?>
-                                                <?= date('d/m/Y H:i', strtotime($plan->fcreacion)) ?>
+                                            <?php if ($tieneMacros): ?>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-primary macro-badge">P <?= number_format((float) $plan->prot_porcentaje, 1) ?>%</span>
+                                                    <span class="badge bg-warning text-dark macro-badge">G <?= number_format((float) $plan->grasa_porcentaje, 1) ?>%</span>
+                                                    <span class="badge bg-success macro-badge">CHO <?= number_format((float) $plan->cho_porcentaje, 1) ?>%</span>
+                                                </div>
                                             <?php else: ?>
                                                 —
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <?= $plan->requerimiento_kcal ? number_format($plan->requerimiento_kcal, 0) . ' kcal' : '—' ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($plan->prot_porcentaje && $plan->grasa_porcentaje && $plan->cho_porcentaje): ?>
-                                                P: <?= number_format($plan->prot_porcentaje, 1) ?>% · 
-                                                G: <?= number_format($plan->grasa_porcentaje, 1) ?>% · 
-                                                CHO: <?= number_format($plan->cho_porcentaje, 1) ?>%
-                                            <?php else: ?>
-                                                —
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($plan->adecuacion_kcal_porc): ?>
-                                                <span class="badge bg-<?= $plan->adecuacion_kcal_porc >= 90 && $plan->adecuacion_kcal_porc <= 110 ? 'success' : 'warning' ?>">
-                                                    <?= number_format($plan->adecuacion_kcal_porc, 1) ?>%
+                                        <td class="text-center" data-order="<?= $adecuacion !== null ? $adecuacion : '' ?>">
+                                            <?php if ($adecuacion !== null): ?>
+                                                <span class="badge bg-<?= $adecuacionBadge ?>">
+                                                    <?= number_format($adecuacion, 1) ?>%
                                                 </span>
                                             <?php else: ?>
                                                 —
                                             <?php endif; ?>
                                         </td>
-                                        <td>
-                                            <?php
-                                            $urlPlan = base_url('dashboard/plan-alimentario')
-                                                . '?paciente_id=' . (int) $paciente->id
-                                                . '&tab=plan';
-                                            if (!empty($plan->detalle_agenda_id)) {
-                                                $urlPlan .= '&detalle_agenda_id=' . (int) $plan->detalle_agenda_id;
-                                            }
-                                            ?>
+                                        <td class="text-center text-nowrap">
                                             <a href="<?= $urlPlan ?>"
-                                               class="btn btn-sm btn-outline-primary btn-action">
+                                               class="btn btn-sm btn-outline-primary btn-action"
+                                               title="Abrir plan alimentario">
                                                 <i class="fas fa-eye"></i> Ver plan
                                             </a>
                                         </td>
@@ -521,7 +607,7 @@
                         </table>
                     </div>
                 <?php else: ?>
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-0">
                         <i class="fas fa-info-circle me-2"></i> No hay planes alimentarios registrados para este paciente.
                     </div>
                 <?php endif; ?>
@@ -621,6 +707,17 @@ $(document).ready(function() {
         $('#tablaDocumentosPaciente').DataTable($.extend({}, dtCommon, {
             order: [[2, 'desc']],
             columnDefs: [{ orderable: false, targets: 4 }]
+        }));
+    }
+
+    if ($('#tablaPlanesPaciente').length && $('#tablaPlanesPaciente tbody tr').length) {
+        $('#tablaPlanesPaciente').DataTable($.extend({}, dtCommon, {
+            order: [[0, 'desc']],
+            columnDefs: [
+                { orderable: false, targets: 5 },
+                { className: 'text-num', targets: 2 },
+                { className: 'text-center', targets: [4, 5] }
+            ]
         }));
     }
 });

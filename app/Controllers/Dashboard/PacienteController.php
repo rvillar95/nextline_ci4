@@ -111,7 +111,7 @@ class PacienteController extends BaseController
             if ($r->estado == 'A') {
                 $botones = '<button class="btn btn-sm btn-outline-primary" onclick="editarPaciente(' . $r->id . ')">Editar</button> ' .
                           '<button class="btn btn-sm btn-outline-info" onclick="verDetallePaciente(' . $r->id . ')">Ver</button> ' .
-                          '<button class="btn btn-sm btn-outline-danger" onclick="eliminarPaciente(' . $r->id . ')">Eliminar</button>';
+                          '<button class="btn btn-sm btn-outline-danger" onclick="eliminarPaciente(' . $r->id . ')">Desactivar</button>';
             } else {
                 $botones = '<button class="btn btn-sm btn-outline-success" onclick="activarPaciente(' . $r->id . ')">Activar</button> ' .
                           '<button class="btn btn-sm btn-outline-info" onclick="verDetallePaciente(' . $r->id . ')">Ver</button>';
@@ -351,21 +351,104 @@ class PacienteController extends BaseController
 
     public function eliminar($id = null)
     {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No autorizado',
+            ])->setStatusCode(401);
+        }
+
         if (!$id) {
             $id = $this->request->getPost('id');
         }
-        
+
         if (!$id) {
-            return redirect()->to(base_url('dashboard/paciente/lista'))->with('error', 'ID de paciente requerido');
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'ID de paciente requerido',
+            ])->setStatusCode(400);
         }
-        
-        $paciente = new Paciente();
-        
-        if ($paciente->update($id, ['estado' => 'I'])) {
-            return redirect()->to(base_url('dashboard/paciente/lista'))->with('success', 'Paciente eliminado con éxito');
-        } else {
-            return redirect()->back()->with('error', 'Error al eliminar el paciente');
+
+        $pacienteModel = new Paciente();
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $registro = $pacienteModel->find($id);
+
+        if (!$registro || (int) $registro->nutricionista_id !== $usuarioId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Paciente no encontrado',
+            ])->setStatusCode(404);
         }
+
+        if ($registro->estado === 'I') {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'El paciente ya estaba inactivo',
+            ]);
+        }
+
+        if ($pacienteModel->update($id, ['estado' => 'I'])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Paciente desactivado con éxito',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'error' => 'Error al desactivar el paciente',
+        ])->setStatusCode(500);
+    }
+
+    public function activar($id = null)
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No autorizado',
+            ])->setStatusCode(401);
+        }
+
+        if (!$id) {
+            $id = $this->request->getPost('id');
+        }
+
+        if (!$id) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'ID de paciente requerido',
+            ])->setStatusCode(400);
+        }
+
+        $pacienteModel = new Paciente();
+        $usuarioId = (int) session()->get('usuario')['id'];
+        $registro = $pacienteModel->find($id);
+
+        if (!$registro || (int) $registro->nutricionista_id !== $usuarioId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Paciente no encontrado',
+            ])->setStatusCode(404);
+        }
+
+        if ($registro->estado === 'A') {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'El paciente ya estaba activo',
+            ]);
+        }
+
+        if ($pacienteModel->update($id, ['estado' => 'A'])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Paciente activado con éxito',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'error' => 'Error al activar el paciente',
+        ])->setStatusCode(500);
     }
 
     public function detalle($id)
@@ -391,15 +474,23 @@ class PacienteController extends BaseController
         $documentoModel = new \App\Models\Documento();
         $data['documentos'] = $documentoModel->getDocumentosPorPaciente($id);
 
-        // Cargar planes alimentarios
-        $planModel = new \App\Models\PlanAlimentario();
-        $data['planes'] = $planModel->where('paciente_id', $id)
-            ->orderBy('fcreacion', 'DESC')
-            ->findAll();
-
-        // Consultas unificadas (cita + datos de historial clínico si existen)
         $db = \Config\Database::connect();
         $usuario_id = session()->get('usuario')['id'];
+
+        // Planes alimentarios con fecha de consulta vinculada (si existe)
+        $data['planes'] = $db->table('plan_alimentario pa')
+            ->select(
+                'pa.*, a.fecha as fecha_consulta, da.hora_inicio as hora_consulta,'
+                . ' da.estado_cita as estado_consulta'
+            )
+            ->join('detalle_agenda da', 'da.id = pa.detalle_agenda_id', 'left')
+            ->join('agenda a', 'a.id = da.agenda_id', 'left')
+            ->where('pa.paciente_id', $id)
+            ->orderBy('pa.fcreacion', 'DESC')
+            ->get()
+            ->getResult();
+
+        // Consultas unificadas (cita + datos de historial clínico si existen)
         $data['consultas'] = $db->table('detalle_agenda da')
             ->select(
                 'da.id, da.estado_cita, da.tipo_consulta, da.hora_inicio, da.hora_fin, da.motivo,'
@@ -415,6 +506,12 @@ class PacienteController extends BaseController
             ->orderBy('da.hora_inicio', 'DESC')
             ->get()
             ->getResult();
+
+        $data['total_historiales'] = (int) $db->table('historial_clinico')
+            ->where('paciente_id', $id)
+            ->where('nutricionista_id', $usuario_id)
+            ->where('estado', 'A')
+            ->countAllResults();
 
         return view('Modulos/paciente/detalle', $data);
     }
@@ -522,7 +619,14 @@ class PacienteController extends BaseController
         } elseif (!in_array($tipoPaciente, ['particular', 'convenio', 'seguro', 'fonasa', 'isapre', 'otro'], true)) {
             $errors['tipo_paciente'] = 'Tipo de paciente no válido.';
         }
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if ($telefono === '') {
+            $errors['telefono'] = 'El teléfono es obligatorio para WhatsApp.';
+        } elseif (strlen(preg_replace('/\D/', '', $telefono)) < 8) {
+            $errors['telefono'] = 'Ingrese un teléfono válido (mínimo 8 dígitos).';
+        }
+        if ($email === '') {
+            $errors['email'] = 'El correo es obligatorio para confirmación y cobros.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'El correo no tiene un formato válido.';
         }
 
@@ -550,8 +654,8 @@ class PacienteController extends BaseController
             'nombre' => $nombre,
             'apellido' => $apellido,
             'rut_dni' => $rutDni,
-            'telefono' => $telefono !== '' ? $telefono : null,
-            'email' => $email !== '' ? $email : null,
+            'telefono' => $telefono,
+            'email' => $email,
             'estado' => 'A',
         ];
 

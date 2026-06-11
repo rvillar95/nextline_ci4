@@ -215,6 +215,32 @@ exit(); */
                 #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner svg {
                     flex-shrink: 0;
                     margin-top: 2px;
+                    width: 20px !important;
+                    height: 20px !important;
+                    stroke-width: 2;
+                    color: #506690;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link {
+                    display: flex !important;
+                    align-items: center;
+                    min-height: 44px;
+                    padding: 10px 14px !important;
+                    border-radius: 8px;
+                    color: #191e3a;
+                    font-weight: 600;
+                    text-decoration: none;
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu.active > a.sidebar-menu-link,
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link.active {
+                    background: #fff;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+                }
+
+                #sidebar ul.nutrinext-sidebar-menu li.menu.active > a.sidebar-menu-link svg,
+                #sidebar ul.nutrinext-sidebar-menu a.sidebar-menu-link.active svg {
+                    color: var(--user-primary, #7bc143);
                 }
 
                 #sidebar ul.nutrinext-sidebar-menu .sidebar-menu-link-inner span {
@@ -251,10 +277,57 @@ exit(); */
                 }
 
                 @media (max-width: 991px) {
-                    .sidebar-wrapper { overflow-y: auto !important; }
+                    .sidebar-wrapper {
+                        overflow: visible !important;
+                        z-index: 10050 !important;
+                    }
                     #sidebar {
                         height: 100vh !important;
+                        max-height: 100vh !important;
                         padding-bottom: 48px !important;
+                        overflow-y: auto !important;
+                        overflow-x: hidden !important;
+                        -webkit-overflow-scrolling: touch;
+                        touch-action: pan-y;
+                    }
+                    #sidebar ul.menu-categories,
+                    #sidebar ul.menu-categories.ps {
+                        height: auto !important;
+                        max-height: none !important;
+                        overflow: visible !important;
+                    }
+                    #sidebar ul.menu-categories .ps__rail-y {
+                        display: none !important;
+                    }
+                    #sidebar ul.nutrinext-sidebar-menu li.menu > .dropdown-toggle.sidebar-menu-link {
+                        min-height: 48px;
+                        padding: 12px 14px !important;
+                    }
+                    #sidebar ul.nutrinext-sidebar-menu ul.submenu > li a {
+                        min-height: 44px;
+                        padding: 12px 12px 12px 18px !important;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .main-container.sbar-open .sidebar-wrapper {
+                        left: 0 !important;
+                        width: 280px !important;
+                        max-width: min(280px, 92vw) !important;
+                    }
+                    .overlay.show {
+                        z-index: 10040 !important;
+                        opacity: 0.55 !important;
+                        display: block !important;
+                    }
+                    .header-container {
+                        z-index: 10030;
+                    }
+                    .secondary-nav .btn-toggle.sidebarCollapse {
+                        min-width: 44px;
+                        min-height: 44px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
                     }
                 }
             </style>
@@ -1096,3 +1169,5 @@ exit(); */
         <script src="<?= base_url('lib/js/modals.js') ?>"></script>
         
         <?= view('template/footer') ?>
+        <?php echo $this->renderSection('page_scripts'); ?>
+        <script src="<?= base_url('lib/js/nutrinext-dashboard-sidebar.js') ?>"></script>

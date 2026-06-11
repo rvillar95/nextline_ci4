@@ -95,6 +95,10 @@
                     <a href="<?= base_url('dashboard/agenda/consulta?id=' . (int)$retorno_consulta_id) ?>" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i> Volver a la consulta
                     </a>
+                    <?php elseif (!empty($paciente_id_preseleccionado)): ?>
+                    <a href="<?= base_url('dashboard/paciente/detalle/' . (int) $paciente_id_preseleccionado) ?>" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i> Volver al paciente
+                    </a>
                     <?php else: ?>
                     <a href="<?= base_url('dashboard/historial/lista') ?>" class="btn btn-light">
                         <i class="fas fa-arrow-left me-2"></i> Volver
@@ -284,6 +288,11 @@ $(document).ready(function() {
             $('#seccionComparacion').hide();
         }
     });
+
+    var pacientePreseleccionado = <?= (int) ($paciente_id_preseleccionado ?? 0) ?>;
+    if (pacientePreseleccionado > 0) {
+        $('#selectPaciente').val(String(pacientePreseleccionado)).trigger('change');
+    }
 
     // Limpiar selección
     $('#btnLimpiar').on('click', function() {

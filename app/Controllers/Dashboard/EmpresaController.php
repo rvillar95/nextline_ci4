@@ -30,6 +30,34 @@ class EmpresaController extends BaseController
         return $usuario['empresa_id'] ?? null;
     }
 
+    private function esVistaConsultorio(): bool
+    {
+        return ! $this->esSuperAdmin();
+    }
+
+    /**
+     * Redirige si el usuario intenta acceder a una empresa que no es la suya.
+     */
+    private function redirigirSiNoEsSuEmpresa($id)
+    {
+        if ($this->esSuperAdmin()) {
+            return null;
+        }
+
+        $empresaId = (int) $this->getEmpresaIdUsuario();
+        if ($empresaId <= 0) {
+            return redirect()->to(base_url('dashboard/menu'))
+                ->with('error', 'Su usuario no tiene una empresa asociada.');
+        }
+
+        if ((int) $id !== $empresaId) {
+            return redirect()->to(base_url('dashboard/empresa/editar/' . $empresaId))
+                ->with('error', 'Solo puede editar los datos de su consultorio.');
+        }
+
+        return null;
+    }
+
     /**
      * Lista de empresas
      * - SA: Ve todas las empresas
@@ -185,8 +213,23 @@ class EmpresaController extends BaseController
         $paqueteModel = new Paquete();
         $data['paquetes'] = $paqueteModel->where('activo', 'A')->findAll();
 
-        $data['titulo'] = $data['empresa'] ? 'Editar Empresa' : 'Crear Nueva Empresa';
+        $data['titulo'] = $data['empresa'] ? 'Mi consultorio' : 'Crear Nueva Empresa';
+        $data['es_vista_consultorio'] = $this->esVistaConsultorio();
         return view('Modulos/empresa/registro', $data);
+    }
+
+    /**
+     * Atajo para nutricionista: edita solo su empresa.
+     */
+    public function miConsultorio()
+    {
+        $empresaId = (int) $this->getEmpresaIdUsuario();
+        if ($empresaId <= 0) {
+            return redirect()->to(base_url('dashboard/menu'))
+                ->with('error', 'Su usuario no tiene una empresa asociada.');
+        }
+
+        return redirect()->to(base_url('dashboard/empresa/editar/' . $empresaId));
     }
 
     /**
@@ -204,31 +247,27 @@ class EmpresaController extends BaseController
         }
         $data['data'] = $menuTotal;
 
-        $empresa = new Empresa();
-        
-        // Verificar permisos
-        if (!$this->esSuperAdmin()) {
-            // Usuario normal: solo puede editar su propia empresa
-            $empresaId = $this->getEmpresaIdUsuario();
-            if ($id != $empresaId) {
-                return redirect()->to(base_url('dashboard/empresa/editar/' . $empresaId))
-                    ->with('error', 'No tienes permisos para editar esta empresa');
-            }
+        if ($denegado = $this->redirigirSiNoEsSuEmpresa($id)) {
+            return $denegado;
         }
 
+        $empresa = new Empresa();
         $data['empresa'] = $empresa->find($id);
         if (!$data['empresa']) {
-            return redirect()->to(base_url('dashboard/empresa/lista'))
+            $destino = $this->esSuperAdmin() ? 'dashboard/empresa/lista' : 'dashboard/menu';
+
+            return redirect()->to(base_url($destino))
                 ->with('error', 'Empresa no encontrada');
         }
 
         $data['es_super_admin'] = $this->esSuperAdmin();
+        $data['es_vista_consultorio'] = $this->esVistaConsultorio();
 
         // Cargar paquetes para el selector (solo SA)
         $paqueteModel = new Paquete();
         $data['paquetes'] = $paqueteModel->where('activo', 'A')->findAll();
 
-        $data['titulo'] = 'Editar Empresa';
+        $data['titulo'] = $data['es_vista_consultorio'] ? 'Mi consultorio' : 'Editar Empresa';
         return view('Modulos/empresa/registro', $data);
     }
 
@@ -292,44 +331,76 @@ class EmpresaController extends BaseController
                 ->with('error', 'Empresa no encontrada');
         }
 
-        // Verificar permisos
-        if (!$this->esSuperAdmin()) {
-            // Usuario normal: solo puede editar su propia empresa
-            $empresaId = $this->getEmpresaIdUsuario();
-            if ($id != $empresaId) {
-                return redirect()->to(base_url('dashboard/empresa/editar/' . $empresaId))
-                    ->with('error', 'No tienes permisos para editar esta empresa');
+        if ($denegado = $this->redirigirSiNoEsSuEmpresa($id)) {
+            return $denegado;
+        }
+
+        if ($this->esSuperAdmin()) {
+            $data = [
+                'nombre' => $this->request->getPost('nombre'),
+                'nombre_comercial' => $this->request->getPost('nombre_comercial'),
+                'rut' => $this->request->getPost('rut'),
+                'direccion' => $this->request->getPost('direccion'),
+                'url_google_maps' => $this->request->getPost('url_google_maps') ?: null,
+                'telefono' => $this->request->getPost('telefono'),
+                'email' => $this->request->getPost('email'),
+                'sitio_web' => $this->request->getPost('sitio_web'),
+                'logo_path' => $this->request->getPost('logo_path'),
+                'descripcion' => $this->request->getPost('descripcion'),
+                'mision' => $this->request->getPost('mision'),
+                'vision' => $this->request->getPost('vision'),
+                'valores' => $this->request->getPost('valores'),
+                'paquete_id' => $this->request->getPost('paquete_id') ?: null,
+            ];
+        } else {
+            $data = [
+                'nombre_comercial' => trim((string) $this->request->getPost('nombre_comercial')),
+                'direccion' => trim((string) $this->request->getPost('direccion')),
+                'url_google_maps' => trim((string) $this->request->getPost('url_google_maps')) ?: null,
+                'telefono' => trim((string) $this->request->getPost('telefono')),
+                'email' => trim((string) $this->request->getPost('email')),
+                'sitio_web' => trim((string) $this->request->getPost('sitio_web')) ?: null,
+                'descripcion' => trim((string) $this->request->getPost('descripcion')),
+            ];
+
+            $erroresConsultorio = [];
+            if ($data['direccion'] === '' || strlen($data['direccion']) < 10) {
+                $erroresConsultorio['direccion'] = 'La dirección es obligatoria (mínimo 10 caracteres).';
+            }
+            if ($data['telefono'] === '' || strlen(preg_replace('/\D/', '', $data['telefono'])) < 8) {
+                $erroresConsultorio['telefono'] = 'El teléfono es obligatorio.';
+            }
+            if ($data['email'] === '' || ! filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                $erroresConsultorio['email'] = 'Ingrese un correo válido.';
+            }
+            if ($data['url_google_maps'] !== null && $data['url_google_maps'] !== '' && ! filter_var($data['url_google_maps'], FILTER_VALIDATE_URL)) {
+                $erroresConsultorio['url_google_maps'] = 'La URL de Google Maps no es válida.';
+            }
+            if ($erroresConsultorio !== []) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('errors', $erroresConsultorio);
             }
         }
 
-        $data = [
-            'nombre' => $this->request->getPost('nombre'),
-            'nombre_comercial' => $this->request->getPost('nombre_comercial'),
-            'rut' => $this->request->getPost('rut'),
-            'direccion' => $this->request->getPost('direccion'),
-            'url_google_maps' => $this->request->getPost('url_google_maps') ?: null,
-            'telefono' => $this->request->getPost('telefono'),
-            'email' => $this->request->getPost('email'),
-            'sitio_web' => $this->request->getPost('sitio_web'),
-            'logo_path' => $this->request->getPost('logo_path'),
-            'descripcion' => $this->request->getPost('descripcion'),
-            'mision' => $this->request->getPost('mision'),
-            'vision' => $this->request->getPost('vision'),
-            'valores' => $this->request->getPost('valores'),
-        ];
-
-        // Solo SA puede cambiar el paquete
-        if ($this->esSuperAdmin()) {
-            $data['paquete_id'] = $this->request->getPost('paquete_id') ?: null;
+        if (! $this->esSuperAdmin()) {
+            $empresa->skipValidation(true);
         }
 
-        if ($empresa->update($id, $data)) {
+        $actualizado = $empresa->update($id, $data);
+        $empresa->skipValidation(false);
+
+        if ($actualizado) {
             $redirectUrl = $this->esSuperAdmin() 
                 ? base_url('dashboard/empresa/lista')
                 : base_url('dashboard/empresa/editar/' . $id);
             
+            $mensaje = $this->esVistaConsultorio()
+                ? 'Datos del consultorio actualizados con éxito'
+                : 'Empresa actualizada con éxito';
+
             return redirect()->to($redirectUrl)
-                ->with('success', 'Empresa actualizada con éxito');
+                ->with('success', $mensaje);
         } else {
             return redirect()->back()
                 ->withInput()
@@ -451,13 +522,8 @@ class EmpresaController extends BaseController
                 ->with('error', 'Empresa no encontrada');
         }
 
-        // Verificar permisos
         if (!$this->esSuperAdmin()) {
-            $empresaId = $this->getEmpresaIdUsuario();
-            if ($id != $empresaId) {
-                return redirect()->to(base_url('dashboard/empresa/detalle/' . $empresaId))
-                    ->with('error', 'No tienes permisos para ver esta empresa');
-            }
+            return redirect()->to(base_url('dashboard/empresa/editar/' . (int) $this->getEmpresaIdUsuario()));
         }
 
         // Cargar información adicional

@@ -511,22 +511,17 @@
             </script>
             <?php endif; ?>
 
-            <!-- Secciones de consulta en tabs: Información Clínica, Mediciones, Registro Clínico, Calorimetría -->
+            <!-- Secciones de consulta en tabs: Registro Clínico, Mediciones, Calorimetría -->
             <div class="section-card consulta-secciones-tabs" style="border-left: 4px solid #28a745 !important;">
                 <ul class="nav nav-tabs" id="consultaSeccionesTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="tab-info-clinica-btn" data-bs-toggle="tab" data-bs-target="#pane-info-clinica" type="button" role="tab" aria-controls="pane-info-clinica" aria-selected="true">
-                            <i class="fas fa-file-medical me-1"></i> Información Clínica <span id="infoClinicaEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;" title="Últimos cambios guardados">Guardado</span>
+                        <button class="nav-link active" id="tab-registro-btn" data-bs-toggle="tab" data-bs-target="#pane-registro" type="button" role="tab" aria-controls="pane-registro" aria-selected="true">
+                            <i class="fas fa-file-medical me-1"></i> Registro Clínico <span id="registroClinicoEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="tab-mediciones-btn" data-bs-toggle="tab" data-bs-target="#pane-mediciones" type="button" role="tab" aria-controls="pane-mediciones" aria-selected="false">
                             <i class="fas fa-ruler-combined me-1"></i> Mediciones <span id="medicionesEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="tab-registro-btn" data-bs-toggle="tab" data-bs-target="#pane-registro" type="button" role="tab" aria-controls="pane-registro" aria-selected="false">
-                            <i class="fas fa-file-medical me-1"></i> Registro Clínico <span id="registroClinicoEstado" class="badge tab-badge bg-success small" style="font-size: 0.7rem;">Guardado</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -536,37 +531,7 @@
                     </li>
                 </ul>
                 <div class="tab-content" id="consultaSeccionesTabContent">
-                    <div class="tab-pane fade show active" id="pane-info-clinica" role="tabpanel" aria-labelledby="tab-info-clinica-btn">
-                        <p class="text-muted small mb-3">
-                            <i class="fas fa-info-circle me-1"></i> Motivo de consulta, plan de tratamiento y recomendaciones u observaciones. Se guarda en el historial clínico del paciente.
-                        </p>
-                        <div class="mb-4">
-                        <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
-                        <?= $mostrar_ref_ultima_texto('motivo_consulta') ?>
-                        <p class="text-muted small mb-2">Indique el motivo de la consulta o el objetivo principal acordado con el paciente. Puede usar formato de texto.</p>
-                        <textarea name="motivo_consulta" id="motivo_consulta" class="form-control" rows="4" placeholder="Ej: Control de peso, Mejorar hábitos alimentarios, Seguimiento diabetes..."><?= esc($historial['motivo_consulta'] ?? $cita->motivo ?? '') ?></textarea>
-                    </div>
-                    <div class="mb-4">
-                        <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
-                        <?= $mostrar_ref_ultima_texto('plan_tratamiento') ?>
-                        <p class="text-muted small mb-2">Describe el plan de tratamiento y alimentación acordado. Puedes usar formato de texto (negrita, cursiva, listas, etc.).</p>
-                        <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="6" placeholder="Ej: Dieta mediterránea, 5 comidas al día, Eliminar azúcares refinados, Aumentar consumo de vegetales..."><?= esc($historial['plan_tratamiento'] ?? $cita->plan_alimentacion ?? '') ?></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
-                        <?= $mostrar_ref_ultima_texto('recomendaciones') ?>
-                        <p class="text-muted small mb-2">Agrega recomendaciones y observaciones para el paciente. Puedes usar formato de texto.</p>
-                        <textarea name="recomendaciones" id="recomendaciones" class="form-control" rows="5" placeholder="Ej: Realizar ejercicio cardiovascular 30 min 3 veces por semana, Tomar suplemento de vitamina D, Agendar próxima cita en 1 mes..."><?= esc(trim(($historial['recomendaciones'] ?? '') . (isset($historial['observaciones']) && (string)($historial['observaciones'] ?? '') !== '' ? "\n\n" . ($historial['observaciones'] ?? '') : '')) ?: ($cita->recomendaciones ?? '')) ?></textarea>
-                    </div>
-                        <div class="d-flex justify-content-end mt-3">
-                            <button type="button" class="btn btn-success" onclick="guardarInformacionClinica()">
-                                <i class="fas fa-save me-2"></i> Guardar
-                            </button>
-                        </div>
-                    </div>
-                    <!-- /pane-info-clinica -->
-
-                    <form id="formMediciones" onsubmit="guardarMediciones(event)" data-tab-visible="false">
+                    <form id="formMediciones" onsubmit="guardarMediciones(event)" data-tab-visible="true">
                 <?= csrf_field() ?>
                 <input type="hidden" name="detalle_agenda_id" value="<?= $cita->id ?>">
                 <input type="hidden" name="paciente_id" value="<?= $cita->paciente_id ?>">
@@ -631,7 +596,7 @@
                     ? $recordatorioActual
                     : trim((string) ($refUltima['recordatorio_24h'] ?? ''));
                 ?>
-                    <div class="tab-pane fade" id="pane-mediciones" role="tabpanel" aria-labelledby="tab-mediciones-btn">
+                    <div class="tab-pane fade" id="pane-mediciones" role="tabpanel" aria-labelledby="tab-mediciones-btn" tabindex="0">
                         <p class="text-muted small mb-3">
                             <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal. Se guardan en el historial clínico del paciente.
                         </p>
@@ -920,10 +885,30 @@
                     </div>
                     <!-- /pane-mediciones -->
 
-                    <div class="tab-pane fade" id="pane-registro" role="tabpanel" aria-labelledby="tab-registro-btn">
+                    <div class="tab-pane fade show active" id="pane-registro" role="tabpanel" aria-labelledby="tab-registro-btn" tabindex="0">
                         <p class="text-muted small mb-3">
-                            <i class="fas fa-info-circle me-1"></i> Ficha de ingreso (anamnesis clínica y alimentaria), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h. Se guarda en el mismo historial clínico de la consulta.
+                            <i class="fas fa-info-circle me-1"></i> Motivo, plan, recomendaciones, ficha de ingreso (anamnesis), exámenes bioquímicos, tendencia de consumo y recordatorio 24 h. Se guarda en el historial clínico del paciente.
                         </p>
+
+                        <div class="mb-4 pb-3 border-bottom">
+                            <h6 class="text-primary mb-2"><i class="fas fa-bullseye me-2"></i> Motivo de consulta y/o Objetivo Principal</h6>
+                            <?= $mostrar_ref_ultima_texto('motivo_consulta') ?>
+                            <p class="text-muted small mb-2">Indique el motivo de la consulta o el objetivo principal acordado con el paciente. Puede usar formato de texto.</p>
+                            <textarea name="motivo_consulta" id="motivo_consulta" class="form-control" rows="4" placeholder="Ej: Control de peso, Mejorar hábitos alimentarios, Seguimiento diabetes..."><?= esc($historial['motivo_consulta'] ?? $cita->motivo ?? '') ?></textarea>
+                        </div>
+                        <div class="mb-4 pb-3 border-bottom">
+                            <h6 class="mb-2" style="color: #0dcaf0;"><i class="fas fa-utensils me-2"></i> Plan de Tratamiento</h6>
+                            <?= $mostrar_ref_ultima_texto('plan_tratamiento') ?>
+                            <p class="text-muted small mb-2">Describe el plan de tratamiento y alimentación acordado. Puedes usar formato de texto (negrita, cursiva, listas, etc.).</p>
+                            <textarea name="plan_tratamiento" id="plan_tratamiento" class="form-control" rows="6" placeholder="Ej: Dieta mediterránea, 5 comidas al día, Eliminar azúcares refinados, Aumentar consumo de vegetales..."><?= esc($historial['plan_tratamiento'] ?? $cita->plan_alimentacion ?? '') ?></textarea>
+                        </div>
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h6 class="mb-2" style="color: #fd7e14;"><i class="fas fa-lightbulb me-2"></i> Recomendaciones u Observaciones</h6>
+                            <?= $mostrar_ref_ultima_texto('recomendaciones') ?>
+                            <p class="text-muted small mb-2">Agrega recomendaciones y observaciones para el paciente. Puedes usar formato de texto.</p>
+                            <textarea name="recomendaciones" id="recomendaciones" class="form-control" rows="5" placeholder="Ej: Realizar ejercicio cardiovascular 30 min 3 veces por semana, Tomar suplemento de vitamina D, Agendar próxima cita en 1 mes..."><?= esc(trim(($historial['recomendaciones'] ?? '') . (isset($historial['observaciones']) && (string)($historial['observaciones'] ?? '') !== '' ? "\n\n" . ($historial['observaciones'] ?? '') : '')) ?: ($cita->recomendaciones ?? '')) ?></textarea>
+                        </div>
+
                         <!-- Ficha de Ingreso: Anamnesis clínica (estructurada) -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -1119,13 +1104,10 @@
                             </div>
                         </div>
 
-                        <!-- Botones (guardan Mediciones + Registro Clínico en el mismo historial) -->
+                        <!-- Botones registro clínico -->
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" onclick="limpiarFormularioMediciones()">
-                                <i class="fas fa-eraser me-2"></i> Limpiar
-                            </button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i> Guardar Mediciones
+                            <button type="button" class="btn btn-success" onclick="guardarRegistroClinicoCompleto()">
+                                <i class="fas fa-save me-2"></i> Guardar Registro Clínico
                             </button>
                         </div>
                     </div>
@@ -1702,21 +1684,15 @@ function confirmarTerminarConsulta() {
     });
 }
 
-// Estado del badge Información Clínica: 'guardado' | 'cambios' | 'guardando'
-function actualizarEstadoInfoClinica(estado) {
-    var $badge = $('#infoClinicaEstado');
-    if (!$badge.length) return;
-    $badge.removeClass('bg-secondary bg-warning bg-success bg-danger').removeAttr('title');
-    if (estado === 'guardando') {
-        $badge.addClass('bg-primary').html('<i class="fas fa-sync-alt fa-spin me-1"></i> Guardando...');
-    } else if (estado === 'cambios') {
-        $badge.addClass('bg-warning text-dark').html('<i class="fas fa-pen me-1"></i> Cambios sin guardar').attr('title', 'Hay cambios que aún no se han guardado. Se guardan automáticamente cada 2 min o al hacer clic en Guardar.');
-    } else {
-        $badge.addClass('bg-success').html('<i class="fas fa-check me-1"></i> Guardado').attr('title', 'Últimos cambios guardados correctamente');
+function marcarCambiosPendientesInfoClinica() {
+    if ($('#registroClinicoEstado').length && !$('#registroClinicoEstado').hasClass('bg-primary')) {
+        actualizarEstadoRegistroClinico('cambios');
     }
 }
-function marcarCambiosPendientesInfoClinica() {
-    actualizarEstadoInfoClinica('cambios');
+
+function guardarRegistroClinicoCompleto() {
+    guardarInformacionClinica(true);
+    guardarMediciones({ preventDefault: function() {} }, 'registro');
 }
 
 // Estado de badges: Mediciones, Registro Clínico (mismo form), Calorimetría y Plan
@@ -1788,8 +1764,8 @@ function guardarBloqueCalorimetriaPlan() {
     }, 2500);
 }
 
-// Guardar notas de consulta
-function guardarInformacionClinica() {
+// Guardar motivo, plan y recomendaciones (dentro del tab Registro Clínico)
+function guardarInformacionClinica(silentToast) {
     var csrfToken = $('input[name="csrf_test_name"]').val() || obtenerTokenCSRF() || $('meta[name="csrf-token"]').attr('content') || '<?= csrf_hash() ?>';
     var csrfName = 'csrf_test_name';
     
@@ -1830,7 +1806,7 @@ function guardarInformacionClinica() {
         [csrfName]: csrfToken
     };
     
-    actualizarEstadoInfoClinica('guardando');
+    actualizarEstadoRegistroClinico('guardando');
     $.ajax({
         url: '<?= base_url('dashboard/agenda/guardarInformacionClinica') ?>',
         type: 'POST',
@@ -1840,16 +1816,20 @@ function guardarInformacionClinica() {
         success: function(response, textStatus, xhr) {
             actualizarTokenCSRF(xhr);
             if (response.success) {
-                actualizarEstadoInfoClinica('guardado');
-                toastr.success(response.message || 'Información clínica guardada correctamente', 'Éxito', { timeOut: 2000 });
+                if (!$('#registroClinicoEstado').hasClass('bg-warning')) {
+                    actualizarEstadoRegistroClinico('guardado');
+                }
+                if (!silentToast) {
+                    toastr.success(response.message || 'Registro clínico guardado correctamente', 'Éxito', { timeOut: 2000 });
+                }
             } else {
-                actualizarEstadoInfoClinica('cambios');
+                actualizarEstadoRegistroClinico('cambios');
                 toastr.error(response.error || 'Error al guardar', 'Error');
             }
         },
         error: function(xhr) {
             actualizarTokenCSRF(xhr);
-            actualizarEstadoInfoClinica('cambios');
+            actualizarEstadoRegistroClinico('cambios');
             var errorMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error al guardar la información';
             toastr.error(errorMsg, 'Error');
         }
@@ -2488,6 +2468,11 @@ var medicionesAutoSaveTimeout = null;
 $(document).ready(function() {
     $('#formMediciones').on('change input', 'input, select, textarea', function() {
         var $el = $(this);
+        var fieldId = $el.attr('id') || '';
+        if (fieldId === 'motivo_consulta' || fieldId === 'plan_tratamiento' || fieldId === 'recomendaciones') {
+            marcarCambiosPendientesInfoClinica();
+            return;
+        }
         // Solo actualizar el badge del tab que contiene el campo editado
         if ($el.closest('#pane-mediciones').length) {
             if ($('#medicionesEstado').length && !$('#medicionesEstado').hasClass('bg-primary')) actualizarEstadoMediciones('cambios');
@@ -2502,8 +2487,13 @@ $(document).ready(function() {
                 var soloReg = $('#registroClinicoEstado').hasClass('bg-warning') && !$('#medicionesEstado').hasClass('bg-warning');
                 var ambos = $('#medicionesEstado').hasClass('bg-warning') && $('#registroClinicoEstado').hasClass('bg-warning');
                 if (soloMed) guardarMediciones({ preventDefault: function() {} }, 'mediciones');
-                else if (soloReg) guardarMediciones({ preventDefault: function() {} }, 'registro');
-                else if (ambos) guardarMediciones({ preventDefault: function() {} }, 'ambos');
+                else if (soloReg) {
+                    guardarInformacionClinica(true);
+                    guardarMediciones({ preventDefault: function() {} }, 'registro');
+                } else if (ambos) {
+                    guardarInformacionClinica(true);
+                    guardarMediciones({ preventDefault: function() {} }, 'ambos');
+                }
             }, 2000);
         }
     });
@@ -2622,12 +2612,11 @@ function sincronizarAnamnesisHidden() {
 }
 
 function consultaTieneCambiosSinGuardar() {
-    return $('#infoClinicaEstado, #medicionesEstado, #registroClinicoEstado, #calorimetriaPlanEstado').filter('.bg-warning').length > 0;
+    return $('#medicionesEstado, #registroClinicoEstado, #calorimetriaPlanEstado').filter('.bg-warning').length > 0;
 }
 
 function nombreTabConsulta(paneId) {
     var map = {
-        '#pane-info-clinica': 'Información Clínica',
         '#pane-mediciones': 'Mediciones',
         '#pane-registro': 'Registro Clínico',
         '#pane-calorimetria': 'Calorimetría y Plan'
@@ -2637,7 +2626,6 @@ function nombreTabConsulta(paneId) {
 
 function badgeIdPorPane(paneId) {
     var map = {
-        '#pane-info-clinica': '#infoClinicaEstado',
         '#pane-mediciones': '#medicionesEstado',
         '#pane-registro': '#registroClinicoEstado',
         '#pane-calorimetria': '#calorimetriaPlanEstado'
@@ -2674,6 +2662,7 @@ $(function() {
             if (e.target && e.target.blur) e.target.blur();
         });
         var lastTab = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('consultaSeccionTab');
+        if (lastTab === '#pane-info-clinica') lastTab = '#pane-registro';
         if (lastTab) {
             var btn = document.querySelector('#consultaSeccionesTabs button[data-bs-target="' + lastTab + '"]');
             if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
@@ -3143,8 +3132,13 @@ setInterval(function() {
     var soloReg = $('#registroClinicoEstado').hasClass('bg-warning') && !$('#medicionesEstado').hasClass('bg-warning');
     var ambos = $('#medicionesEstado').hasClass('bg-warning') && $('#registroClinicoEstado').hasClass('bg-warning');
     if (soloMed) guardarMediciones({ preventDefault: function() {} }, 'mediciones');
-    else if (soloReg) guardarMediciones({ preventDefault: function() {} }, 'registro');
-    else if (ambos) guardarMediciones({ preventDefault: function() {} }, 'ambos');
+    else if (soloReg) {
+        guardarInformacionClinica(true);
+        guardarMediciones({ preventDefault: function() {} }, 'registro');
+    } else if (ambos) {
+        guardarInformacionClinica(true);
+        guardarMediciones({ preventDefault: function() {} }, 'ambos');
+    }
 }, 120000);
 
 // Iniciar timer si la consulta ya está iniciada

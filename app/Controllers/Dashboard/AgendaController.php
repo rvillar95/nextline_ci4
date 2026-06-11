@@ -4037,7 +4037,7 @@ class AgendaController extends BaseController
         $post = $this->request->getPost();
         $detalleAgendaId = $post['detalle_agenda_id'] ?? null;
         $pacienteId = $post['paciente_id'] ?? null;
-        $historialId = $post['historial_id'] ?? null;
+        $historialId = ! empty($post['historial_id']) ? (int) $post['historial_id'] : null;
         $seccionGuardar = $post['seccion_guardar'] ?? 'ambos'; // 'mediciones' | 'registro' | 'ambos'
 
         if (!$detalleAgendaId || !$pacienteId) {
@@ -4077,6 +4077,11 @@ class AgendaController extends BaseController
             $historialExistente = $historialModel->find($historialId);
         } else {
             $historialExistente = $historialModel->where('detalle_agenda_id', $detalleAgendaId)->where('paciente_id', $pacienteId)->first();
+        }
+        if (! $historialId && $historialExistente) {
+            $historialId = (int) (is_array($historialExistente)
+                ? ($historialExistente['id'] ?? 0)
+                : ($historialExistente->id ?? 0));
         }
 
         // Calcular IMC si hay peso y altura
@@ -4255,12 +4260,18 @@ class AgendaController extends BaseController
             } else {
                 // Crear nuevo registro
                 $nuevoId = $historialModel->insert($dataHistorial);
+                if (! $nuevoId) {
+                    return $this->response->setJSON([
+                        'error' => 'Error al guardar',
+                        'message' => 'No se pudo crear el historial clínico de la consulta',
+                    ])->setStatusCode(500);
+                }
                 $mensaje = 'Mediciones guardadas correctamente';
-                $historialId = $nuevoId;
+                $historialId = (int) $nuevoId;
             }
 
             // Exámenes bioquímicos y tendencia: solo al guardar registro o ambos
-            if ($seccionGuardar !== 'mediciones') {
+            if ($seccionGuardar !== 'mediciones' && $historialId > 0) {
             $examenModel = new \App\Models\HistorialExamenBioquimico();
             $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $historialId)->delete();
             $examenesRaw = $post['examenes_bioquimicos'] ?? '';
@@ -4290,19 +4301,21 @@ class AgendaController extends BaseController
                 if (is_array($tendenciaRows)) {
                     foreach ($tendenciaRows as $row) {
                         $grupo = $row['grupo'] ?? null;
-                        if (empty($grupo)) {
+                        $preferencia = trim((string) ($row['preferencia'] ?? ''));
+                        $alergia = trim((string) ($row['alergia_intolerancia'] ?? ''));
+                        if (empty($grupo) || ($preferencia === '' && $alergia === '')) {
                             continue;
                         }
                         $tendenciaModel->insert([
                             'historial_clinico_id' => $historialId,
                             'grupo' => $grupo,
-                            'preferencia' => $row['preferencia'] ?? null,
-                            'alergia_intolerancia' => $row['alergia_intolerancia'] ?? null
+                            'preferencia' => $preferencia !== '' ? $preferencia : null,
+                            'alergia_intolerancia' => $alergia !== '' ? $alergia : null,
                         ]);
                     }
                 }
             }
-            } // fin si seccionGuardar !== 'mediciones'
+            } // fin si seccionGuardar !== 'mediciones' && historialId > 0
 
             $response = $this->response->setJSON([
                 'success' => true,

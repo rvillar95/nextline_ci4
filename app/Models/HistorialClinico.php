@@ -53,6 +53,46 @@ class HistorialClinico extends Model
     protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
+    /** Normaliza fecha_consulta (Y-m-d, d-m-Y o d/m/Y) a Y-m-d para ordenar. */
+    public static function fechaConsultaToSortKey(?string $fecha): string
+    {
+        $fecha = trim((string) $fecha);
+        if ($fecha === '') {
+            return '0000-00-00';
+        }
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $fecha, $m)) {
+            return $m[1] . '-' . $m[2] . '-' . $m[3];
+        }
+        if (preg_match('/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/', $fecha, $m)) {
+            return sprintf('%04d-%02d-%02d', (int) $m[3], (int) $m[2], (int) $m[1]);
+        }
+
+        return '0000-00-00';
+    }
+
+    public static function fechaConsultaToDisplay(?string $fecha): string
+    {
+        $key = self::fechaConsultaToSortKey($fecha);
+
+        return $key !== '0000-00-00' ? date('d/m/Y', strtotime($key)) : '—';
+    }
+
+    public static function fechaConsultaToTimestamp(?string $fecha, ?string $hora = null): int
+    {
+        $key = self::fechaConsultaToSortKey($fecha);
+        if ($key === '0000-00-00') {
+            return 0;
+        }
+        $hora = trim((string) $hora);
+        if ($hora === '') {
+            $hora = '00:00:00';
+        } elseif (preg_match('/^\d{2}:\d{2}$/', $hora)) {
+            $hora .= ':00';
+        }
+
+        return (int) strtotime($key . ' ' . $hora);
+    }
+
     /**
      * Obtener historial completo con relaciones
      */
