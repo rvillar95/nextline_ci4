@@ -84,7 +84,38 @@ class BotonPagoController extends BaseController
             $data['plantillas'] = [];
         }
 
+        $data['puede_eliminar'] = $this->tienePermisoRuta('/eliminar', 'eliminar');
+
         return view('Modulos/boton_pago/lista', $data);
+    }
+
+    /**
+     * Verifica permiso por ruta de detalle del módulo boton-pago (misma lógica que SessionFilter).
+     */
+    private function tienePermisoRuta(string $detalleRuta, string $accion): bool
+    {
+        $usuario = session()->get('usuario');
+        if (!$usuario) {
+            return false;
+        }
+
+        $moduloDetalle = new ModuloDetalle();
+        $rutasPermitidas = $moduloDetalle->getAllowedByPerfil(
+            (int) ($usuario['perfil_id'] ?? 0),
+            $usuario['empresa_id'] ?? null
+        );
+
+        foreach ($rutasPermitidas as $ruta) {
+            if (($ruta['modulo_ruta'] ?? '') !== '/dashboard/boton-pago') {
+                continue;
+            }
+            if (($ruta['detalle_ruta'] ?? '') !== $detalleRuta) {
+                continue;
+            }
+            return (bool) ($ruta['permisos'][$accion] ?? false);
+        }
+
+        return false;
     }
 
     /**
@@ -175,6 +206,85 @@ class BotonPagoController extends BaseController
         $data['modo_tarifa'] = true;
 
         return view('Modulos/boton_pago/crear', $data);
+    }
+
+    /**
+     * Desactivar tarifa (plantilla de botón de pago)
+     */
+    public function eliminar($id = null)
+    {
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No autorizado',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(401);
+        }
+
+        if (!$id) {
+            $id = $this->request->getPost('id');
+        }
+
+        if (!$id) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'ID de tarifa requerido',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
+
+        $usuario = session()->get('usuario');
+        $empresaId = $usuario['empresa_id'] ?? null;
+
+        if (!$empresaId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No se pudo determinar la empresa del usuario',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(400);
+        }
+
+        if (!$this->tienePermisoRuta('/eliminar', 'eliminar')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'No tiene permisos para eliminar tarifas',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(403);
+        }
+
+        $plantillaModel = new BotonPagoPlantilla();
+        $plantilla = $plantillaModel->getPlantilla($id, $empresaId);
+
+        if (!$plantilla) {
+            return $this->response->setJSON([
+                'success' => false,
+                'error' => 'Tarifa no encontrada',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(404);
+        }
+
+        $activo = is_object($plantilla) ? ($plantilla->activo ?? 'A') : ($plantilla['activo'] ?? 'A');
+        if ($activo === 'I') {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'La tarifa ya estaba inactiva',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        }
+
+        if ($plantillaModel->update($id, ['activo' => 'I'])) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Tarifa eliminada con éxito',
+                'csrf_hash' => csrf_hash(),
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash());
+        }
+
+        return $this->response->setJSON([
+            'success' => false,
+            'error' => 'No se pudo eliminar la tarifa',
+            'csrf_hash' => csrf_hash(),
+        ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(500);
     }
 
     /**

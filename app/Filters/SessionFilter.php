@@ -269,6 +269,7 @@ final class SessionFilter implements FilterInterface
 
         // Documentos: AJAX (envío por correo, listado por paciente, eliminar) si tiene el módulo
         $esDocumentoAjax = $this->isDirectMatch($path, '/dashboard/documento/enviar-correo')
+            || $this->isDirectMatch($path, '/dashboard/documento/registrar-lote')
             || $this->isDirectMatch($path, '/dashboard/documento/getDocumentos')
             || (bool) preg_match('#^/dashboard/documento/por-paciente/[0-9]+/?$#', $this->sanitizePath($path))
             || (bool) preg_match('#^/dashboard/documento/eliminar/[0-9]+/?$#', $this->sanitizePath($path))
@@ -283,7 +284,7 @@ final class SessionFilter implements FilterInterface
             }
         }
 
-        // Tarifas de consulta: /editar/{id} si tiene acceso al módulo boton-pago
+        // Tarifas: /editar/{id} (ruta legacy; edición habitual vía /crear?plantilla_id=)
         if (preg_match('#^/dashboard/boton-pago/editar/[0-9]+/?$#', $this->sanitizePath($path))) {
             foreach ($allowed as $rule) {
                 if (strpos($rule['pattern'], '/dashboard/boton-pago') === 0) {

@@ -1152,9 +1152,8 @@ class HistorialController extends BaseController
         }
 
         try {
-            // Calcular
             $resultado = $service->calcular($metodoSlug, $historial, $paciente);
-            
+
             return $this->response->setJSON([
                 'success' => true,
                 'resultado' => $resultado,
@@ -1162,13 +1161,16 @@ class HistorialController extends BaseController
                 'historial_id' => $historialId,
                 'csrf_hash' => csrf_hash(),
             ])->setHeader('X-CSRF-TOKEN', csrf_hash());
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            log_message('error', 'calcularComposicion [' . $metodoSlug . ']: ' . $e->getMessage());
+
             return $this->response->setJSON([
+                'success' => false,
                 'error' => 'Error al calcular',
                 'message' => $e->getMessage(),
                 'metodo' => $metodoSlug,
                 'csrf_hash' => csrf_hash(),
-            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(500);
+            ])->setHeader('X-CSRF-TOKEN', csrf_hash())->setStatusCode(422);
         }
     }
 

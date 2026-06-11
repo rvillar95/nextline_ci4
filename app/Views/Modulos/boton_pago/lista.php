@@ -111,6 +111,15 @@
                                                    class="btn btn-sm btn-outline-secondary" title="Duplicar como nueva tarifa">
                                                     <i class="fas fa-copy"></i>
                                                 </a>
+                                                <?php if ($activo === 'A' && !empty($puede_eliminar)): ?>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger btn-eliminar-tarifa"
+                                                        title="Eliminar tarifa"
+                                                        data-id="<?= (int)($plantilla['id'] ?? $plantilla->id ?? 0) ?>"
+                                                        data-titulo="<?= esc($plantilla['titulo'] ?? $plantilla->titulo ?? '', 'attr') ?>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -124,8 +133,94 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalConfirmarEliminacionTarifa" tabindex="-1" aria-labelledby="modalConfirmarEliminacionTarifaLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarEliminacionTarifaLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Desea eliminar la tarifa <strong id="tarifaTituloEliminar"></strong>?</p>
+                <p class="text-muted small mb-0">
+                    La tarifa quedará inactiva y dejará de aparecer al agendar citas. No se borrará del historial.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarEliminacionTarifa()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+window.tarifaIdAEliminar = null;
+
+window.eliminarTarifa = function(id, titulo) {
+    window.tarifaIdAEliminar = id;
+    $('#tarifaTituloEliminar').text(titulo || 'seleccionada');
+    var modalEl = document.getElementById('modalConfirmarEliminacionTarifa');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    } else {
+        $('#modalConfirmarEliminacionTarifa').modal('show');
+    }
+};
+
+window.confirmarEliminacionTarifa = function() {
+    if (!window.tarifaIdAEliminar) {
+        return;
+    }
+
+    $.ajax({
+        url: '<?= base_url('dashboard/boton-pago/eliminar') ?>/' + window.tarifaIdAEliminar,
+        type: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
+        },
+        data: {
+            '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+        },
+        success: function(response) {
+            if (response.success) {
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(response.message || 'Tarifa eliminada con éxito');
+                }
+                var modalEl = document.getElementById('modalConfirmarEliminacionTarifa');
+                if (modalEl && typeof bootstrap !== 'undefined') {
+                    var inst = bootstrap.Modal.getInstance(modalEl);
+                    if (inst) inst.hide();
+                } else {
+                    $('#modalConfirmarEliminacionTarifa').modal('hide');
+                }
+                window.location.reload();
+            } else if (typeof toastr !== 'undefined') {
+                toastr.error(response.error || 'Error al eliminar la tarifa');
+            } else {
+                alert(response.error || 'Error al eliminar la tarifa');
+            }
+        },
+        error: function(xhr) {
+            var error = xhr.responseJSON?.error || 'Error al eliminar la tarifa';
+            if (typeof toastr !== 'undefined') {
+                toastr.error(error);
+            } else {
+                alert(error);
+            }
+        }
+    });
+};
+
 $(document).ready(function() {
+    $(document).on('click', '.btn-eliminar-tarifa', function() {
+        var id = parseInt($(this).data('id'), 10);
+        var titulo = $(this).attr('data-titulo') || '';
+        if (id > 0) {
+            window.eliminarTarifa(id, titulo);
+        }
+    });
+
     // Solo inicializar DataTables si la tabla existe y tiene datos
     if ($('#tablaBotonesPago').length && $('#tablaBotonesPago tbody tr').length > 0) {
         var table = $('#tablaBotonesPago').DataTable({

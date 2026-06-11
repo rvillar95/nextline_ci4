@@ -70,13 +70,21 @@ class Documento extends Model
     /**
      * Obtener documentos por paciente
      */
-    public function getDocumentosPorPaciente($pacienteId, $tipo = null)
+    public function getDocumentosPorPaciente($pacienteId, $tipo = null, $nutricionistaId = null)
     {
         $builder = $this->where('paciente_id', $pacienteId)
             ->where('estado', 'A');
 
         if ($tipo) {
             $builder->where('tipo_documento', $tipo);
+        }
+
+        if ($nutricionistaId !== null && (int) $nutricionistaId > 0) {
+            $builder->groupStart()
+                ->where('nutricionista_id', (int) $nutricionistaId)
+                ->orWhere('nutricionista_id', null)
+                ->orWhere('nutricionista_id', 0)
+                ->groupEnd();
         }
 
         return $builder->orderBy('fecha_documento', 'DESC')

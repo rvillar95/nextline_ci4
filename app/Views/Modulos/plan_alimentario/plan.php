@@ -526,7 +526,8 @@ function validarDistribucion() {
     calcularMacros();
 }
 
-function guardarPlanAlimentario() {
+function guardarPlanAlimentario(silent) {
+    silent = !!silent;
     const detalleAgendaId = $('#detalle_agenda_id_plan').val();
     const requerimientoKcal = parseFloat($('#plan_requerimiento_kcal').val());
     const modoGramos = $('#modo_gramos').is(':checked');
@@ -538,7 +539,8 @@ function guardarPlanAlimentario() {
         const cho_g = parseFloat($('#plan_cho_gramos_input').val()) || 0;
         const totalKcalMacros = prot_g * 4 + grasa_g * 9 + cho_g * 4;
         if (!requerimientoKcal || requerimientoKcal <= 0) {
-            toastr.error('El requerimiento energético es requerido');
+            if (!silent) toastr.error('El requerimiento energético es requerido');
+            if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             return;
         }
         protPorc = requerimientoKcal > 0 ? (prot_g * 4 / requerimientoKcal) * 100 : (totalKcalMacros > 0 ? (prot_g * 4 / totalKcalMacros) * 100 : 0);
@@ -551,7 +553,8 @@ function guardarPlanAlimentario() {
     }
     
     if (!requerimientoKcal || requerimientoKcal <= 0) {
-        toastr.error('El requerimiento energético es requerido');
+        if (!silent) toastr.error('El requerimiento energético es requerido');
+        if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
         return;
     }
     
@@ -586,20 +589,22 @@ function guardarPlanAlimentario() {
         success: function(response) {
             if (response.success) {
                 if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('guardado');
-                toastr.success('Plan alimentario guardado correctamente');
+                if (!silent) {
+                    toastGuardadoExito(response.message || 'Plan alimentario actualizado correctamente');
+                }
                 planGuardado = response.plan;
                 
                 // Habilitar tab de distribución
                 $('#distribucion-tab').removeClass('disabled');
             } else {
                 if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
-                toastr.error(response.error || 'Error al guardar plan');
+                if (!silent) toastGuardadoError(response.error || 'Error al guardar plan alimentario');
             }
         },
         error: function(xhr, status, error) {
             if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             console.error('Error:', error);
-            toastr.error('Error al guardar plan alimentario');
+            if (!silent) toastGuardadoError('Error al guardar plan alimentario');
         }
     });
 }

@@ -3961,7 +3961,7 @@ class AgendaController extends BaseController
         }
         return $this->response->setJSON([
             'success' => true,
-            'message' => 'Información clínica guardada correctamente',
+            'message' => 'Registro clínico actualizado correctamente',
             'csrf_token' => csrf_hash()
         ])->setHeader('X-CSRF-TOKEN', csrf_hash());
     }

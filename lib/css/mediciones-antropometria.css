@@ -1,0 +1,244 @@
+/**
+ * Panel de mediciones antropométricas — consulta / historial
+ * Filtro por método vía tabs; inputs neutros y legibles.
+ */
+
+:root {
+    --med-accent: var(--user-primary, #7bc143);
+    --med-text: #1e293b;
+    --med-text-muted: #64748b;
+    --med-border: #e2e8f0;
+    --med-surface: #ffffff;
+    --med-bg: #f8fafc;
+}
+
+/* Intro */
+.mediciones-intro {
+    background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+    border: 1px solid #d1fae5;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    color: #334155;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+.mediciones-intro i {
+    color: var(--med-accent);
+}
+
+/* Tabs método — segmented control */
+.mediciones-metodo-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.25rem;
+    background: var(--med-bg);
+    border: 1px solid var(--med-border);
+    border-radius: 12px;
+    padding: 0.35rem;
+    margin-bottom: 1rem !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.mediciones-metodo-tabs .nav-item {
+    flex-shrink: 0;
+}
+.mediciones-metodo-tabs .nav-link {
+    font-weight: 500;
+    font-size: 0.8125rem;
+    color: var(--med-text-muted);
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.85rem;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.mediciones-metodo-tabs .nav-link:hover {
+    color: var(--med-text);
+    background: rgba(255, 255, 255, 0.7);
+}
+.mediciones-metodo-tabs .nav-link.active {
+    color: var(--med-text);
+    background: var(--med-surface);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+    font-weight: 600;
+}
+.mediciones-metodo-tabs .nav-link.active i {
+    color: var(--med-accent);
+}
+
+#medicionesMetodoHint,
+#medicionesMetodoHintEditar {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    color: #92400e;
+}
+#medicionesMetodoHint:not(.d-none),
+#medicionesMetodoHintEditar:not(.d-none) {
+    display: block !important;
+}
+
+/* Secciones tipo tarjeta */
+.mediciones-panel .medicion-seccion {
+    background: var(--med-surface);
+    border: 1px solid var(--med-border);
+    border-radius: 12px;
+    padding: 1.15rem 1.35rem 0.25rem;
+    margin-bottom: 1.25rem !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.mediciones-panel .medicion-seccion[data-seccion="basicas"] {
+    border-top: 3px solid var(--med-accent);
+}
+.mediciones-panel .medicion-seccion[data-seccion="circunferencias"] {
+    border-top: 3px solid #3b82f6;
+}
+.mediciones-panel .medicion-seccion[data-seccion="pliegues"] {
+    border-top: 3px solid #8b5cf6;
+}
+.mediciones-panel .medicion-seccion[data-seccion="diametros"] {
+    border-top: 3px solid #f59e0b;
+}
+
+.mediciones-panel .medicion-seccion > .col-12:first-child {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.mediciones-panel .medicion-seccion h6 {
+    color: var(--med-text);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem !important;
+}
+.mediciones-panel .medicion-seccion h6 i {
+    color: var(--med-accent);
+    opacity: 0.9;
+}
+.mediciones-panel .medicion-seccion[data-seccion="circunferencias"] h6 i { color: #3b82f6; }
+.mediciones-panel .medicion-seccion[data-seccion="pliegues"] h6 i { color: #8b5cf6; }
+.mediciones-panel .medicion-seccion[data-seccion="diametros"] h6 i { color: #f59e0b; }
+
+.mediciones-panel .medicion-seccion > .col-12 p.small {
+    color: var(--med-text-muted);
+    margin-bottom: 0;
+    font-size: 0.8rem;
+}
+
+/* Campos */
+.mediciones-panel .medicion-campo-wrap {
+    margin-bottom: 1rem;
+}
+.mediciones-panel .form-label,
+.mediciones-panel label:not(.form-check-label) {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.8125rem;
+    margin-bottom: 0.2rem;
+    letter-spacing: 0.01em;
+    display: block;
+}
+.mediciones-panel .form-group {
+    margin-bottom: 0;
+}
+.mediciones-panel .form-control {
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    color: var(--med-text);
+    font-size: 0.9375rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.mediciones-panel .form-control::placeholder {
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+.mediciones-panel .form-control:hover:not(:focus):not([readonly]) {
+    border-color: #cbd5e1;
+}
+.mediciones-panel .form-control:focus {
+    border-color: var(--med-accent);
+    box-shadow: 0 0 0 3px rgba(123, 193, 67, 0.18);
+    background: #fff;
+}
+.mediciones-panel .form-control[readonly] {
+    background: #f8fafc;
+    color: #475569;
+    cursor: default;
+}
+.mediciones-panel .medicion-suma-pliegues .form-control {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--med-text);
+    border-color: #c7d2fe;
+    background: linear-gradient(180deg, #faf5ff 0%, #f8fafc 100%);
+}
+.mediciones-panel small.text-muted:not(.ultima-consulta-ref) {
+    font-size: 0.75rem;
+    color: #94a3b8 !important;
+    margin-top: 0.2rem;
+    display: block;
+}
+
+/* Sin colores por método — clases solo para filtro JS */
+.mediciones-panel .metodo-2,
+.mediciones-panel .metodo-4,
+.mediciones-panel .metodo-5,
+.mediciones-panel .metodo-somato,
+body.mediciones-filtradas .mediciones-panel .metodo-2,
+body.mediciones-filtradas .mediciones-panel .metodo-4,
+body.mediciones-filtradas .mediciones-panel .metodo-5,
+body.mediciones-filtradas .mediciones-panel .metodo-somato {
+    border-left: none !important;
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+}
+
+/* Referencia última consulta */
+.ultima-consulta-ref {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem !important;
+    line-height: 1.3;
+    color: #64748b !important;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.12rem 0.45rem;
+    margin-bottom: 0.35rem !important;
+    width: fit-content;
+    max-width: 100%;
+}
+.ultima-consulta-ref i {
+    font-size: 0.65rem;
+    color: #94a3b8;
+}
+.ultima-consulta-ref strong {
+    color: #475569;
+    font-weight: 600;
+}
+
+/* Cálculo composición — tarjetas método */
+.mediciones-calculo-wrap .card.border-success {
+    border-color: #bbf7d0 !important;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.mediciones-calculo-wrap .card.border-secondary {
+    border-radius: 12px;
+}
+
+@media (max-width: 767.98px) {
+    .mediciones-panel .medicion-seccion {
+        padding: 1rem;
+    }
+    .mediciones-metodo-tabs .nav-link {
+        font-size: 0.75rem;
+        padding: 0.45rem 0.65rem;
+    }
+}

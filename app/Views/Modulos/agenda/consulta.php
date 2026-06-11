@@ -4,6 +4,7 @@
 
 <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="<?= base_url('lib/js/toast-guardado.js') ?>"></script>
 
 <!-- Flatpickr Date Picker -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -19,6 +20,7 @@
 
 <!-- Chart.js (para gráficos de composición corporal y somatocarta) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="<?= base_url('lib/css/mediciones-antropometria.css') ?>">
 
 <style>
     .section-card {
@@ -77,54 +79,6 @@
         color: white;
     }
     
-    .ultima-consulta-ref {
-        font-size: 0.8rem;
-        line-height: 1.3;
-    }
-
-    /* Estilos para campos según método de cálculo */
-    .metodo-4 {
-        border-left: 4px solid #dc3545 !important;
-        background-color: #fff5f5 !important;
-    }
-    
-    .metodo-5 {
-        border-left: 4px solid #0d6efd !important;
-        background-color: #f0f7ff !important;
-    }
-    
-    .metodo-2 {
-        border-left: 4px solid #198754 !important;
-        background-color: #f0fff4 !important;
-    }
-    
-    /* Campos con múltiples métodos - usar gradiente o color combinado */
-    .metodo-4.metodo-5 {
-        border-left: 4px solid #6f42c1 !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0f7ff 100%) !important;
-    }
-    
-    .metodo-4.metodo-2 {
-        border-left: 4px solid #fd7e14 !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0fff4 100%) !important;
-    }
-    
-    .metodo-5.metodo-2 {
-        border-left: 4px solid #20c997 !important;
-        background: linear-gradient(90deg, #f0f7ff 0%, #f0fff4 100%) !important;
-    }
-    
-    .metodo-4.metodo-5.metodo-2 {
-        border-left: 4px solid #6c757d !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0f7ff 50%, #f0fff4 100%) !important;
-    }
-    
-    .metodo-4:focus,
-    .metodo-5:focus,
-    .metodo-2:focus {
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-
     /* Tabs de secciones de consulta: responsive (móvil + PC) */
     .consulta-secciones-tabs .nav-tabs {
         border-bottom: 2px solid #dee2e6;
@@ -482,7 +436,7 @@
                         ? (string) (int) $n
                         : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
                 }
-                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc((string) $v) . esc($unidad) . '</small>';
+                return '<span class="ultima-consulta-ref"><i class="fas fa-history" aria-hidden="true"></i> Anterior: <strong>' . esc((string) $v) . esc($unidad) . '</strong></span>';
             };
             $mostrar_ref_ultima_texto = function ($campo, $maxLen = 100) use ($referencia_ultima_consulta) {
                 if (empty($referencia_ultima_consulta[$campo])) {
@@ -495,7 +449,7 @@
                 if (mb_strlen($v) > $maxLen) {
                     $v = mb_substr($v, 0, $maxLen) . '…';
                 }
-                return '<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' . esc($v) . '</small>';
+                return '<span class="ultima-consulta-ref"><i class="fas fa-history" aria-hidden="true"></i> Anterior: <strong>' . esc($v) . '</strong></span>';
             };
             ?>
             <?php if ($referencia_ultima_fecha !== ''): ?>
@@ -597,64 +551,57 @@
                     : trim((string) ($refUltima['recordatorio_24h'] ?? ''));
                 ?>
                     <div class="tab-pane fade" id="pane-mediciones" role="tabpanel" aria-labelledby="tab-mediciones-btn" tabindex="0">
-                        <p class="text-muted small mb-3">
-                            <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal. Se guardan en el historial clínico del paciente.
+                        <p class="mediciones-intro mb-0">
+                            <i class="fas fa-info-circle me-1"></i> Elegí el método de composición corporal y cargá solo las medidas necesarias. Peso y talla siempre se muestran.
                         </p>
-                        <!-- Leyenda de Métodos de Cálculo (visible solo al expandir) -->
-                        <div class="alert alert-light border mb-3" style="background-color: #f8f9fa;">
-                            <div class="d-flex align-items-center mb-2">
-                                <strong class="me-2"><i class="fas fa-info-circle me-1"></i> Leyenda de Métodos de Cálculo:</strong>
-                            </div>
-                            <div class="d-flex flex-wrap gap-3 align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <div class="border rounded p-2" style="border-width: 3px !important; border-color: #dc3545 !important; background-color: #fff5f5;">
-                                        <span class="fw-bold text-danger">4 Componentes</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="border rounded p-2" style="border-width: 3px !important; border-color: #0d6efd !important; background-color: #f0f7ff;">
-                                        <span class="fw-bold text-primary">5 Componentes</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="border rounded p-2" style="border-width: 3px !important; border-color: #198754 !important; background-color: #f0fff4;">
-                                        <span class="fw-bold text-success">2 Componentes</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="border rounded p-2" style="border-width: 3px !important; border-color: #6f42c1 !important; background-color: #f3effd;">
-                                        <span class="fw-bold" style="color: #6f42c1;">4 y 5 Componentes</span>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <div class="border rounded p-2" style="border-width: 3px !important; border-color: #6c757d !important; background-color: #e9ecef;">
-                                        <span class="fw-bold text-secondary">4, 5 y 2 Componentes</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <small class="text-muted mt-2 d-block">
-                                El borde de cada campo indica para qué método(s) se usa: <strong>Rojo</strong> solo 4 · <strong>Azul</strong> solo 5 · <strong>Verde</strong> solo 2 · <strong>Morado</strong> 4 y 5 · <strong>Gris</strong> 4, 5 y 2. Los que no llevan color no se usan en estos métodos.
-                            </small>
-                        </div>
+                        <ul class="nav nav-tabs mediciones-metodo-tabs" id="medicionesMetodoTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link active" data-medicion-metodo="todos" role="tab" aria-selected="true">
+                                    <i class="fas fa-th-list me-1"></i> Todas
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="2-componentes" role="tab" aria-selected="false">
+                                    <i class="fas fa-layer-group me-1"></i> 2 Componentes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="4-componentes" role="tab" aria-selected="false">
+                                    <i class="fas fa-layer-group me-1"></i> 4 Componentes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="5-componentes" role="tab" aria-selected="false">
+                                    <i class="fas fa-layer-group me-1"></i> 5 Componentes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="somatotipo" role="tab" aria-selected="false">
+                                    <i class="fas fa-user me-1"></i> Somatotipo
+                                </button>
+                            </li>
+                        </ul>
+                        <p id="medicionesMetodoHint" class="small mb-3 d-none"></p>
+                        <div class="mediciones-panel">
                         <!-- Medidas Básicas -->
-                        <div class="row mb-4">
+                        <div class="row medicion-seccion" data-seccion="basicas">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-weight me-2"></i> Medidas Básicas</h6>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 medicion-campo-wrap medicion-always">
                                 <label class="form-label">Peso (kg) *</label>
                                 <input type="number" name="peso_actual" id="peso_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 70.5" value="<?= !empty($historial['peso_actual']) ? esc($historial['peso_actual']) : '' ?>">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 medicion-campo-wrap medicion-always">
                                 <label class="form-label">Altura (cm) *</label>
                                 <input type="number" name="altura_actual" id="altura_actual" class="form-control" step="0.01" min="0" placeholder="Ej: 170" value="<?= !empty($historial['altura_actual']) ? esc($historial['altura_actual']) : '' ?>">
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 medicion-campo-wrap">
                                 <label class="form-label">Altura Sentado (cm)</label>
-                                <input type="number" name="altura_sentado" id="altura_sentado" class="form-control" step="0.01" min="0" placeholder="Ej: 90" value="<?= !empty($historial['altura_sentado']) ? esc($historial['altura_sentado']) : '' ?>">
-                                <small class="text-muted">Para métodos 4, 5 componentes</small>
+                                <input type="number" name="altura_sentado" id="altura_sentado" class="form-control metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 90" value="<?= !empty($historial['altura_sentado']) ? esc($historial['altura_sentado']) : '' ?>">
+                                <small class="text-muted">4, 5 componentes y somatotipo</small>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-3 medicion-campo-wrap medicion-always">
                                 <label class="form-label">IMC</label>
                                 <input type="number" name="imc_actual" id="imc_actual" class="form-control" step="0.01" readonly value="<?= !empty($historial['imc_actual']) ? esc($historial['imc_actual']) : '' ?>">
                                 <small class="text-muted">Se calcula automáticamente</small>
@@ -662,181 +609,170 @@
                         </div>
 
                         <!-- Circunferencias -->
-                        <div class="row mb-4">
+                        <div class="row medicion-seccion" data-seccion="circunferencias">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-circle-notch me-2"></i> Circunferencias (cm)</h6>
                                 <p class="text-muted small">Medición con cinta métrica. Se mide en centímetros (cm).</p>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Cintura</label>
-                                <input type="number" name="circunferencia_cintura" id="circunferencia_cintura" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 85.5" value="<?= !empty($historial['circunferencia_cintura']) ? esc($historial['circunferencia_cintura']) : '' ?>">
+                                <input type="number" name="circunferencia_cintura" id="circunferencia_cintura" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 85.5" value="<?= !empty($historial['circunferencia_cintura']) ? esc($historial['circunferencia_cintura']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Cadera</label>
-                                <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 95.0" value="<?= !empty($historial['circunferencia_cadera']) ? esc($historial['circunferencia_cadera']) : '' ?>">
+                                <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 95.0" value="<?= !empty($historial['circunferencia_cadera']) ? esc($historial['circunferencia_cadera']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Brazo Relajado</label>
                                 <input type="number" name="circunferencia_brazo_relajado" id="circunferencia_brazo_relajado" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 28.5" value="<?= !empty($historial['circunferencia_brazo_relajado']) ? esc($historial['circunferencia_brazo_relajado']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Brazo Contraído</label>
-                                <input type="number" name="circunferencia_brazo_contraido" id="circunferencia_brazo_contraido" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 32.0" value="<?= !empty($historial['circunferencia_brazo_contraido']) ? esc($historial['circunferencia_brazo_contraido']) : '' ?>">
+                                <input type="number" name="circunferencia_brazo_contraido" id="circunferencia_brazo_contraido" class="form-control metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 32.0" value="<?= !empty($historial['circunferencia_brazo_contraido']) ? esc($historial['circunferencia_brazo_contraido']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muslo Medio</label>
                                 <input type="number" name="circunferencia_muslo_medio" id="circunferencia_muslo_medio" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 55.0" value="<?= !empty($historial['circunferencia_muslo_medio']) ? esc($historial['circunferencia_muslo_medio']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Pantorrilla</label>
-                                <input type="number" name="circunferencia_pantorrilla" id="circunferencia_pantorrilla" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 36.5" value="<?= !empty($historial['circunferencia_pantorrilla']) ? esc($historial['circunferencia_pantorrilla']) : '' ?>">
+                                <input type="number" name="circunferencia_pantorrilla" id="circunferencia_pantorrilla" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" step="0.01" min="0" placeholder="Ej: 36.5" value="<?= !empty($historial['circunferencia_pantorrilla']) ? esc($historial['circunferencia_pantorrilla']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Cuello</label>
                                 <input type="number" name="circunferencia_cuello" id="circunferencia_cuello" class="form-control" step="0.01" min="0" placeholder="Ej: 38.0" value="<?= !empty($historial['circunferencia_cuello']) ? esc($historial['circunferencia_cuello']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tórax</label>
                                 <input type="number" name="circunferencia_torax" id="circunferencia_torax" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 98.0" value="<?= !empty($historial['circunferencia_torax']) ? esc($historial['circunferencia_torax']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Cabeza</label>
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
+                                <label class="form-label">Circunferencia de cabeza</label>
                                 <input type="number" name="circunferencia_cabeza" id="circunferencia_cabeza" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 56.0" value="<?= !empty($historial['circunferencia_cabeza']) ? esc($historial['circunferencia_cabeza']) : '' ?>">
+                                <small class="text-muted">Perímetro con cinta (cm). Solo 5 componentes. Típico: 50–60.</small>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Antebrazo Máximo</label>
                                 <input type="number" name="circunferencia_antebrazo_maximo" id="circunferencia_antebrazo_maximo" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 28.0" value="<?= !empty($historial['circunferencia_antebrazo_maximo']) ? esc($historial['circunferencia_antebrazo_maximo']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muslo Máximo</label>
                                 <input type="number" name="circunferencia_muslo_maximo" id="circunferencia_muslo_maximo" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 58.0" value="<?= !empty($historial['circunferencia_muslo_maximo']) ? esc($historial['circunferencia_muslo_maximo']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muñeca</label>
                                 <input type="number" name="circunferencia_muneca" id="circunferencia_muneca" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 16.5" value="<?= !empty($historial['circunferencia_muneca']) ? esc($historial['circunferencia_muneca']) : '' ?>">
                             </div>
                         </div>
 
                         <!-- Pliegues Cutáneos -->
-                        <div class="row mb-4">
+                        <div class="row medicion-seccion" data-seccion="pliegues">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-hand-paper me-2"></i> Pliegues Cutáneos (mm)</h6>
                                 <p class="text-muted small">Medición con plicómetro. Se mide en milímetros (mm).</p>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tricipital</label>
-                                <input type="number" name="pliegue_tricipital" id="pliegue_tricipital" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 12.5" value="<?= isset($historial['pliegue_tricipital']) && $historial['pliegue_tricipital'] !== '' ? esc($historial['pliegue_tricipital']) : '' ?>">
+                                <input type="number" name="pliegue_tricipital" id="pliegue_tricipital" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" step="0.01" min="0" placeholder="Ej: 12.5" value="<?= isset($historial['pliegue_tricipital']) && $historial['pliegue_tricipital'] !== '' ? esc($historial['pliegue_tricipital']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Bicipital</label>
                                 <input type="number" name="pliegue_bicipital" id="pliegue_bicipital" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 8.3" value="<?= isset($historial['pliegue_bicipital']) && $historial['pliegue_bicipital'] !== '' ? esc($historial['pliegue_bicipital']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Subescapular</label>
-                                <input type="number" name="pliegue_subescapular" id="pliegue_subescapular" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 15.2" value="<?= isset($historial['pliegue_subescapular']) && $historial['pliegue_subescapular'] !== '' ? esc($historial['pliegue_subescapular']) : '' ?>">
+                                <input type="number" name="pliegue_subescapular" id="pliegue_subescapular" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" step="0.01" min="0" placeholder="Ej: 15.2" value="<?= isset($historial['pliegue_subescapular']) && $historial['pliegue_subescapular'] !== '' ? esc($historial['pliegue_subescapular']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Suprailíaco</label>
                                 <input type="number" name="pliegue_suprailíaco" id="pliegue_suprailíaco" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 18.7" value="<?= isset($historial['pliegue_suprailíaco']) && $historial['pliegue_suprailíaco'] !== '' ? esc($historial['pliegue_suprailíaco']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Supraespinal</label>
-                                <input type="number" name="pliegue_supraespinal" id="pliegue_supraespinal" class="form-control metodo-2 metodo-5" step="0.01" min="0" placeholder="Ej: 16.5" value="<?= isset($historial['pliegue_supraespinal']) && $historial['pliegue_supraespinal'] !== '' ? esc($historial['pliegue_supraespinal']) : '' ?>">
+                                <input type="number" name="pliegue_supraespinal" id="pliegue_supraespinal" class="form-control metodo-2 metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 16.5" value="<?= isset($historial['pliegue_supraespinal']) && $historial['pliegue_supraespinal'] !== '' ? esc($historial['pliegue_supraespinal']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Abdominal</label>
-                                <input type="number" name="pliegue_abdominal" id="pliegue_abdominal" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 22.1" value="<?= isset($historial['pliegue_abdominal']) && $historial['pliegue_abdominal'] !== '' ? esc($historial['pliegue_abdominal']) : '' ?>">
+                                <input type="number" name="pliegue_abdominal" id="pliegue_abdominal" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 22.1" value="<?= isset($historial['pliegue_abdominal']) && $historial['pliegue_abdominal'] !== '' ? esc($historial['pliegue_abdominal']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muslo Anterior</label>
-                                <input type="number" name="pliegue_muslo_anterior" id="pliegue_muslo_anterior" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 20.5" value="<?= isset($historial['pliegue_muslo_anterior']) && $historial['pliegue_muslo_anterior'] !== '' ? esc($historial['pliegue_muslo_anterior']) : '' ?>">
+                                <input type="number" name="pliegue_muslo_anterior" id="pliegue_muslo_anterior" class="form-control" step="0.01" min="0" placeholder="Ej: 20.5" value="<?= isset($historial['pliegue_muslo_anterior']) && $historial['pliegue_muslo_anterior'] !== '' ? esc($historial['pliegue_muslo_anterior']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Pantorrilla Medial</label>
-                                <input type="number" name="pliegue_pantorrilla_medial" id="pliegue_pantorrilla_medial" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 10.8" value="<?= isset($historial['pliegue_pantorrilla_medial']) && $historial['pliegue_pantorrilla_medial'] !== '' ? esc($historial['pliegue_pantorrilla_medial']) : '' ?>">
+                                <input type="number" name="pliegue_pantorrilla_medial" id="pliegue_pantorrilla_medial" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" step="0.01" min="0" placeholder="Ej: 10.8" value="<?= isset($historial['pliegue_pantorrilla_medial']) && $historial['pliegue_pantorrilla_medial'] !== '' ? esc($historial['pliegue_pantorrilla_medial']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Pectoral</label>
                                 <input type="number" name="pliegue_pectoral" id="pliegue_pectoral" class="form-control" step="0.01" min="0" placeholder="Ej: 12.0" value="<?= isset($historial['pliegue_pectoral']) && $historial['pliegue_pectoral'] !== '' ? esc($historial['pliegue_pectoral']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Axilar Medio</label>
                                 <input type="number" name="pliegue_axilar_medio" id="pliegue_axilar_medio" class="form-control" step="0.01" min="0" placeholder="Ej: 14.5" value="<?= isset($historial['pliegue_axilar_medio']) && $historial['pliegue_axilar_medio'] !== '' ? esc($historial['pliegue_axilar_medio']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muslo Medial</label>
-                                <input type="number" name="pliegue_muslo_medial" id="pliegue_muslo_medial" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 18.0" value="<?= isset($historial['pliegue_muslo_medial']) && $historial['pliegue_muslo_medial'] !== '' ? esc($historial['pliegue_muslo_medial']) : '' ?>">
+                                <input type="number" name="pliegue_muslo_medial" id="pliegue_muslo_medial" class="form-control metodo-4 metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 18.0" value="<?= isset($historial['pliegue_muslo_medial']) && $historial['pliegue_muslo_medial'] !== '' ? esc($historial['pliegue_muslo_medial']) : '' ?>">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 medicion-campo-wrap medicion-suma-pliegues">
                                 <label class="form-label">Suma de Pliegues (mm)</label>
-                                <input type="number" name="suma_pliegues" id="suma_pliegues" class="form-control" step="0.01" readonly value="<?= isset($historial['suma_pliegues']) && $historial['suma_pliegues'] !== '' ? esc($historial['suma_pliegues']) : '' ?>">
+                                <input type="number" name="suma_pliegues" id="suma_pliegues" class="form-control metodo-2 metodo-4 metodo-5 metodo-somato" step="0.01" readonly value="<?= isset($historial['suma_pliegues']) && $historial['suma_pliegues'] !== '' ? esc($historial['suma_pliegues']) : '' ?>">
                                 <small class="text-muted">Se calcula automáticamente</small>
                             </div>
                         </div>
 
                         <!-- Diámetros Óseos -->
-                        <div class="row mb-4">
+                        <div class="row medicion-seccion" data-seccion="diametros">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-ruler me-2"></i> Diámetros Óseos (cm)</h6>
                                 <p class="text-muted small">Medición con antropómetro o caliper. Se mide en centímetros (cm). Necesarios para métodos 4, 5 componentes y somatotipo.</p>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Biacromial (Hombros)</label>
                                 <input type="number" name="diametro_biacromial" id="diametro_biacromial" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 38.5" value="<?= isset($historial['diametro_biacromial']) && $historial['diametro_biacromial'] !== '' ? esc($historial['diametro_biacromial']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Bi-iliocristal (Cadera)</label>
                                 <input type="number" name="diametro_bi_iliocristal" id="diametro_bi_iliocristal" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 28.0" value="<?= isset($historial['diametro_bi_iliocristal']) && $historial['diametro_bi_iliocristal'] !== '' ? esc($historial['diametro_bi_iliocristal']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Húmero (Codo)</label>
-                                <input type="number" name="diametro_humero" id="diametro_humero" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 6.5" value="<?= isset($historial['diametro_humero']) && $historial['diametro_humero'] !== '' ? esc($historial['diametro_humero']) : '' ?>">
+                                <input type="number" name="diametro_humero" id="diametro_humero" class="form-control metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 6.5" value="<?= isset($historial['diametro_humero']) && $historial['diametro_humero'] !== '' ? esc($historial['diametro_humero']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Fémur (Rodilla)</label>
-                                <input type="number" name="diametro_femur" id="diametro_femur" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 9.0" value="<?= isset($historial['diametro_femur']) && $historial['diametro_femur'] !== '' ? esc($historial['diametro_femur']) : '' ?>">
+                                <input type="number" name="diametro_femur" id="diametro_femur" class="form-control metodo-4 metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 9.0" value="<?= isset($historial['diametro_femur']) && $historial['diametro_femur'] !== '' ? esc($historial['diametro_femur']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muñeca</label>
-                                <input type="number" name="diametro_muneca" id="diametro_muneca" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 5.5" value="<?= isset($historial['diametro_muneca']) && $historial['diametro_muneca'] !== '' ? esc($historial['diametro_muneca']) : '' ?>">
+                                <input type="number" name="diametro_muneca" id="diametro_muneca" class="form-control" step="0.01" min="0" placeholder="Ej: 5.5" value="<?= isset($historial['diametro_muneca']) && $historial['diametro_muneca'] !== '' ? esc($historial['diametro_muneca']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tobillo</label>
                                 <input type="number" name="diametro_tobillo" id="diametro_tobillo" class="form-control" step="0.01" min="0" placeholder="Ej: 6.8" value="<?= isset($historial['diametro_tobillo']) && $historial['diametro_tobillo'] !== '' ? esc($historial['diametro_tobillo']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tórax Transverso</label>
                                 <input type="number" name="diametro_torax_transverso" id="diametro_torax_transverso" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 28.5" value="<?= isset($historial['diametro_torax_transverso']) && $historial['diametro_torax_transverso'] !== '' ? esc($historial['diametro_torax_transverso']) : '' ?>">
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tórax Anteroposterior</label>
                                 <input type="number" name="diametro_torax_anteroposterior" id="diametro_torax_anteroposterior" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 20.0" value="<?= isset($historial['diametro_torax_anteroposterior']) && $historial['diametro_torax_anteroposterior'] !== '' ? esc($historial['diametro_torax_anteroposterior']) : '' ?>">
                             </div>
                         </div>
+                        </div><!-- /.mediciones-panel -->
 
-                        <!-- Composición Corporal -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h6 class="text-primary mb-3"><i class="fas fa-chart-pie me-2"></i> Composición Corporal</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Grasa Corporal (%)</label>
-                                <input type="number" name="grasa_corporal" id="grasa_corporal" class="form-control" step="0.01" min="0" max="100" placeholder="Ej: 25.5" value="<?= isset($historial['grasa_corporal']) && $historial['grasa_corporal'] !== '' ? esc($historial['grasa_corporal']) : '' ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Grasa Corporal Calculada (%)</label>
-                                <input type="number" name="grasa_corporal_calculada" id="grasa_corporal_calculada" class="form-control" step="0.01" readonly value="<?= isset($historial['grasa_corporal_calculada']) && $historial['grasa_corporal_calculada'] !== '' ? esc($historial['grasa_corporal_calculada']) : '' ?>">
-                                <small class="text-muted">Se calcula a partir de los pliegues</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Masa Muscular (kg)</label>
-                                <input type="number" name="masa_muscular" id="masa_muscular" class="form-control" step="0.01" min="0" placeholder="Ej: 45.2" value="<?= isset($historial['masa_muscular']) && $historial['masa_muscular'] !== '' ? esc($historial['masa_muscular']) : '' ?>">
-                            </div>
+                        <!-- Composición corporal: campos ocultos (se completan con los métodos de cálculo) -->
+                        <div class="d-none" aria-hidden="true">
+                            <input type="number" name="grasa_corporal" id="grasa_corporal" step="0.01" value="<?= isset($historial['grasa_corporal']) && $historial['grasa_corporal'] !== '' ? esc($historial['grasa_corporal']) : '' ?>">
+                            <input type="number" name="grasa_corporal_calculada" id="grasa_corporal_calculada" step="0.01" value="<?= isset($historial['grasa_corporal_calculada']) && $historial['grasa_corporal_calculada'] !== '' ? esc($historial['grasa_corporal_calculada']) : '' ?>">
+                            <input type="number" name="masa_muscular" id="masa_muscular" step="0.01" value="<?= isset($historial['masa_muscular']) && $historial['masa_muscular'] !== '' ? esc($historial['masa_muscular']) : '' ?>">
                         </div>
 
                         <!-- Métodos de Cálculo de Composición Corporal -->
                         <?php if (!empty($metodos_calculo ?? [])): ?>
-                        <div class="row mb-4">
+                        <div class="row mb-4 mediciones-calculo-wrap">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-calculator me-2"></i> Métodos de Cálculo de Composición Corporal</h6>
                                 <p class="text-muted small mb-3">Guardá primero las mediciones para poder calcular. Luego elegí el método según tu plan.</p>
@@ -1357,11 +1293,18 @@
 </div>
 
 <script>
-// Configurar toastr
-toastr.options = {
-    "closeButton": true,
-    "progressBar": true,
-    "positionClass": "toast-top-right"
+<?php
+$fechaNacConsulta = null;
+if (!empty($cita->fecha_nacimiento)) {
+    $tsFnConsulta = strtotime((string) $cita->fecha_nacimiento);
+    if ($tsFnConsulta) {
+        $fechaNacConsulta = date('Y-m-d', $tsFnConsulta);
+    }
+}
+?>
+window.pacienteCalorimetriaDatos = {
+    fechaNacimiento: <?= json_encode($fechaNacConsulta) ?>,
+    genero: <?= json_encode(!empty($cita->genero) ? (string) $cita->genero : null) ?>
 };
 
 // CSRF y binding de Calcular (JavaScript puro para no depender de jQuery)
@@ -1373,11 +1316,163 @@ function setCsrfHashCalc(newHash) {
     var inp = document.querySelector('input[name="' + csrfNameCalc.replace(/"/g, '\\"') + '"]');
     if (inp) inp.value = csrfHashCalc;
 }
+function ejecutarCalculoComposicion(btn, metodoSlug, metodoNombre, historialId, originalHtml) {
+    var csrfInput = document.querySelector('input[name="' + csrfNameCalc.replace(/"/g, '\\"') + '"]');
+    var csrfTokenActual = (csrfInput && csrfInput.value) || csrfHashCalc;
+    var url = '<?= esc(base_url('dashboard/historial/calcular-')) ?>' + metodoSlug;
+    var body = new FormData();
+    body.append('historial_id', historialId);
+    body.append(csrfNameCalc, csrfTokenActual);
+    fetch(url, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfTokenActual },
+        body: body
+    }).then(function(r) {
+        var headerToken = r.headers.get('X-CSRF-TOKEN');
+        if (headerToken) setCsrfHashCalc(headerToken);
+        return r.json().catch(function() { return {}; }).then(function(data) {
+            return { ok: r.ok, data: data };
+        });
+    }).then(function(result) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        var response = result.data || {};
+        if (response.csrf_hash) setCsrfHashCalc(response.csrf_hash);
+        if (response.success && typeof window.mostrarResultadosCalculo === 'function') {
+            window.mostrarResultadosCalculo(metodoNombre, response.resultado, response.metodo);
+        } else if (response.requiere_upgrade && typeof window.mostrarErrorUpgrade === 'function') {
+            window.mostrarErrorUpgrade(response);
+        } else if (response.error === 'Datos insuficientes' && response.faltantes && response.faltantes.length && typeof mostrarModalDatosInsuficientes === 'function') {
+            mostrarModalDatosInsuficientes(response);
+        } else if (typeof window.mostrarModalErrorCalculo === 'function') {
+            window.mostrarModalErrorCalculo({
+                error: response.error || 'Error al calcular',
+                message: response.message || response.error || 'No se pudo completar el cálculo.',
+                metodo: response.metodo || metodoSlug,
+                warnings: response.warnings || []
+            });
+        } else if (typeof toastr !== 'undefined') {
+            toastr.error(response.message || response.error || 'Error desconocido', 'Error');
+        }
+    }).catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        if (typeof window.mostrarModalErrorCalculo === 'function') {
+            window.mostrarModalErrorCalculo({ error: 'Error al calcular', message: err && err.message ? err.message : 'Error de conexión', metodo: metodoSlug });
+        } else if (typeof toastr !== 'undefined') {
+            toastr.error('Error al calcular', 'Error');
+        }
+    });
+}
+
+(function() {
+    var METODO_CLASS = {
+        '2-componentes': 'metodo-2',
+        '4-componentes': 'metodo-4',
+        '5-componentes': 'metodo-5',
+        'somatotipo': 'metodo-somato'
+    };
+    var METODO_LABEL = {
+        'todos': 'Todas las medidas',
+        '2-componentes': '2 componentes',
+        '4-componentes': '4 componentes',
+        '5-componentes': '5 componentes',
+        'somatotipo': 'Somatotipo'
+    };
+    var STORAGE_KEY = 'nutrinext_medicion_metodo_filtro';
+
+    function campoUsadoEnMetodo(input, metodo) {
+        if (!metodo || metodo === 'todos') return true;
+        var cls = METODO_CLASS[metodo];
+        return !!(cls && input.classList.contains(cls));
+    }
+
+    window.aplicarFiltroMedicionMetodo = function(metodo, opts) {
+        opts = opts || {};
+        var pane = document.getElementById('pane-mediciones');
+        if (!pane) return;
+        metodo = metodo || 'todos';
+        document.body.classList.toggle('mediciones-filtradas', metodo !== 'todos');
+
+        pane.querySelectorAll('.medicion-campo-wrap').forEach(function(wrap) {
+            if (wrap.classList.contains('medicion-always')) {
+                wrap.classList.remove('d-none');
+                return;
+            }
+            var input = wrap.querySelector('input, select, textarea');
+            if (!input) return;
+            wrap.classList.toggle('d-none', !campoUsadoEnMetodo(input, metodo));
+        });
+
+        pane.querySelectorAll('.medicion-seccion').forEach(function(seccion) {
+            var visibles = seccion.querySelectorAll('.medicion-campo-wrap:not(.d-none)').length;
+            var header = seccion.querySelector('.col-12');
+            if (header) header.classList.toggle('d-none', visibles === 0);
+            if (seccion.getAttribute('data-seccion') !== 'basicas') {
+                seccion.classList.toggle('d-none', visibles === 0);
+            }
+        });
+
+        var hint = document.getElementById('medicionesMetodoHint');
+        if (hint) {
+            if (metodo !== 'todos') {
+                hint.textContent = 'Mostrando solo los campos necesarios para ' + (METODO_LABEL[metodo] || metodo) + '. Peso y talla siempre visibles.';
+                hint.classList.remove('d-none');
+            } else {
+                hint.classList.add('d-none');
+            }
+        }
+
+        if (!opts.skipStorage) {
+            try { sessionStorage.setItem(STORAGE_KEY, metodo); } catch (err) {}
+        }
+
+        var tabs = document.getElementById('medicionesMetodoTabs');
+        if (tabs) {
+            tabs.querySelectorAll('[data-medicion-metodo]').forEach(function(tabBtn) {
+                var active = tabBtn.getAttribute('data-medicion-metodo') === metodo;
+                tabBtn.classList.toggle('active', active);
+                tabBtn.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+        }
+    };
+
+    window.seleccionarFiltroMedicionMetodo = function(metodoSlug) {
+        if (METODO_CLASS[metodoSlug]) {
+            window.aplicarFiltroMedicionMetodo(metodoSlug);
+        }
+    };
+
+    document.addEventListener('click', function(e) {
+        var tabBtn = e.target && e.target.closest && e.target.closest('#medicionesMetodoTabs [data-medicion-metodo]');
+        if (!tabBtn) return;
+        e.preventDefault();
+        window.aplicarFiltroMedicionMetodo(tabBtn.getAttribute('data-medicion-metodo'));
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var saved = 'todos';
+        try { saved = sessionStorage.getItem(STORAGE_KEY) || 'todos'; } catch (err) {}
+        if (saved !== 'todos') window.aplicarFiltroMedicionMetodo(saved, { skipStorage: true });
+        var tabMediciones = document.getElementById('tab-mediciones-btn');
+        if (tabMediciones) {
+            tabMediciones.addEventListener('shown.bs.tab', function() {
+                var m = 'todos';
+                try { m = sessionStorage.getItem(STORAGE_KEY) || 'todos'; } catch (err) {}
+                window.aplicarFiltroMedicionMetodo(m, { skipStorage: true });
+            });
+        }
+    });
+})();
+
 document.addEventListener('click', function(e) {
     var btn = e.target && e.target.closest && e.target.closest('.calcular-metodo');
     if (!btn) return;
     var metodoSlug = btn.getAttribute('data-metodo');
     var metodoNombre = btn.getAttribute('data-nombre') || metodoSlug;
+    if (typeof window.seleccionarFiltroMedicionMetodo === 'function') {
+        window.seleccionarFiltroMedicionMetodo(metodoSlug);
+    }
     var hid = document.getElementById('historial_id');
     var historialId = hid && hid.value ? parseInt(hid.value, 10) : 0;
     if (!historialId) {
@@ -1391,41 +1486,23 @@ document.addEventListener('click', function(e) {
             return;
         }
     }
-    var csrfInput = document.querySelector('input[name="' + csrfNameCalc.replace(/"/g, '\\"') + '"]');
-    var csrfTokenActual = (csrfInput && csrfInput.value) || csrfHashCalc;
     var originalHtml = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculando...';
-    var url = '<?= esc(base_url('dashboard/historial/calcular-')) ?>' + metodoSlug;
-    var body = new FormData();
-    body.append('historial_id', historialId);
-    body.append(csrfNameCalc, csrfTokenActual);
-    fetch(url, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfTokenActual },
-        body: body
-    }).then(function(r) {
-        var headerToken = r.headers.get('X-CSRF-TOKEN');
-        if (headerToken) setCsrfHashCalc(headerToken);
-        return r.json().catch(function() { return {}; });
-    }).then(function(response) {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-        if (response && response.csrf_hash) setCsrfHashCalc(response.csrf_hash);
-        if (response && response.success && typeof window.mostrarResultadosCalculo === 'function') {
-            window.mostrarResultadosCalculo(metodoNombre, response.resultado, response.metodo);
-        } else if (response && response.requiere_upgrade && typeof window.mostrarErrorUpgrade === 'function') {
-            window.mostrarErrorUpgrade(response);
-        } else if (response && !response.success && typeof toastr !== 'undefined') {
-            toastr.error(response.error || response.message || 'Error desconocido', 'Error');
-        }
-    }).catch(function(err) {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
-        if (typeof window.mostrarModalErrorCalculo === 'function') {
-            window.mostrarModalErrorCalculo({ error: 'Error al calcular', message: err && err.message ? err.message : 'Error de conexión', metodo: metodoSlug });
-        } else if (typeof toastr !== 'undefined') {
-            toastr.error('Error al calcular', 'Error');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...';
+    guardarMediciones({ preventDefault: function() {} }, 'mediciones', {
+        silent: true,
+        onComplete: function(ok) {
+            if (!ok) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (typeof toastr !== 'undefined') {
+                    toastr.error('No se pudieron guardar las mediciones antes de calcular.', 'Error');
+                }
+                return;
+            }
+            historialId = hid && hid.value ? parseInt(hid.value, 10) : historialId;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculando...';
+            ejecutarCalculoComposicion(btn, metodoSlug, metodoNombre, historialId, originalHtml);
         }
     });
 });
@@ -1684,10 +1761,25 @@ function confirmarTerminarConsulta() {
     });
 }
 
+var infoClinicaAutoSaveTimeout = null;
+
+function programarAutoGuardadoInfoClinica() {
+    if (!$('input[name="detalle_agenda_id"]').val()) {
+        return;
+    }
+    clearTimeout(infoClinicaAutoSaveTimeout);
+    infoClinicaAutoSaveTimeout = setTimeout(function() {
+        if ($('#registroClinicoEstado').hasClass('bg-warning')) {
+            guardarInformacionClinica(false);
+        }
+    }, 2000);
+}
+
 function marcarCambiosPendientesInfoClinica() {
     if ($('#registroClinicoEstado').length && !$('#registroClinicoEstado').hasClass('bg-primary')) {
         actualizarEstadoRegistroClinico('cambios');
     }
+    programarAutoGuardadoInfoClinica();
 }
 
 function guardarRegistroClinicoCompleto() {
@@ -1737,31 +1829,54 @@ if (typeof window !== 'undefined') {
     window.actualizarEstadoCalorimetriaPlan = actualizarEstadoCalorimetriaPlan;
 }
 
+var calorimetriaPlanAutoSaveTimeout = null;
+
+function consultaTieneDetalleAgenda() {
+    return !!(
+        $('#formMediciones input[name="detalle_agenda_id"]').val()
+        || $('#detalle_agenda_id_cal').val()
+        || $('#detalle_agenda_id_plan').val()
+    );
+}
+
+// Auto-guardar calorimetría / plan (debounce 2 s), igual que mediciones
+function programarAutoGuardadoCalorimetriaPlan() {
+    if (!consultaTieneDetalleAgenda()) {
+        return;
+    }
+    clearTimeout(calorimetriaPlanAutoSaveTimeout);
+    calorimetriaPlanAutoSaveTimeout = setTimeout(function() {
+        if ($('#calorimetriaPlanEstado').hasClass('bg-warning')) {
+            guardarBloqueCalorimetriaPlan({ silent: false });
+        }
+    }, 2000);
+}
+
+if (typeof window !== 'undefined') {
+    window.programarAutoGuardadoCalorimetriaPlan = programarAutoGuardadoCalorimetriaPlan;
+}
+
 // Guardar el bloque Calorimetría y Plan Alimentario (según la pestaña activa)
-function guardarBloqueCalorimetriaPlan() {
+function guardarBloqueCalorimetriaPlan(opciones) {
+    opciones = opciones || {};
+    var silent = !!opciones.silent;
     actualizarEstadoCalorimetriaPlan('guardando');
     var activeTab = $('#planAlimentarioTabContent .tab-pane.active');
     var id = activeTab.length ? activeTab.attr('id') : 'calorimetria';
     if (id === 'calorimetria' && typeof calcularYGuardarCalorimetria === 'function') {
-        calcularYGuardarCalorimetria();
+        calcularYGuardarCalorimetria(silent);
     } else if (id === 'plan' && typeof guardarPlanAlimentario === 'function') {
-        guardarPlanAlimentario();
+        guardarPlanAlimentario(silent);
     } else if (id === 'distribucion' && typeof guardarDistribucion === 'function') {
-        guardarDistribucion();
+        guardarDistribucion(silent);
     } else if (typeof calcularYGuardarCalorimetria === 'function') {
-        calcularYGuardarCalorimetria();
+        calcularYGuardarCalorimetria(silent);
     } else {
         actualizarEstadoCalorimetriaPlan('guardado');
-        toastr.info('Abrí la sección Calorimetría y Plan Alimentario para guardar.', 'Guardar');
-        return;
-    }
-    // Las vistas incluidas pueden llamar actualizarEstadoCalorimetriaPlan('guardado') o ('cambios') en su success/error; si no, mostramos Guardado tras 2.5s
-    setTimeout(function() {
-        var $b = $('#calorimetriaPlanEstado');
-        if ($b.length && $b.hasClass('bg-primary')) {
-            actualizarEstadoCalorimetriaPlan('guardado');
+        if (!silent) {
+            toastr.info('Abrí la sección Calorimetría y Plan Alimentario para guardar.', 'Guardar');
         }
-    }, 2500);
+    }
 }
 
 // Guardar motivo, plan y recomendaciones (dentro del tab Registro Clínico)
@@ -1816,22 +1931,31 @@ function guardarInformacionClinica(silentToast) {
         success: function(response, textStatus, xhr) {
             actualizarTokenCSRF(xhr);
             if (response.success) {
-                if (!$('#registroClinicoEstado').hasClass('bg-warning')) {
-                    actualizarEstadoRegistroClinico('guardado');
+                actualizarEstadoRegistroClinico('guardado');
+                var motivoSync = '', planSync = '', recomSync = '';
+                if (typeof tinymce !== 'undefined') {
+                    if (tinymce.get('motivo_consulta')) motivoSync = tinymce.get('motivo_consulta').getContent();
+                    if (tinymce.get('plan_tratamiento')) planSync = tinymce.get('plan_tratamiento').getContent();
+                    if (tinymce.get('recomendaciones')) recomSync = tinymce.get('recomendaciones').getContent();
                 }
+                ultimoContenido = {
+                    motivo: motivoSync || $('#motivo_consulta').val() || '',
+                    plan: planSync || $('#plan_tratamiento').val() || '',
+                    recomendaciones: recomSync || $('#recomendaciones').val() || ''
+                };
                 if (!silentToast) {
-                    toastr.success(response.message || 'Registro clínico guardado correctamente', 'Éxito', { timeOut: 2000 });
+                    toastGuardadoExito(response.message || 'Registro clínico actualizado correctamente');
                 }
             } else {
                 actualizarEstadoRegistroClinico('cambios');
-                toastr.error(response.error || 'Error al guardar', 'Error');
+                toastGuardadoError(response.error || 'Error al guardar el registro clínico');
             }
         },
         error: function(xhr) {
             actualizarTokenCSRF(xhr);
             actualizarEstadoRegistroClinico('cambios');
             var errorMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error al guardar la información';
-            toastr.error(errorMsg, 'Error');
+            toastGuardadoError(errorMsg);
         }
     });
 }
@@ -2279,6 +2403,10 @@ function calcularSumaPliegues() {
 
 // Event listeners para cálculos automáticos
 $(document).ready(function() {
+    if (typeof aplicarDatosPacienteCalorimetria === 'function') {
+        aplicarDatosPacienteCalorimetria();
+    }
+
     $('#peso_actual, #altura_actual').on('input', function() {
         calcularIMC();
         if (typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
@@ -2297,8 +2425,10 @@ $(document).ready(function() {
     });
 });
 
-// Guardar mediciones. Opcional: seccionGuardar = 'mediciones' | 'registro' | 'ambos' (solo guarda esa sección en el servidor)
-function guardarMediciones(event, seccionGuardar) {
+// Guardar mediciones. Opcional: seccionGuardar = 'mediciones' | 'registro' | 'ambos'
+// opciones: { silent: bool, onComplete: function(ok, response, xhr) }
+function guardarMediciones(event, seccionGuardar, opciones) {
+    opciones = opciones || {};
     if (event && typeof event.preventDefault === 'function') event.preventDefault();
     
     // Sincronizar token CSRF con la cookie (CI4 usa cookie; el token del form puede estar desactualizado)
@@ -2427,11 +2557,20 @@ function guardarMediciones(event, seccionGuardar) {
             if (response.success) {
                 if (guardandoMed) actualizarEstadoMediciones('guardado');
                 if (guardandoReg) actualizarEstadoRegistroClinico('guardado');
-                toastr.success(response.message || 'Mediciones guardadas correctamente', 'Éxito', {
-                    timeOut: 3000
-                });
-                // Actualizar historial_id si es nuevo registro
-                if (response.historial_id && !$('#historial_id').val()) {
+                if (!opciones.silent) {
+                    var msgGuardado = response.message;
+                    if (!msgGuardado) {
+                        if (seccionGuardar === 'registro') {
+                            msgGuardado = 'Registro clínico actualizado correctamente';
+                        } else if (seccionGuardar === 'mediciones') {
+                            msgGuardado = 'Mediciones actualizadas correctamente';
+                        } else {
+                            msgGuardado = 'Cambios guardados correctamente';
+                        }
+                    }
+                    toastGuardadoExito(msgGuardado);
+                }
+                if (response.historial_id) {
                     $('#historial_id').val(response.historial_id);
                 }
                 if (guardandoMed && typeof window.sincronizarCalorimetriaDesdeMediciones === 'function') {
@@ -2440,25 +2579,35 @@ function guardarMediciones(event, seccionGuardar) {
             } else {
                 if (guardandoMed) actualizarEstadoMediciones('cambios');
                 if (guardandoReg) actualizarEstadoRegistroClinico('cambios');
-                toastr.error(response.error || 'Error al guardar', 'Error');
+                if (!opciones.silent) {
+                    toastGuardadoError(response.error || 'Error al guardar');
+                }
+            }
+            if (typeof opciones.onComplete === 'function') {
+                opciones.onComplete(!!response.success, response, xhr);
             }
         },
         error: function(xhr) {
             actualizarTokenCSRF(xhr);
             if (guardandoMed) actualizarEstadoMediciones('cambios');
             if (guardandoReg) actualizarEstadoRegistroClinico('cambios');
-            var errorMsg = 'Error al guardar las mediciones';
-            if (xhr.status === 403) {
-                errorMsg = 'Sesión o token de seguridad expirado. Actualizá el token e intentá guardar de nuevo.';
-                var nuevoToken = obtenerTokenCSRF();
-                if (nuevoToken) {
-                    $('input[name="csrf_test_name"]').val(nuevoToken);
-                    $('meta[name="csrf-token"]').attr('content', nuevoToken);
+            if (!opciones.silent) {
+                var errorMsg = 'Error al guardar las mediciones';
+                if (xhr.status === 403) {
+                    errorMsg = 'Sesión o token de seguridad expirado. Actualizá el token e intentá guardar de nuevo.';
+                    var nuevoToken = obtenerTokenCSRF();
+                    if (nuevoToken) {
+                        $('input[name="csrf_test_name"]').val(nuevoToken);
+                        $('meta[name="csrf-token"]').attr('content', nuevoToken);
+                    }
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
                 }
-            } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
+                toastGuardadoError(errorMsg);
             }
-            toastr.error(errorMsg, 'Error');
+            if (typeof opciones.onComplete === 'function') {
+                opciones.onComplete(false, xhr.responseJSON || {}, xhr);
+            }
         }
     });
 }
@@ -2497,13 +2646,25 @@ $(document).ready(function() {
             }, 2000);
         }
     });
-    // Calorimetría y Plan Alimentario: marcar "Cambios sin guardar" al editar dentro del bloque
+    // Calorimetría y Plan Alimentario: marcar cambios y auto-guardar tras 2 s
     $(document).on('change input', '#pane-calorimetria input, #pane-calorimetria select, #pane-calorimetria textarea', function() {
         var $b = $('#calorimetriaPlanEstado');
         if ($b.length && !$b.hasClass('bg-primary')) {
             actualizarEstadoCalorimetriaPlan('cambios');
         }
+        programarAutoGuardadoCalorimetriaPlan();
     });
+
+    // Al cambiar sub-pestaña (Calorimetría / Plan / Distribución), guardar la sección que se abandona
+    var planAlimentarioTabsEl = document.getElementById('planAlimentarioTabs');
+    if (planAlimentarioTabsEl) {
+        planAlimentarioTabsEl.addEventListener('hide.bs.tab', function() {
+            if ($('#calorimetriaPlanEstado').hasClass('bg-warning') && consultaTieneDetalleAgenda()) {
+                clearTimeout(calorimetriaPlanAutoSaveTimeout);
+                guardarBloqueCalorimetriaPlan({ silent: true });
+            }
+        });
+    }
 });
 
 // Agregar fila a la tabla de exámenes bioquímicos
@@ -2544,7 +2705,7 @@ function initReferenciasUltimaConsulta() {
     function addHintAfterLabel($label, text) {
         if (!$label.length || !text) return;
         if ($label.next('.ultima-consulta-ref').length) return;
-        $label.after('<small class="text-muted d-block ultima-consulta-ref mb-1">Última consulta: ' + $('<span>').text(text).html() + '</small>');
+        $label.after('<span class="ultima-consulta-ref"><i class="fas fa-history" aria-hidden="true"></i> Anterior: <strong>' + $('<span>').text(text).html() + '</strong></span>');
     }
     Object.keys(ref).forEach(function(name) {
         if (name.indexOf('[]') >= 0) return;
@@ -2647,6 +2808,11 @@ $(function() {
         seccionesTabEl.addEventListener('hide.bs.tab', function(e) {
             var paneId = e.target.getAttribute('data-bs-target');
             var badgeId = badgeIdPorPane(paneId);
+            if (paneId === '#pane-calorimetria' && badgeId && $(badgeId).hasClass('bg-warning') && consultaTieneDetalleAgenda()) {
+                clearTimeout(calorimetriaPlanAutoSaveTimeout);
+                guardarBloqueCalorimetriaPlan({ silent: true });
+                return;
+            }
             if (badgeId && $(badgeId).hasClass('bg-warning')) {
                 var nombre = nombreTabConsulta(paneId);
                 if (!confirm('Hay cambios sin guardar en ' + nombre + '. ¿Salir sin guardar?')) {
@@ -2704,9 +2870,17 @@ function limpiarFormularioMediciones() {
 // CÁLCULO DE COMPOSICIÓN CORPORAL (helpers; el binding está al inicio del script)
 // ============================================
 
+function humanizarMensajeErrorCalculo(msg) {
+    if (!msg) return msg;
+    return String(msg)
+        .replace(/\bPCAB\b/g, 'circunferencia de cabeza')
+        .replace(/\bMO_CAB\b/g, 'resultado del modelo')
+        .replace(/masa ósea de cabeza/gi, 'resultado del cálculo');
+}
+
 function mostrarModalErrorCalculo(payload) {
     var titulo = (payload && payload.error) ? payload.error : 'Error al calcular';
-    var mensaje = (payload && payload.message) ? payload.message : 'Ocurrió un error inesperado.';
+    var mensaje = humanizarMensajeErrorCalculo((payload && payload.message) ? payload.message : 'Ocurrió un error inesperado.');
     var metodo = (payload && payload.metodo) ? payload.metodo : null;
     var warnings = (payload && Array.isArray(payload.warnings)) ? payload.warnings : [];
     var modalHtml = '<div class="modal fade" id="modalErrorCalculo" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>' + titulo + '</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body">' + (metodo ? '<div class="small text-muted mb-2">Método: <strong>' + metodo + '</strong></div>' : '') + (warnings.length ? '<div class="alert alert-warning border small"><strong>Revisar:</strong><ul class="mb-0">' + warnings.map(function(w){ return '<li>' + w + '</li>'; }).join('') + '</ul></div>' : '') + '<div class="alert alert-light border"><div class="fw-semibold mb-1">Detalle</div><pre class="mb-0" style="white-space: pre-wrap; word-break: break-word;">' + mensaje + '</pre></div><div class="small text-muted">Si el error menciona perímetros/diámetros "muy bajos", revisá que estén cargados en <strong>cm</strong> (no pulgadas) y que los pliegues estén en <strong>mm</strong>.</div></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>';
@@ -2732,6 +2906,12 @@ function validarUnidadesHolway5C() {
     var PMUS = numByName('circunferencia_muslo_maximo');
     var PPAN = numByName('circunferencia_pantorrilla');
     var PTX = numByName('circunferencia_torax');
+    var PCAB = numByName('circunferencia_cabeza');
+    if (PCAB === null || PCAB <= 0) {
+        issues.push({ campo: 'circunferencia_cabeza', valor: PCAB == null ? '—' : PCAB, hint: 'Perímetro con cinta (cm), en Circunferencias. Requerido para 5 componentes.' });
+    } else if (PCAB < 47) {
+        issues.push({ campo: 'circunferencia_cabeza', valor: PCAB, hint: 'Circunferencia de cabeza en cm suele ser 50–60. ¿Pulgadas o valor incompleto?' });
+    }
     pushIf('circunferencia_brazo_relajado', PBR, PBR > 0 && PBR < 18, 'Brazo relajado en cm suele ser > 18. ¿Pulgadas?');
     pushIf('circunferencia_antebrazo_maximo', PAM, PAM > 0 && PAM < 18, 'Antebrazo en cm suele ser > 18. ¿Pulgadas?');
     pushIf('circunferencia_muslo_maximo', PMUS, PMUS > 0 && PMUS < 30, 'Muslo máximo en cm suele ser > 30. ¿Pulgadas?');
@@ -2748,7 +2928,7 @@ var etiquetasCamposComposicion = {
     peso_actual: 'Peso (kg)', altura_actual: 'Talla (cm)', altura_sentado: 'Altura sentado (cm)',
     pliegue_tricipital: 'Pliegue tríceps (mm)', pliegue_subescapular: 'Pliegue subescapular (mm)', pliegue_suprailíaco: 'Pliegue suprailíaco (mm)', pliegue_abdominal: 'Pliegue abdominal (mm)', pliegue_supraespinal: 'Pliegue supraespinal (mm)', pliegue_muslo_medial: 'Pliegue muslo medial (mm)', pliegue_pantorrilla_medial: 'Pliegue pantorrilla medial (mm)', pliegue_bicipital: 'Pliegue bicipital (mm)', pliegue_muslo_anterior: 'Pliegue muslo anterior (mm)',
     diametro_humero: 'Diámetro húmero (cm)', diametro_femur: 'Diámetro fémur (cm)', diametro_muneca: 'Diámetro muñeca (cm)', diametro_biacromial: 'Diámetro biacromial (cm)', diametro_bi_iliocristal: 'Diámetro bi-iliocristal (cm)', diametro_torax_transverso: 'Diámetro tórax transverso (cm)', diametro_torax_anteroposterior: 'Diámetro tórax anteroposterior (cm)',
-    circunferencia_brazo_relajado: 'Circunferencia brazo relajado (cm)', circunferencia_brazo_contraido: 'Circunferencia brazo contraído (cm)', circunferencia_pantorrilla: 'Circunferencia pantorrilla (cm)', circunferencia_cintura: 'Circunferencia cintura (cm)', circunferencia_cadera: 'Circunferencia cadera (cm)', circunferencia_muneca: 'Circunferencia muñeca (cm)', circunferencia_muslo_medio: 'Circunferencia muslo medio (cm)', circunferencia_cabeza: 'Circunferencia cabeza (cm)', circunferencia_antebrazo_maximo: 'Circunferencia antebrazo máximo (cm)', circunferencia_muslo_maximo: 'Circunferencia muslo máximo (cm)', circunferencia_torax: 'Circunferencia tórax (cm)'
+    circunferencia_brazo_relajado: 'Circunferencia brazo relajado (cm)', circunferencia_brazo_contraido: 'Circunferencia brazo contraído (cm)', circunferencia_pantorrilla: 'Circunferencia pantorrilla (cm)', circunferencia_cintura: 'Circunferencia cintura (cm)', circunferencia_cadera: 'Circunferencia cadera (cm)', circunferencia_muneca: 'Circunferencia muñeca (cm)', circunferencia_muslo_medio: 'Circunferencia muslo medio (cm)', circunferencia_cabeza: 'Circunferencia de cabeza (cm)', circunferencia_antebrazo_maximo: 'Circunferencia antebrazo máximo (cm)', circunferencia_muslo_maximo: 'Circunferencia muslo máximo (cm)', circunferencia_torax: 'Circunferencia tórax (cm)'
 };
 
 function mostrarModalUnidadesSospechosas(issues) {
@@ -2769,7 +2949,7 @@ function mostrarModalDatosInsuficientes(response) {
         var etiqueta = (typeof etiquetasCamposComposicion !== 'undefined' && etiquetasCamposComposicion[campo]) ? etiquetasCamposComposicion[campo] : campo.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
         return '<li class="list-group-item"><i class="fas fa-exclamation-circle text-warning me-2"></i>' + etiqueta + '</li>';
     }).join('');
-    var metodoNombre = { '2-componentes': '2 componentes', '4-componentes': '4 componentes (De Rose)', '5-componentes': '5 componentes (Kerr)', 'somatotipo': 'Somatotipo' }[metodo] || metodo;
+    var metodoNombre = { '2-componentes': '2 componentes (Kerr — MA y MM)', '4-componentes': '4 componentes (Fisionutdep)', '5-componentes': '5 componentes (Holway / Kerr)', 'somatotipo': 'Somatotipo (Heath-Carter)' }[metodo] || metodo;
     var modalHtml = '<div class="modal fade" id="modalDatosInsuficientes" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Datos insuficientes</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="mb-3">Para calcular <strong>' + metodoNombre + '</strong> faltan los siguientes datos. Complétalos en esta ficha y vuelve a intentar.</p><ul class="list-group list-group-flush">' + listaHtml + '</ul></div><div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button></div></div></div></div>';
     $('#modalDatosInsuficientes').remove();
     $('body').append(modalHtml);
@@ -2850,7 +3030,12 @@ function mostrarResultadosCalculo(nombreMetodo, resultado, metodoInfo) {
             contenido += '<tr><th>Grasa</th><td><strong>' + c.grasa.kg + ' kg</strong>' + (c.grasa.porcentaje != null ? ' (' + c.grasa.porcentaje + '%)' : '') + '</td></tr><tr><th>Músculo</th><td><strong>' + c.musculo.kg + ' kg</strong>' + (c.musculo.porcentaje != null ? ' (' + c.musculo.porcentaje + '%)' : '') + '</td></tr><tr><th>Hueso</th><td><strong>' + c.hueso.kg + ' kg</strong>' + (c.hueso.porcentaje != null ? ' (' + c.hueso.porcentaje + '%)' : '') + '</td></tr><tr><th>Residual</th><td><strong>' + c.residual.kg + ' kg</strong>' + (c.residual.porcentaje != null ? ' (' + c.residual.porcentaje + '%)' : '') + '</td></tr>';
             if (c.piel) contenido += '<tr><th>Piel</th><td><strong>' + c.piel.kg + ' kg</strong>' + (c.piel.porcentaje != null ? ' (' + c.piel.porcentaje + '%)' : '') + '</td></tr>';
         }
-        if (c.endomorfia !== undefined) contenido += '<tr><th>Endomorfia</th><td><strong>' + c.endomorfia + '</strong></td></tr><tr><th>Mesomorfia</th><td><strong>' + c.mesomorfia + '</strong></td></tr><tr><th>Ectomorfia</th><td><strong>' + c.ectomorfia + '</strong></td></tr>';
+        if (c.endomorfia !== undefined) {
+            contenido += '<tr><th>Endomorfia</th><td><strong>' + c.endomorfia + '</strong></td></tr><tr><th>Mesomorfia</th><td><strong>' + c.mesomorfia + '</strong></td></tr><tr><th>Ectomorfia</th><td><strong>' + c.ectomorfia + '</strong></td></tr>';
+            if (resultado.coordenadas_somatochart) {
+                contenido += '<tr><th>Coord. somatocarta (X)</th><td><strong>' + resultado.coordenadas_somatochart.x + '</strong></td></tr><tr><th>Coord. somatocarta (Y)</th><td><strong>' + resultado.coordenadas_somatochart.y + '</strong></td></tr>';
+            }
+        }
     } else if (resultado && (resultado.masa_adiposa_kg !== undefined || resultado.grasa_kg !== undefined)) {
         if (resultado.masa_adiposa_kg !== undefined) contenido += '<tr><th>Masa Adiposa</th><td><strong>' + resultado.masa_adiposa_kg + ' kg</strong> (' + resultado.masa_adiposa_porcentaje + '%)</td></tr><tr><th>Masa Magra</th><td><strong>' + resultado.masa_magra_kg + ' kg</strong> (' + resultado.masa_magra_porcentaje + '%)</td></tr>';
         if (resultado.grasa_kg !== undefined) contenido += '<tr><th>Grasa</th><td><strong>' + resultado.grasa_kg + ' kg</strong></td></tr><tr><th>Músculo</th><td><strong>' + resultado.musculo_kg + ' kg</strong></td></tr><tr><th>Hueso</th><td><strong>' + resultado.hueso_kg + ' kg</strong></td></tr><tr><th>Residual</th><td><strong>' + resultado.residual_kg + ' kg</strong></td></tr>';
@@ -2921,17 +3106,17 @@ function mostrarResultadosCalculo(nombreMetodo, resultado, metodoInfo) {
             definiciones.push('Σ4 = Tricipital + Subescapular + Suprailíaco + Abdominal');
         }
         if (resultado.pasos_calculo.suma_6_pliegues_mm != null || (resultado.datos_usados && resultado.datos_usados.suma_6_pliegues != null)) {
-            if (metodoSlug === '5-componentes' && (resultado.pasos_calculo.z_adip != null || resultado.pasos_calculo.madip_kg != null)) {
-                definiciones.push('Σ6 = Tricipital + Subescapular + Supraespinal + Abdominal + Muslo medial + Pantorrilla (pliegue)');
+            if (metodoSlug === '5-componentes' || metodoSlug === '2-componentes') {
+                definiciones.push('Σ6 = Tricipital + Subescapular + Supraespinal + Abdominal + Muslo medial + Pantorrilla medial');
             } else {
                 definiciones.push('Σ6 = Tricipital + Subescapular + Suprailíaco + Abdominal + Muslo medial + Pantorrilla medial');
             }
         }
-        if (resultado.pasos_calculo.suma_3_pliegues_endo != null || (resultado.datos_usados && resultado.datos_usados.suma_pliegues != null)) {
-            definiciones.push('Σ3 (Endomorfia) = Tricipital + Subescapular + Suprailíaco');
+        if (resultado.pasos_calculo.suma_3_pliegues_endo != null || (resultado.datos_usados && resultado.datos_usados.suma_3_pliegues != null)) {
+            definiciones.push('Σ3 (Endomorfia) = Tricipital + Subescapular + Supraespinal');
         }
         if (metodoSlug === '2-componentes') {
-            definiciones.push('Nota: en 2 componentes la talla NO participa del cálculo (se muestra como dato de ficha).');
+            definiciones.push('Perímetros corregidos: brazo relajado − (π·tríceps/10), antebrazo, muslo máx − (π·muslo medial/10), pantorrilla − (π·pantorrilla/10), tórax − (π·subescapular/10)');
         }
         var filasPasos = [];
         Object.keys(resultado.pasos_calculo).forEach(function(k) {
@@ -3119,9 +3304,8 @@ setInterval(function() {
         recomendacionesActuales = $('#recomendaciones').val() || '';
     }
     var hayCambios = motivoActual !== ultimoContenido.motivo || planActual !== ultimoContenido.plan || recomendacionesActuales !== ultimoContenido.recomendaciones;
-    if (hayCambios && consultaIniciada) {
-        guardarInformacionClinica();
-        ultimoContenido = { motivo: motivoActual, plan: planActual, recomendaciones: recomendacionesActuales };
+    if (hayCambios && $('input[name="detalle_agenda_id"]').val()) {
+        guardarInformacionClinica(false);
     }
 }, 120000);
 
@@ -3138,6 +3322,14 @@ setInterval(function() {
     } else if (ambos) {
         guardarInformacionClinica(true);
         guardarMediciones({ preventDefault: function() {} }, 'ambos');
+    }
+}, 120000);
+
+// Auto-guardar Calorimetría y Plan cada 2 min si hay cambios pendientes
+setInterval(function() {
+    if (!consultaTieneDetalleAgenda()) return;
+    if ($('#calorimetriaPlanEstado').hasClass('bg-warning')) {
+        guardarBloqueCalorimetriaPlan({ silent: false });
     }
 }, 120000);
 
@@ -3171,19 +3363,10 @@ $(document).ready(function() {
         branding: false,
         promotion: false,
         setup: function(editor) {
-            // Marcar que hay cambios sin guardar
-            editor.on('change keyup', function() {
-                if (typeof marcarCambiosPendientesInfoClinica === 'function') marcarCambiosPendientesInfoClinica();
-            });
-            // Auto-guardar cuando se hace un cambio (después de 2 segundos de inactividad)
-            var timeout;
-            editor.on('keyup', function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    if (consultaIniciada) {
-                        guardarInformacionClinica();
-                    }
-                }, 2000); // 2 segundos después de dejar de escribir
+            editor.on('change keyup undo redo paste input SetContent', function() {
+                if (typeof marcarCambiosPendientesInfoClinica === 'function') {
+                    marcarCambiosPendientesInfoClinica();
+                }
             });
         }
     };
@@ -3412,6 +3595,9 @@ $(document).ready(function() {
 
     // Al abrir el tab "Calorimetría y Plan", cargar/recargar calorimetría guardada y pre-cargar distribución si ya hay plan (evita aviso "Primero debes crear un Plan")
     $('#tab-calorimetria-btn').on('shown.bs.tab', function() {
+        if (typeof aplicarDatosPacienteCalorimetria === 'function') {
+            aplicarDatosPacienteCalorimetria();
+        }
         if (typeof cargarCalorimetriaExistente === 'function') {
             cargarCalorimetriaExistente();
         }

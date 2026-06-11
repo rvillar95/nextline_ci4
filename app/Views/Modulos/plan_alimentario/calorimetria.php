@@ -165,37 +165,81 @@ $(document).ready(function() {
     cargarActividades(); // dentro de su success se llama cargarCalorimetriaExistente()
 });
 
-function prellenarDatosPaciente() {
-    <?php if (isset($cita) && $cita): ?>
-    // Pre-llenar datos del paciente si están disponibles
-    <?php if (isset($cita->genero) && $cita->genero): ?>
-    $('#cal_sexo').val('<?= $cita->genero ?>');
-    <?php endif; ?>
-    
-    <?php if (isset($cita->fecha_nacimiento) && $cita->fecha_nacimiento): ?>
-    // Calcular edad desde fecha de nacimiento
-    const fechaNac = new Date('<?= $cita->fecha_nacimiento ?>');
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    const mes = hoy.getMonth() - fechaNac.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+<?php
+$fechaNacCal = null;
+$generoCal = null;
+if (isset($cita) && $cita) {
+    if (!empty($cita->fecha_nacimiento)) {
+        $tsFn = strtotime((string) $cita->fecha_nacimiento);
+        if ($tsFn) {
+            $fechaNacCal = date('Y-m-d', $tsFn);
+        }
+    }
+    if (!empty($cita->genero)) {
+        $generoCal = (string) $cita->genero;
+    }
+}
+$histPesoCal = isset($historial) ? (is_array($historial) ? ($historial['peso_actual'] ?? null) : ($historial->peso_actual ?? null)) : null;
+$histAlturaCal = isset($historial) ? (is_array($historial) ? ($historial['altura_actual'] ?? null) : ($historial->altura_actual ?? null)) : null;
+?>
+window.pacienteCalorimetriaDatos = window.pacienteCalorimetriaDatos || {
+    fechaNacimiento: <?= json_encode($fechaNacCal) ?>,
+    genero: <?= json_encode($generoCal) ?>,
+    peso: <?= json_encode($histPesoCal !== null && $histPesoCal !== '' ? (float) $histPesoCal : null) ?>,
+    talla: <?= json_encode($histAlturaCal !== null && $histAlturaCal !== '' ? (float) $histAlturaCal : null) ?>
+};
+
+function calcularEdadDesdeFechaNacimiento(fechaStr) {
+    if (!fechaStr) return null;
+    var s = String(fechaStr).trim();
+    var partes = null;
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        partes = s.substring(0, 10).split('-');
+    } else if (/^\d{2}-\d{2}-\d{4}$/.test(s)) {
+        var p = s.split('-');
+        partes = [p[2], p[1], p[0]];
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+        var p2 = s.split('/');
+        partes = [p2[2], p2[1], p2[0]];
+    }
+    if (!partes || partes.length !== 3) return null;
+    var y = parseInt(partes[0], 10);
+    var m = parseInt(partes[1], 10) - 1;
+    var d = parseInt(partes[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+    var hoy = new Date();
+    var nac = new Date(y, m, d);
+    if (isNaN(nac.getTime())) return null;
+    var edad = hoy.getFullYear() - nac.getFullYear();
+    if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) {
         edad--;
     }
-    $('#cal_edad').val(edad);
-    <?php endif; ?>
-    
-    // Si hay historial con peso y altura, pre-llenarlos (soporta array u objeto)
-    <?php
-    $histPeso = isset($historial) ? (is_array($historial) ? ($historial['peso_actual'] ?? null) : ($historial->peso_actual ?? null)) : null;
-    $histAltura = isset($historial) ? (is_array($historial) ? ($historial['altura_actual'] ?? null) : ($historial->altura_actual ?? null)) : null;
-    ?>
-    <?php if (!empty($histPeso)): ?>
-    $('#cal_peso').val(<?= (float) $histPeso ?>);
-    <?php endif; ?>
-    <?php if (!empty($histAltura)): ?>
-    $('#cal_talla').val(<?= (float) $histAltura ?>);
-    <?php endif; ?>
-    <?php endif; ?>
+    return edad >= 0 ? edad : null;
+}
+
+function aplicarDatosPacienteCalorimetria(opciones) {
+    opciones = opciones || {};
+    var datos = window.pacienteCalorimetriaDatos || {};
+    var edad = calcularEdadDesdeFechaNacimiento(datos.fechaNacimiento);
+    if (edad !== null && $('#cal_edad').length) {
+        $('#cal_edad').val(edad);
+    }
+    if (datos.genero && $('#cal_sexo').length) {
+        $('#cal_sexo').val(datos.genero);
+    }
+    var peso = opciones.peso != null ? opciones.peso : (parseFloat($('#peso_actual').val()) || datos.peso);
+    var talla = opciones.talla != null ? opciones.talla : (parseFloat($('#altura_actual').val()) || datos.talla);
+    if (peso > 0) $('#cal_peso').val(peso);
+    if (talla > 0) $('#cal_talla').val(talla);
+    if (typeof calcularTMB === 'function') {
+        calcularTMB();
+    }
+}
+window.aplicarDatosPacienteCalorimetria = aplicarDatosPacienteCalorimetria;
+window.calcularEdadDesdeFechaNacimiento = calcularEdadDesdeFechaNacimiento;
+
+function prellenarDatosPaciente() {
+    aplicarDatosPacienteCalorimetria();
 }
 
 function cargarActividades() {
@@ -367,7 +411,8 @@ function calcularTotalesCalorimetria() {
     }
 }
 
-function calcularYGuardarCalorimetria() {
+function calcularYGuardarCalorimetria(silent) {
+    silent = !!silent;
     const detalleAgendaId = $('#detalle_agenda_id_cal').val();
     const peso = parseFloat($('#cal_peso').val());
     const talla = parseFloat($('#cal_talla').val());
@@ -375,7 +420,12 @@ function calcularYGuardarCalorimetria() {
     const sexo = $('#cal_sexo').val();
     
     if (!peso || !talla || !edad || !sexo) {
-        toastr.error('Por favor complete todos los campos');
+        if (!silent) {
+            toastr.error('Por favor complete todos los campos');
+        }
+        if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') {
+            window.actualizarEstadoCalorimetriaPlan('cambios');
+        }
         return;
     }
     
@@ -406,7 +456,9 @@ function calcularYGuardarCalorimetria() {
         success: function(response) {
             if (response.success) {
                 if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('guardado');
-                toastr.success('Calorimetría calculada y guardada correctamente');
+                if (!silent) {
+                    toastGuardadoExito(response.message || 'Calorimetría actualizada correctamente');
+                }
                 calorimetriaGuardada = response.calorimetria;
                 
                 // Actualizar requerimiento en Plan solo cuando no hay plan guardado en BD
@@ -418,13 +470,17 @@ function calcularYGuardarCalorimetria() {
                 }
             } else {
                 if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
-                toastr.error(response.error || 'Error al guardar calorimetría');
+                if (!silent) {
+                    toastGuardadoError(response.error || 'Error al guardar calorimetría');
+                }
             }
         },
         error: function(xhr, status, error) {
             if (typeof window.actualizarEstadoCalorimetriaPlan === 'function') window.actualizarEstadoCalorimetriaPlan('cambios');
             console.error('Error:', error);
-            toastr.error('Error al calcular calorimetría');
+            if (!silent) {
+                toastGuardadoError('Error al guardar calorimetría');
+            }
         }
     });
 }
@@ -433,7 +489,12 @@ function aplicarCalorimetriaEnFormulario(cal, esReferencia) {
     if (!cal) return false;
     if (cal.peso != null) $('#cal_peso').val(cal.peso);
     if (cal.talla != null) $('#cal_talla').val(cal.talla);
-    if (cal.edad != null) $('#cal_edad').val(cal.edad);
+    if (cal.edad != null) {
+        $('#cal_edad').val(cal.edad);
+    } else if (typeof calcularEdadDesdeFechaNacimiento === 'function' && window.pacienteCalorimetriaDatos) {
+        var edadDesdeFn = calcularEdadDesdeFechaNacimiento(window.pacienteCalorimetriaDatos.fechaNacimiento);
+        if (edadDesdeFn !== null) $('#cal_edad').val(edadDesdeFn);
+    }
     if (cal.sexo) $('#cal_sexo').val(cal.sexo);
     calcularTMB();
     if (esReferencia) {
@@ -498,26 +559,25 @@ function cargarCalorimetriaExistente() {
     if (!detalleAgendaId || detalleAgendaId === '0') return;
 
     cargarCalorimetriaDesdeDetalle(detalleAgendaId, false, function(encontrada) {
-        if (!encontrada && window.referenciaDetalleAgendaId
-            && String(window.referenciaDetalleAgendaId) !== detalleAgendaId) {
-            cargarCalorimetriaDesdeDetalle(window.referenciaDetalleAgendaId, true);
+        if (!encontrada) {
+            if (typeof aplicarDatosPacienteCalorimetria === 'function') {
+                aplicarDatosPacienteCalorimetria();
+            }
+            if (window.referenciaDetalleAgendaId
+                && String(window.referenciaDetalleAgendaId) !== detalleAgendaId) {
+                cargarCalorimetriaDesdeDetalle(window.referenciaDetalleAgendaId, true);
+            }
         }
     });
 }
 
-/** Sincroniza peso/talla de Mediciones → Calorimetría y recalcula TMB. */
+/** Sincroniza peso/talla/edad/sexo de Mediciones y paciente → Calorimetría. */
 function sincronizarCalorimetriaDesdeMediciones() {
     if (!$('#cal_peso').length) return;
     var peso = parseFloat($('#peso_actual').val());
     var talla = parseFloat($('#altura_actual').val());
-    if (peso > 0) {
-        $('#cal_peso').val(peso);
-    }
-    if (talla > 0) {
-        $('#cal_talla').val(talla);
-    }
-    if (typeof calcularTMB === 'function') {
-        calcularTMB();
+    if (typeof aplicarDatosPacienteCalorimetria === 'function') {
+        aplicarDatosPacienteCalorimetria({ peso: peso > 0 ? peso : null, talla: talla > 0 ? talla : null });
     }
 }
 window.sincronizarCalorimetriaDesdeMediciones = sincronizarCalorimetriaDesdeMediciones;

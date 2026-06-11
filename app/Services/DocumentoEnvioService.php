@@ -36,6 +36,9 @@ class DocumentoEnvioService
             if (!$doc || ($doc->estado ?? '') !== 'A') {
                 return ['ok' => false, 'error' => 'Uno o más documentos no están disponibles.'];
             }
+            if (!$this->puedeEnviarDocumento($doc, $nutricionistaId)) {
+                return ['ok' => false, 'error' => 'No tiene permiso para enviar uno o más documentos seleccionados.'];
+            }
             if ($pacienteId === null) {
                 $pacienteId = (int) $doc->paciente_id;
             } elseif ((int) $doc->paciente_id !== $pacienteId) {
@@ -46,7 +49,7 @@ class DocumentoEnvioService
 
         $pacienteModel = new Paciente();
         $paciente = $pacienteModel->find($pacienteId);
-        if (!$paciente) {
+        if (!$paciente || !$this->puedeEnviarPaciente($paciente, $nutricionistaId)) {
             return ['ok' => false, 'error' => 'Paciente no encontrado.'];
         }
 
@@ -184,5 +187,41 @@ class DocumentoEnvioService
             'otro'              => 'Otro',
             default             => 'Documento',
         };
+    }
+
+    private function esSuperAdmin(): bool
+    {
+        $usuario = session()->get('usuario');
+
+        return (int) ($usuario['poder'] ?? 0) === 3;
+    }
+
+    private function puedeEnviarPaciente($paciente, int $nutricionistaId): bool
+    {
+        if ($this->esSuperAdmin()) {
+            return (bool) $paciente;
+        }
+
+        return $paciente && (int) ($paciente->nutricionista_id ?? 0) === $nutricionistaId;
+    }
+
+    private function puedeEnviarDocumento($documento, int $nutricionistaId): bool
+    {
+        if ($this->esSuperAdmin()) {
+            return (bool) $documento;
+        }
+
+        if (!$documento) {
+            return false;
+        }
+
+        $docNutri = (int) ($documento->nutricionista_id ?? 0);
+        if ($docNutri > 0) {
+            return $docNutri === $nutricionistaId;
+        }
+
+        $paciente = (new Paciente())->find((int) ($documento->paciente_id ?? 0));
+
+        return $this->puedeEnviarPaciente($paciente, $nutricionistaId);
     }
 }

@@ -102,27 +102,24 @@ class ArchivoController extends BaseController
     private function puedeVerDocumento(object $documento): bool
     {
         $sessionUser = session()->get('usuario');
-        $poder = (int) ($sessionUser['poder'] ?? 0);
-        if ($poder >= 90) {
+        if ((int) ($sessionUser['poder'] ?? 0) === 3) {
             return true;
         }
 
-        $nutricionistaId = (int) ($documento->nutricionista_id ?? 0);
-        if ($nutricionistaId > 0 && (int) ($sessionUser['id'] ?? 0) === $nutricionistaId) {
-            return true;
+        $usuarioId = (int) ($sessionUser['id'] ?? 0);
+        if ($usuarioId <= 0) {
+            return false;
         }
 
-        if ((int) ($sessionUser['empresa_id'] ?? 0) > 0) {
+        $docNutri = (int) ($documento->nutricionista_id ?? 0);
+        if ($docNutri > 0 && $docNutri === $usuarioId) {
             return true;
         }
 
         $pacienteModel = new \App\Models\Paciente();
         $paciente = $pacienteModel->find((int) ($documento->paciente_id ?? 0));
-        if ($paciente && (int) ($paciente->nutricionista_id ?? 0) === (int) ($sessionUser['id'] ?? 0)) {
-            return true;
-        }
 
-        return false;
+        return $paciente && (int) ($paciente->nutricionista_id ?? 0) === $usuarioId;
     }
 
     private function puedeVerArchivoUsuario(int $usuarioId): bool

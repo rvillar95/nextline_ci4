@@ -11,6 +11,7 @@
 
 <!-- Chart.js (para gráficos de composición corporal y somatocarta) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="<?= base_url('lib/css/mediciones-antropometria.css') ?>">
 <!-- TinyMCE editor (motivo, plan, recomendaciones enriquecidos) -->
 <script src="https://cdn.tiny.cloud/1/k10uo8qhvhuxj1ho5z73jcbhzpwlspewyrz3lkbu5b99faon/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
@@ -99,35 +100,6 @@
         border-radius: 8px;
     }
     
-    /* Leyenda de métodos de cálculo (igual que en Agenda/Consulta) */
-    .metodo-4 {
-        border-left: 4px solid #dc3545 !important;
-        background-color: #fff5f5 !important;
-    }
-    .metodo-5 {
-        border-left: 4px solid #0d6efd !important;
-        background-color: #f0f7ff !important;
-    }
-    .metodo-2 {
-        border-left: 4px solid #198754 !important;
-        background-color: #f0fff4 !important;
-    }
-    .metodo-4.metodo-5 {
-        border-left: 4px solid #6f42c1 !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0f7ff 100%) !important;
-    }
-    .metodo-4.metodo-2 {
-        border-left: 4px solid #fd7e14 !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0fff4 100%) !important;
-    }
-    .metodo-5.metodo-2 {
-        border-left: 4px solid #20c997 !important;
-        background: linear-gradient(90deg, #f0f7ff 0%, #f0fff4 100%) !important;
-    }
-    .metodo-4.metodo-5.metodo-2 {
-        border-left: 4px solid #6c757d !important;
-        background: linear-gradient(90deg, #fff5f5 0%, #f0f7ff 50%, #f0fff4 100%) !important;
-    }
     /* Tabs de secciones (igual que consulta): responsive */
     .historial-secciones-tabs .nav-tabs {
         border-bottom: 2px solid #dee2e6;
@@ -309,59 +281,55 @@
                     </ul>
                     <div class="tab-content" id="historialSeccionesTabContent">
                         <div class="tab-pane fade" id="pane-mediciones-editar" role="tabpanel" aria-labelledby="tab-mediciones-editar-btn">
-                        <p class="text-muted small mb-3">
-                            <i class="fas fa-info-circle me-1"></i> Medidas básicas, pliegues cutáneos, circunferencias, diámetros óseos y métodos de cálculo de composición corporal.
+                        <p class="mediciones-intro mb-0">
+                            <i class="fas fa-info-circle me-1"></i> Elegí el método y cargá solo las medidas necesarias. Peso y talla siempre visibles.
                         </p>
-                    <!-- Leyenda de Métodos de Cálculo -->
-                    <div class="alert alert-light border mb-4" style="background-color: #f8f9fa;">
-                        <div class="d-flex align-items-center mb-2">
-                            <strong class="me-2"><i class="fas fa-info-circle me-1"></i> Leyenda de Métodos de Cálculo:</strong>
+                        <ul class="nav nav-tabs mediciones-metodo-tabs" id="medicionesMetodoTabsEditar" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link active" data-medicion-metodo="todos" role="tab">Todas</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="2-componentes" role="tab">2 Componentes</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="4-componentes" role="tab">4 Componentes</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="5-componentes" role="tab">5 Componentes</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button type="button" class="nav-link" data-medicion-metodo="somatotipo" role="tab">Somatotipo</button>
+                            </li>
+                        </ul>
+                        <p id="medicionesMetodoHintEditar" class="small mb-3 d-none"></p>
+                        <div class="mediciones-panel">
+
+                    <div class="row medicion-seccion" data-seccion="basicas">
+                        <div class="col-12">
+                            <h6 class="mb-2"><i class="fas fa-weight me-2"></i> Medidas Básicas</h6>
                         </div>
-                        <div class="d-flex flex-wrap gap-3 align-items-center">
-                            <div class="border rounded p-2" style="border-width: 3px !important; border-color: #dc3545 !important; background-color: #fff5f5;">
-                                <span class="fw-bold text-danger">4 Componentes</span>
-                            </div>
-                            <div class="border rounded p-2" style="border-width: 3px !important; border-color: #0d6efd !important; background-color: #f0f7ff;">
-                                <span class="fw-bold text-primary">5 Componentes</span>
-                            </div>
-                            <div class="border rounded p-2" style="border-width: 3px !important; border-color: #198754 !important; background-color: #f0fff4;">
-                                <span class="fw-bold text-success">2 Componentes</span>
-                            </div>
-                            <div class="border rounded p-2" style="border-width: 3px !important; border-color: #6f42c1 !important; background-color: #f3effd;">
-                                <span class="fw-bold" style="color: #6f42c1;">4 y 5 Componentes</span>
-                            </div>
-                            <div class="border rounded p-2" style="border-width: 3px !important; border-color: #6c757d !important; background-color: #e9ecef;">
-                                <span class="fw-bold text-secondary">4, 5 y 2 Componentes</span>
-                            </div>
-                        </div>
-                        <small class="text-muted mt-2 d-block">
-                            El borde de cada campo indica para qué método(s) se usa: <strong>Rojo</strong> solo 4 · <strong>Azul</strong> solo 5 · <strong>Verde</strong> solo 2 · <strong>Morado</strong> 4 y 5 · <strong>Gris</strong> 4, 5 y 2. Los que no llevan color no se usan en estos métodos.
-                        </small>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap medicion-always">
                             <div class="form-group">
                                 <label>Peso (kg)</label>
                                 <input type="number" step="0.01" name="peso_actual" class="form-control" id="peso_actual" 
                                        value="<?= old('peso_actual', $historial->peso_actual) ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap medicion-always">
                             <div class="form-group">
                                 <label>Altura (cm)</label>
                                 <input type="number" step="0.01" name="altura_actual" class="form-control" id="altura_actual" 
                                        value="<?= old('altura_actual', $historial->altura_actual) ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap">
                             <div class="form-group">
                                 <label>Altura Sentado (cm)</label>
-                                <input type="number" step="0.01" name="altura_sentado" class="form-control" 
+                                <input type="number" step="0.01" name="altura_sentado" class="form-control metodo-5 metodo-somato" 
                                        value="<?= old('altura_sentado', $historial->altura_sentado ?? '') ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap medicion-always">
                             <div class="form-group">
                                 <label>IMC</label>
                                 <input type="text" class="form-control" id="imc_actual" readonly 
@@ -370,38 +338,26 @@
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Grasa Corporal (%)</label>
-                                <input type="number" step="0.01" name="grasa_corporal" class="form-control" 
-                                       value="<?= old('grasa_corporal', $historial->grasa_corporal) ?>">
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Masa Muscular (kg)</label>
-                                <input type="number" step="0.01" name="masa_muscular" class="form-control" 
-                                       value="<?= old('masa_muscular', $historial->masa_muscular) ?>">
-                            </div>
-                        </div>
+                    <div class="d-none" aria-hidden="true">
+                        <input type="number" step="0.01" name="grasa_corporal" value="<?= old('grasa_corporal', $historial->grasa_corporal) ?>">
+                        <input type="number" step="0.01" name="masa_muscular" value="<?= old('masa_muscular', $historial->masa_muscular) ?>">
                     </div>
 
-                    <div class="row mt-3">
+                    <div class="row medicion-seccion" data-seccion="circunferencias">
                         <div class="col-md-12">
                             <h6 class="text-primary mb-2"><i class="fas fa-circle-notch me-2"></i> Circunferencias (cm)</h6>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap">
                             <div class="form-group">
                                 <label>Cintura</label>
-                                <input type="number" step="0.01" name="circunferencia_cintura" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="circunferencia_cintura" class="form-control metodo-5" 
                                        value="<?= old('circunferencia_cintura', $historial->circunferencia_cintura) ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Cadera</label>
-                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-5" 
                                        value="<?= old('circunferencia_cadera', $historial->circunferencia_cadera) ?>">
                             </div>
                         </div>
@@ -415,7 +371,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Brazo Contraído</label>
-                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-5 metodo-somato" 
                                        value="<?= old('circunferencia_brazo_contraido', $historial->circunferencia_brazo_contraido ?? '') ?>">
                             </div>
                         </div>
@@ -429,7 +385,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Pantorrilla</label>
-                                <input type="number" step="0.01" name="circunferencia_pantorrilla" class="form-control metodo-4 metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="circunferencia_pantorrilla" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" 
                                        value="<?= old('circunferencia_pantorrilla', $historial->circunferencia_pantorrilla ?? '') ?>">
                             </div>
                         </div>
@@ -449,9 +405,11 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Cabeza</label>
+                                <label>Circunferencia de cabeza</label>
                                 <input type="number" step="0.01" name="circunferencia_cabeza" class="form-control metodo-5" 
-                                       value="<?= old('circunferencia_cabeza', $historial->circunferencia_cabeza ?? '') ?>">
+                                       value="<?= old('circunferencia_cabeza', $historial->circunferencia_cabeza ?? '') ?>"
+                                       placeholder="Ej: 56.0">
+                                <small class="text-muted">Perímetro con cinta (cm). Solo 5 componentes.</small>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -477,7 +435,7 @@
                         </div>
                     </div>
 
-                    <div class="row mt-3">
+                    <div class="row medicion-seccion" data-seccion="diametros">
                         <div class="col-md-12">
                             <h6 class="text-primary mb-2"><i class="fas fa-ruler me-2"></i> Diámetros Óseos (cm)</h6>
                         </div>
@@ -498,21 +456,21 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Húmero</label>
-                                <input type="number" step="0.01" name="diametro_humero" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="diametro_humero" class="form-control metodo-5 metodo-somato" 
                                        value="<?= old('diametro_humero', $historial->diametro_humero ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Fémur</label>
-                                <input type="number" step="0.01" name="diametro_femur" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="diametro_femur" class="form-control metodo-4 metodo-5 metodo-somato" 
                                        value="<?= old('diametro_femur', $historial->diametro_femur ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muñeca</label>
-                                <input type="number" step="0.01" name="diametro_muneca" class="form-control metodo-4" 
+                                <input type="number" step="0.01" name="diametro_muneca" class="form-control" 
                                        value="<?= old('diametro_muneca', $historial->diametro_muneca ?? '') ?>">
                             </div>
                         </div>
@@ -539,7 +497,7 @@
                         </div>
                     </div>
 
-                    <div class="row mt-3">
+                    <div class="row medicion-seccion" data-seccion="pliegues">
                         <div class="col-md-12">
                             <h6 class="text-primary mb-2"><i class="fas fa-hand-paper me-2"></i> Pliegues Cutáneos (mm)</h6>
                             <p class="text-muted small mb-2">Medición con plicómetro. Se mide en milímetros (mm).</p>
@@ -547,7 +505,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Tricipital</label>
-                                <input type="number" step="0.01" name="pliegue_tricipital" class="form-control metodo-4 metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="pliegue_tricipital" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" 
                                        value="<?= old('pliegue_tricipital', $historial->pliegue_tricipital ?? '') ?>">
                             </div>
                         </div>
@@ -561,7 +519,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Subescapular</label>
-                                <input type="number" step="0.01" name="pliegue_subescapular" class="form-control metodo-4 metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="pliegue_subescapular" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" 
                                        value="<?= old('pliegue_subescapular', $historial->pliegue_subescapular ?? '') ?>">
                             </div>
                         </div>
@@ -575,28 +533,28 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Supraespinal</label>
-                                <input type="number" step="0.01" name="pliegue_supraespinal" class="form-control metodo-2 metodo-5" 
+                                <input type="number" step="0.01" name="pliegue_supraespinal" class="form-control metodo-2 metodo-5 metodo-somato" 
                                        value="<?= old('pliegue_supraespinal', $historial->pliegue_supraespinal ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Abdominal</label>
-                                <input type="number" step="0.01" name="pliegue_abdominal" class="form-control metodo-4 metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="pliegue_abdominal" class="form-control metodo-5 metodo-2" 
                                        value="<?= old('pliegue_abdominal', $historial->pliegue_abdominal ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muslo Anterior</label>
-                                <input type="number" step="0.01" name="pliegue_muslo_anterior" class="form-control metodo-4" 
+                                <input type="number" step="0.01" name="pliegue_muslo_anterior" class="form-control" 
                                        value="<?= old('pliegue_muslo_anterior', $historial->pliegue_muslo_anterior ?? '') ?>">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Pantorrilla Medial</label>
-                                <input type="number" step="0.01" name="pliegue_pantorrilla_medial" class="form-control metodo-4 metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="pliegue_pantorrilla_medial" class="form-control metodo-4 metodo-5 metodo-2 metodo-somato" 
                                        value="<?= old('pliegue_pantorrilla_medial', $historial->pliegue_pantorrilla_medial ?? '') ?>">
                             </div>
                         </div>
@@ -617,27 +575,21 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muslo Medial</label>
-                                <input type="number" step="0.01" name="pliegue_muslo_medial" class="form-control metodo-5 metodo-2" 
+                                <input type="number" step="0.01" name="pliegue_muslo_medial" class="form-control metodo-4 metodo-5 metodo-2" 
                                        value="<?= old('pliegue_muslo_medial', $historial->pliegue_muslo_medial ?? '') ?>">
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 medicion-campo-wrap medicion-suma-pliegues">
                             <div class="form-group">
                                 <label>Suma de Pliegues (mm)</label>
-                                <input type="number" step="0.01" name="suma_pliegues" class="form-control" readonly
+                                <input type="number" step="0.01" name="suma_pliegues" class="form-control metodo-2 metodo-4 metodo-5 metodo-somato" readonly
                                        value="<?= old('suma_pliegues', $historial->suma_pliegues ?? '') ?>">
                                 <small class="text-muted">Se calcula automáticamente</small>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Grasa Corporal Calculada (%)</label>
-                                <input type="number" step="0.01" name="grasa_corporal_calculada" class="form-control" readonly
-                                       value="<?= old('grasa_corporal_calculada', $historial->grasa_corporal_calculada ?? '') ?>">
-                                <small class="text-muted">Se calcula a partir de los pliegues</small>
-                            </div>
-                        </div>
+                        <input type="hidden" name="grasa_corporal_calculada" value="<?= old('grasa_corporal_calculada', $historial->grasa_corporal_calculada ?? '') ?>">
                     </div>
+                        </div><!-- /.mediciones-panel -->
                     <div class="d-flex justify-content-end mt-3">
                         <button type="button" class="btn btn-primary" onclick="guardarMedicionesHistorial()"><i class="fas fa-save me-2"></i> Guardar Mediciones</button>
                     </div>
@@ -1312,10 +1264,100 @@ $(document).ready(function() {
         }
     }
 
+    (function() {
+        var METODO_CLASS = { '2-componentes': 'metodo-2', '4-componentes': 'metodo-4', '5-componentes': 'metodo-5', 'somatotipo': 'metodo-somato' };
+        var METODO_LABEL = { 'todos': 'Todas las medidas', '2-componentes': '2 componentes', '4-componentes': '4 componentes', '5-componentes': '5 componentes', 'somatotipo': 'Somatotipo' };
+        var STORAGE_KEY = 'nutrinext_medicion_metodo_filtro_editar';
+        var ALWAYS = { peso_actual: true, altura_actual: true };
+
+        function wrapDeInput(input) {
+            return input.closest('.medicion-campo-wrap') || input.closest('.col-md-3, .col-md-4, .col-md-6');
+        }
+
+        function campoUsadoEnMetodo(input, metodo) {
+            if (!metodo || metodo === 'todos') return true;
+            var cls = METODO_CLASS[metodo];
+            return !!(cls && input.classList.contains(cls));
+        }
+
+        window.aplicarFiltroMedicionEditar = function(metodo, opts) {
+            opts = opts || {};
+            var pane = document.getElementById('pane-mediciones-editar');
+            if (!pane) return;
+            metodo = metodo || 'todos';
+            document.body.classList.toggle('mediciones-filtradas', metodo !== 'todos');
+
+            pane.querySelectorAll('input.form-control[name], select.form-control[name], textarea.form-control[name]').forEach(function(input) {
+                if (input.type === 'hidden') return;
+                var wrap = wrapDeInput(input);
+                if (!wrap) return;
+                if (wrap.classList.contains('medicion-always') || ALWAYS[input.name]) {
+                    wrap.classList.remove('d-none');
+                    return;
+                }
+                wrap.classList.toggle('d-none', !campoUsadoEnMetodo(input, metodo));
+            });
+
+            pane.querySelectorAll('.medicion-seccion').forEach(function(seccion) {
+                var camposVisibles = 0;
+                seccion.querySelectorAll('input.form-control[name], select.form-control[name], textarea.form-control[name]').forEach(function(input) {
+                    if (input.type === 'hidden') return;
+                    var wrap = wrapDeInput(input);
+                    if (wrap && !wrap.classList.contains('d-none')) camposVisibles++;
+                });
+                var header = seccion.querySelector('.col-md-12');
+                if (header) header.classList.toggle('d-none', camposVisibles === 0);
+                if (seccion.getAttribute('data-seccion') !== 'basicas') {
+                    seccion.classList.toggle('d-none', camposVisibles === 0);
+                }
+            });
+
+            var hint = document.getElementById('medicionesMetodoHintEditar');
+            if (hint) {
+                if (metodo !== 'todos') {
+                    hint.textContent = 'Mostrando solo los campos necesarios para ' + (METODO_LABEL[metodo] || metodo) + '.';
+                    hint.classList.remove('d-none');
+                } else {
+                    hint.classList.add('d-none');
+                }
+            }
+
+            if (!opts.skipStorage) {
+                try { sessionStorage.setItem(STORAGE_KEY, metodo); } catch (e) {}
+            }
+
+            var tabs = document.getElementById('medicionesMetodoTabsEditar');
+            if (tabs) {
+                tabs.querySelectorAll('[data-medicion-metodo]').forEach(function(btn) {
+                    var active = btn.getAttribute('data-medicion-metodo') === metodo;
+                    btn.classList.toggle('active', active);
+                });
+            }
+        };
+
+        $(document).on('click', '#medicionesMetodoTabsEditar [data-medicion-metodo]', function(e) {
+            e.preventDefault();
+            window.aplicarFiltroMedicionEditar($(this).data('medicion-metodo'));
+        });
+
+        var saved = 'todos';
+        try { saved = sessionStorage.getItem(STORAGE_KEY) || 'todos'; } catch (e) {}
+        if (saved !== 'todos') window.aplicarFiltroMedicionEditar(saved, { skipStorage: true });
+
+        $('#tab-mediciones-editar-btn').on('shown.bs.tab', function() {
+            var m = 'todos';
+            try { m = sessionStorage.getItem(STORAGE_KEY) || 'todos'; } catch (e) {}
+            window.aplicarFiltroMedicionEditar(m, { skipStorage: true });
+        });
+    })();
+
     $(document).on('click', '.calcular-metodo', function() {
         console.log('[Composición] Click calcular-metodo', this);
         var metodoSlug = $(this).data('metodo');
         var metodoNombre = $(this).data('nombre');
+        if (typeof window.aplicarFiltroMedicionEditar === 'function') {
+            window.aplicarFiltroMedicionEditar(metodoSlug);
+        }
         var historialId = <?= $historial->id ?? 0 ?>;
         
         if (!historialId) {
@@ -1367,13 +1409,16 @@ $(document).ready(function() {
                 if (response.success) {
                     // Mostrar resultados en modal
                     mostrarResultadosCalculo(metodoNombre, response.resultado, response.metodo);
+                } else if (response.error === 'Datos insuficientes' && response.faltantes && response.faltantes.length) {
+                    mostrarModalDatosInsuficientes(response);
+                } else if (response.requiere_upgrade) {
+                    mostrarErrorUpgrade(response);
                 } else {
-                    // Mostrar error
-                    if (response.requiere_upgrade) {
-                        mostrarErrorUpgrade(response);
-                    } else {
-                        alert('Error: ' + (response.error || response.message || 'Error desconocido'));
-                    }
+                    mostrarModalErrorCalculo({
+                        error: response.error || 'Error al calcular',
+                        message: response.message || response.error || 'Error desconocido',
+                        metodo: response.metodo || metodoSlug
+                    });
                 }
             },
             error: function(xhr) {
@@ -1401,10 +1446,18 @@ $(document).ready(function() {
     });
 });
 
+function humanizarMensajeErrorCalculo(msg) {
+    if (!msg) return msg;
+    return String(msg)
+        .replace(/\bPCAB\b/g, 'circunferencia de cabeza')
+        .replace(/\bMO_CAB\b/g, 'resultado del modelo')
+        .replace(/masa ósea de cabeza/gi, 'resultado del cálculo');
+}
+
 // Modal genérico para errores de cálculo (evita alert y muestra detalle clínico)
 function mostrarModalErrorCalculo(payload) {
     var titulo = (payload && payload.error) ? payload.error : 'Error al calcular';
-    var mensaje = (payload && payload.message) ? payload.message : 'Ocurrió un error inesperado.';
+    var mensaje = humanizarMensajeErrorCalculo((payload && payload.message) ? payload.message : 'Ocurrió un error inesperado.');
     var metodo = (payload && payload.metodo) ? payload.metodo : null;
     var warnings = (payload && Array.isArray(payload.warnings)) ? payload.warnings : [];
 
@@ -1460,7 +1513,13 @@ function validarUnidadesHolway5C() {
     var PMUS = numByName('circunferencia_muslo_maximo');
     var PPAN = numByName('circunferencia_pantorrilla');
     var PTX = numByName('circunferencia_torax');
+    var PCAB = numByName('circunferencia_cabeza');
 
+    if (PCAB === null || PCAB <= 0) {
+        issues.push({ campo: 'circunferencia_cabeza', valor: PCAB == null ? '—' : PCAB, hint: 'Perímetro con cinta (cm), en Circunferencias. Requerido para 5 componentes.' });
+    } else if (PCAB < 47) {
+        issues.push({ campo: 'circunferencia_cabeza', valor: PCAB, hint: 'Circunferencia de cabeza en cm suele ser 50–60. ¿Pulgadas o valor incompleto?' });
+    }
     pushIf('circunferencia_brazo_relajado', PBR, PBR > 0 && PBR < 18, 'Brazo relajado en cm suele ser > 18. ¿Pulgadas?');
     pushIf('circunferencia_antebrazo_maximo', PAM, PAM > 0 && PAM < 18, 'Antebrazo en cm suele ser > 18. ¿Pulgadas?');
     pushIf('circunferencia_muslo_maximo', PMUS, PMUS > 0 && PMUS < 30, 'Muslo máximo en cm suele ser > 30. ¿Pulgadas?');
@@ -1631,6 +1690,10 @@ function mostrarResultadosCalculo(nombreMetodo, resultado, metodoInfo) {
                 <tr><th>Mesomorfia</th><td><strong>${resultado.componentes.mesomorfia}</strong></td></tr>
                 <tr><th>Ectomorfia</th><td><strong>${resultado.componentes.ectomorfia}</strong></td></tr>
             `;
+            if (resultado.coordenadas_somatochart) {
+                contenido += `<tr><th>Coord. somatocarta (X)</th><td><strong>${resultado.coordenadas_somatochart.x}</strong></td></tr>`;
+                contenido += `<tr><th>Coord. somatocarta (Y)</th><td><strong>${resultado.coordenadas_somatochart.y}</strong></td></tr>`;
+            }
         }
     } else {
         // Estructura plana (compatibilidad)
@@ -1732,17 +1795,17 @@ function mostrarResultadosCalculo(nombreMetodo, resultado, metodoInfo) {
             definiciones.push('Σ4 = Tricipital + Subescapular + Suprailíaco + Abdominal');
         }
         if (resultado.pasos_calculo.suma_6_pliegues_mm != null || (resultado.datos_usados && resultado.datos_usados.suma_6_pliegues != null)) {
-            if (metodoSlug === '5-componentes' && (resultado.pasos_calculo.z_adip != null || resultado.pasos_calculo.madip_kg != null)) {
-                definiciones.push('Σ6 = Tricipital + Subescapular + Supraespinal + Abdominal + Muslo medial + Pantorrilla (pliegue)');
+            if (metodoSlug === '5-componentes' || metodoSlug === '2-componentes') {
+                definiciones.push('Σ6 = Tricipital + Subescapular + Supraespinal + Abdominal + Muslo medial + Pantorrilla medial');
             } else {
                 definiciones.push('Σ6 = Tricipital + Subescapular + Suprailíaco + Abdominal + Muslo medial + Pantorrilla medial');
             }
         }
-        if (resultado.pasos_calculo.suma_3_pliegues_endo != null || (resultado.datos_usados && resultado.datos_usados.suma_pliegues != null)) {
-            definiciones.push('Σ3 (Endomorfia) = Tricipital + Subescapular + Suprailíaco');
+        if (resultado.pasos_calculo.suma_3_pliegues_endo != null || (resultado.datos_usados && resultado.datos_usados.suma_3_pliegues != null)) {
+            definiciones.push('Σ3 (Endomorfia) = Tricipital + Subescapular + Supraespinal');
         }
         if (metodoSlug === '2-componentes') {
-            definiciones.push('Nota: en 2 componentes la talla NO participa del cálculo (se muestra como dato de ficha).');
+            definiciones.push('Perímetros corregidos: brazo relajado − (π·tríceps/10), antebrazo, muslo máx − (π·muslo medial/10), pantorrilla − (π·pantorrilla/10), tórax − (π·subescapular/10)');
         }
 
         var filasPasos = [];
@@ -1977,7 +2040,7 @@ var etiquetasCamposComposicion = {
     circunferencia_cadera: 'Circunferencia cadera (cm)',
     circunferencia_muneca: 'Circunferencia muñeca (cm)',
     circunferencia_muslo_medio: 'Circunferencia muslo medio (cm)',
-    circunferencia_cabeza: 'Circunferencia cabeza (cm)',
+    circunferencia_cabeza: 'Circunferencia de cabeza (cm)',
     circunferencia_antebrazo_maximo: 'Circunferencia antebrazo máximo (cm)',
     circunferencia_muslo_maximo: 'Circunferencia muslo máximo (cm)',
     circunferencia_torax: 'Circunferencia tórax (cm)'
@@ -1991,7 +2054,7 @@ function mostrarModalDatosInsuficientes(response) {
         var etiqueta = etiquetasCamposComposicion[campo] || campo.replace(/_/g, ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
         return '<li class="list-group-item"><i class="fas fa-exclamation-circle text-warning me-2"></i>' + etiqueta + '</li>';
     }).join('');
-    var metodoNombre = { '2-componentes': '2 componentes', '4-componentes': '4 componentes (De Rose)', '5-componentes': '5 componentes (Kerr)', 'somatotipo': 'Somatotipo' }[metodo] || metodo;
+    var metodoNombre = { '2-componentes': '2 componentes (Kerr — MA y MM)', '4-componentes': '4 componentes (Fisionutdep)', '5-componentes': '5 componentes (Holway / Kerr)', 'somatotipo': 'Somatotipo (Heath-Carter)' }[metodo] || metodo;
     var modalHtml = `
         <div class="modal fade" id="modalDatosInsuficientes" tabindex="-1">
             <div class="modal-dialog">

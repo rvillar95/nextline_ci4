@@ -16,7 +16,7 @@
                             <i class="fas fa-envelope me-2"></i> Enviar por correo
                         </button>
                         <a href="<?= base_url('dashboard/documento/registro') ?>" class="btn btn-light">
-                            <i class="fas fa-plus me-2"></i> Nuevo Documento
+                            <i class="fas fa-file-upload me-2"></i> Cargar documentos
                         </a>
                     </div>
                 </div>
@@ -47,6 +47,10 @@
             </div>
 
             <div class="section-card" style="border-left-color: #4facfe;">
+                <style>
+                    #tablaDocumentos th:last-child,
+                    #tablaDocumentos td:last-child { min-width: 300px; }
+                </style>
                 <div class="table-responsive">
                     <table id="tablaDocumentos" class="table table-bordered table-striped nowrap" style="width:100%">
                         <thead>
@@ -116,13 +120,21 @@ $(document).ready(function() {
 
     var table = $('#tablaDocumentos').DataTable({
         processing: true,
-        serverSide: true,
+        serverSide: false,
+        searching: false,
         ajax: {
             url: '<?= base_url('dashboard/documento/getDocumentos') ?>',
             type: 'GET',
+            dataSrc: 'data',
             data: function(d) {
                 d.paciente_id = $('#filtroPaciente').val();
                 d.busqueda = $('#busquedaDocumento').val();
+            },
+            error: function(xhr) {
+                console.error('Error al cargar documentos:', xhr.status, xhr.responseText);
+                if (typeof mostrarModalError === 'function') {
+                    mostrarModalError('No se pudo cargar la lista de documentos. Verifique su sesión y permisos.');
+                }
             }
         },
         columns: [
@@ -134,9 +146,15 @@ $(document).ready(function() {
             { data: 5 },
             { data: 6, orderable: false }
         ],
+        columnDefs: [
+            { orderable: false, targets: 6 },
+            { className: 'text-nowrap', targets: [3, 6] }
+        ],
         language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
-        responsive: true,
-        pageLength: 25
+        scrollX: true,
+        autoWidth: false,
+        pageLength: 25,
+        order: [[3, 'desc']]
     });
 
     $('#filtroPaciente, #busquedaDocumento').on('change keyup', function() {

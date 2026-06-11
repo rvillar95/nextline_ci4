@@ -56,12 +56,120 @@ class ComposicionCorporalService
     }
     
     /**
-     * Método 2 Componentes: Masa Grasa y Masa Libre de Grasa
-     * Fórmulas obligatorias Durnin & Womersley. Sin perímetros ni diámetros.
-     * Entrada: P (kg), T (cm), Edad, Sexo; 4 pliegues (mm): TR, SE, SI, AB.
-     * Salida: %MG, MG (kg), MLG (kg).
+     * Método 2 Componentes — Excel «KG_% DE MM Y MA - 2 COMPONENTES.xlsx»
+     * Masa Adiposa y Masa Muscular (Kerr / phantom 170.18 cm).
+     *
+     * Adiposa: Σ6 pliegues → Z_ADIP → kg (C36–C39).
+     * Muscular: perímetros corregidos (L42–L46) → Z_MUSC → kg (C42–C45).
      */
     private function calcular2Componentes($historial, $paciente)
+    {
+        $P = floatval($historial->peso_actual ?? 0);
+        $T = floatval($historial->altura_actual ?? 0);
+
+        $PTRI = floatval($historial->pliegue_tricipital ?? 0);
+        $PSUB = floatval($historial->pliegue_subescapular ?? 0);
+        $PSUP = floatval($historial->pliegue_supraespinal ?? 0);
+        $PABD = floatval($historial->pliegue_abdominal ?? 0);
+        $PMED = floatval($historial->pliegue_muslo_medial ?? 0);
+        $PPANPL = floatval($historial->pliegue_pantorrilla_medial ?? 0);
+
+        $PBR = floatval($historial->circunferencia_brazo_relajado ?? 0);
+        $PAM = floatval($historial->circunferencia_antebrazo_maximo ?? 0);
+        $PTX = floatval($historial->circunferencia_torax ?? 0);
+        $PMUS = floatval($historial->circunferencia_muslo_maximo ?? 0);
+        $PPAN = floatval($historial->circunferencia_pantorrilla ?? 0);
+
+        if ($P <= 0 || $T <= 0) {
+            throw new \Exception('Peso y talla son requeridos para el modelo 2 componentes (Kerr)');
+        }
+
+        $SUM6 = $PTRI + $PSUB + $PSUP + $PABD + $PMED + $PPANPL;
+        if ($SUM6 <= 0) {
+            throw new \Exception(
+                'Se requieren 6 pliegues (mm): tríceps, subescapular, supraespinal, abdominal, muslo medial y pantorrilla medial'
+            );
+        }
+
+        $T_REF = 170.18;
+        $ratioT = $T_REF / $T;
+        $PI = M_PI;
+
+        $Z_ADIP = (($SUM6 * $ratioT) - 116.41) / 34.79;
+        $MADIP = (($Z_ADIP * 5.85) + 25.6) / pow($ratioT, 3);
+        if ($MADIP <= 0) {
+            throw new \Exception('Masa adiposa inválida (≤ 0). Revisá los 6 pliegues (mm) y la talla (cm).');
+        }
+
+        $PBR_CORR = $PBR - (($PTRI * $PI) / 10);
+        $PAM_CORR = $PAM;
+        $PMUS_CORR = $PMUS - (($PMED * $PI) / 10);
+        $PPAN_CORR = $PPAN - (($PPANPL * $PI) / 10);
+        $PTX_CORR = $PTX - (($PSUB * $PI) / 10);
+
+        $SUM_PER_CORR = $PBR_CORR + $PAM_CORR + $PMUS_CORR + $PPAN_CORR + $PTX_CORR;
+        if ($SUM_PER_CORR <= 0) {
+            throw new \Exception(
+                'Se requieren perímetros (cm): brazo relajado, antebrazo máximo, tórax mesoesternal, muslo máximo y pantorrilla máxima'
+            );
+        }
+
+        $Z_MUSC = (($SUM_PER_CORR * $ratioT) - 207.21) / 13.74;
+        $MMUSC = (($Z_MUSC * 5.4) + 24.5) / pow($ratioT, 3);
+        if ($MMUSC <= 0) {
+            throw new \Exception(
+                'Masa muscular inválida (≤ 0). Revisá perímetros (cm) y pliegues (mm); suele deberse a unidades incorrectas (pulgadas como cm).'
+            );
+        }
+
+        $pctADIP = ($P > 0) ? ($MADIP / $P) * 100 : 0;
+        $pctMUSC = ($P > 0) ? ($MMUSC / $P) * 100 : 0;
+
+        return [
+            'metodo' => '2-componentes',
+            'nombre' => 'Modelo 2 componentes (Kerr — Masa Adiposa y Masa Muscular)',
+            'componentes' => [
+                'masa_adiposa' => [
+                    'kg' => round($MADIP, 2),
+                    'porcentaje' => round($pctADIP, 2),
+                ],
+                'masa_muscular' => [
+                    'kg' => round($MMUSC, 2),
+                    'porcentaje' => round($pctMUSC, 2),
+                ],
+            ],
+            'datos_usados' => [
+                'peso' => $P,
+                'talla' => $T,
+                'suma_6_pliegues' => $SUM6,
+                'suma_perimetros_corregidos' => round($SUM_PER_CORR, 2),
+            ],
+            'pasos_calculo' => [
+                'suma_6_pliegues_mm' => round($SUM6, 2),
+                'z_adip' => round($Z_ADIP, 4),
+                'madip_kg' => round($MADIP, 2),
+                'pbr_corr' => round($PBR_CORR, 2),
+                'pam_corr' => round($PAM_CORR, 2),
+                'pmus_corr' => round($PMUS_CORR, 2),
+                'ppan_corr' => round($PPAN_CORR, 2),
+                'ptx_corr' => round($PTX_CORR, 2),
+                'sum_per_corr' => round($SUM_PER_CORR, 2),
+                'z_musc' => round($Z_MUSC, 4),
+                'mmusc_kg' => round($MMUSC, 2),
+            ],
+        ];
+    }
+    
+    /**
+     * Método 4 Componentes — Excel «Composición Corporal Fisionutdep - 4 COMPONENTES.xlsm»
+     * Hoja: Antropometría & Composición (ecuación Siri por defecto).
+     *
+     * Grasa: Durnin (log) sobre 4 pliegues TR + SE + SI + Bíceps → % Siri → kg.
+     * Ósea: 3.02 × (((T/100)² × (muñeca/100) × (fémur/100) × 400)^0.712).
+     * Muscular: Lee (celda J8) con perímetros corregidos (brazo, pantorrilla, muslo).
+     * Residual: P − (MM + MG + MO).
+     */
+    private function calcular4Componentes($historial, $paciente)
     {
         $P = floatval($historial->peso_actual ?? 0);
         $T = floatval($historial->altura_actual ?? 0);
@@ -72,23 +180,38 @@ class ComposicionCorporalService
             $Edad = 0;
         }
 
-        // 4 pliegues cutáneos en mm: TR, SE, SI, AB (solo estos)
         $TR = floatval($historial->pliegue_tricipital ?? 0);
         $SE = floatval($historial->pliegue_subescapular ?? 0);
         $SI = floatval($historial->pliegue_suprailíaco ?? 0);
-        $AB = floatval($historial->pliegue_abdominal ?? 0);
+        $BI = floatval($historial->pliegue_bicipital ?? 0);
+
+        $PBR = floatval($historial->circunferencia_brazo_relajado ?? 0);
+        $PPAN = floatval($historial->circunferencia_pantorrilla ?? 0);
+        $PMUS = floatval($historial->circunferencia_muslo_medio ?? 0);
+        $PMUN = floatval($historial->circunferencia_muneca ?? 0);
+        $PLPAN = floatval($historial->pliegue_pantorrilla_medial ?? 0);
+        $PLMUS = floatval($historial->pliegue_muslo_medial ?? 0);
+        $DF = floatval($historial->diametro_femur ?? 0);
 
         if ($P <= 0 || $T <= 0) {
-            throw new \Exception('Peso y talla son requeridos para el modelo 2 componentes');
-        }
-        $suma4 = $TR + $SE + $SI + $AB;
-        if ($suma4 <= 0) {
-            throw new \Exception('Se requieren los 4 pliegues cutáneos: tríceps, subescapular, suprailíaco, abdominal');
+            throw new \Exception('Peso y talla son requeridos para el modelo 4 componentes (Fisionutdep)');
         }
 
-        // ---- Densidad corporal (Durnin & Womersley) ----
-        // Coeficientes exactos por sexo y franja de edad. log10(Σ4).
-        $logSuma = log10($suma4);
+        $suma4Durnin = $TR + $SE + $SI + $BI;
+        if ($suma4Durnin <= 0) {
+            throw new \Exception('Se requieren 4 pliegues (mm): tríceps, subescapular, suprailíaco y bíceps (Fisionutdep / Durnin)');
+        }
+        if ($PBR <= 0 || $PPAN <= 0 || $PMUS <= 0) {
+            throw new \Exception('Se requieren circunferencias (cm): brazo relajado, pantorrilla y muslo (Fisionutdep / Lee)');
+        }
+        if ($PLPAN <= 0 || $PLMUS <= 0) {
+            throw new \Exception('Se requieren pliegues (mm): pantorrilla medial y muslo medial (Fisionutdep / perímetros corregidos)');
+        }
+        if ($PMUN <= 0 || $DF <= 0) {
+            throw new \Exception('Se requieren circunferencia de muñeca (cm) y diámetro de fémur (cm) para masa ósea (Fisionutdep)');
+        }
+
+        $logSuma = log10($suma4Durnin);
         if ($esMujer) {
             if ($Edad >= 17 && $Edad <= 19) {
                 $D = 1.1549 - (0.0678 * $logSuma);
@@ -99,7 +222,6 @@ class ComposicionCorporalService
             } elseif ($Edad >= 40 && $Edad <= 49) {
                 $D = 1.1333 - (0.0612 * $logSuma);
             } else {
-                // 50+ y < 17 usan 50+
                 $D = 1.1339 - (0.0645 * $logSuma);
             }
         } else {
@@ -116,162 +238,94 @@ class ComposicionCorporalService
             }
         }
 
-        // ---- Porcentaje de grasa (Siri) ----
-        // %MG = ((4.95 / D) − 4.50) × 100
-        $pctMG = ((4.95 / $D) - 4.50) * 100;
-
-        // ---- Masa grasa en kg ----
-        // MG = (P × %MG) / 100
-        $MG = ($P * $pctMG) / 100;
-
-        // ---- Masa libre de grasa ----
-        // MLG = P − MG
-        $MLG = $P - $MG;
-
-        $pctMLG = ($P > 0) ? (100 - $pctMG) : 0;
-
-        return [
-            'metodo' => '2-componentes',
-            'nombre' => 'Modelo 2 componentes (Masa Grasa y Masa Libre de Grasa)',
-            'componentes' => [
-                'masa_adiposa' => [
-                    'kg' => round($MG, 2),
-                    'porcentaje' => round($pctMG, 2)
-                ],
-                'masa_magra' => [
-                    'kg' => round($MLG, 2),
-                    'porcentaje' => round($pctMLG, 2)
-                ]
-            ],
-            'datos_usados' => [
-                'peso' => $P,
-                'edad' => $Edad,
-                'sexo' => $esMujer ? 'Mujer' : 'Hombre',
-                'suma_4_pliegues' => $suma4
-            ],
-            // Datos clínicos/referencia (no influyen en el cálculo 2C)
-            'datos_ficha' => [
-                'talla' => $T
-            ],
-            'pasos_calculo' => [
-                'suma_4_pliegues_mm' => round($suma4, 2),
-                'log10_suma_pliegues' => round($logSuma, 4),
-                'densidad_d_durnin' => round($D, 4),
-                'pct_grasa_siri' => round($pctMG, 2),
-                'masa_grasa_kg' => round($MG, 2),
-                'masa_magra_kg' => round($MLG, 2)
-            ]
-        ];
-    }
-    
-    /**
-     * Método 4 Componentes (DE ROSE): Grasa / Ósea / Residual / Muscular
-     * Fórmulas obligatorias del modelo De Rose. Sin piel. Sin perímetros para masa muscular.
-     * Entrada: P (kg), T (cm), Sexo, Edad; 4 pliegues (mm): TR, SE, SI, AB; diámetros (cm): DH, DF.
-     * Masa muscular SOLO por diferencia: MM = P − (MG + MO + MR).
-     */
-    private function calcular4Componentes($historial, $paciente)
-    {
-        $P = floatval($historial->peso_actual ?? 0);
-        $T = floatval($historial->altura_actual ?? 0);
-        $genero = strtoupper(trim($paciente->genero ?? 'M'));
-        $esMujer = ($genero === 'F' || $genero === 'MUJER');
-        $Edad = (int) $this->calcularEdad($paciente->fecha_nacimiento ?? null);
-        if ($Edad === null || $Edad < 0) {
-            $Edad = 0;
+        if ($D <= 0) {
+            throw new \Exception('Densidad corporal inválida. Revisá pliegues (mm) y edad.');
         }
 
-        // Pliegues cutáneos en mm: TR, SE, SI, AB (solo 4)
-        $TR = floatval($historial->pliegue_tricipital ?? 0);
-        $SE = floatval($historial->pliegue_subescapular ?? 0);
-        $SI = floatval($historial->pliegue_suprailíaco ?? 0);
-        $AB = floatval($historial->pliegue_abdominal ?? 0);
+        // Siri % (celda D46): (495/D) − 450 ≡ ((4.95/D)−4.50)×100
+        $pctMG = (495 / $D) - 450;
+        $MG = ($pctMG * $P) / 100;
 
-        // Diámetros óseos en cm: DH (húmero), DF (fémur)
-        $DH = floatval($historial->diametro_humero ?? 0);
-        $DF = floatval($historial->diametro_femur ?? 0);
+        // Masa ósea (celda J12)
+        $MO = 3.02 * pow((($T / 100) ** 2) * ($PMUN / 100) * ($DF / 100) * 400, 0.712);
 
-        if ($P <= 0 || $T <= 0) {
-            throw new \Exception('Peso y talla son requeridos para el modelo 4 componentes De Rose');
-        }
-        $suma4 = $TR + $SE + $SI + $AB;
-        if ($suma4 <= 0) {
-            throw new \Exception('Se requieren los 4 pliegues De Rose: tríceps, subescapular, suprailíaco, abdominal');
-        }
-        if ($DH <= 0 || $DF <= 0) {
-            throw new \Exception('Diámetros bicondíleos de húmero y fémur son requeridos para masa ósea (Rocha)');
-        }
+        // Perímetros corregidos (J54, J55, J56) — π/10 ≈ 0.31416
+        $piDec = M_PI / 10;
+        $perBrazoCorr = $PBR - ($BI * $piDec);
+        $perPiernaCorr = $PPAN - ($PLPAN * $piDec);
+        $perMusloCorr = $PMUS - ($PLMUS * $piDec);
 
-        // ---- 1) MASA GRASA ----
-        // Σ4 = TR + SE + SI + AB
-        // Densidad corporal De Rose:
-        // Hombre: D = 1.112 − (0.00043499 × Σ4) + (0.00000055 × Σ4²) − (0.00028826 × Edad)
-        // Mujer:  D = 1.097 − (0.00046971 × Σ4) + (0.00000056 × Σ4²) − (0.00012828 × Edad)
-        // %MG = ((4.95 / D) − 4.50) × 100
-        // MG = (P × %MG) / 100
+        // Ajuste étnico G12 (por defecto caucásica-latina = 0)
+        $ajusteEtnia = 0.0;
+
         if ($esMujer) {
-            $D = 1.097 - (0.00046971 * $suma4) + (0.00000056 * $suma4 * $suma4) - (0.00012828 * $Edad);
+            $mmLee = ($T * ((0.00744 * $perBrazoCorr ** 2) + (0.00088 * $perMusloCorr ** 2) + (0.00441 * $perPiernaCorr ** 2)))
+                - (0.048 * $Edad) + 7.8 + $ajusteEtnia;
         } else {
-            $D = 1.112 - (0.00043499 * $suma4) + (0.00000055 * $suma4 * $suma4) - (0.00028826 * $Edad);
+            $mmLee = ($T * ((0.00744 * $perBrazoCorr ** 2) + (0.00088 * $perMusloCorr ** 2) + (0.00447 * $perPiernaCorr ** 2)))
+                + 2.4 - (0.048 * $Edad) + 7.8 + $ajusteEtnia;
         }
-        $pctMG = ((4.95 / $D) - 4.50) * 100;
-        $MG = ($P * $pctMG) / 100;
+        $MM = $mmLee / 100;
 
-        // ---- 2) MASA ÓSEA (Rocha) ----
-        // MO = 3.02 × ((DH² × DF × T) × 0.001)
-        $MO = 3.02 * (($DH * $DH * $DF * $T) * 0.001);
+        // Residual por diferencia (celda J14)
+        $MR = $P - $MM - $MG - $MO;
 
-        // ---- 3) MASA RESIDUAL ----
-        // Hombre: MR = P × 0.24; Mujer: MR = P × 0.21
-        $MR = $esMujer ? ($P * 0.21) : ($P * 0.24);
+        if ($MM <= 0) {
+            throw new \Exception('Masa muscular inválida (≤ 0). Revisá circunferencias (cm) y pliegues (mm) según Fisionutdep.');
+        }
+        if ($MR < 0) {
+            throw new \Exception(
+                'Masa residual negativa: las masas grasa, muscular y ósea superan el peso. ' .
+                'Revisá mediciones y unidades (cm/mm).'
+            );
+        }
 
-        // ---- 4) MASA MUSCULAR (por diferencia) ----
-        // MM = P − (MG + MO + MR)
-        $MM = $P - ($MG + $MO + $MR);
-
+        $pctMM = ($P > 0) ? ($MM / $P) * 100 : 0;
         $pctMO = ($P > 0) ? ($MO / $P) * 100 : 0;
         $pctMR = ($P > 0) ? ($MR / $P) * 100 : 0;
-        $pctMM = ($P > 0) ? ($MM / $P) * 100 : 0;
 
         return [
             'metodo' => '4-componentes',
-            'nombre' => 'Modelo antropométrico 4 componentes (De Rose)',
+            'nombre' => 'Modelo 4 componentes (Fisionutdep — Siri / Lee)',
             'componentes' => [
                 'grasa' => [
                     'kg' => round($MG, 2),
-                    'porcentaje' => round($pctMG, 2)
+                    'porcentaje' => round($pctMG, 2),
                 ],
                 'hueso' => [
                     'kg' => round($MO, 2),
-                    'porcentaje' => round($pctMO, 2)
+                    'porcentaje' => round($pctMO, 2),
                 ],
                 'residual' => [
                     'kg' => round($MR, 2),
-                    'porcentaje' => round($pctMR, 2)
+                    'porcentaje' => round($pctMR, 2),
                 ],
                 'musculo' => [
                     'kg' => round($MM, 2),
-                    'porcentaje' => round($pctMM, 2)
-                ]
+                    'porcentaje' => round($pctMM, 2),
+                ],
             ],
             'datos_usados' => [
                 'peso' => $P,
                 'talla' => $T,
                 'sexo' => $esMujer ? 'Mujer' : 'Hombre',
                 'edad' => $Edad,
-                'suma_4_pliegues' => $suma4,
-                'diametro_humero' => $DH,
-                'diametro_femur' => $DF
+                'suma_4_pliegues_durnin' => $suma4Durnin,
+                'circunferencia_muneca' => $PMUN,
+                'diametro_femur' => $DF,
+                'perimetro_brazo_corregido' => round($perBrazoCorr, 2),
+                'perimetro_pantorrilla_corregido' => round($perPiernaCorr, 2),
+                'perimetro_muslo_corregido' => round($perMusloCorr, 2),
             ],
             'pasos_calculo' => [
-                'suma_4_pliegues_mm' => round($suma4, 2),
-                'densidad_de_rose' => round($D, 4),
+                'suma_4_pliegues_mm' => round($suma4Durnin, 2),
+                'densidad_durnin' => round($D, 4),
                 'pct_grasa_siri' => round($pctMG, 2),
                 'masa_grasa_kg' => round($MG, 2),
-                'masa_osea_rocha_kg' => round($MO, 2),
+                'masa_osea_kg' => round($MO, 2),
+                'masa_muscular_lee_kg' => round($MM, 2),
                 'masa_residual_kg' => round($MR, 2),
-                'masa_muscular_diferencia_kg' => round($MM, 2)
-            ]
+            ],
         ];
     }
     
@@ -295,7 +349,8 @@ class ComposicionCorporalService
     }
     
     /**
-     * Método 5 Componentes (D. Kerr, 1988 / Holway - Excel Antropgym Francis Holway)
+     * Método 5 Componentes — Excel «Antropgym Francis Holway - 5 COMPONENTE.xlsx»
+     * Hoja de cálculo: «Proc datos brutos» (D. Kerr, 1988 / Holway).
      *
      * REGLAS:
      * - NO usar densidad + Siri.
@@ -484,12 +539,15 @@ class ComposicionCorporalService
         // =========================
         // Cabeza
         if ($PCAB <= 0) {
-            throw new \Exception('Circunferencia de cabeza (cm) es requerida para masa ósea (cabeza)');
+            throw new \Exception('Falta la circunferencia de cabeza (cm). Completala en la sección Circunferencias — es un perímetro con cinta, no un diámetro óseo.');
         }
         $Z_CAB = ($PCAB - 56) / 1.44;
         $MO_CAB = ($Z_CAB * 0.18) + 1.2;
         if ($MO_CAB <= 0) {
-            throw new \Exception('Resultado inválido: MO_CAB <= 0 (ósea cabeza). Revisá PCAB (cm).');
+            throw new \Exception(
+                'Circunferencia de cabeza inválida (' . round($PCAB, 1) . ' cm): el valor es muy bajo para 5 componentes. ' .
+                'Medila con cinta en cm (típico 50–60), en Circunferencias — no en Diámetros óseos.'
+            );
         }
 
         // Cuerpo
@@ -624,75 +682,103 @@ class ComposicionCorporalService
     /**
      * Calcular Somatotipo (Heath-Carter)
      */
+    /**
+     * Somatotipo Heath-Carter — Excel «SOMATOTIPO BASICO.xls» (hoja DATOS).
+     *
+     * Endo: cúbica sobre TRC + SSC + SSP (supraespinal).
+     * Meso: 0.858·HUM + 0.601·FEM + 0.188·PCB + 0.161·PCP − 0.131·T + 4.5
+     *       (PCB = brazo flex − TRC/10; PCP = pantorrilla máx − pliegue pantorrilla/10).
+     * Ecto: HWR = T / P^(1/3) con tramos 38.28 / 40.75.
+     */
     private function calcularSomatotipo($historial, $paciente)
     {
         $peso = floatval($historial->peso_actual ?? 0);
         $altura = floatval($historial->altura_actual ?? 0);
-        $altura_sentado = floatval($historial->altura_sentado ?? 0);
         $pliegue_tricipital = floatval($historial->pliegue_tricipital ?? 0);
         $pliegue_subescapular = floatval($historial->pliegue_subescapular ?? 0);
-        $pliegue_suprailíaco = floatval($historial->pliegue_suprailíaco ?? 0);
+        $pliegue_supraespinal = floatval($historial->pliegue_supraespinal ?? 0);
+        $pliegue_pantorrilla = floatval($historial->pliegue_pantorrilla_medial ?? 0);
         $diametro_humero = floatval($historial->diametro_humero ?? 0);
         $diametro_femur = floatval($historial->diametro_femur ?? 0);
         $circunferencia_brazo_contraido = floatval($historial->circunferencia_brazo_contraido ?? 0);
         $circunferencia_pantorrilla = floatval($historial->circunferencia_pantorrilla ?? 0);
-        
-        if ($peso <= 0 || $altura <= 0 || $altura_sentado <= 0) {
-            throw new \Exception('Peso, altura y altura sentado son requeridos para el somatotipo');
+
+        if ($peso <= 0 || $altura <= 0) {
+            throw new \Exception('Peso y talla son requeridos para el somatotipo (Heath-Carter)');
         }
-        
-        // 1. ENDOMORFIA (grasa relativa)
-        $suma_pliegues_endo = $pliegue_tricipital + $pliegue_subescapular + $pliegue_suprailíaco;
-        $endomorfia = -0.7182 + (0.1451 * $suma_pliegues_endo) - (0.00068 * pow($suma_pliegues_endo, 2)) + (0.0000014 * pow($suma_pliegues_endo, 3));
-        
-        // 2. MESOMORFIA (desarrollo músculo-esquelético)
-        $altura_metros = $altura / 100;
-        $mesomorfia = 0.858 * ($diametro_humero + $diametro_femur) + 0.601 * ($circunferencia_brazo_contraido + $circunferencia_pantorrilla) - (0.188 * $altura_metros) + 0.161;
-        
-        // 3. ECTOMORFIA (linealidad relativa)
-        $altura_peso_ratio = $altura / pow($peso, 1/3);
-        if ($altura_peso_ratio >= 40.75) {
-            $ectomorfia = 0.732 * $altura_peso_ratio - 28.58;
-        } elseif ($altura_peso_ratio >= 38.25) {
-            $ectomorfia = 0.463 * $altura_peso_ratio - 17.63;
-        } else {
+        if ($pliegue_tricipital <= 0 || $pliegue_subescapular <= 0 || $pliegue_supraespinal <= 0) {
+            throw new \Exception('Se requieren pliegues (mm): tríceps, subescapular y supraespinal');
+        }
+        if ($diametro_humero <= 0 || $diametro_femur <= 0) {
+            throw new \Exception('Se requieren diámetros (cm): húmero y fémur');
+        }
+        if ($circunferencia_brazo_contraido <= 0 || $circunferencia_pantorrilla <= 0) {
+            throw new \Exception('Se requieren circunferencias (cm): brazo flexionado y pantorrilla máxima');
+        }
+
+        $suma_pliegues_endo = $pliegue_tricipital + $pliegue_subescapular + $pliegue_supraespinal;
+        $endomorfia = -0.7182
+            + (0.1451 * $suma_pliegues_endo)
+            - (0.00068 * pow($suma_pliegues_endo, 2))
+            + (0.0000014 * pow($suma_pliegues_endo, 3));
+
+        $pcb = $circunferencia_brazo_contraido - ($pliegue_tricipital / 10);
+        $pcp = $circunferencia_pantorrilla - ($pliegue_pantorrilla / 10);
+        $mesomorfia = (0.858 * $diametro_humero)
+            + (0.601 * $diametro_femur)
+            + (0.188 * $pcb)
+            + (0.161 * $pcp)
+            - (0.131 * $altura)
+            + 4.5;
+
+        $altura_peso_ratio = $altura / pow($peso, 1 / 3);
+        if ($altura_peso_ratio <= 38.28) {
             $ectomorfia = 0.1;
+        } elseif ($altura_peso_ratio < 40.75) {
+            $ectomorfia = (0.463 * $altura_peso_ratio) - 17.63;
+        } else {
+            $ectomorfia = (0.732 * $altura_peso_ratio) - 28.58;
         }
-        
-        // Normalizar valores (deben estar entre 0.5 y 7.5 aproximadamente)
-        $endomorfia = max(0.5, min(7.5, $endomorfia));
-        $mesomorfia = max(0.5, min(7.5, $mesomorfia));
-        $ectomorfia = max(0.5, min(7.5, $ectomorfia));
-        
-        // Determinar tipo dominante
+
+        $coordX = $ectomorfia - $endomorfia;
+        $coordY = (2 * $mesomorfia) - ($endomorfia + $ectomorfia);
+
         $valores = ['endomorfo' => $endomorfia, 'mesomorfo' => $mesomorfia, 'ectomorfo' => $ectomorfia];
         $tipo_dominante = array_search(max($valores), $valores);
-        
+
         return [
             'metodo' => 'somatotipo',
             'nombre' => 'Somatotipo (Heath-Carter)',
             'componentes' => [
                 'endomorfia' => round($endomorfia, 2),
                 'mesomorfia' => round($mesomorfia, 2),
-                'ectomorfia' => round($ectomorfia, 2)
+                'ectomorfia' => round($ectomorfia, 2),
+            ],
+            'coordenadas_somatochart' => [
+                'x' => round($coordX, 2),
+                'y' => round($coordY, 2),
             ],
             'tipo_dominante' => $tipo_dominante,
             'descripcion' => $this->getDescripcionSomatotipo($endomorfia, $mesomorfia, $ectomorfia),
             'datos_usados' => [
                 'peso' => $peso,
                 'altura' => $altura,
-                'altura_sentado' => $altura_sentado,
-                'suma_pliegues' => $suma_pliegues_endo,
+                'suma_3_pliegues' => round($suma_pliegues_endo, 2),
+                'perimetro_brazo_corregido' => round($pcb, 2),
+                'perimetro_pantorrilla_corregido' => round($pcp, 2),
                 'diametros' => ['humero' => $diametro_humero, 'femur' => $diametro_femur],
-                'circunferencias' => ['brazo' => $circunferencia_brazo_contraido, 'pantorrilla' => $circunferencia_pantorrilla]
             ],
             'pasos_calculo' => [
                 'suma_3_pliegues_endo' => round($suma_pliegues_endo, 2),
                 'endomorfia' => round($endomorfia, 2),
+                'perimetro_brazo_corregido' => round($pcb, 2),
+                'perimetro_pantorrilla_corregido' => round($pcp, 2),
                 'mesomorfia' => round($mesomorfia, 2),
                 'altura_peso_ratio' => round($altura_peso_ratio, 2),
-                'ectomorfia' => round($ectomorfia, 2)
-            ]
+                'ectomorfia' => round($ectomorfia, 2),
+                'coordenada_x' => round($coordX, 2),
+                'coordenada_y' => round($coordY, 2),
+            ],
         ];
     }
     
@@ -719,16 +805,21 @@ class ComposicionCorporalService
     public function verificarDatosDisponibles($metodoSlug, $historial)
     {
         $requiere_datos = [
-            // 2 comp Durnin & Womersley: P, T, Edad, Sexo (paciente); 4 pliegues (TR, SE, SI, AB). Sin perímetros ni diámetros.
+            // 2 comp Kerr (Excel KG_% DE MM Y MA): Σ6 pliegues + 5 perímetros corregidos
             '2-componentes' => [
                 'peso_actual', 'altura_actual',
-                'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_suprailíaco', 'pliegue_abdominal'
+                'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_supraespinal', 'pliegue_abdominal',
+                'pliegue_muslo_medial', 'pliegue_pantorrilla_medial',
+                'circunferencia_brazo_relajado', 'circunferencia_antebrazo_maximo', 'circunferencia_torax',
+                'circunferencia_muslo_maximo', 'circunferencia_pantorrilla',
             ],
-            // 4 comp De Rose: P, T, Sexo, Edad (paciente); 4 pliegues (TR, SE, SI, AB); DH, DF. Sin perímetros.
+            // 4 comp Fisionutdep.xlsm: Durnin (TR, SE, SI, bíceps) + Lee (perímetros) + ósea (muñeca circ + fémur)
             '4-componentes' => [
                 'peso_actual', 'altura_actual',
-                'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_suprailíaco', 'pliegue_abdominal',
-                'diametro_humero', 'diametro_femur'
+                'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_suprailíaco', 'pliegue_bicipital',
+                'pliegue_pantorrilla_medial', 'pliegue_muslo_medial',
+                'circunferencia_brazo_relajado', 'circunferencia_pantorrilla', 'circunferencia_muslo_medio',
+                'circunferencia_muneca', 'diametro_femur',
             ],
             // 5 comp Kerr: P, T, Sexo; 6 pliegues (TR, SE, SI, AB, MME, PA); DH, DF. Sin perímetros.
             '5-componentes' => [
@@ -747,7 +838,13 @@ class ComposicionCorporalService
                 'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_supraespinal',
                 'pliegue_abdominal', 'pliegue_muslo_medial', 'pliegue_pantorrilla_medial'
             ],
-            'somatotipo' => ['peso_actual', 'altura_actual', 'altura_sentado', 'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_suprailíaco', 'diametro_humero', 'diametro_femur', 'circunferencia_brazo_contraido', 'circunferencia_pantorrilla']
+            // Somatotipo BASICO.xls: TRC, SSC, SSP + diámetros + brazo flex / pantorrilla corregidos
+            'somatotipo' => [
+                'peso_actual', 'altura_actual',
+                'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_supraespinal', 'pliegue_pantorrilla_medial',
+                'diametro_humero', 'diametro_femur',
+                'circunferencia_brazo_contraido', 'circunferencia_pantorrilla',
+            ],
         ];
         
         if (!isset($requiere_datos[$metodoSlug])) {

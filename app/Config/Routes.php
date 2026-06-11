@@ -190,6 +190,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('detalle/(:num)', 'Dashboard\DocumentoController::detalle/$1');
         $routes2->get('getDocumentos', 'Dashboard\DocumentoController::getDocumentos');
         $routes2->post('registrar', 'Dashboard\DocumentoController::registrar');
+        $routes2->post('registrar-lote', 'Dashboard\DocumentoController::registrarLote');
         $routes2->post('update', 'Dashboard\DocumentoController::update');
         $routes2->post('eliminar', 'Dashboard\DocumentoController::eliminar');
         $routes2->post('eliminar/(:num)', 'Dashboard\DocumentoController::eliminar/$1');
@@ -446,6 +447,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('crear/(:num)', 'Dashboard\BotonPagoController::crear/$1');
         $routes2->get('editar/(:num)', 'Dashboard\BotonPagoController::editar/$1');
         $routes2->get('ver/(:num)', 'Dashboard\BotonPagoController::ver/$1');
+        $routes2->post('eliminar/(:num)', 'Dashboard\BotonPagoController::eliminar/$1');
         $routes2->post('generar', 'Dashboard\BotonPagoController::generarBoton');
     });
 
