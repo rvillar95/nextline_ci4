@@ -150,3 +150,4 @@ nextline_pyme*.sql
 !database/schema_red_profesionales_judiciales.sql
 !database/schema_red_abogado_perfil_gcp.sql
 !database/migration_solo_tabla_contacto.sql
+!database/seed_abopech_demo.sql

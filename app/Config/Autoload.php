@@ -90,5 +90,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = ['seo', 'auth_portal', 'storage_path'];
+    public $helpers = ['seo', 'auth_portal', 'storage_path', 'abopech'];
 }

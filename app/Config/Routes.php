@@ -501,6 +501,49 @@ $routes->post('newsletter/suscribir', 'Web\NewsletterController::suscribir');
 
 $routes->get('precios', 'Web\PreciosController::index');
 
+// ---------------------------------------------------------------------
+// ABOPECH — Abogados Penalistas de Chile
+// ---------------------------------------------------------------------
+$routes->group('abopech', static function ($routes) {
+    $routes->get('/', 'Web\\Abopech\\HomeController::index');
+    $routes->get('buscar', 'Web\\Abopech\\BusquedaController::index');
+    $routes->get('buscar/comunas/(:num)', 'Web\\Abopech\\BusquedaController::comunasJson/$1');
+    $routes->get('abogado/(:num)', 'Web\\Abopech\\PerfilController::ver/$1');
+    $routes->get('abogado/(:num)/contactar', 'Web\\Abopech\\ContactoController::form/$1');
+    $routes->post('abogado/(:num)/contactar', 'Web\\Abopech\\ContactoController::enviar/$1');
+    $routes->post('abogado/(:num)/contactar/confirmar', 'Web\\Abopech\\ContactoController::confirmarPost/$1');
+
+    $routes->get('auth/login', 'Auth\\AbopechAuthController::login');
+    $routes->post('auth/login', 'Auth\\AbopechAuthController::loginPost');
+    $routes->get('auth/registro', 'Auth\\AbopechAuthController::registro');
+    $routes->post('auth/registro', 'Auth\\AbopechAuthController::registroPost');
+    $routes->get('auth/google', 'Auth\\AbopechAuthController::googleRedirect');
+    $routes->get('auth/google/callback', 'Auth\\AbopechAuthController::googleCallback');
+    $routes->get('auth/logout', 'Auth\\AbopechAuthController::logout');
+
+    $routes->group('mi-perfil', ['filter' => 'abopechAbogado'], static function ($routes) {
+        $routes->get('/', 'Abogado\\PerfilController::index');
+        $routes->post('guardar', 'Abogado\\PerfilController::guardar');
+        $routes->post('enviar-revision', 'Abogado\\PerfilController::enviarRevision');
+        $routes->post('estudio', 'Abogado\\EstudioController::guardar');
+        $routes->post('estudio/eliminar/(:num)', 'Abogado\\EstudioController::eliminar/$1');
+        $routes->get('comunas/(:num)', 'Abogado\\PerfilController::comunasJson/$1');
+    });
+
+    $routes->group('admin', ['filter' => 'abopechAdmin'], static function ($routes) {
+        $routes->get('/', 'Abopech\\Admin\\DashboardController::index');
+        $routes->get('abogados', 'Abopech\\Admin\\AbogadoController::lista');
+        $routes->get('abogados/(:num)', 'Abopech\\Admin\\AbogadoController::ver/$1');
+        $routes->post('abogados/aprobar/(:num)', 'Abopech\\Admin\\AbogadoController::aprobar/$1');
+        $routes->post('abogados/rechazar/(:num)', 'Abopech\\Admin\\AbogadoController::rechazar/$1');
+        $routes->get('contactos', 'Abopech\\Admin\\ContactoController::lista');
+        $routes->post('contactos/estado/(:num)', 'Abopech\\Admin\\ContactoController::cambiarEstado/$1');
+        $routes->get('tribunales', 'Abopech\\Admin\\TribunalController::lista');
+        $routes->get('tribunales/registro', 'Abopech\\Admin\\TribunalController::registro');
+        $routes->post('tribunales/guardar', 'Abopech\\Admin\\TribunalController::guardar');
+    });
+});
+
 // Equipo de nutricionistas (web pública)
 $routes->get('equipo', 'Web\EquipoController::index');
 $routes->get('equipo/(:num)', 'Web\EquipoController::detalle/$1');

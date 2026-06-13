@@ -43,6 +43,9 @@ final class SessionFilter implements FilterInterface
         '/dashboard/agenda/calendario/callback',
         // Webhook WhatsApp (Meta, sin sesión)
         '/whatsapp/webhook',
+        // ABOPECH (sitio público y auth propia)
+        '/abopech',
+        '/abopech/*',
     ];
 
     /**

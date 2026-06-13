@@ -156,6 +156,37 @@ class Database extends Config
     //    ];
 
     /**
+     * Base de datos Abopech (red profesionales judiciales).
+     *
+     * @var array<string, mixed>
+     */
+    public array $abopech = [
+        'DSN'          => '',
+        'hostname'     => 'localhost',
+        'username'     => 'root',
+        'password'     => '',
+        'database'     => 'red_profesionales_judiciales',
+        'DBDriver'     => 'MySQLi',
+        'DBPrefix'     => '',
+        'pConnect'     => false,
+        'DBDebug'      => true,
+        'charset'      => 'utf8mb4',
+        'DBCollat'     => 'utf8mb4_unicode_ci',
+        'swapPre'      => '',
+        'encrypt'      => false,
+        'compress'     => false,
+        'strictOn'     => false,
+        'failover'     => [],
+        'port'         => 3306,
+        'numberNative' => false,
+        'dateFormat'   => [
+            'date'     => 'Y-m-d',
+            'datetime' => 'Y-m-d H:i:s',
+            'time'     => 'H:i:s',
+        ],
+    ];
+
+    /**
      * This database connection is used when running PHPUnit database tests.
      *
      * @var array<string, mixed>
@@ -250,6 +281,35 @@ class Database extends Config
             if ($dbName === 'mysql') {
                 $this->default['database'] = getenv('DATABASE_NAME') ?: ($_SERVER['DATABASE_NAME'] ?? null) ?: 'nutrinext';
             }
+        }
+
+        $this->syncAbopechFromEnv();
+    }
+
+    private function syncAbopechFromEnv(): void
+    {
+        $map = [
+            'DATABASE_ABOPECH_HOSTNAME' => 'hostname',
+            'DATABASE_ABOPECH_PORT'     => 'port',
+            'DATABASE_ABOPECH_USERNAME' => 'username',
+            'DATABASE_ABOPECH_PASSWORD' => 'password',
+            'DATABASE_ABOPECH_NAME'     => 'database',
+        ];
+
+        foreach ($map as $envKey => $prop) {
+            $val = getenv($envKey) ?: ($_SERVER[$envKey] ?? null);
+            if ($val === null || $val === '') {
+                continue;
+            }
+            if ($prop === 'port') {
+                $this->abopech['port'] = (int) $val;
+                $val = (string) $this->abopech['port'];
+            } else {
+                $this->abopech[$prop] = $val;
+            }
+            $dotKey = 'database.abopech.' . ($prop === 'database' ? 'database' : $prop);
+            $_ENV[$dotKey]    = (string) $val;
+            $_SERVER[$dotKey] = (string) $val;
         }
     }
 }

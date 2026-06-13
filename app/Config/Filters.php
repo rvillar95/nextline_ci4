@@ -15,6 +15,8 @@ use CodeIgniter\Filters\SecureHeaders;
 
 use App\Filters\SessionFilter;
 use App\Filters\CSRFExceptWebhook;
+use App\Filters\AbopechAbogadoFilter;
+use App\Filters\AbopechAdminFilter;
 
 class Filters extends BaseFilters
 {
@@ -41,7 +43,9 @@ class Filters extends BaseFilters
         'session'       => SessionFilter::class,
         // Compatibilidad por si quedó referenciado con mayúsculas en algún sitio
         'SessionFilter' => SessionFilter::class,
-        'perfilDetalle' => PerfilDetalleFilter::class
+        'perfilDetalle' => PerfilDetalleFilter::class,
+        'abopechAbogado' => AbopechAbogadoFilter::class,
+        'abopechAdmin'   => AbopechAdminFilter::class,
     ];
 
     /**
