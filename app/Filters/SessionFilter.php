@@ -317,6 +317,18 @@ final class SessionFilter implements FilterInterface
             }
         }
 
+        // Paciente: desactivar/activar con ID (POST AJAX) si tiene acceso al módulo Pacientes
+        $pathPac = $this->sanitizePath($path);
+        $esPacienteEstadoAjax = (bool) preg_match('#^/dashboard/paciente/(activar|eliminar)/[0-9]+/?$#', $pathPac);
+        if ($esPacienteEstadoAjax) {
+            foreach ($allowed as $rule) {
+                if (strpos($rule['pattern'], '/dashboard/paciente') === 0) {
+                    log_message('info', 'SessionFilter: Ruta paciente estado permitida por excepción: ' . $path);
+                    return;
+                }
+            }
+        }
+
         // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos
         if (strpos($this->sanitizePath($path), '/dashboard/menu-grupo') === 0) {
             foreach ($allowed as $rule) {
@@ -500,7 +512,7 @@ final class SessionFilter implements FilterInterface
         }
         // 3) Heurística por último segmento (evita 'lista'/'registro')
         $last = basename($pattern);
-        $verbsId = ['editar', 'eliminar', 'update', 'detalle', 'show', 'view', 'generarPDF', 'calorimetria', 'plan', 'comidas'];
+        $verbsId = ['editar', 'eliminar', 'activar', 'update', 'detalle', 'show', 'view', 'generarPDF', 'calorimetria', 'plan', 'comidas'];
         return in_array($last, $verbsId, true);
     }
 
