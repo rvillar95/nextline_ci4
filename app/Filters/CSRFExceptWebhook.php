@@ -55,9 +55,6 @@ class CSRFExceptWebhook extends BaseCSRF
         'dashboard/historial/calcular-4-componentes',
         'dashboard/historial/calcular-5-componentes',
         'dashboard/historial/calcular-somatotipo',
-        // Pacientes: activar / desactivar (AJAX; PacienteController valida nutricionista_id)
-        'dashboard/paciente/activar/*',
-        'dashboard/paciente/eliminar/*',
     ];
 
     public function before(RequestInterface $request, $arguments = null)

@@ -317,12 +317,6 @@ final class SessionFilter implements FilterInterface
             }
         }
 
-        // Paciente: desactivar/activar con ID — sesión ya validada; PacienteController verifica nutricionista_id
-        $pathPac = $this->sanitizePath($path);
-        if (preg_match('#^/dashboard/paciente/(activar|eliminar)/[0-9]+/?$#', $pathPac)) {
-            return;
-        }
-
         // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos
         if (strpos($this->sanitizePath($path), '/dashboard/menu-grupo') === 0) {
             foreach ($allowed as $rule) {
