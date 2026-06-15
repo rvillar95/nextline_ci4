@@ -65,7 +65,7 @@ $filas[] = fila('2 Componentes', '%_masa_adiposa', $ref2['pct_adiposa'], $r2['co
 $filas[] = fila('2 Componentes', 'kg_masa_muscular', $ref2['kg_muscular'], $r2['componentes']['masa_muscular']['kg']);
 $filas[] = fila('2 Componentes', '%_masa_muscular', $ref2['pct_muscular'], $r2['componentes']['masa_muscular']['porcentaje']);
 
-// ─── 3. CUATRO COMPONENTES — Fisionutdep (medidas realistas; Excel trae fémur/muñeca=30 placeholder) ───
+// ─── 3. CUATRO COMPONENTES — Fisionutdep.xlsm (valores por defecto de la hoja + celdas J8/J10/J12/J14) ───
 $h4 = (object) [
     'peso_actual' => 50.0,
     'altura_actual' => 150.0,
@@ -78,37 +78,27 @@ $h4 = (object) [
     'circunferencia_brazo_relajado' => 20,
     'circunferencia_pantorrilla' => 20,
     'circunferencia_muslo_medio' => 20,
-    'circunferencia_muneca' => 16,
-    'diametro_femur' => 9,
+    'diametro_humero' => 30,
+    'diametro_muneca' => 30,
+    'diametro_femur' => 30,
 ];
 $p4 = (object) ['genero' => 'F', 'fecha_nacimiento' => '1992-05-20'];
 $r4 = $service->calcular('4-componentes', $h4, $p4);
 
-// Referencia calculada con mismas fórmulas Excel (Siri + Lee + ósea + residual)
-$T = 150; $P = 50; $pi = M_PI;
-$suma4 = 40; $logS = log10($suma4);
-$D = 1.1423 - 0.0632 * $logS;
-$pctMG = (495 / $D) - 450;
-$MG = $pctMG * $P / 100;
-$MO = 3.02 * pow((($T / 100) ** 2) * (16 / 100) * (9 / 100) * 400, 0.712);
-$perB = 20 - 10 * $pi / 10;
-$perP = 20 - 10 * $pi / 10;
-$perM = 20 - 10 * $pi / 10;
-$mmLee = $T * ((0.00744 * $perB ** 2) + (0.00088 * $perM ** 2) + (0.00441 * $perP ** 2)) - 0.048 * 34 + 7.8;
-$MM = $mmLee / 100;
-$MR = $P - $MM - $MG - $MO;
-$ref4 = [
-    'pct_grasa' => round($pctMG, 2),
-    'kg_grasa' => round($MG, 2),
-    'kg_osea' => round($MO, 2),
-    'kg_muscular' => round($MM, 2),
-    'kg_residual' => round($MR, 2),
+// Valores cacheados en el Excel de referencia (misma fila de datos demo)
+$excel4 = [
+    'kg_muscular' => 5.49,
+    'kg_grasa' => 12.74,
+    'pct_grasa' => 25.48,
+    'kg_osea' => 69.0,
+    'kg_residual' => -37.23,
 ];
-$filas[] = fila('4 Componentes', '%_grasa', $ref4['pct_grasa'], $r4['componentes']['grasa']['porcentaje']);
-$filas[] = fila('4 Componentes', 'kg_grasa', $ref4['kg_grasa'], $r4['componentes']['grasa']['kg']);
-$filas[] = fila('4 Componentes', 'kg_osea', $ref4['kg_osea'], $r4['componentes']['hueso']['kg']);
-$filas[] = fila('4 Componentes', 'kg_muscular', $ref4['kg_muscular'], $r4['componentes']['musculo']['kg']);
-$filas[] = fila('4 Componentes', 'kg_residual', $ref4['kg_residual'], $r4['componentes']['residual']['kg']);
+$filas[] = fila('4 Componentes', 'kg_muscular (J8)', $excel4['kg_muscular'], $r4['componentes']['musculo']['kg']);
+$filas[] = fila('4 Componentes', 'kg_grasa (J10)', $excel4['kg_grasa'], $r4['componentes']['grasa']['kg']);
+$filas[] = fila('4 Componentes', '%_grasa (D46)', $excel4['pct_grasa'], $r4['componentes']['grasa']['porcentaje']);
+$filas[] = fila('4 Componentes', 'kg_osea (J12)', $excel4['kg_osea'], $r4['componentes']['hueso']['kg']);
+$filas[] = fila('4 Componentes', 'kg_residual (J14)', $excel4['kg_residual'], $r4['componentes']['residual']['kg']);
+$filas[] = fila('4 Componentes', 'advertencia_residual_neg', 1, !empty($r4['advertencias']) ? 1 : 0, 0);
 
 // ─── 4. CINCO COMPONENTES — Holway (datos moderados, no placeholders del Excel) ───
 $h5 = (object) [
@@ -136,16 +126,21 @@ $h5 = (object) [
     'pliegue_pantorrilla_medial' => 10.0,
 ];
 $r5 = $service->calcular('5-componentes', $h5, (object) ['genero' => 'M', 'fecha_nacimiento' => '1995-01-01']);
-// Smoke test: masas positivas y suma coherente
-$suma5 = $r5['componentes']['masa_adiposa']['kg']
-    + $r5['componentes']['masa_muscular']['kg']
-    + $r5['componentes']['masa_residual']['kg']
-    + $r5['componentes']['masa_osea_total']['kg']
-    + $r5['componentes']['masa_piel']['kg'];
-$filas[] = fila('5 Componentes', 'masa_adiposa > 0', 1, $r5['componentes']['masa_adiposa']['kg'] > 0 ? 1 : 0, 0);
-$filas[] = fila('5 Componentes', 'masa_muscular > 0', 1, $r5['componentes']['masa_muscular']['kg'] > 0 ? 1 : 0, 0);
-$pesoReconst = $r5['cierre_peso']['peso_reconstituido_kg'];
-$filas[] = fila('5 Componentes', 'suma_5_masas = peso_reconstituido', $pesoReconst, round($suma5, 2), 0.05);
+// Valores esperados = fórmulas Excel «Proc datos brutos» (Holway), mismo dataset clínico
+$excel5 = [
+    'kg_piel' => 3.82,
+    'kg_adiposa' => 21.84,
+    'kg_muscular' => 33.69,
+    'kg_residual' => 7.60,
+    'kg_osea' => 8.20,
+    'peso_reconstituido' => 75.15,
+];
+$filas[] = fila('5 Componentes', 'kg_piel (MPIEL)', $excel5['kg_piel'], $r5['componentes']['masa_piel']['kg']);
+$filas[] = fila('5 Componentes', 'kg_adiposa (MADIP)', $excel5['kg_adiposa'], $r5['componentes']['masa_adiposa']['kg']);
+$filas[] = fila('5 Componentes', 'kg_muscular (MMUSC)', $excel5['kg_muscular'], $r5['componentes']['masa_muscular']['kg']);
+$filas[] = fila('5 Componentes', 'kg_residual (MRES)', $excel5['kg_residual'], $r5['componentes']['masa_residual']['kg']);
+$filas[] = fila('5 Componentes', 'kg_osea_total (MO)', $excel5['kg_osea'], $r5['componentes']['masa_osea_total']['kg']);
+$filas[] = fila('5 Componentes', 'peso_reconstituido', $excel5['peso_reconstituido'], $r5['cierre_peso']['peso_reconstituido_kg']);
 $filas[] = fila('5 Componentes', 'cierre_peso_medido_kg', $h5->peso_actual, $r5['cierre_peso']['peso_medido_kg'], 0.01);
 
 // ─── Salida ───

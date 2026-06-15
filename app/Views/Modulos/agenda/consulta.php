@@ -620,7 +620,7 @@
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Cadera</label>
-                                <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control metodo-5" step="0.01" min="0" placeholder="Ej: 95.0" value="<?= !empty($historial['circunferencia_cadera']) ? esc($historial['circunferencia_cadera']) : '' ?>">
+                                <input type="number" name="circunferencia_cadera" id="circunferencia_cadera" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 95.0" value="<?= !empty($historial['circunferencia_cadera']) ? esc($historial['circunferencia_cadera']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Brazo Relajado</label>
@@ -628,7 +628,7 @@
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Brazo Contraído</label>
-                                <input type="number" name="circunferencia_brazo_contraido" id="circunferencia_brazo_contraido" class="form-control metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 32.0" value="<?= !empty($historial['circunferencia_brazo_contraido']) ? esc($historial['circunferencia_brazo_contraido']) : '' ?>">
+                                <input type="number" name="circunferencia_brazo_contraido" id="circunferencia_brazo_contraido" class="form-control metodo-somato" step="0.01" min="0" placeholder="Ej: 32.0" value="<?= !empty($historial['circunferencia_brazo_contraido']) ? esc($historial['circunferencia_brazo_contraido']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Muslo Medio</label>
@@ -660,8 +660,8 @@
                                 <input type="number" name="circunferencia_muslo_maximo" id="circunferencia_muslo_maximo" class="form-control metodo-5 metodo-2" step="0.01" min="0" placeholder="Ej: 58.0" value="<?= !empty($historial['circunferencia_muslo_maximo']) ? esc($historial['circunferencia_muslo_maximo']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
-                                <label class="form-label">Muñeca</label>
-                                <input type="number" name="circunferencia_muneca" id="circunferencia_muneca" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 16.5" value="<?= !empty($historial['circunferencia_muneca']) ? esc($historial['circunferencia_muneca']) : '' ?>">
+                                <label class="form-label">Muñeca <span class="text-muted">(circunferencia)</span></label>
+                                <input type="number" name="circunferencia_muneca" id="circunferencia_muneca" class="form-control" step="0.01" min="0" placeholder="Ej: 16.5" value="<?= !empty($historial['circunferencia_muneca']) ? esc($historial['circunferencia_muneca']) : '' ?>">
                             </div>
                         </div>
 
@@ -685,7 +685,7 @@
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Suprailíaco</label>
-                                <input type="number" name="pliegue_suprailíaco" id="pliegue_suprailíaco" class="form-control metodo-4 metodo-5" step="0.01" min="0" placeholder="Ej: 18.7" value="<?= isset($historial['pliegue_suprailíaco']) && $historial['pliegue_suprailíaco'] !== '' ? esc($historial['pliegue_suprailíaco']) : '' ?>">
+                                <input type="number" name="pliegue_suprailíaco" id="pliegue_suprailíaco" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 18.7" value="<?= isset($historial['pliegue_suprailíaco']) && $historial['pliegue_suprailíaco'] !== '' ? esc($historial['pliegue_suprailíaco']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Supraespinal</label>
@@ -726,7 +726,7 @@
                         <div class="row medicion-seccion" data-seccion="diametros">
                             <div class="col-12">
                                 <h6 class="text-primary mb-3"><i class="fas fa-ruler me-2"></i> Diámetros Óseos (cm)</h6>
-                                <p class="text-muted small">Medición con antropómetro o caliper. Se mide en centímetros (cm). Necesarios para métodos 4, 5 componentes y somatotipo.</p>
+                                <p class="text-muted small">Medición con antropómetro o caliper en <strong>cm</strong>. En 4 componentes (Fisionutdep): <strong>Húmero</strong>, <strong>Muñeca</strong> (diámetro, no circunferencia) y <strong>Fémur</strong>. También usados en 5 componentes y somatotipo.</p>
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Biacromial (Hombros)</label>
@@ -738,15 +738,15 @@
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Húmero (Codo)</label>
-                                <input type="number" name="diametro_humero" id="diametro_humero" class="form-control metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 6.5" value="<?= isset($historial['diametro_humero']) && $historial['diametro_humero'] !== '' ? esc($historial['diametro_humero']) : '' ?>">
+                                <input type="number" name="diametro_humero" id="diametro_humero" class="form-control metodo-4 metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 6.5" value="<?= isset($historial['diametro_humero']) && $historial['diametro_humero'] !== '' ? esc($historial['diametro_humero']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Fémur (Rodilla)</label>
                                 <input type="number" name="diametro_femur" id="diametro_femur" class="form-control metodo-4 metodo-5 metodo-somato" step="0.01" min="0" placeholder="Ej: 9.0" value="<?= isset($historial['diametro_femur']) && $historial['diametro_femur'] !== '' ? esc($historial['diametro_femur']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
-                                <label class="form-label">Muñeca</label>
-                                <input type="number" name="diametro_muneca" id="diametro_muneca" class="form-control" step="0.01" min="0" placeholder="Ej: 5.5" value="<?= isset($historial['diametro_muneca']) && $historial['diametro_muneca'] !== '' ? esc($historial['diametro_muneca']) : '' ?>">
+                                <label class="form-label">Muñeca <span class="text-muted">(diámetro)</span></label>
+                                <input type="number" name="diametro_muneca" id="diametro_muneca" class="form-control metodo-4" step="0.01" min="0" placeholder="Ej: 5.5" value="<?= isset($historial['diametro_muneca']) && $historial['diametro_muneca'] !== '' ? esc($historial['diametro_muneca']) : '' ?>">
                             </div>
                             <div class="col-md-4 mb-3 medicion-campo-wrap">
                                 <label class="form-label">Tobillo</label>

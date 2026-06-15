@@ -357,7 +357,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Cadera</label>
-                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-5" 
+                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-4"
                                        value="<?= old('circunferencia_cadera', $historial->circunferencia_cadera) ?>">
                             </div>
                         </div>
@@ -371,7 +371,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Brazo Contraído</label>
-                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-5 metodo-somato" 
+                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-somato" 
                                        value="<?= old('circunferencia_brazo_contraido', $historial->circunferencia_brazo_contraido ?? '') ?>">
                             </div>
                         </div>
@@ -429,8 +429,8 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muñeca</label>
-                                <input type="number" step="0.01" name="circunferencia_muneca" class="form-control metodo-4" 
-                                       value="<?= old('circunferencia_muneca', $historial->circunferencia_muneca ?? '') ?>">
+                                <input type="number" step="0.01" name="circunferencia_muneca" class="form-control"
+                                       value="<?= old('circunferencia_muneca', $historial->circunferencia_muneca ?? '') ?>" placeholder="Circunferencia (cm)">
                             </div>
                         </div>
                     </div>
@@ -456,7 +456,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Húmero</label>
-                                <input type="number" step="0.01" name="diametro_humero" class="form-control metodo-5 metodo-somato" 
+                                <input type="number" step="0.01" name="diametro_humero" class="form-control metodo-4 metodo-5 metodo-somato"
                                        value="<?= old('diametro_humero', $historial->diametro_humero ?? '') ?>">
                             </div>
                         </div>
@@ -470,8 +470,8 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muñeca</label>
-                                <input type="number" step="0.01" name="diametro_muneca" class="form-control" 
-                                       value="<?= old('diametro_muneca', $historial->diametro_muneca ?? '') ?>">
+                                <input type="number" step="0.01" name="diametro_muneca" class="form-control metodo-4"
+                                       value="<?= old('diametro_muneca', $historial->diametro_muneca ?? '') ?>" placeholder="Diámetro (cm)">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -526,7 +526,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Suprailíaco</label>
-                                <input type="number" step="0.01" name="pliegue_suprailíaco" class="form-control metodo-4 metodo-5" 
+                                <input type="number" step="0.01" name="pliegue_suprailíaco" class="form-control metodo-4"
                                        value="<?= old('pliegue_suprailíaco', $historial->pliegue_suprailíaco ?? '') ?>">
                             </div>
                         </div>

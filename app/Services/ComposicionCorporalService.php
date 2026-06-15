@@ -165,7 +165,7 @@ class ComposicionCorporalService
      * Hoja: Antropometría & Composición (ecuación Siri por defecto).
      *
      * Grasa: Durnin (log) sobre 4 pliegues TR + SE + SI + Bíceps → % Siri → kg.
-     * Ósea: 3.02 × (((T/100)² × (muñeca/100) × (fémur/100) × 400)^0.712).
+     * Ósea: 3.02 × (((T/100)² × (diámetro muñeca/100) × (fémur/100) × 400)^0.712) — celdas G34 y D36.
      * Muscular: Lee (celda J8) con perímetros corregidos (brazo, pantorrilla, muslo).
      * Residual: P − (MM + MG + MO).
      */
@@ -188,9 +188,9 @@ class ComposicionCorporalService
         $PBR = floatval($historial->circunferencia_brazo_relajado ?? 0);
         $PPAN = floatval($historial->circunferencia_pantorrilla ?? 0);
         $PMUS = floatval($historial->circunferencia_muslo_medio ?? 0);
-        $PMUN = floatval($historial->circunferencia_muneca ?? 0);
         $PLPAN = floatval($historial->pliegue_pantorrilla_medial ?? 0);
         $PLMUS = floatval($historial->pliegue_muslo_medial ?? 0);
+        $DMUN = floatval($historial->diametro_muneca ?? 0);
         $DF = floatval($historial->diametro_femur ?? 0);
 
         if ($P <= 0 || $T <= 0) {
@@ -207,8 +207,8 @@ class ComposicionCorporalService
         if ($PLPAN <= 0 || $PLMUS <= 0) {
             throw new \Exception('Se requieren pliegues (mm): pantorrilla medial y muslo medial (Fisionutdep / perímetros corregidos)');
         }
-        if ($PMUN <= 0 || $DF <= 0) {
-            throw new \Exception('Se requieren circunferencia de muñeca (cm) y diámetro de fémur (cm) para masa ósea (Fisionutdep)');
+        if ($DMUN <= 0 || $DF <= 0) {
+            throw new \Exception('Se requieren diámetros óseos (cm): muñeca y fémur para masa ósea (Fisionutdep — celdas G34 y D36)');
         }
 
         $logSuma = log10($suma4Durnin);
@@ -246,8 +246,8 @@ class ComposicionCorporalService
         $pctMG = (495 / $D) - 450;
         $MG = ($pctMG * $P) / 100;
 
-        // Masa ósea (celda J12)
-        $MO = 3.02 * pow((($T / 100) ** 2) * ($PMUN / 100) * ($DF / 100) * 400, 0.712);
+        // Masa ósea (celda J12) — diámetro muñeca G34 y diámetro fémur D36
+        $MO = 3.02 * pow((($T / 100) ** 2) * ($DMUN / 100) * ($DF / 100) * 400, 0.712);
 
         // Perímetros corregidos (J54, J55, J56) — π/10 ≈ 0.31416
         $piDec = M_PI / 10;
@@ -273,11 +273,10 @@ class ComposicionCorporalService
         if ($MM <= 0) {
             throw new \Exception('Masa muscular inválida (≤ 0). Revisá circunferencias (cm) y pliegues (mm) según Fisionutdep.');
         }
+
+        $advertencias = [];
         if ($MR < 0) {
-            throw new \Exception(
-                'Masa residual negativa: las masas grasa, muscular y ósea superan el peso. ' .
-                'Revisá mediciones y unidades (cm/mm).'
-            );
+            $advertencias[] = 'Masa residual negativa: revisá diámetros óseos (cm) y demás mediciones. El Excel puede mostrar lo mismo con datos de ejemplo irreales.';
         }
 
         $pctMM = ($P > 0) ? ($MM / $P) * 100 : 0;
@@ -287,6 +286,7 @@ class ComposicionCorporalService
         return [
             'metodo' => '4-componentes',
             'nombre' => 'Modelo 4 componentes (Fisionutdep — Siri / Lee)',
+            'advertencias' => $advertencias,
             'componentes' => [
                 'grasa' => [
                     'kg' => round($MG, 2),
@@ -311,7 +311,7 @@ class ComposicionCorporalService
                 'sexo' => $esMujer ? 'Mujer' : 'Hombre',
                 'edad' => $Edad,
                 'suma_4_pliegues_durnin' => $suma4Durnin,
-                'circunferencia_muneca' => $PMUN,
+                'diametro_muneca' => $DMUN,
                 'diametro_femur' => $DF,
                 'perimetro_brazo_corregido' => round($perBrazoCorr, 2),
                 'perimetro_pantorrilla_corregido' => round($perPiernaCorr, 2),
@@ -813,13 +813,13 @@ class ComposicionCorporalService
                 'circunferencia_brazo_relajado', 'circunferencia_antebrazo_maximo', 'circunferencia_torax',
                 'circunferencia_muslo_maximo', 'circunferencia_pantorrilla',
             ],
-            // 4 comp Fisionutdep.xlsm: Durnin (TR, SE, SI, bíceps) + Lee (perímetros) + ósea (muñeca circ + fémur)
+            // 4 comp Fisionutdep.xlsm: Durnin + Lee + ósea (diámetro muñeca G34 + fémur D36)
             '4-componentes' => [
                 'peso_actual', 'altura_actual',
                 'pliegue_tricipital', 'pliegue_subescapular', 'pliegue_suprailíaco', 'pliegue_bicipital',
                 'pliegue_pantorrilla_medial', 'pliegue_muslo_medial',
                 'circunferencia_brazo_relajado', 'circunferencia_pantorrilla', 'circunferencia_muslo_medio',
-                'circunferencia_muneca', 'diametro_femur',
+                'diametro_muneca', 'diametro_femur',
             ],
             // 5 comp Kerr: P, T, Sexo; 6 pliegues (TR, SE, SI, AB, MME, PA); DH, DF. Sin perímetros.
             '5-componentes' => [

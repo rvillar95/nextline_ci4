@@ -195,7 +195,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Cadera</label>
-                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-4 metodo-5">
+                                <input type="number" step="0.01" name="circunferencia_cadera" class="form-control metodo-4">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -207,7 +207,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Brazo Contraído</label>
-                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-4 metodo-5">
+                                <input type="number" step="0.01" name="circunferencia_brazo_contraido" class="form-control metodo-somato">
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -255,7 +255,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Muñeca</label>
-                                <input type="number" step="0.01" name="circunferencia_muneca" class="form-control metodo-4">
+                                <input type="number" step="0.01" name="circunferencia_muneca" class="form-control" placeholder="Circunferencia (cm)">
                             </div>
                         </div>
                     </div>
@@ -339,7 +339,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Suprailíaco</label>
-                                <input type="number" step="0.01" name="pliegue_suprailíaco" class="form-control metodo-4 metodo-5">
+                                <input type="number" step="0.01" name="pliegue_suprailíaco" class="form-control metodo-4">
                             </div>
                         </div>
                         <div class="col-md-3">
