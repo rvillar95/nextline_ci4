@@ -153,6 +153,31 @@
 
 <script>
 $(document).ready(function() {
+    function pacienteAjaxCsrf() {
+        var name = window.NutriNextCsrf ? NutriNextCsrf.getName() : '<?= csrf_token() ?>';
+        var token = window.NutriNextCsrf ? NutriNextCsrf.getToken() : '<?= csrf_hash() ?>';
+        var data = {};
+        data[name] = token;
+        return {
+            headers: { 'X-CSRF-TOKEN': token },
+            data: data
+        };
+    }
+
+    function pacienteAjaxError(xhr, fallback) {
+        var msg = fallback;
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+            msg = xhr.responseJSON.error;
+        } else if (xhr.status === 403) {
+            msg = 'Acceso denegado (403). Recargue la página e intente de nuevo.';
+        }
+        if (typeof toastr !== 'undefined') {
+            toastr.error(msg);
+        } else {
+            alert(msg);
+        }
+    }
+
     var table = $('#tablaPacientes').DataTable({
         "processing": true,
         "serverSide": true,
@@ -221,12 +246,8 @@ $(document).ready(function() {
         $.ajax({
             url: '<?= base_url('dashboard/paciente/eliminar') ?>/' + window.pacienteIdAEliminar,
             type: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
-            },
-            data: {
-                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
-            },
+            headers: pacienteAjaxCsrf().headers,
+            data: pacienteAjaxCsrf().data,
             success: function(response) {
                 if (response.success) {
                     if (typeof toastr !== 'undefined') {
@@ -241,12 +262,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                var error = xhr.responseJSON?.error || 'Error al desactivar el paciente';
-                if (typeof toastr !== 'undefined') {
-                    toastr.error(error);
-                } else {
-                    alert(error);
-                }
+                pacienteAjaxError(xhr, 'Error al desactivar el paciente');
             }
         });
     };
@@ -255,12 +271,8 @@ $(document).ready(function() {
         $.ajax({
             url: '<?= base_url('dashboard/paciente/activar') ?>/' + id,
             type: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
-            },
-            data: {
-                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
-            },
+            headers: pacienteAjaxCsrf().headers,
+            data: pacienteAjaxCsrf().data,
             success: function(response) {
                 if (response.success) {
                     if (typeof toastr !== 'undefined') {
@@ -274,12 +286,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                var error = xhr.responseJSON?.error || 'Error al activar el paciente';
-                if (typeof toastr !== 'undefined') {
-                    toastr.error(error);
-                } else {
-                    alert(error);
-                }
+                pacienteAjaxError(xhr, 'Error al activar el paciente');
             }
         });
     };

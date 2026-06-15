@@ -317,16 +317,10 @@ final class SessionFilter implements FilterInterface
             }
         }
 
-        // Paciente: desactivar/activar con ID (POST AJAX) si tiene acceso al módulo Pacientes
+        // Paciente: desactivar/activar con ID — sesión ya validada; PacienteController verifica nutricionista_id
         $pathPac = $this->sanitizePath($path);
-        $esPacienteEstadoAjax = (bool) preg_match('#^/dashboard/paciente/(activar|eliminar)/[0-9]+/?$#', $pathPac);
-        if ($esPacienteEstadoAjax) {
-            foreach ($allowed as $rule) {
-                if (strpos($rule['pattern'], '/dashboard/paciente') === 0) {
-                    log_message('info', 'SessionFilter: Ruta paciente estado permitida por excepción: ' . $path);
-                    return;
-                }
-            }
+        if (preg_match('#^/dashboard/paciente/(activar|eliminar)/[0-9]+/?$#', $pathPac)) {
+            return;
         }
 
         // Menú lateral (super admin): rutas menu-grupo si tiene acceso al módulo Módulos

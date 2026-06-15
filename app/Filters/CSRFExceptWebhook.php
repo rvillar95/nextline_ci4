@@ -54,7 +54,10 @@ class CSRFExceptWebhook extends BaseCSRF
         'dashboard/historial/calcular-2-componentes',
         'dashboard/historial/calcular-4-componentes',
         'dashboard/historial/calcular-5-componentes',
-        'dashboard/historial/calcular-somatotipo'
+        'dashboard/historial/calcular-somatotipo',
+        // Pacientes: activar / desactivar (AJAX; PacienteController valida nutricionista_id)
+        'dashboard/paciente/activar/*',
+        'dashboard/paciente/eliminar/*',
     ];
 
     public function before(RequestInterface $request, $arguments = null)
@@ -67,13 +70,7 @@ class CSRFExceptWebhook extends BaseCSRF
         }
         
         $uri = $request->getUri();
-        $path = $uri->getPath();
-        
-        // Normalizar el path: remover index.php/ si existe, remover query strings, remover dominio
-        $path = preg_replace('#^https?://[^/]+#', '', $path); // Remover dominio
-        $path = preg_replace('#^/?index\.php/#', '', $path); // Remover index.php/
-        $path = preg_replace('#\?.*$#', '', $path); // Remover query strings
-        $path = ltrim($path, '/');
+        $path = $this->normalizeRequestPath($uri->getPath());
 
         // Log para debugging de rutas excluidas (especialmente webhooks)
         if (strpos($path, 'mercadopago/webhook') !== false || 
@@ -137,5 +134,37 @@ class CSRFExceptWebhook extends BaseCSRF
 
         // Aplicar CSRF normal para otras rutas
         return parent::before($request, $arguments);
+    }
+
+    /**
+     * Path relativo al baseURL (sin index.php), p. ej. dashboard/paciente/activar/3
+     */
+    private function normalizeRequestPath(string $rawPath): string
+    {
+        $path = '/' . ltrim($rawPath, '/');
+
+        $baseURL  = rtrim((string) config('App')->baseURL, '/');
+        $basePath = (string) (parse_url($baseURL, PHP_URL_PATH) ?? '');
+        if ($basePath !== '' && str_starts_with($path, $basePath)) {
+            $path = substr($path, strlen($basePath));
+            if ($path === '' || $path[0] !== '/') {
+                $path = '/' . $path;
+            }
+        }
+
+        $index = trim((string) config('App')->indexPage, '/');
+        if ($index !== '' && str_starts_with($path, '/' . $index)) {
+            $path = substr($path, strlen('/' . $index));
+            if ($path === '' || $path[0] !== '/') {
+                $path = '/' . $path;
+            }
+        }
+
+        return ltrim($path, '/');
+    }
+
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
+    {
+        return parent::after($request, $response, $arguments);
     }
 }
