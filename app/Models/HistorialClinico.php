@@ -77,6 +77,30 @@ class HistorialClinico extends Model
         return $key !== '0000-00-00' ? date('d/m/Y', strtotime($key)) : '—';
     }
 
+    /**
+     * Convierte HTML/enidades del editor a texto plano para tablas y resúmenes.
+     */
+    public static function richTextToPlain(?string $html, int $maxLen = 0): string
+    {
+        $decoded = html_entity_decode((string) ($html ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim(preg_replace('/\s+/u', ' ', strip_tags($decoded)));
+        if ($maxLen > 0 && $text !== '' && mb_strlen($text) > $maxLen) {
+            return mb_substr($text, 0, $maxLen) . '...';
+        }
+
+        return $text;
+    }
+
+    /**
+     * Condición SQL para excluir registros con soft delete (joins manuales fuera del Model).
+     */
+    public static function sqlNoEliminado(string $alias = 'hc'): string
+    {
+        $a = preg_replace('/[^a-zA-Z0-9_]/', '', $alias) ?: 'hc';
+
+        return "({$a}.feliminacion IS NULL OR {$a}.feliminacion = '0000-00-00 00:00:00')";
+    }
+
     public static function fechaConsultaToTimestamp(?string $fecha, ?string $hora = null): int
     {
         $key = self::fechaConsultaToSortKey($fecha);

@@ -161,6 +161,7 @@ $routes->group('dashboard', function ($routes) {
         $routes2->get('editar/(:num)', 'Dashboard\TestimonioController::editar/$1'); //vista
         $routes2->get('lista', 'Dashboard\TestimonioController::lista'); //vista
         $routes2->get('getTestimonios', 'Dashboard\TestimonioController::getTestimonios'); //get Data
+        $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar');
     });
 
     // ============================================
@@ -227,7 +228,6 @@ $routes->group('dashboard', function ($routes) {
         $routes2->post('guardarInformacionClinica', 'Dashboard\HistorialController::guardarInformacionClinica');
         $routes2->post('guardarMediciones', 'Dashboard\HistorialController::guardarMediciones');
         $routes2->post('eliminar', 'Dashboard\HistorialController::eliminar');
-        $routes2->post('eliminar', 'Dashboard\TestimonioController::eliminar'); //accion
     });
 
     $routes->group('cliente', function ($routes2) {

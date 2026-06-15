@@ -164,7 +164,22 @@ $(document).ready(function() {
         };
     }
 
+    function pacienteActualizarCsrf(xhr, response) {
+        if (response && window.NutriNextCsrf) {
+            NutriNextCsrf.applyFromJson(response);
+        }
+        if (xhr && xhr.getResponseHeader) {
+            var headerToken = xhr.getResponseHeader('X-CSRF-TOKEN');
+            if (headerToken && window.NutriNextCsrf) {
+                NutriNextCsrf.setToken(headerToken);
+            }
+        }
+    }
+
+    var pacienteAccionEnCurso = false;
+
     function pacienteAjaxError(xhr, fallback) {
+        pacienteActualizarCsrf(xhr, xhr.responseJSON || null);
         var msg = fallback;
         if (xhr.responseJSON && xhr.responseJSON.error) {
             msg = xhr.responseJSON.error;
@@ -173,8 +188,6 @@ $(document).ready(function() {
         }
         if (typeof toastr !== 'undefined') {
             toastr.error(msg);
-        } else {
-            alert(msg);
         }
     }
 
@@ -239,16 +252,18 @@ $(document).ready(function() {
     };
 
     window.confirmarEliminacionPaciente = function() {
-        if (!window.pacienteIdAEliminar) {
+        if (!window.pacienteIdAEliminar || pacienteAccionEnCurso) {
             return;
         }
 
+        pacienteAccionEnCurso = true;
         $.ajax({
             url: '<?= base_url('dashboard/paciente/eliminar') ?>/' + window.pacienteIdAEliminar,
             type: 'POST',
             headers: pacienteAjaxCsrf().headers,
             data: pacienteAjaxCsrf().data,
-            success: function(response) {
+            success: function(response, _textStatus, xhr) {
+                pacienteActualizarCsrf(xhr, response);
                 if (response.success) {
                     if (typeof toastr !== 'undefined') {
                         toastr.success(response.message || 'Paciente desactivado con éxito');
@@ -257,23 +272,30 @@ $(document).ready(function() {
                     table.ajax.reload(null, false);
                 } else if (typeof toastr !== 'undefined') {
                     toastr.error(response.error || 'Error al desactivar el paciente');
-                } else {
-                    alert(response.error || 'Error al desactivar el paciente');
                 }
             },
             error: function(xhr) {
                 pacienteAjaxError(xhr, 'Error al desactivar el paciente');
+            },
+            complete: function() {
+                pacienteAccionEnCurso = false;
             }
         });
     };
 
     window.activarPaciente = function(id) {
+        if (pacienteAccionEnCurso) {
+            return;
+        }
+
+        pacienteAccionEnCurso = true;
         $.ajax({
             url: '<?= base_url('dashboard/paciente/activar') ?>/' + id,
             type: 'POST',
             headers: pacienteAjaxCsrf().headers,
             data: pacienteAjaxCsrf().data,
-            success: function(response) {
+            success: function(response, _textStatus, xhr) {
+                pacienteActualizarCsrf(xhr, response);
                 if (response.success) {
                     if (typeof toastr !== 'undefined') {
                         toastr.success(response.message || 'Paciente activado con éxito');
@@ -281,12 +303,13 @@ $(document).ready(function() {
                     table.ajax.reload(null, false);
                 } else if (typeof toastr !== 'undefined') {
                     toastr.error(response.error || 'Error al activar el paciente');
-                } else {
-                    alert(response.error || 'Error al activar el paciente');
                 }
             },
             error: function(xhr) {
                 pacienteAjaxError(xhr, 'Error al activar el paciente');
+            },
+            complete: function() {
+                pacienteAccionEnCurso = false;
             }
         });
     };

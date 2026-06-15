@@ -12,7 +12,10 @@ use CodeIgniter\HTTP\ResponseInterface;
 class CSRFExceptWebhook extends BaseCSRF
 {
     /**
-     * Rutas excluidas del CSRF
+     * Rutas excluidas del CSRF.
+     *
+     * PENDIENTE OBLIGATORIO: reducir esta lista a webhooks + rutas públicas.
+     * Ver docs/PENDIENTES.md (P1) y docs/nutrinext-csrf.md.
      */
     protected $except = [
         'whatsapp/webhook',

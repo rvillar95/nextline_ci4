@@ -169,10 +169,8 @@ class HistorialController extends BaseController
             $imcInfo = $r->imc_actual ? "IMC: {$r->imc_actual}" : '';
             $medidas = trim($pesoInfo . ($imcInfo ? ' | ' . $imcInfo : ''));
 
-            // Motivo sin etiquetas HTML (solo texto para la tabla)
-            $motivoTexto = strip_tags($r->motivo_consulta ?? '');
-            $motivoTexto = trim(preg_replace('/\s+/', ' ', $motivoTexto));
-            $motivoCorta = $motivoTexto !== '' ? (mb_substr($motivoTexto, 0, 50) . (mb_strlen($motivoTexto) > 50 ? '...' : '')) : '';
+            // Motivo: texto plano (editor guarda HTML/entidades como &oacute;)
+            $motivoCorta = HistorialClinico::richTextToPlain($r->motivo_consulta ?? '', 50);
 
             // Obtener tags como badges
             $tagsHtml = '';
@@ -678,6 +676,46 @@ class HistorialController extends BaseController
     }
 
     /**
+     * Eliminar registro de historial clínico (soft delete).
+     * Borra exámenes bioquímicos y tendencia de consumo asociados.
+     */
+    public function eliminar()
+    {
+        $this->response->setContentType('application/json');
+
+        if (!session()->get('usuario')) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No autorizado'])->setStatusCode(401);
+        }
+
+        $id = (int) ($this->request->getPost('id') ?? 0);
+        if ($id <= 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ID de historial requerido'])->setStatusCode(400);
+        }
+
+        $historialModel = new HistorialClinico();
+        $registro = $historialModel->find($id);
+        $usuarioId = (int) session()->get('usuario')['id'];
+
+        if (!$registro || (int) ($registro->nutricionista_id ?? 0) !== $usuarioId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Registro no encontrado'])->setStatusCode(404);
+        }
+
+        $db = \Config\Database::connect();
+        $db->table('historial_examen_bioquimico')->where('historial_clinico_id', $id)->delete();
+        $db->table('historial_tendencia_consumo')->where('historial_clinico_id', $id)->delete();
+
+        if ($historialModel->delete($id)) {
+            return $this->response->setJSON([
+                'success'    => true,
+                'message'    => 'Registro eliminado correctamente',
+                'csrf_token' => csrf_hash(),
+            ]);
+        }
+
+        return $this->response->setJSON(['success' => false, 'message' => 'Error al eliminar el registro'])->setStatusCode(500);
+    }
+
+    /**
      * Guardar información clínica vía AJAX (editar por historial id). Mismo comportamiento que agenda/guardarInformacionClinica.
      */
     public function guardarInformacionClinica()
@@ -950,6 +988,7 @@ class HistorialController extends BaseController
             INNER JOIN pacientes p ON p.id = hc.paciente_id
             WHERE hc.nutricionista_id = ?
               AND hc.estado = 'A'
+              AND (hc.feliminacion IS NULL OR hc.feliminacion = '0000-00-00 00:00:00')
             GROUP BY p.id, p.nombre, p.apellido
             HAVING COUNT(hc.id) > 0
             ORDER BY p.nombre ASC
@@ -963,7 +1002,8 @@ class HistorialController extends BaseController
         $pacienteIdPre = (int) $this->request->getGet('paciente_id');
         $data['paciente_id_preseleccionado'] = 0;
         if ($pacienteIdPre > 0) {
-            $tieneHistoriales = $db->table('historial_clinico')
+            $historialModel = new HistorialClinico();
+            $tieneHistoriales = $historialModel
                 ->where('paciente_id', $pacienteIdPre)
                 ->where('nutricionista_id', $usuario_id)
                 ->where('estado', 'A')

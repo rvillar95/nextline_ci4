@@ -1762,6 +1762,54 @@ function confirmarTerminarConsulta() {
 }
 
 var infoClinicaAutoSaveTimeout = null;
+var registroClinicoListoParaDirty = false;
+var ultimoContenido = { motivo: '', plan: '', recomendaciones: '' };
+
+function normalizarHtmlEditor(html) {
+    html = (html || '').trim();
+    if (html === '' || html === '<p></p>' || html === '<p><br></p>' || html === '<p><br data-mce-bogus="1"></p>' || html === '<p>&nbsp;</p>') {
+        return '';
+    }
+    return html;
+}
+
+function obtenerContenidoRegistroClinico() {
+    var motivo = '', plan = '', recomendaciones = '';
+    if (typeof tinymce !== 'undefined') {
+        if (tinymce.get('motivo_consulta')) motivo = tinymce.get('motivo_consulta').getContent();
+        else motivo = $('#motivo_consulta').val() || '';
+        if (tinymce.get('plan_tratamiento')) plan = tinymce.get('plan_tratamiento').getContent();
+        else plan = $('#plan_tratamiento').val() || '';
+        if (tinymce.get('recomendaciones')) recomendaciones = tinymce.get('recomendaciones').getContent();
+        else recomendaciones = $('#recomendaciones').val() || '';
+    } else {
+        motivo = $('#motivo_consulta').val() || '';
+        plan = $('#plan_tratamiento').val() || '';
+        recomendaciones = $('#recomendaciones').val() || '';
+    }
+    return {
+        motivo: normalizarHtmlEditor(motivo),
+        plan: normalizarHtmlEditor(plan),
+        recomendaciones: normalizarHtmlEditor(recomendaciones)
+    };
+}
+
+function sincronizarBaselineRegistroClinico() {
+    ultimoContenido = obtenerContenidoRegistroClinico();
+}
+
+function registroClinicoHayCambiosReales() {
+    var actual = obtenerContenidoRegistroClinico();
+    return actual.motivo !== ultimoContenido.motivo
+        || actual.plan !== ultimoContenido.plan
+        || actual.recomendaciones !== ultimoContenido.recomendaciones;
+}
+
+function activarDeteccionCambiosRegistroClinico() {
+    sincronizarBaselineRegistroClinico();
+    registroClinicoListoParaDirty = true;
+    actualizarEstadoRegistroClinico('guardado');
+}
 
 function programarAutoGuardadoInfoClinica() {
     if (!$('input[name="detalle_agenda_id"]').val()) {
@@ -1769,6 +1817,9 @@ function programarAutoGuardadoInfoClinica() {
     }
     clearTimeout(infoClinicaAutoSaveTimeout);
     infoClinicaAutoSaveTimeout = setTimeout(function() {
+        if (!registroClinicoListoParaDirty || !registroClinicoHayCambiosReales()) {
+            return;
+        }
         if ($('#registroClinicoEstado').hasClass('bg-warning')) {
             guardarInformacionClinica(false);
         }
@@ -1776,6 +1827,16 @@ function programarAutoGuardadoInfoClinica() {
 }
 
 function marcarCambiosPendientesInfoClinica() {
+    if (!registroClinicoListoParaDirty) {
+        return;
+    }
+    if (!registroClinicoHayCambiosReales()) {
+        if ($('#registroClinicoEstado').hasClass('bg-warning')) {
+            actualizarEstadoRegistroClinico('guardado');
+        }
+        clearTimeout(infoClinicaAutoSaveTimeout);
+        return;
+    }
     if ($('#registroClinicoEstado').length && !$('#registroClinicoEstado').hasClass('bg-primary')) {
         actualizarEstadoRegistroClinico('cambios');
     }
@@ -1932,17 +1993,7 @@ function guardarInformacionClinica(silentToast) {
             actualizarTokenCSRF(xhr);
             if (response.success) {
                 actualizarEstadoRegistroClinico('guardado');
-                var motivoSync = '', planSync = '', recomSync = '';
-                if (typeof tinymce !== 'undefined') {
-                    if (tinymce.get('motivo_consulta')) motivoSync = tinymce.get('motivo_consulta').getContent();
-                    if (tinymce.get('plan_tratamiento')) planSync = tinymce.get('plan_tratamiento').getContent();
-                    if (tinymce.get('recomendaciones')) recomSync = tinymce.get('recomendaciones').getContent();
-                }
-                ultimoContenido = {
-                    motivo: motivoSync || $('#motivo_consulta').val() || '',
-                    plan: planSync || $('#plan_tratamiento').val() || '',
-                    recomendaciones: recomSync || $('#recomendaciones').val() || ''
-                };
+                sincronizarBaselineRegistroClinico();
                 if (!silentToast) {
                     toastGuardadoExito(response.message || 'Registro clínico actualizado correctamente');
                 }
@@ -3271,40 +3322,12 @@ function imprimirResultados() {
     window.print();
 }
 
-// Auto-guardar cada 2 minutos si hay cambios (información clínica)
-var ultimoContenido = {
-    motivo: $('#motivo_consulta').val(),
-    plan: $('#plan_tratamiento').val(),
-    recomendaciones: $('#recomendaciones').val()
-};
-
-setTimeout(function() {
-    if (typeof tinymce !== 'undefined') {
-        if (tinymce.get('motivo_consulta')) ultimoContenido.motivo = tinymce.get('motivo_consulta').getContent();
-        else ultimoContenido.motivo = $('#motivo_consulta').val();
-        if (tinymce.get('plan_tratamiento')) ultimoContenido.plan = tinymce.get('plan_tratamiento').getContent();
-        else ultimoContenido.plan = $('#plan_tratamiento').val();
-        if (tinymce.get('recomendaciones')) ultimoContenido.recomendaciones = tinymce.get('recomendaciones').getContent();
-        else ultimoContenido.recomendaciones = $('#recomendaciones').val();
-    }
-}, 1500);
-
+// Auto-guardar cada 2 minutos si hay cambios reales (información clínica)
 setInterval(function() {
-    var motivoActual = '', planActual = '', recomendacionesActuales = '';
-    if (typeof tinymce !== 'undefined') {
-        if (tinymce.get('motivo_consulta')) motivoActual = tinymce.get('motivo_consulta').getContent();
-        else motivoActual = $('#motivo_consulta').val() || '';
-        if (tinymce.get('plan_tratamiento')) planActual = tinymce.get('plan_tratamiento').getContent();
-        else planActual = $('#plan_tratamiento').val() || '';
-        if (tinymce.get('recomendaciones')) recomendacionesActuales = tinymce.get('recomendaciones').getContent();
-        else recomendacionesActuales = $('#recomendaciones').val() || '';
-    } else {
-        motivoActual = $('#motivo_consulta').val() || '';
-        planActual = $('#plan_tratamiento').val() || '';
-        recomendacionesActuales = $('#recomendaciones').val() || '';
+    if (!registroClinicoListoParaDirty || !registroClinicoHayCambiosReales()) {
+        return;
     }
-    var hayCambios = motivoActual !== ultimoContenido.motivo || planActual !== ultimoContenido.plan || recomendacionesActuales !== ultimoContenido.recomendaciones;
-    if (hayCambios && $('input[name="detalle_agenda_id"]').val()) {
+    if ($('input[name="detalle_agenda_id"]').val()) {
         guardarInformacionClinica(false);
     }
 }, 120000);
@@ -3363,7 +3386,8 @@ $(document).ready(function() {
         branding: false,
         promotion: false,
         setup: function(editor) {
-            editor.on('change keyup undo redo paste input SetContent', function() {
+            // No usar SetContent: se dispara al cargar el editor y provocaba autoguardado fantasma
+            editor.on('change keyup undo redo paste input', function() {
                 if (typeof marcarCambiosPendientesInfoClinica === 'function') {
                     marcarCambiosPendientesInfoClinica();
                 }
@@ -3374,8 +3398,7 @@ $(document).ready(function() {
     // Función para inicializar TinyMCE con manejo de errores
     function inicializarEditor(selector, height) {
         if (!$(selector).length) {
-            console.error('Elemento no encontrado:', selector);
-            return;
+            return Promise.resolve();
         }
         
         try {
@@ -3384,13 +3407,16 @@ $(document).ready(function() {
                 height: height
             });
             
-            tinymce.init(config).then(function(editors) {
+            return tinymce.init(config).then(function(editors) {
                 console.log('TinyMCE inicializado correctamente para:', selector);
+                return editors;
             }).catch(function(error) {
                 console.error('Error al inicializar TinyMCE para ' + selector + ':', error);
+                return [];
             });
         } catch (error) {
             console.error('Error al inicializar TinyMCE para ' + selector + ':', error);
+            return Promise.resolve();
         }
     }
 
@@ -3401,9 +3427,15 @@ $(document).ready(function() {
 
         // Esperar un momento para asegurar que el DOM esté completamente cargado
         setTimeout(function() {
-            inicializarEditor('#motivo_consulta', 200);
-            inicializarEditor('#plan_tratamiento', 280);
-            inicializarEditor('#recomendaciones', 200);
+            Promise.all([
+                inicializarEditor('#motivo_consulta', 200),
+                inicializarEditor('#plan_tratamiento', 280),
+                inicializarEditor('#recomendaciones', 200)
+            ]).then(function() {
+                setTimeout(function() {
+                    activarDeteccionCambiosRegistroClinico();
+                }, 200);
+            });
         }, 100);
     }
     

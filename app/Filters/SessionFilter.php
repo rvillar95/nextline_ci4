@@ -209,6 +209,8 @@ final class SessionFilter implements FilterInterface
         //exit();
 
         // 5) Excepciones especiales para rutas que requieren autenticación pero no están en módulo_detalle
+        // PENDIENTE OBLIGATORIO (docs/PENDIENTES.md P1): registrar en modulo_detalle y quitar bypasses
+        // que no respeten ver/registrar/editar/eliminar del perfil.
         // Rutas de calendario/agenda que requieren autenticación (usuario logueado con acceso a agenda)
         $calendarioExcepciones = [
             '/dashboard/agenda/calendario/verificar-token',

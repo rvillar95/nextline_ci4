@@ -63,6 +63,13 @@ En respuestas JSON de endpoints AJAX, incluir cuando aplique:
 
 O header: `->setHeader('X-CSRF-TOKEN', csrf_hash())`
 
+## Deuda técnica (obligatorio)
+
+**P1 — Quitar exclusiones CSRF y atajos de SessionFilter** que saltan permisos.  
+Plan completo, checklist y criterios de aceptación: **[PENDIENTES.md](./PENDIENTES.md)**.
+
+Pacientes (`activar` / `eliminar`) ya sigue el modelo correcto; el resto del dashboard está pendiente.
+
 ## Rama `feature/gym`
 
 El portal alumno y gym usan el mismo archivo; en `feature/gym` también se carga desde `layout/alumno.php`. No mezclar ramas sin commitear este archivo en ambas si hace falta.

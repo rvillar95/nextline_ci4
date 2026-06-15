@@ -70,9 +70,32 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalConfirmarEliminarHistorial" tabindex="-1" aria-labelledby="modalConfirmarEliminarHistorialLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarEliminarHistorialLabel">Eliminar registro clínico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Desea eliminar este registro del historial clínico?</p>
+                <p class="text-muted small mb-0">
+                    Se borrarán las mediciones, anamnesis y exámenes asociados a esta consulta.
+                    La cita en agenda y los planes alimentarios vinculados a la misma fecha no se eliminan.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminarHistorial">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 var table;
 var tagifyBusqueda = null;
+var historialIdAEliminar = null;
 
 $(document).ready(function() {
     // Inicializar Tagify para búsqueda por tags
@@ -167,6 +190,53 @@ $(document).ready(function() {
         "pageLength": 25,
         "order": [[1, "desc"]]
     });
+
+    $('#btnConfirmarEliminarHistorial').on('click', function() {
+        if (!historialIdAEliminar) {
+            return;
+        }
+        var id = historialIdAEliminar;
+        var csrfName = window.NutriNextCsrf ? NutriNextCsrf.getName() : '<?= csrf_token() ?>';
+        var csrfToken = window.NutriNextCsrf ? NutriNextCsrf.getToken() : '<?= csrf_hash() ?>';
+        var postData = { id: id };
+        postData[csrfName] = csrfToken;
+
+        $('#btnConfirmarEliminarHistorial').prop('disabled', true);
+
+        $.ajax({
+            url: '<?= site_url('dashboard/historial/eliminar') ?>',
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: postData,
+            success: function(response) {
+                if (window.NutriNextCsrf) NutriNextCsrf.applyFromJson(response);
+                if (response.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(response.message || 'Registro eliminado correctamente');
+                    }
+                    var modalEl = document.getElementById('modalConfirmarEliminarHistorial');
+                    if (modalEl && typeof bootstrap !== 'undefined') {
+                        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                    }
+                    $('#tablaHistorial').DataTable().ajax.reload(null, false);
+                } else if (typeof toastr !== 'undefined') {
+                    toastr.error(response.message || 'Error al eliminar el registro');
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message
+                    : (xhr.responseJSON && xhr.responseJSON.error) ? xhr.responseJSON.error
+                    : 'Error al eliminar el registro';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                }
+            },
+            complete: function() {
+                $('#btnConfirmarEliminarHistorial').prop('disabled', false);
+                historialIdAEliminar = null;
+            }
+        });
+    });
 });
 
 function aplicarFiltros() {
@@ -195,32 +265,11 @@ function editarHistorial(id) {
 }
 
 function eliminarHistorial(id) {
-    if (!confirm('¿Está seguro de que desea eliminar este registro del historial clínico?')) {
-        return;
+    historialIdAEliminar = id;
+    var modalEl = document.getElementById('modalConfirmarEliminarHistorial');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
-    
-    $.ajax({
-        url: '<?= base_url('dashboard/historial/eliminar') ?>',
-        type: 'POST',
-        data: {
-            id: id,
-            <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-        },
-        success: function(response) {
-            if (response.success) {
-                toastr.success('Registro eliminado correctamente');
-                var tableInstance = $('#tablaHistorial').DataTable();
-                if (tableInstance) {
-                    tableInstance.ajax.reload();
-                }
-            } else {
-                toastr.error(response.message || 'Error al eliminar el registro');
-            }
-        },
-        error: function() {
-            toastr.error('Error al eliminar el registro');
-        }
-    });
 }
 </script>
 

@@ -439,7 +439,7 @@
                                     };
                                     $tipo = $c->tipo_consulta ?? $c->historial_tipo ?? '—';
                                     $motivoRaw = $c->motivo_consulta ?: ($c->motivo ?? '');
-                                    $motivoTxt = trim(strip_tags(html_entity_decode((string) $motivoRaw, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+                                    $motivoTxt = \App\Models\HistorialClinico::richTextToPlain($motivoRaw);
                                     if (strlen($motivoTxt) > 60) {
                                         $motivoTxt = substr($motivoTxt, 0, 60) . '…';
                                     }

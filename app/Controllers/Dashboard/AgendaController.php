@@ -3326,9 +3326,9 @@ class AgendaController extends BaseController
         $data['cita'] = $cita;
         $data['fecha'] = $cita->fecha ?: $cita->fecha_agenda;
 
-        // Buscar si ya existe un registro de historial clínico para esta cita (incluir soft-deleted para mostrar datos)
+        // Buscar historial clínico activo (excluye soft delete)
         $historialModel = new HistorialClinico();
-        $historialExistente = $historialModel->withDeleted()
+        $historialExistente = $historialModel
             ->where('detalle_agenda_id', $detalleAgendaId)
             ->where('paciente_id', $cita->paciente_id)
             ->first();
@@ -3389,7 +3389,8 @@ class AgendaController extends BaseController
             ->join('agenda a', 'a.id = da.agenda_id', 'left')
             ->join(
                 'historial_clinico hc',
-                'hc.detalle_agenda_id = da.id AND hc.paciente_id = da.paciente_id AND hc.estado = \'A\'',
+                'hc.detalle_agenda_id = da.id AND hc.paciente_id = da.paciente_id AND hc.estado = \'A\' AND '
+                . HistorialClinico::sqlNoEliminado('hc'),
                 'inner'
             )
             ->where('da.paciente_id', $cita->paciente_id)
@@ -3406,7 +3407,7 @@ class AgendaController extends BaseController
 
         if ($consultaAnterior) {
             $historialModel = new HistorialClinico();
-            $historialAnterior = $historialModel->withDeleted()
+            $historialAnterior = $historialModel
                 ->where('detalle_agenda_id', $consultaAnterior->id)
                 ->where('paciente_id', $cita->paciente_id)
                 ->first();

@@ -780,6 +780,20 @@
                             <div id="rapido_rut_feedback" class="form-text"></div>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label" for="rapido_fecha_nacimiento">Fecha de nacimiento <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="rapido_fecha_nacimiento" name="fecha_nacimiento" required
+                                   max="<?= date('Y-m-d') ?>" autocomplete="bday">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="rapido_genero">Sexo <span class="text-danger">*</span></label>
+                            <select class="form-control" id="rapido_genero" name="genero" required>
+                                <option value="">— Seleccione —</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="O">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label" for="rapido_tipo_paciente">Tipo de paciente <span class="text-danger">*</span></label>
                             <select class="form-control" id="rapido_tipo_paciente" name="tipo_paciente" required>
                                 <option value="particular">Particular</option>
@@ -1647,6 +1661,23 @@ $('#formCrearPacienteRapido').on('submit', function(e) {
         $('#rapido_email').focus();
         return;
     }
+    var fechaNac = $('#rapido_fecha_nacimiento').val();
+    if (!fechaNac) {
+        toastr.error('La fecha de nacimiento es obligatoria.');
+        $('#rapido_fecha_nacimiento').focus();
+        return;
+    }
+    if (fechaNac > '<?= date('Y-m-d') ?>') {
+        toastr.error('La fecha de nacimiento no puede ser futura.');
+        $('#rapido_fecha_nacimiento').focus();
+        return;
+    }
+    var genero = $('#rapido_genero').val();
+    if (!genero) {
+        toastr.error('Seleccione el sexo.');
+        $('#rapido_genero').focus();
+        return;
+    }
     var csrfToken = obtenerTokenCSRF() || '<?= csrf_hash() ?>';
     var $btn = $('#btnGuardarPacienteRapido');
     $btn.prop('disabled', true);
@@ -1661,6 +1692,8 @@ $('#formCrearPacienteRapido').on('submit', function(e) {
             apellido: $('#rapido_apellido').val(),
             rut_dni: rut,
             tipo_paciente: $('#rapido_tipo_paciente').val(),
+            fecha_nacimiento: fechaNac,
+            genero: genero,
             telefono: $('#rapido_telefono').val(),
             email: $('#rapido_email').val()
         },
